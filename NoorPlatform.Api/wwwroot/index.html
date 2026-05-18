@@ -1,0 +1,4996 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="منصة نور — نظام إدارة مراكز وحلقات تحفيظ القرآن الكريم">
+    <meta name="keywords" content="تحفيظ القرآن, مراكز تحفيظ, حلقات قرآن, إدارة طلاب, منصة نور">
+    <meta name="author" content="منصة نور">
+    <title>منصة نور — مركز تحفيظ القرآن الكريم</title>
+    <link rel="icon" href="/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #10b981;
+            --green-dark: #059669;
+            --green-light: #d1fae5;
+            --blue: #3b82f6;
+            --blue-dark: #2563eb;
+            --blue-light: #dbeafe;
+            --teal: #14b8a6;
+            --bg: #f0fdf9;
+            --sidebar-bg: #0f172a;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 24px rgba(16,185,129,0.08);
+            --shadow-lg: 0 12px 48px rgba(16,185,129,0.15);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --gradient: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            --sidebar-w: 260px;
+            --bg-secondary: #e8f5f0;
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.5s;
+        }
+
+        .login-card {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+            .login-card h2 {
+                font-size: 24px;
+                font-weight: 800;
+                margin-bottom: 8px;
+                color: var(--text);
+            }
+
+            .login-card p {
+                font-size: 14px;
+                color: var(--text-muted);
+                margin-bottom: 32px;
+            }
+
+        .form-group {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+            .form-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            transition: .2s;
+            outline: none;
+        }
+
+            .form-control:focus {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+            }
+
+        .login-footer {
+            margin-top: 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+            .login-footer a {
+                color: var(--green);
+                font-weight: 700;
+                text-decoration: none;
+            }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+            overflow: hidden;
+        }
+
+        .sidebar-logo {
+            padding: 28px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+        }
+
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            font-weight: 400;
+        }
+
+        /* Role badge */
+        .role-badge {
+            margin: 16px 20px;
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .role-info h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .role-info span {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .role-switch {
+            margin-right: auto;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px;
+            padding: 4px 8px;
+            color: rgba(255,255,255,0.5);
+            font-size: 11px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: .2s;
+        }
+
+            .role-switch:hover {
+                background: rgba(255,255,255,0.1);
+                color: #fff;
+            }
+
+        /* Nav */
+        .nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+            scrollbar-width: none;
+        }
+
+            .nav::-webkit-scrollbar {
+                display: none;
+            }
+
+        .nav-section {
+            margin-bottom: 8px;
+        }
+
+        .nav-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            color: rgba(255,255,255,0.25);
+            text-transform: uppercase;
+            padding: 8px 10px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s;
+            color: rgba(255,255,255,0.55);
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            margin-bottom: 2px;
+        }
+
+            .nav-item:hover {
+                background: rgba(255,255,255,0.06);
+                color: rgba(255,255,255,0.85);
+            }
+
+            .nav-item.active {
+                background: rgba(16,185,129,0.15);
+                color: var(--green);
+            }
+
+                .nav-item.active::before {
+                    content: '';
+                    position: absolute;
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 3px;
+                    height: 22px;
+                    background: var(--green);
+                    border-radius: 3px 0 0 3px;
+                }
+
+        .nav-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.04);
+            transition: .25s;
+        }
+
+        .nav-item.active .nav-icon {
+            background: rgba(16,185,129,0.2);
+        }
+
+        .nav-badge {
+            margin-right: auto;
+            background: var(--green);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 20px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 16px 12px;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .logout-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(239,68,68,0.08);
+            border: none;
+            cursor: pointer;
+            color: rgba(239,68,68,0.7);
+            font-size: 13px;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+            transition: .25s;
+        }
+
+            .logout-btn:hover {
+                background: rgba(239,68,68,0.15);
+                color: #ef4444;
+            }
+
+        /* ===== MAIN ===== */
+        .main {
+            margin-right: var(--sidebar-w);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin .35s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* Top Bar */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            box-shadow: 0 1px 12px rgba(0,0,0,0.04);
+        }
+
+        .menu-toggle {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg);
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            align-items: center;
+            justify-content: center;
+            transition: .2s;
+        }
+
+            .menu-toggle:hover {
+                background: var(--green-light);
+            }
+
+        .topbar-title {
+            flex: 1;
+        }
+
+            .topbar-title h2 {
+                font-size: 20px;
+                font-weight: 800;
+                color: var(--text);
+            }
+
+            .topbar-title p {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            transition: .25s;
+        }
+
+            .search-box:focus-within {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+            }
+
+            .search-box input {
+                border: none;
+                background: none;
+                font-family: 'Tajawal', sans-serif;
+                font-size: 13px;
+                color: var(--text);
+                outline: none;
+                width: 180px;
+            }
+
+                .search-box input::placeholder {
+                    color: var(--text-muted);
+                }
+
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: .2s;
+            position: relative;
+        }
+
+            .icon-btn:hover {
+                background: var(--bg);
+                border-color: var(--green);
+            }
+
+        .notif-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* ===== CONTENT ===== */
+        .content {
+            flex: 1;
+            padding: 28px;
+            display: none;
+        }
+
+            .content.active {
+                display: block;
+            }
+
+        /* ===== DASHBOARD ===== */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: transform .25s, box-shadow .25s;
+            cursor: default;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-3px);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .stat-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 80px;
+                height: 80px;
+                border-radius: 0 var(--radius) 0 80px;
+                opacity: 0.08;
+            }
+
+            .stat-card.green::before {
+                background: var(--green);
+            }
+
+            .stat-card.blue::before {
+                background: var(--blue);
+            }
+
+            .stat-card.teal::before {
+                background: var(--teal);
+            }
+
+            .stat-card.purple::before {
+                background: #8b5cf6;
+            }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card.green .stat-icon {
+            background: var(--green-light);
+        }
+
+        .stat-card.blue .stat-icon {
+            background: var(--blue-light);
+        }
+
+        .stat-card.teal .stat-icon {
+            background: #ccfbf1;
+        }
+
+        .stat-card.purple .stat-icon {
+            background: #ede9fe;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-card.green .stat-value {
+            color: var(--green-dark);
+        }
+
+        .stat-card.blue .stat-value {
+            color: var(--blue-dark);
+        }
+
+        .stat-card.teal .stat-value {
+            color: #0d9488;
+        }
+
+        .stat-card.purple .stat-value {
+            color: #7c3aed;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-trend {
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-up {
+            color: var(--green);
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        /* Charts row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+            .card-header h3 {
+                font-size: 15px;
+                font-weight: 800;
+                color: var(--text);
+            }
+
+            .card-header p {
+                font-size: 12px;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
+
+        .card-action {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-family: 'Tajawal', sans-serif;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: .2s;
+        }
+
+            .card-action:hover {
+                color: var(--green);
+                border-color: var(--green);
+            }
+
+        /* Simple bar chart */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 140px;
+        }
+
+        .bar-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bar {
+            width: 100%;
+            border-radius: 8px 8px 0 0;
+            transition: height .6s cubic-bezier(.4,0,.2,1), opacity .3s;
+            cursor: pointer;
+        }
+
+            .bar:hover {
+                opacity: 0.8;
+            }
+
+        .bar-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Donut */
+        .donut-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .donut-svg {
+            width: 120px;
+            height: 120px;
+        }
+
+        .donut-legend {
+            width: 100%;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-val {
+            margin-right: auto;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* Recent table */
+        .table-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+            .table-card .card-header {
+                padding: 18px 22px;
+                margin: 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: var(--bg);
+            padding: 12px 18px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.3px;
+        }
+
+        tbody tr {
+            transition: background .15s;
+        }
+
+            tbody tr:hover {
+                background: var(--bg);
+            }
+
+        tbody td {
+            padding: 14px 18px;
+            font-size: 13px;
+            color: var(--text);
+            border-bottom: 1px solid rgba(226,232,240,0.5);
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .student-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status-present {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        .status-absent {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-late {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-excellent {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .status-good {
+            background: var(--blue-light);
+            color: var(--blue-dark);
+        }
+
+        /* Progress bar */
+        .progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--gradient);
+            transition: width .6s;
+        }
+
+        .progress-pct {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            width: 30px;
+            text-align: left;
+        }
+
+        /* ===== STUDENTS PAGE ===== */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+            .page-header h2 {
+                font-size: 22px;
+                font-weight: 800;
+            }
+
+            .page-header p {
+                font-size: 13px;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .25s;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(16,185,129,0.45);
+            }
+
+        .btn-outline {
+            background: #fff;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+            .btn-outline:hover {
+                border-color: var(--green);
+                color: var(--green);
+            }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+        }
+
+            .btn-danger:hover {
+                background: #dc2626;
+                color: #fff;
+            }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 9px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #fff;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            outline: none;
+            transition: .2s;
+        }
+
+            .filter-select:focus {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+            }
+
+        /* Cards grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .student-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform .25s, box-shadow .25s;
+            cursor: pointer;
+        }
+
+            .student-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-lg);
+            }
+
+        .student-card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .student-avatar-lg {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .student-card-info h4 {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 3px;
+        }
+
+        .student-card-info span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .student-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .mini-stat {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+            .mini-stat label {
+                font-size: 10px;
+                color: var(--text-muted);
+                font-weight: 600;
+            }
+
+            .mini-stat p {
+                font-size: 15px;
+                font-weight: 800;
+                color: var(--text);
+                margin-top: 2px;
+            }
+
+        .student-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+            .student-card-actions .btn {
+                flex: 1;
+                padding: 8px 12px;
+                font-size: 12px;
+                justify-content: center;
+            }
+
+        /* ===== ATTENDANCE PAGE ===== */
+        .attendance-header {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            align-items: start;
+            margin-bottom: 24px;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 16px;
+            box-shadow: var(--shadow);
+        }
+
+            .date-nav button {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                border: 1px solid var(--border);
+                background: var(--bg);
+                cursor: pointer;
+                font-size: 14px;
+                transition: .2s;
+            }
+
+                .date-nav button:hover {
+                    border-color: var(--green);
+                    color: var(--green);
+                }
+
+            .date-nav span {
+                font-size: 15px;
+                font-weight: 700;
+                color: var(--text);
+                min-width: 140px;
+                text-align: center;
+            }
+
+        .circle-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .circle-chip {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            background: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+            .circle-chip.active {
+                background: var(--gradient);
+                color: #fff;
+                border-color: transparent;
+                box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+            }
+
+            .circle-chip:hover:not(.active) {
+                border-color: var(--green);
+                color: var(--green);
+            }
+
+        .attendance-table-wrap {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .att-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 22px;
+            border-bottom: 1px solid rgba(226,232,240,0.5);
+            transition: background .15s;
+            gap: 16px;
+        }
+
+            .att-row:last-child {
+                border-bottom: none;
+            }
+
+            .att-row:hover {
+                background: var(--bg);
+            }
+
+        .att-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .att-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .att-phone {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .att-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .att-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .att-btn:hover {
+                transform: scale(1.1);
+            }
+
+            .att-btn.present {
+                border-color: var(--green);
+                background: var(--green-light);
+            }
+
+            .att-btn.absent {
+                border-color: #ef4444;
+                background: #fee2e2;
+            }
+
+            .att-btn.late {
+                border-color: #f59e0b;
+                background: #fef3c7;
+            }
+
+        /* ===== MEMORIZATION PAGE ===== */
+        .memorize-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+        }
+
+        .surah-progress-grid {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .surah-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 22px;
+            border-bottom: 1px solid rgba(226,232,240,0.5);
+            gap: 14px;
+            transition: background .15s;
+        }
+
+            .surah-item:last-child {
+                border-bottom: none;
+            }
+
+            .surah-item:hover {
+                background: var(--bg);
+            }
+
+        .surah-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .surah-info {
+            flex: 1;
+        }
+
+            .surah-info h4 {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 6px;
+            }
+
+        .surah-status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .surah-done {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        .surah-progress-badge {
+            background: var(--blue-light);
+            color: var(--blue-dark);
+        }
+
+        .surah-pending {
+            background: var(--bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        /* Sidebar panel */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .panel-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .panel-card-body {
+            padding: 16px 20px;
+        }
+
+        /* ===== EXAMS PAGE ===== */
+        .exam-cards {
+            display: grid;
+            gap: 16px;
+        }
+
+        .exam-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            transition: transform .25s;
+        }
+
+            .exam-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-lg);
+            }
+
+        .exam-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+
+        .exam-info {
+            flex: 1;
+        }
+
+            .exam-info h4 {
+                font-size: 15px;
+                font-weight: 800;
+                margin-bottom: 4px;
+            }
+
+            .exam-info p {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
+
+        .exam-meta {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .exam-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .tag-green {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        .tag-blue {
+            background: var(--blue-light);
+            color: var(--blue-dark);
+        }
+
+        .tag-orange {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .exam-score {
+            text-align: center;
+        }
+
+            .exam-score .score-val {
+                font-size: 26px;
+                font-weight: 900;
+                color: var(--green-dark);
+            }
+
+            .exam-score .score-max {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
+
+        /* ===== ANNOUNCEMENTS ===== */
+        .ann-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .ann-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+            transition: transform .25s;
+            cursor: pointer;
+        }
+
+            .ann-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-lg);
+            }
+
+        .ann-indicator {
+            width: 4px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            align-self: stretch;
+        }
+
+        .ann-card-content {
+            flex: 1;
+        }
+
+        .ann-card-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+            .ann-card-top h4 {
+                font-size: 14px;
+                font-weight: 800;
+                flex: 1;
+            }
+
+            .ann-card-top time {
+                font-size: 11px;
+                color: var(--text-muted);
+            }
+
+        .ann-card-content p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .ann-target {
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+            .modal-overlay.open {
+                display: flex;
+            }
+
+        .modal {
+            background: var(--card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+            animation: modalIn .3s cubic-bezier(.4,0,.2,1);
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .modal-header {
+            padding: 22px 24px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+            .modal-header h3 {
+                font-size: 18px;
+                font-weight: 800;
+            }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            font-size: 18px;
+            cursor: pointer;
+            transition: .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal-close:hover {
+                background: #fee2e2;
+                color: #dc2626;
+                border-color: #dc2626;
+            }
+
+        .modal-body {
+            padding: 22px 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            background: #fff;
+            outline: none;
+            transition: .2s;
+        }
+
+            .form-input:focus {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+            }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* ===== ROLES PANEL ===== */
+        .role-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--card);
+            border-radius: 14px;
+            padding: 6px;
+            border: 1px solid var(--border);
+            width: fit-content;
+            box-shadow: var(--shadow);
+        }
+
+        .role-tab {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            background: none;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .25s;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .role-tab.active {
+                background: var(--gradient);
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+            }
+
+            .role-tab:not(.active):hover {
+                background: var(--bg);
+                color: var(--text);
+            }
+
+        /* ===== STUDENT VIEW (for student/parent) ===== */
+        .student-profile-hero {
+            background: var(--gradient);
+            border-radius: var(--radius);
+            padding: 30px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+            .student-profile-hero::before {
+                content: '📖';
+                position: absolute;
+                left: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 100px;
+                opacity: 0.08;
+            }
+
+        .hero-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: 800;
+            border: 3px solid rgba(255,255,255,0.4);
+            flex-shrink: 0;
+        }
+
+        .hero-info h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .hero-info p {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .hero-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .student-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: var(--sidebar-bg);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            animation: toastIn .3s, toastOut .3s 2.7s forwards;
+            border-right: 4px solid var(--green);
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        @keyframes toastOut {
+            to {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1100px) {
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+
+            .memorize-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .student-stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-w: 260px;
+            }
+
+            .sidebar {
+                transform: translateX(100%);
+            }
+
+                .sidebar.open {
+                    transform: translateX(0);
+                }
+
+            .main {
+                margin-right: 0;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .student-stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .role-tabs {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--text-muted);
+            }
+
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+
+        /* ══════════════════════════════════════════════════
+           🎨 UI OVERRIDES — تحسينات الهوية البصرية
+           مستوحاة من الصور المرجعية للمشروع
+        ══════════════════════════════════════════════════ */
+
+        /* ── بطاقات الإحصائيات: Flex layout + خط ملوّن أسفل ── */
+        .stat-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 20px;
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0; left: 0;
+            height: 3px;
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+        .stat-card.green::after  { background: #10b981; }
+        .stat-card.blue::after   { background: #3b82f6; }
+        .stat-card.teal::after   { background: #8b5cf6; }
+        .stat-card.purple::after { background: #f59e0b; }
+        .stat-card-body { flex: 1; }
+        .stat-value { font-size: 28px; }
+        .stat-icon { margin-bottom: 0; }
+
+        /* ── بطاقات الطلاب: حواف أنيقة وظل خفيف ── */
+        .student-card {
+            border-radius: 20px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            border: 1px solid rgba(226,232,240,0.8);
+        }
+        .student-card:hover {
+            box-shadow: 0 8px 32px rgba(16,185,129,0.15);
+            border-color: rgba(16,185,129,0.2);
+        }
+
+        /* ── شريط البحث في صفحة الطلاب ── */
+        .students-search-bar {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+        .students-search-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            outline: none;
+            direction: rtl;
+        }
+        .students-search-input::placeholder { color: var(--text-muted); }
+        .search-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        .search-row svg { flex-shrink: 0; opacity: 0.4; }
+
+        /* ── Filter Chips (مثل الصورة: "مستجد", "ذكر", "أسامة") ── */
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+        .filter-chips::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all .2s;
+            color: var(--text);
+        }
+        .filter-chip:hover { border-color: var(--green); color: var(--green); }
+        .filter-chip.active { background: var(--green); color: #fff; border-color: var(--green); }
+        .filter-chip select {
+            border: none; background: none; font-family: 'Tajawal', sans-serif;
+            font-size: 13px; font-weight: 600; cursor: pointer; outline: none;
+            color: inherit; -webkit-appearance: none;
+        }
+
+        /* ── بطاقات الطالب: أزرار عرض/تعديل/حذف بالألوان ── */
+        .btn-view   { background: #eff6ff; color: #2563eb; border: none; }
+        .btn-edit   { background: #fefce8; color: #ca8a04; border: none; }
+        .btn-delete { background: #fef2f2; color: #dc2626; border: none; }
+        .btn-view:hover   { background: #2563eb; color: #fff; }
+        .btn-edit:hover   { background: #ca8a04; color: #fff; }
+        .btn-delete:hover { background: #dc2626; color: #fff; }
+
+        /* ── Topbar: تاريخ + أيقونات أنيقة ── */
+        .topbar-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            background: var(--bg);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        /* ── FAB (Floating Action Button) — مثل الصورة 3 ── */
+        .fab-container {
+            position: fixed;
+            bottom: 90px;
+            left: 20px;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .fab-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+            transition: all .3s cubic-bezier(.4,0,.2,1);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(12px) scale(0.96);
+        }
+        .fab-menu.open {
+            pointer-events: all;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .fab-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--card);
+            border-radius: 14px;
+            padding: 10px 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            transition: all .2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .fab-menu-item:hover { background: var(--green); color: #fff; border-color: var(--green); }
+        .fab-menu-item .fmi-icon {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--green-light); color: var(--green-dark);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0; transition: .2s;
+        }
+        .fab-menu-item:hover .fmi-icon { background: rgba(255,255,255,0.2); color: #fff; }
+        .fab-btn {
+            width: 54px; height: 54px;
+            border-radius: 50%;
+            background: var(--gradient);
+            border: none; cursor: pointer;
+            box-shadow: 0 6px 24px rgba(16,185,129,0.45);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            transition: all .3s cubic-bezier(.4,0,.2,1);
+            -webkit-tap-highlight-color: transparent;
+            color: #fff;
+        }
+        .fab-btn:hover { transform: scale(1.08); box-shadow: 0 8px 32px rgba(16,185,129,0.55); }
+        .fab-btn.open { transform: rotate(45deg); background: linear-gradient(135deg,#ef4444,#f97316); box-shadow: 0 6px 24px rgba(239,68,68,0.4); }
+        /* إخفاء FAB على الديسكتوب */
+        @media (min-width: 769px) { .fab-container { display: none; } }
+
+        /* ── صندوق الإشعارات اليومية — Timeline Style ── */
+        .daily-notif-box {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .daily-notif-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+        .daily-notif-header h3 { font-size: 15px; font-weight: 800; }
+        .daily-notif-header p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .notif-bell-btn {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: var(--green-light); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; transition: .2s;
+        }
+        .notif-bell-btn:hover { background: var(--green); }
+        .notif-timeline { padding: 0 22px; }
+        .notif-item {
+            display: flex;
+            gap: 14px;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(226,232,240,0.5);
+            position: relative;
+            align-items: flex-start;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-dot-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 0;
+            width: 40px;
+        }
+        .notif-dot {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: var(--green-light);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .notif-dot.nd-blue { background: #dbeafe; }
+        .notif-dot.nd-amber { background: #fef3c7; }
+        .notif-dot.nd-red { background: #fee2e2; }
+        .notif-line {
+            width: 2px; flex: 1; background: var(--border);
+            min-height: 12px; margin-top: 4px; border-radius: 2px;
+        }
+        .notif-content { flex: 1; }
+        .notif-content-top {
+            display: flex; align-items: flex-start;
+            justify-content: space-between; gap: 8px;
+        }
+        .notif-content p { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.5; }
+        .notif-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-top: 2px; }
+        .notif-green-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--green); flex-shrink: 0; margin-top: 6px;
+        }
+
+        /* ── Topbar Avatar دائري ── */
+        .topbar-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: var(--gradient);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800; color: #fff;
+            cursor: pointer; flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(16,185,129,0.3);
+        }
+
+        /* ── Mobile Topbar تحسين ── */
+        @media (max-width: 768px) {
+            .topbar { padding: 0 16px; height: 60px; gap: 12px; }
+            .topbar-title h2 { font-size: 17px; }
+            .topbar-title p { display: none; }
+            .stat-grid { gap: 10px; }
+            .stat-card { padding: 16px; gap: 12px; }
+            .stat-value { font-size: 24px; }
+            .fab-container { bottom: 80px; }
+        }
+
+        /* ── Dark Mode للعناصر الجديدة ── */
+        body.dark-mode .students-search-bar { background: #1e293b; border-color: #334155; }
+        body.dark-mode .filter-chip { background: #1e293b; border-color: #334155; color: #f1f5f9; }
+        body.dark-mode .fab-menu-item { background: #1e293b; border-color: #334155; color: #f1f5f9; }
+        body.dark-mode .daily-notif-box { background: #1e293b; border-color: #334155; }
+        body.dark-mode .notif-dot { background: rgba(16,185,129,0.2); }
+        body.dark-mode .notif-dot.nd-blue { background: rgba(59,130,246,0.2); }
+        body.dark-mode .notif-dot.nd-amber { background: rgba(245,158,11,0.2); }
+        body.dark-mode .notif-dot.nd-red { background: rgba(239,68,68,0.2); }
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    /* ─── الوضع الليلي ─── */
+    body.dark-mode {
+      --bg: #0f172a; --bg-secondary: #1e293b; --card: #1e293b;
+      --text: #f1f5f9; --text-muted: #94a3b8; --border: #334155;
+      --green-light: #052e16; --green-dark: #86efac;
+    }
+    .dark-toggle { cursor:pointer; font-size:20px; transition:.2s; user-select:none; }
+    .dark-toggle:hover { transform:scale(1.2); }
+
+    /* ─── خريطة الحفظ ─── */
+    .quran-map { padding:20px; }
+    .quran-map-title { font-size:16px; font-weight:800; margin-bottom:16px; color:var(--text); display:flex; align-items:center; gap:8px; }
+    .surah-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:6px; }
+    .surah-cell {
+      border-radius:10px; padding:8px 6px; font-size:11px; font-weight:700;
+      text-align:center; cursor:pointer; transition:.2s; border:1px solid transparent;
+      display:flex; flex-direction:column; align-items:center; gap:2px;
+    }
+    .surah-cell:hover { transform:scale(1.05); }
+    .surah-cell.memorized { background:#dcfce7; color:#15803d; border-color:#86efac; }
+    .surah-cell.partial   { background:#fef9c3; color:#854d0e; border-color:#fde047; }
+    .surah-cell.empty     { background:var(--bg-secondary); color:var(--text-muted); border-color:var(--border); }
+    .surah-cell .surah-num { font-size:9px; opacity:.7; }
+    .surah-cell .surah-icon { font-size:14px; }
+    .map-legend { display:flex; gap:16px; margin-bottom:16px; font-size:12px; flex-wrap:wrap; }
+    .legend-item { display:flex; align-items:center; gap:6px; }
+    .legend-dot { width:12px; height:12px; border-radius:50%; }
+
+    /* ─── PWA install banner ─── */
+    #pwa-banner {
+      display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      padding:14px 20px; box-shadow:0 8px 32px rgba(0,0,0,.15); z-index:999;
+      align-items:center; gap:12px; font-size:13px; max-width:340px;
+    }
+    #pwa-banner.show { display:flex; }
+    #pwa-banner button { padding:6px 14px; border-radius:8px; border:none; cursor:pointer; font-size:12px; }
+
+    /* ─── Dark Mode Enhanced ─── */
+    body.dark-mode .sidebar { background: #0a0f1a; }
+    body.dark-mode .topbar { background: #1e293b; border-color: #334155; box-shadow: 0 1px 12px rgba(0,0,0,0.2); }
+    body.dark-mode .form-control,
+    body.dark-mode .form-input { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+    body.dark-mode .login-card { background: #1e293b; border-color: #334155; }
+    body.dark-mode .login-card h2, body.dark-mode .login-card p { color: #f1f5f9; }
+    body.dark-mode .icon-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    body.dark-mode .search-box { background: #0f172a; border-color: #334155; }
+    body.dark-mode .search-box input { color: #f1f5f9; }
+    body.dark-mode .modal { background: #1e293b; }
+    body.dark-mode .modal-header { border-color: #334155; }
+    body.dark-mode .modal-footer { border-color: #334155; }
+    body.dark-mode .filter-select { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+
+    /* ─── Splash Screen ─── */
+    .splash-screen {
+      position:fixed; inset:0; z-index:2000;
+      background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      transition: opacity 0.6s, visibility 0.6s;
+    }
+    .splash-screen.hide { opacity:0; visibility:hidden; pointer-events:none; }
+    .splash-logo { width:100px; height:100px; border-radius:24px; background:var(--gradient);
+      display:flex; align-items:center; justify-content:center; font-size:48px;
+      box-shadow: 0 12px 40px rgba(16,185,129,0.4); animation: splashPulse 1.5s ease-in-out infinite; }
+    .splash-text { color:#fff; font-size:28px; font-weight:900; margin-top:20px;
+      background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .splash-sub { color:rgba(255,255,255,0.5); font-size:13px; margin-top:6px; }
+    .splash-loader { width:40px; height:40px; border:3px solid rgba(255,255,255,0.1);
+      border-top-color:#10b981; border-radius:50%; margin-top:32px; animation: spin 0.8s linear infinite; }
+    @keyframes splashPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Bottom Navigation (Mobile) ─── */
+    .bottom-nav {
+      display:none; position:fixed; bottom:0; left:0; right:0; z-index:95;
+      background:var(--card); border-top:1px solid var(--border);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      padding: 6px 0 env(safe-area-inset-bottom, 6px);
+    }
+    .bottom-nav-inner {
+      display:flex; justify-content:space-around; align-items:center;
+      max-width:500px; margin:0 auto;
+    }
+    .bottom-nav-item {
+      display:flex; flex-direction:column; align-items:center; gap:2px;
+      padding:6px 12px; border-radius:12px; cursor:pointer;
+      transition: all 0.25s; color:var(--text-muted); font-size:10px; font-weight:600;
+      position:relative; -webkit-tap-highlight-color:transparent;
+    }
+    .bottom-nav-item .bnav-icon { font-size:22px; transition: transform 0.25s; }
+    .bottom-nav-item.active { color:var(--green); }
+    .bottom-nav-item.active .bnav-icon { transform: scale(1.15); }
+    .bottom-nav-item.active::after {
+      content:''; position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+      width:20px; height:3px; background:var(--gradient); border-radius:0 0 3px 3px;
+    }
+    body.dark-mode .bottom-nav { background:#1e293b; border-color:#334155; }
+
+    @media (max-width: 768px) {
+      .bottom-nav { display:block; }
+      .main { padding-bottom: 72px; }
+      .content { padding-bottom: 80px; }
+      #pwa-banner { bottom: 88px; }
+    }
+
+    /* ─── Page Transitions ─── */
+    .content { animation: fadeUp 0.35s ease-out; }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(12px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+
+    /* ─── Toast Improvements ─── */
+    .toast.toast-success { border-right-color: #10b981; }
+    .toast.toast-error { border-right-color: #ef4444; }
+    .toast.toast-warning { border-right-color: #f59e0b; }
+    .toast.toast-info { border-right-color: #3b82f6; }
+
+    /* ─── Skeleton Loading ─── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--border) 25%, rgba(255,255,255,0.3) 50%, var(--border) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius:8px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ─── Empty State ─── */
+    .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
+    .empty-state-icon { font-size:56px; margin-bottom:16px; opacity:0.6; }
+    .empty-state-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:6px; }
+    .empty-state-desc { font-size:13px; line-height:1.6; }
+
+    /* ─── Micro animations ─── */
+    .stat-card { animation: fadeUp 0.4s ease-out backwards; }
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.2s; }
+    .student-card { animation: fadeUp 0.35s ease-out backwards; }
+  </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-logo">🕌</div>
+        <div class="splash-text">منصة نور</div>
+        <div class="splash-sub">مركز تحفيظ القرآن الكريم</div>
+        <div class="splash-loader"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-overlay">
+        <div class="login-card">
+            <div class="logo-icon" style="margin: 0 auto 20px;">📖</div>
+            <h2>تسجيل الدخول</h2>
+            <p>مرحباً بك في منصة نور لتحفيظ القرآن</p>
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="example@noor.sa" value="admin@noor.sa">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" value="Admin123!">
+                </div>
+                <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;" onclick="handleLogin()">دخول</button>
+                <div class="login-footer">
+                    ليس لديك حساب؟ <a href="#" onclick="toggleAuthMode('register')">إنشاء حساب جديد</a>
+                </div>
+            </div>
+            <div id="registerForm" style="display:none">
+                <div class="form-group">
+                    <label>الاسم الكامل</label>
+                    <input type="text" id="regName" class="form-control" placeholder="الاسم الرباعي">
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="regEmail" class="form-control" placeholder="example@noor.sa">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>نوع الحساب</label>
+                    <select id="regRole" class="form-control">
+                        <option value="Student">طالب / ولي أمر</option>
+                        <option value="Teacher">محفظ</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;" onclick="handleRegister()">إنشاء حساب</button>
+                <div class="login-footer">
+                    لديك حساب بالفعل؟ <a href="#" onclick="toggleAuthMode('login')">تسجيل الدخول</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-wrap">
+                <div class="logo-icon">🕌</div>
+                <div class="logo-text">
+                    <h1>منصة نور</h1>
+                    <span>مركز تحفيظ القرآن الكريم</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="role-badge">
+            <div class="role-avatar" id="roleAvatar">👤</div>
+            <div class="role-info">
+                <h4 id="roleName">المشرف العام</h4>
+                <span id="roleEmail">admin@noor.sa</span>
+            </div>
+            <button class="role-switch" onclick="showRoleModal()">تبديل</button>
+        </div>
+
+        <nav class="nav">
+            <div class="nav-section">
+                <div class="nav-section-label">الرئيسية</div>
+                <div class="nav-item active" onclick="navigate('dashboard', this)">
+                    <div class="nav-icon">📊</div>
+                    <span>لوحة التحكم</span>
+                </div>
+                <div class="nav-item" onclick="navigate('announcements', this)">
+                    <div class="nav-icon">📢</div>
+                    <span>الإعلانات</span>
+                    <span class="nav-badge">3</span>
+                </div>
+            </div>
+
+            <div class="nav-section" id="adminSection">
+                <div class="nav-section-label">الإدارة</div>
+                <div class="nav-item" onclick="navigate('students', this)">
+                    <div class="nav-icon">👨‍🎓</div>
+                    <span>الطلاب</span>
+                </div>
+                <div class="nav-item" onclick="navigate('teachers', this)">
+                    <div class="nav-icon">👨‍🏫</div>
+                    <span>المحفظون</span>
+                </div>
+                <div class="nav-item" onclick="navigate('circles', this)">
+                    <div class="nav-icon">⭕</div>
+                    <span>الحلقات</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-label">المتابعة</div>
+                <div class="nav-item" onclick="navigate('attendance', this)">
+                    <div class="nav-icon">✅</div>
+                    <span>الحضور والغياب</span>
+                </div>
+                <div class="nav-item" onclick="navigate('memorization', this)">
+                    <div class="nav-icon">📖</div>
+                    <span>الحفظ والتسميع</span>
+                </div>
+                <div class="nav-item" onclick="navigate('exams', this)">
+                    <div class="nav-icon">📝</div>
+                    <span>الاختبارات</span>
+                </div>
+            </div>
+
+            <div class="nav-section" id="studentSection" style="display:none">
+                <div class="nav-section-label">بوابة الطالب</div>
+                <div class="nav-item" onclick="navigate('studentView', this)">
+                    <div class="nav-icon">🌟</div>
+                    <span>ملفي الشخصي</span>
+                </div>
+            </div>
+
+            <!-- ✅ إصلاح 3: قسم ولي الأمر -->
+            <div class="nav-section" id="parentSection" style="display:none">
+                <div class="nav-section-label">بوابة ولي الأمر</div>
+                <div class="nav-item" onclick="navigate('parentView', this)">
+                    <div class="nav-icon">👨‍👦</div>
+                    <span>متابعة الأبناء</span>
+                </div>
+            </div>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="globalSearchInput" placeholder="بحث سريع عن طالب، حلقة، محفظ..." onkeyup="handleGlobalSearch()">
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn">
+                <span>🚪</span>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+        <!-- Top Bar — محسّن مثل الصورة المرجعية -->
+        <div class="topbar">
+            <div class="topbar-avatar" id="topbarAvatar" onclick="showRoleModal()" title="الحساب">👤</div>
+            <span class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="الوضع الليلي" style="font-size:20px;cursor:pointer;user-select:none">🌙</span>
+            <div class="topbar-title" style="text-align:center;flex:1">
+                <h2 id="pageTitle" style="font-size:19px">لوحة التحكم</h2>
+            </div>
+            <span class="topbar-date" id="topbarDate"></span>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right:0">☰</button>
+        </div>
+
+        <!-- ===== DASHBOARD ===== -->
+        <div class="content active" id="page-dashboard">
+            <!-- Stats -->
+            <div class="stat-grid">
+                <div class="stat-card green">
+                    <div class="stat-icon">🎓</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashStudents">247</div>
+                        <div class="stat-label">إجمالي الطلاب</div>
+                        <div class="stat-trend trend-up">↑ 12 هذا الشهر</div>
+                    </div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon">👨‍🏫</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashTeachers">18</div>
+                        <div class="stat-label">المحفظون النشطون</div>
+                        <div class="stat-trend trend-up">↑ 2 جديد</div>
+                    </div>
+                </div>
+                <div class="stat-card teal">
+                    <div class="stat-icon">⭕</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashCircles">24</div>
+                        <div class="stat-label">الحلقات الفعالة</div>
+                        <div class="stat-trend trend-up">نشط</div>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashAttendance">89%</div>
+                        <div class="stat-label">معدل الحضور</div>
+                        <div class="stat-trend" id="dashAttTrend">آخر 30 يوم</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>نسبة الحضور الأسبوعية</h3>
+                            <p>آخر 7 أيام</p>
+                        </div>
+                        <button class="card-action">هذا الشهر ▾</button>
+                    </div>
+                    <div class="bar-chart">
+                        <div class="bar-col">
+                            <div class="bar" style="height:75%;background:var(--gradient)"></div>
+                            <div class="bar-label">الأحد</div>
+                        </div>
+                        <div class="bar-col">
+                            <div class="bar" style="height:88%;background:var(--gradient)"></div>
+                            <div class="bar-label">الإثنين</div>
+                        </div>
+                        <div class="bar-col">
+                            <div class="bar" style="height:92%;background:var(--gradient)"></div>
+                            <div class="bar-label">الثلاثاء</div>
+                        </div>
+                        <div class="bar-col">
+                            <div class="bar" style="height:70%;background:var(--gradient)"></div>
+                            <div class="bar-label">الأربعاء</div>
+                        </div>
+                        <div class="bar-col">
+                            <div class="bar" style="height:85%;background:var(--gradient)"></div>
+                            <div class="bar-label">الخميس</div>
+                        </div>
+                        <div class="bar-col">
+                            <div class="bar" style="height:60%;background:linear-gradient(135deg,#94a3b8,#cbd5e1)"></div>
+                            <div class="bar-label">الجمعة</div>
+                        </div>
+                        <div class="bar-col">
+                            <div class="bar" style="height:55%;background:linear-gradient(135deg,#94a3b8,#cbd5e1)"></div>
+                            <div class="bar-label">السبت</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>توزيع مستويات الحفظ</h3>
+                        </div>
+                    </div>
+                    <div class="donut-wrap">
+                        <svg class="donut-svg" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" stroke-width="3" />
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10b981" stroke-width="3"
+                                    stroke-dasharray="42 58" stroke-dashoffset="25" stroke-linecap="round" />
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#3b82f6" stroke-width="3"
+                                    stroke-dasharray="30 70" stroke-dashoffset="-17" stroke-linecap="round" />
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f59e0b" stroke-width="3"
+                                    stroke-dasharray="18 82" stroke-dashoffset="-47" stroke-linecap="round" />
+                            <text x="18" y="20" text-anchor="middle" font-size="5" fill="#1e293b" font-weight="bold" font-family="Tajawal,sans-serif">247</text>
+                        </svg>
+                        <div class="donut-legend" style="width:100%">
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:var(--green)"></div>
+                                <span>حفظ ممتاز (جزء كامل+)</span>
+                                <span class="legend-val">104</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:var(--blue)"></div>
+                                <span>حفظ متوسط</span>
+                                <span class="legend-val">74</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:#f59e0b"></div>
+                                <span>مبتدئ</span>
+                                <span class="legend-val">69</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent activity table -->
+            <div class="table-card">
+                <div class="card-header">
+                    <div>
+                        <h3>آخر نشاط التسميع</h3>
+                        <p>اليوم</p>
+                    </div>
+                    <button class="card-action" onclick="navigate('memorization', null)">عرض الكل</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الطالب</th>
+                            <th>الحلقة</th>
+                            <th>السورة / النطاق</th>
+                            <th>التقييم</th>
+                            <th>التقدم الكلي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><div class="student-cell"><div class="avatar" style="background:linear-gradient(135deg,#10b981,#3b82f6)">أح</div><span>أحمد محمد الزهراني</span></div></td>
+                            <td>حلقة الفجر</td>
+                            <td>سورة البقرة (1-20)</td>
+                            <td><span class="status-badge status-excellent">⭐ ممتاز</span></td>
+                            <td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div><span class="progress-pct">78%</span></div></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><div class="student-cell"><div class="avatar" style="background:linear-gradient(135deg,#14b8a6,#3b82f6)">سا</div><span>سارة عبدالله القحطاني</span></div></td>
+                            <td>حلقة النور</td>
+                            <td>سورة آل عمران (50-70)</td>
+                            <td><span class="status-badge status-good">👍 جيد</span></td>
+                            <td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div><span class="progress-pct">55%</span></div></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><div class="student-cell"><div class="avatar" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6)">عم</div><span>عمر خالد الدوسري</span></div></td>
+                            <td>حلقة الصباح</td>
+                            <td>سورة الكهف (كاملة)</td>
+                            <td><span class="status-badge status-excellent">⭐ ممتاز</span></td>
+                            <td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:92%"></div></div><span class="progress-pct">92%</span></div></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><div class="student-cell"><div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">مع</div><span>منى عبدالرحمن العتيبي</span></div></td>
+                            <td>حلقة النور</td>
+                            <td>سورة يس (1-30)</td>
+                            <td><span class="status-badge status-absent">🔄 يراجع</span></td>
+                            <td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:38%"></div></div><span class="progress-pct">38%</span></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- صندوق الإشعارات اليومية — Timeline Style (مثل الصورة) -->
+            <div class="daily-notif-box" id="dailyNotifBox">
+                <div class="daily-notif-header">
+                    <div>
+                        <h3>صندوق الإشعارات اليومية</h3>
+                        <p>يتم عرض إشعارات آخر 24 ساعة فقط</p>
+                    </div>
+                    <button class="notif-bell-btn" title="تحديث">🔔</button>
+                </div>
+                <div class="notif-timeline" id="notifTimeline">
+                    <!-- تُملأ ديناميكياً من buildNotifTimeline() -->
+                    <div class="notif-item">
+                        <div class="notif-dot-wrap">
+                            <div class="notif-dot">🔔</div>
+                            <div class="notif-line"></div>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-content-top">
+                                <p>تم تسجيل حضور حلقة الفجر بنجاح</p>
+                                <div class="notif-green-dot"></div>
+                            </div>
+                            <div class="notif-time">اليوم — 06:24 ص</div>
+                        </div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-dot-wrap">
+                            <div class="notif-dot nd-amber">⭐</div>
+                            <div class="notif-line"></div>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-content-top">
+                                <p>جلسة تسميع: أحمد الزهراني — البقرة (1-20) — ممتاز</p>
+                                <div class="notif-green-dot"></div>
+                            </div>
+                            <div class="notif-time">اليوم — 07:10 ص</div>
+                        </div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-dot-wrap">
+                            <div class="notif-dot nd-red">❌</div>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-content-top">
+                                <p>غياب: سارة القحطاني — حلقة النور</p>
+                            </div>
+                            <div class="notif-time">اليوم — 08:05 ص</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== STUDENTS ===== -->
+        <div class="content" id="page-students">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة الطلاب</h2>
+                    <p id="studentsCount">247 طالب مسجل في المركز</p>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button class="btn btn-outline" onclick="exportStudentsCSV()" style="padding:9px 16px;font-size:13px">📥 تصدير</button>
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" style="padding:9px 16px;font-size:13px">➕ إضافة طالب</button>
+                </div>
+            </div>
+
+            <!-- شريط البحث + Filter Chips — مثل الصورة المرجعية -->
+            <div class="students-search-bar">
+                <div class="search-row">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="studentSearchInput" class="students-search-input"
+                           placeholder="بحث باسم الطالب أو الحلقة..."
+                           oninput="filterStudentsLive(this.value)">
+                </div>
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="setStudentFilter('all', this)">الكل</div>
+                    <div class="filter-chip" onclick="setStudentFilter('beginner', this)">مبتدئ ◂</div>
+                    <div class="filter-chip" onclick="setStudentFilter('intermediate', this)">متوسط</div>
+                    <div class="filter-chip" onclick="setStudentFilter('advanced', this)">متقدم</div>
+                    <div class="filter-chip" id="circleFilterChip" onclick="cycleCircleFilter(this)">جميع الحلقات ◂</div>
+                </div>
+            </div>
+
+            <div class="cards-grid" id="studentsGrid">
+                <!-- Student cards generated dynamically -->
+            </div>
+        </div>
+
+        <!-- ===== TEACHERS ===== -->
+        <div class="content" id="page-teachers">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة المحفظين</h2>
+                    <p>18 محفظ نشط</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addTeacherModal')">➕ إضافة محفظ</button>
+            </div>
+            <div class="cards-grid" id="teachersGrid"></div>
+        </div>
+
+        <!-- ===== CIRCLES ===== -->
+        <div class="content" id="page-circles">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة الحلقات</h2>
+                    <p>24 حلقة فعالة</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addCircleModal')">➕ إنشاء حلقة</button>
+            </div>
+            <div class="cards-grid" id="circlesGrid"></div>
+        </div>
+
+        <!-- ===== ATTENDANCE ===== -->
+        <div class="content" id="page-attendance">
+            <div class="page-header">
+                <div>
+                    <h2>تسجيل الحضور والغياب</h2>
+                    <p>سجّل حضور الطلاب بسهولة</p>
+                </div>
+            </div>
+
+            <div class="attendance-header">
+                <div>
+                    <div class="circle-selector">
+                        <div class="circle-chip active" onclick="selectCircle(this)">حلقة الفجر</div>
+                        <div class="circle-chip" onclick="selectCircle(this)">حلقة النور</div>
+                        <div class="circle-chip" onclick="selectCircle(this)">حلقة الصباح</div>
+                        <div class="circle-chip" onclick="selectCircle(this)">حلقة المغرب</div>
+                        <div class="circle-chip" onclick="selectCircle(this)">حلقة العشاء</div>
+                    </div>
+                    <!-- Summary badges -->
+                    <div style="display:flex;gap:10px;margin-top:4px">
+                        <span class="status-badge status-present">✅ حاضر: <span id="presentCount">0</span></span>
+                        <span class="status-badge status-absent">❌ غائب: <span id="absentCount">0</span></span>
+                        <span class="status-badge status-late">⏰ متأخر: <span id="lateCount">0</span></span>
+                    </div>
+                </div>
+                <div class="date-nav">
+                    <button onclick="changeDate(-1)">‹</button>
+                    <span id="currentDate">الأربعاء، 13 مايو 2026</span>
+                    <button onclick="changeDate(1)">›</button>
+                </div>
+            </div>
+
+            <div class="attendance-table-wrap" id="attendanceList"></div>
+        </div>
+
+        <!-- ===== MEMORIZATION ===== -->
+        <div class="content" id="page-memorization">
+            <div class="page-header">
+                <div>
+                    <h2>الحفظ والتسميع</h2>
+                    <p>متابعة تقدم الطلاب في حفظ القرآن الكريم</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addMemModal')">➕ تسجيل تسميع</button>
+            </div>
+
+            <div class="memorize-layout">
+                <div>
+                    <div class="filter-bar" style="margin-bottom:14px">
+                        <select class="filter-select" onchange="filterStudent(this.value)">
+                            <option value="">— اختر طالباً —</option>
+                            <option>أحمد محمد الزهراني</option>
+                            <option>سارة عبدالله القحطاني</option>
+                            <option>عمر خالد الدوسري</option>
+                            <option>منى عبدالرحمن العتيبي</option>
+                            <option>فيصل سعد المالكي</option>
+                        </select>
+                    </div>
+                    <div class="surah-progress-grid">
+                        <div class="chart-card" style="border-radius:0;border:none;box-shadow:none;border-bottom:1px solid var(--border)">
+                            <div class="card-header" style="margin-bottom:0">
+                                <div><h3>تقدم الحفظ — أحمد الزهراني</h3><p>الجزء الأول والثاني</p></div>
+                                <span class="status-badge status-excellent">78% مكتمل</span>
+                            </div>
+                            <div style="margin-top:16px">
+                                <div class="progress-wrap">
+                                    <div class="progress-bar" style="height:10px">
+                                        <div class="progress-fill" style="width:78%"></div>
+                                    </div>
+                                    <span class="progress-pct" style="font-size:14px;font-weight:900;color:var(--green)">78%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="surahList"></div>
+                    </div>
+                </div>
+
+                <div class="side-panel">
+                    <div class="panel-card">
+                        <div class="panel-card-header">📅 آخر جلسات التسميع</div>
+                        <div class="panel-card-body" id="recentSessions"></div>
+                    </div>
+                    <div class="panel-card">
+                        <div class="panel-card-header">📈 خطة الحفظ المقترحة</div>
+                        <div class="panel-card-body">
+                            <div style="font-size:13px;color:var(--text-muted);line-height:1.8">
+                                <p>🎯 الهدف الأسبوعي: <strong style="color:var(--text)">نصف حزب</strong></p>
+                                <p>📅 الانتهاء المتوقع: <strong style="color:var(--text)">مارس 2027</strong></p>
+                                <p>⚡ معدل الحفظ: <strong style="color:var(--green)">ممتاز</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== EXAMS ===== -->
+        <div class="content" id="page-exams">
+            <div class="page-header">
+                <div>
+                    <h2>الاختبارات والتقييمات</h2>
+                    <p>إدارة الاختبارات الدورية ورصد النتائج</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addExamModal')">➕ إنشاء اختبار</button>
+            </div>
+            <div class="exam-cards" id="examsList"></div>
+        </div>
+
+        <!-- ===== ANNOUNCEMENTS ===== -->
+        <div class="content" id="page-announcements">
+            <div class="page-header">
+                <div>
+                    <h2>الإعلانات والتنبيهات</h2>
+                    <p>3 إعلانات جديدة</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addAnnModal')">➕ إعلان جديد</button>
+            </div>
+            <div class="ann-list" id="annList"></div>
+        </div>
+
+        <!-- ===== STUDENT VIEW ===== -->
+        <div class="content" id="page-studentView">
+            <div class="student-profile-hero">
+                <div class="hero-avatar">أح</div>
+                <div class="hero-info">
+                    <h2>أحمد محمد الزهراني</h2>
+                    <p>حلقة الفجر • المحفظ: عبدالله السلمي</p>
+                    <div class="hero-badges">
+                        <span class="hero-badge">🏆 مستوى متقدم</span>
+                        <span class="hero-badge">📅 منذ: سبتمبر 2024</span>
+                        <span class="hero-badge">⭐ 4.8 / 5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="student-stats-row">
+                <div class="stat-card green">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-value">78%</div>
+                    <div class="stat-label">نسبة الحفظ</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value">94%</div>
+                    <div class="stat-label">نسبة الحضور</div>
+                </div>
+                <div class="stat-card teal">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value">87</div>
+                    <div class="stat-label">آخر اختبار</div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value">4.8</div>
+                    <div class="stat-label">تقييم المحفظ</div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="table-card">
+                    <div class="card-header" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--border)">
+                        <div><h3>سجل التسميع الأخير</h3></div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr><th>التاريخ</th><th>السورة</th><th>النطاق</th><th>التقييم</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>13/05/2026</td><td>البقرة</td><td>1 — 20</td><td><span class="status-badge status-excellent">ممتاز</span></td></tr>
+                            <tr><td>11/05/2026</td><td>البقرة</td><td>21 — 40 (مراجعة)</td><td><span class="status-badge status-good">جيد</span></td></tr>
+                            <tr><td>08/05/2026</td><td>الفاتحة</td><td>كاملة</td><td><span class="status-badge status-excellent">ممتاز</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-card">
+                    <div class="card-header"><div><h3>رسائل المحفظ</h3></div></div>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                        <div style="background:var(--green-light);border-radius:12px;padding:12px 14px">
+                            <p style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:4px">عبدالله السلمي • اليوم</p>
+                            <p style="font-size:13px;color:var(--text)">ماشاء الله أحمد، أداء رائع اليوم في تسميع سورة البقرة. أرجو مراجعة الآيات 15-20 مرة أخرى.</p>
+                        </div>
+                        <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+                            <p style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">عبدالله السلمي • أمس</p>
+                            <p style="font-size:13px;color:var(--text)">تذكر مراجعة الجزء الأول هذه الأسبوع بشكل كامل.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- خريطة الحفظ البصرية -->
+            <div class="table-card" style="margin-top:16px">
+              <div class="card-header" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--border)">
+                <div><h3>🗺️ خريطة حفظ القرآن الكريم</h3></div>
+                <button class="btn btn-outline" style="font-size:12px" onclick="window.open('/api/reports/certificate/' + (window._studentDbId || 1))">📄 شهادة</button>
+              </div>
+              <div class="quran-map" id="quranMap">
+                <div class="map-legend">
+                  <div class="legend-item"><div class="legend-dot" style="background:#86efac"></div> محفوظ</div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#fde047"></div> جزئي</div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#cbd5e1"></div> لم يُحفظ</div>
+                </div>
+                <div class="surah-grid" id="surahGrid">
+                  <div style="text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1">⏳ جاري التحميل...</div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <!-- ===== ✅ إصلاح 3: بوابة ولي الأمر ===== -->
+        <div class="content" id="page-parentView">
+            <div class="page-header">
+                <div>
+                    <h2>بوابة ولي الأمر</h2>
+                    <p>متابعة تقدم أبنائك في حفظ القرآن الكريم</p>
+                </div>
+            </div>
+            <!-- بطاقات الأبناء -->
+            <div id="parentChildrenGrid" class="cards-grid">
+                <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
+                    ⏳ جاري تحميل بيانات الأبناء...
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ── FAB (Floating Action Button) — مثل الصورة 3 ── -->
+    <div class="fab-container" id="fabContainer">
+        <div class="fab-menu" id="fabMenu">
+            <div class="fab-menu-item" onclick="navigate('circles',null);toggleFab()">
+                <div class="fmi-icon">⭕</div>
+                <span>الحلقات</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('students',null);toggleFab()">
+                <div class="fmi-icon">🎓</div>
+                <span>الطلاب</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('memorization',null);toggleFab()">
+                <div class="fmi-icon">📖</div>
+                <span>الحفظ</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('attendance',null);toggleFab()">
+                <div class="fmi-icon">📅</div>
+                <span>الحضور</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('dashboard',null);toggleFab()">
+                <div class="fmi-icon">📊</div>
+                <span>الرئيسية</span>
+            </div>
+        </div>
+        <button class="fab-btn" id="fabBtn" onclick="toggleFab()" title="قائمة سريعة">☰</button>
+    </div>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav" id="bottomNav">
+        <div class="bottom-nav-inner">
+            <div class="bottom-nav-item active" onclick="navBottom('dashboard', this)">
+                <span class="bnav-icon">📊</span>
+                <span>الرئيسية</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('students', this)">
+                <span class="bnav-icon">👨‍🎓</span>
+                <span>الطلاب</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('attendance', this)">
+                <span class="bnav-icon">✅</span>
+                <span>الحضور</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('memorization', this)">
+                <span class="bnav-icon">📖</span>
+                <span>التسميع</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('announcements', this)">
+                <span class="bnav-icon">📢</span>
+                <span>الإعلانات</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== MODALS ===== -->
+    <!-- ✅ إصلاح 4: مودال إدخال نتائج الاختبار -->
+    <div class="modal-overlay" id="addExamResultModal">
+        <div class="modal" style="max-width:580px">
+            <div class="modal-header">
+                <h3>📊 إدخال نتائج الاختبار</h3>
+                <button class="modal-close" onclick="closeModal('addExamResultModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="examResultFormTitle" style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:10px"></div>
+                <div id="examResultRows" style="display:flex;flex-direction:column;gap:10px">
+                    <!-- rows injected dynamically -->
+                </div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:12px">* يمكن ترك خانات الطلاب الغائبين فارغة</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addExamResultModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitExamResults()">💾 حفظ النتائج</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal-overlay" id="addStudentModal">
+        <div class="modal">
+
+            <div class="modal-header">
+                <h3>👨‍🎓 إضافة طالب جديد</h3>
+
+                <button class="modal-close"
+                        onclick="closeModal('addStudentModal')">
+                    ✕
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- الاسم -->
+                <div class="form-row">
+
+                    <div class="form-group">
+                        <label class="form-label">الاسم الأول *</label>
+
+                        <input id="firstName"
+                               class="form-input"
+                               type="text"
+                               placeholder="محمد">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">اسم العائلة *</label>
+
+                        <input id="lastName"
+                               class="form-input"
+                               type="text"
+                               placeholder="الزهراني">
+                    </div>
+
+                </div>
+
+                <!-- الميلاد والهاتف -->
+                <div class="form-row">
+
+                    <div class="form-group">
+                        <label class="form-label">تاريخ الميلاد</label>
+
+                        <input id="birthDate"
+                               class="form-input"
+                               type="date">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">رقم الهاتف</label>
+
+                        <input id="phone"
+                               class="form-input"
+                               type="tel"
+                               placeholder="05xxxxxxxx">
+                    </div>
+
+                </div>
+
+                <!-- الحلقة والمستوى -->
+                <div class="form-row">
+
+                    <div class="form-group">
+                        <label class="form-label">الحلقة</label>
+
+                        <select id="halaqa" class="form-input">
+                            <option>حلقة الفجر</option>
+                            <option>حلقة النور</option>
+                            <option>حلقة الصباح</option>
+                            <option>حلقة المغرب</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">المستوى الأولي</label>
+
+                        <select id="level" class="form-input">
+                            <option>مبتدئ</option>
+                            <option>متوسط</option>
+                            <option>متقدم</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- ولي الأمر -->
+                <div class="form-group">
+
+                    <label class="form-label">
+                        رقم هاتف ولي الأمر *
+                    </label>
+
+                    <input id="parentPhone"
+                           class="form-input"
+                           type="tel"
+                           placeholder="05xxxxxxxx">
+                </div>
+
+                <!-- الملاحظات -->
+                <div class="form-group">
+
+                    <label class="form-label">ملاحظات</label>
+
+                    <textarea id="notes"
+                              class="form-input"
+                              rows="2"
+                              placeholder="أي ملاحظات إضافية..."></textarea>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-outline"
+                        onclick="closeModal('addStudentModal')">
+                    إلغاء
+                </button>
+
+                <button class="btn btn-primary"
+                        onclick="saveStudent()">
+                    💾 حفظ الطالب
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Add Memorization Modal -->
+    <div class="modal-overlay" id="addMemModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📖 تسجيل جلسة تسميع</h3>
+                <button class="modal-close" onclick="closeModal('addMemModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">الطالب *</label>
+                    <select class="form-input">
+                        <option>أحمد محمد الزهراني</option>
+                        <option>سارة عبدالله القحطاني</option>
+                        <option>عمر خالد الدوسري</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">نوع الجلسة</label>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-primary" style="flex:1;padding:10px" onclick="selectSessionType(this, 'حفظ جديد')">📗 حفظ جديد</button>
+                        <button class="btn btn-outline" style="flex:1;padding:10px" onclick="selectSessionType(this, 'مراجعة')">🔄 مراجعة</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">السورة *</label>
+                        <select class="form-input">
+                            <option>الفاتحة</option>
+                            <option>البقرة</option>
+                            <option>آل عمران</option>
+                            <option>النساء</option>
+                            <option>المائدة</option>
+                            <option>الكهف</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">التقييم *</label>
+                        <select class="form-input">
+                            <option>⭐ ممتاز</option>
+                            <option>👍 جيد</option>
+                            <option>🔄 يحتاج مراجعة</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">من الآية</label>
+                        <input class="form-input" type="number" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">إلى الآية</label>
+                        <input class="form-input" type="number" placeholder="20">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ملاحظة للطالب / ولي الأمر</label>
+                    <textarea class="form-input" rows="3" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addMemModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveSession()">💾 حفظ الجلسة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div class="modal-overlay" id="addAnnModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📢 إعلان جديد</h3>
+                <button class="modal-close" onclick="closeModal('addAnnModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">عنوان الإعلان *</label>
+                    <input class="form-input" type="text" placeholder="مثال: موعد الاختبار الشهري">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الجهة المستهدفة</label>
+                    <select class="form-input">
+                        <option>الجميع</option>
+                        <option>الطلاب فقط</option>
+                        <option>المحفظون فقط</option>
+                        <option>أولياء الأمور</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">نص الإعلان *</label>
+                    <textarea class="form-input" rows="4" placeholder="اكتب نص الإعلان هنا..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">تاريخ الانتهاء (اختياري)</label>
+                    <input class="form-input" type="date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addAnnModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveAnn()">📤 نشر الإعلان</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Teacher Modal -->
+    <div class="modal-overlay" id="addTeacherModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>👨‍🏫 إضافة محفظ</h3>
+                <button class="modal-close" onclick="closeModal('addTeacherModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">الاسم *</label>
+                        <input class="form-input" type="text" placeholder="عبدالله السلمي">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">البريد الإلكتروني *</label>
+                        <input class="form-input" type="email" placeholder="teacher@noor.sa">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور *</label>
+                        <input class="form-input" type="password" placeholder="Noor@1234">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">التخصص / المؤهل</label>
+                        <input class="form-input" type="text" placeholder="حافظ للقرآن الكريم كاملاً">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addTeacherModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveTeacher()">💾 حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Exam Modal -->
+    <div class="modal-overlay" id="addExamModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📝 إنشاء اختبار جديد</h3>
+                <button class="modal-close" onclick="closeModal('addExamModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">عنوان الاختبار *</label>
+                    <input class="form-input" id="examTitle" type="text" placeholder="اختبار الجزء الأول">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">التاريخ *</label>
+                        <input class="form-input" id="examDate" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الوصف</label>
+                        <textarea class="form-input" id="examDesc" rows="2" placeholder="وصف مختصر للاختبار (اختياري)" style="resize:vertical"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addExamModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveExam()">📤 إنشاء الاختبار</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Switch Modal -->
+    <!-- Teacher Profile Modal -->
+    <div class="modal-overlay" id="teacherProfileModal">
+        <div class="modal" style="max-width:480px">
+            <div class="modal-header">
+                <h3>📋 ملف المحفظ</h3>
+                <button class="modal-close" onclick="closeModal('teacherProfileModal')">✕</button>
+            </div>
+            <div class="modal-body" id="teacherProfileBody">
+                <div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('teacherProfileModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal" style="max-width:380px">
+            <div class="modal-header">
+                <h3>تبديل دور المستخدم</h3>
+                <button class="modal-close" onclick="closeModal('roleModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">اختر الدور لمعاينة واجهته</p>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <button class="btn btn-primary" onclick="switchRole('admin')">👤 المشرف العام</button>
+                    <button class="btn btn-outline" onclick="switchRole('teacher')">👨‍🏫 المحفظ</button>
+                    <button class="btn btn-outline" onclick="switchRole('student')">👨‍🎓 الطالب</button>
+                    <button class="btn btn-outline" onclick="switchRole('parent')">👨‍👦 ولي الأمر</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Circle Modal -->
+    <div class="modal-overlay" id="addCircleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>⭕ إنشاء حلقة جديدة</h3>
+                <button class="modal-close" onclick="closeModal('addCircleModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">اسم الحلقة *</label>
+                    <input id="circleName" class="form-input" type="text" placeholder="مثال: حلقة الفجر">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">المحفظ</label>
+                        <select id="circleTeacher" class="form-input">
+                            <option value="">— اختر محفظاً —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">القاعة / المكان</label>
+                        <input id="circleLocation" class="form-input" type="text" placeholder="القاعة 1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">الوقت</label>
+                        <input id="circleTime" class="form-input" type="text" placeholder="بعد صلاة الفجر">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">السعة القصوى</label>
+                        <input id="circleCapacity" class="form-input" type="number" placeholder="20">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addCircleModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveCircle()">💾 إنشاء الحلقة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal-overlay" id="confirmDeleteModal">
+        <div class="modal" style="max-width:380px">
+            <div class="modal-header">
+                <h3>⚠️ تأكيد الحذف</h3>
+                <button class="modal-close" onclick="closeModal('confirmDeleteModal')">✕</button>
+            </div>
+            <div class="modal-body" style="text-align:center">
+                <div style="font-size:48px;margin-bottom:16px">🗑️</div>
+                <p id="confirmDeleteMsg" style="font-size:15px;font-weight:600;margin-bottom:8px">هل أنت متأكد من الحذف؟</p>
+                <p style="font-size:13px;color:var(--text-muted)">هذا الإجراء لا يمكن التراجع عنه</p>
+            </div>
+            <div class="modal-footer" style="justify-content:center">
+                <button class="btn btn-outline" onclick="closeModal('confirmDeleteModal')">إلغاء</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn" onclick="executeDelete()">🗑️ حذف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ===== API CONFIG =====
+        const API_URL = '/api';
+        let TOKEN = localStorage.getItem('noor_token');
+        let USER = JSON.parse(localStorage.getItem('noor_user') || '{}');
+
+        // ===== AUTH =====
+        function checkAuth() {
+            if (!TOKEN) {
+                document.getElementById('loginScreen').style.display = 'flex';
+            } else {
+                document.getElementById('loginScreen').style.display = 'none';
+                updateUserInfo();
+                fetchStats();
+                fetchAnnouncements();
+                fetchStudents();
+                fetchTeachers();
+                fetchCircles();
+
+                // ✅ إصلاح 5: استعادة الصفحة من الـ hash عند أول تحميل (F5)
+                var hash = location.hash.replace('#', '');
+                if (hash && document.getElementById('page-' + hash)) {
+                    // نستعيد بعد تحميل البيانات (setTimeout صغير)
+                    setTimeout(function () {
+                        var navEl = document.querySelector('[onclick*="navigate(\'' + hash + '\'"]');
+                        navigate(hash, navEl);
+                    }, 100);
+                }
+            }
+        }
+
+        function toggleAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+            } else {
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+                }
+
+                const data = await res.json();
+                TOKEN = data.token;
+                USER = { fullName: data.user?.fullName || data.fullName, role: data.user?.role || data.role };
+                localStorage.setItem('noor_token', TOKEN);
+                localStorage.setItem('noor_user', JSON.stringify(USER));
+
+                showToast('✅ تم تسجيل الدخول بنجاح');
+                checkAuth();
+            } catch (err) {
+                showToast('❌ ' + err.message);
+            }
+        }
+
+        async function handleRegister() {
+            const fullName = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName, email, password, role })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+
+                showToast('✅ تم إنشاء الحساب، يمكنك الآن الدخول');
+                toggleAuthMode('login');
+            } catch (err) {
+                showToast('❌ ' + err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('noor_token');
+            localStorage.removeItem('noor_user');
+            TOKEN = null;
+            USER = {};
+            location.reload();
+        }
+
+        function updateUserInfo() {
+            document.getElementById('roleName').textContent = USER.fullName;
+            document.getElementById('roleEmail').textContent = USER.role;
+            document.getElementById('roleAvatar').textContent = USER.role === 'Admin' ? '👤' : USER.role === 'Teacher' ? '👨‍🏫' : '👨‍🎓';
+            // تحديث Avatar في الـ Topbar
+            const topAv = document.getElementById('topbarAvatar');
+            if (topAv && USER.fullName) topAv.textContent = USER.fullName.slice(0, 2);
+        }
+
+        // ===== DATA FETCHING =====
+        async function apiFetch(endpoint) {
+            const res = await fetch(`${API_URL}${endpoint}`, {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            if (res.status === 401) logout();
+            return await res.json();
+        }
+
+        async function fetchStats() {
+            const data = await apiFetch('/dashboard/stats');
+            const cards = document.querySelectorAll('.stat-card .stat-value');
+            if (cards.length >= 4) {
+                cards[0].textContent = data.students;
+                cards[1].textContent = data.teachers;
+                cards[2].textContent = data.circles;
+                cards[3].textContent = data.attendanceToday || '0%';
+            }
+        }
+
+        async function fetchAnnouncements() {
+            const data = await apiFetch('/announcements');
+            const list = document.getElementById('annList');
+            list.innerHTML = data.map(a => `
+            <div class="ann-card" onclick="showToast('📢 ${a.title}')">
+              ${a.isUnread ? '<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;background:#ef4444;border-radius:50%"></div>' : ''}
+              <div class="ann-indicator" style="background:${a.color}"></div>
+              <div class="ann-card-content">
+                <div class="ann-card-top">
+                  <h4>${a.title}</h4>
+                  <time>${new Date(a.createdAt).toLocaleDateString('ar-SA')}</time>
+                </div>
+                <p>${a.content}</p>
+                <div class="ann-target" style="color:${a.color}">🎯 ${a.target}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // ─── cache بيانات الطلاب ────────────────────────────
+        let _allStudentsData = [];
+
+        async function fetchStudents() {
+            const grid = document.getElementById('studentsGrid')
+                       || document.querySelector('#page-students .cards-grid');
+            if (grid) grid.innerHTML = `
+                <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:12px;padding:20px 0">
+                    ${[1,2,3].map(() => `<div class="skeleton" style="height:160px;border-radius:20px"></div>`).join('')}
+                </div>`;
+            const data = await apiFetch('/students');
+            _allStudentsData = data;
+            renderStudentCards(data);
+            const cnt = document.getElementById('studentsCount');
+            if (cnt) cnt.textContent = data.length + ' طالب مسجل في المركز';
+        }
+
+        function renderStudentCards(data) {
+            const grid = document.getElementById('studentsGrid')
+                       || document.querySelector('#page-students .cards-grid');
+            if (!grid) return;
+            if (!data.length) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+                    <div class="empty-state-icon">🎓</div>
+                    <div class="empty-state-title">لا يوجد طلاب</div>
+                    <div class="empty-state-desc">لا توجد نتائج تطابق معايير البحث</div>
+                </div>`;
+                return;
+            }
+            grid.innerHTML = data.map((s, i) => {
+                const initials = s.fullName.slice(0, 2);
+                const gradients = [
+                    'linear-gradient(135deg,#10b981,#3b82f6)',
+                    'linear-gradient(135deg,#8b5cf6,#3b82f6)',
+                    'linear-gradient(135deg,#f59e0b,#ef4444)',
+                    'linear-gradient(135deg,#14b8a6,#10b981)',
+                    'linear-gradient(135deg,#ec4899,#8b5cf6)',
+                ];
+                const grad = gradients[i % gradients.length];
+                return `
+            <div class="student-card" style="animation-delay:${i*0.04}s">
+              <div class="student-card-top">
+                <div class="student-avatar-lg" style="background:${grad};font-size:18px">${initials}</div>
+                <div class="student-card-info" style="flex:1">
+                  <h4 style="margin-bottom:2px">${s.fullName}</h4>
+                  <span style="font-size:11px">${s.circleName}</span>
+                  <div style="margin-top:6px">
+                    <span class="status-badge ${s.level==='متقدم'?'status-excellent':s.level==='متوسط'?'status-good':'status-late'}"
+                          style="font-size:10px">${s.level}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="student-card-stats">
+                <div class="mini-stat"><label>الحفظ</label><p>${s.progress}%</p></div>
+                <div class="mini-stat"><label>الحضور</label><p>${s.attendance}%</p></div>
+              </div>
+              <div class="progress-wrap" style="margin-bottom:14px">
+                <div class="progress-bar"><div class="progress-fill" style="width:${s.progress}%"></div></div>
+                <span class="progress-pct">${s.progress}%</span>
+              </div>
+              <div class="student-card-actions">
+                <button class="btn btn-view" onclick="openMemModalForStudent(${s.id},'${s.fullName}')" title="تسميع">👁 عرض</button>
+                <button class="btn btn-edit" onclick="openMemModalForStudent(${s.id},'${s.fullName}')" title="تسميع">✏️ تعديل</button>
+                <button class="btn btn-delete" onclick="deleteStudent(${s.id},'${s.fullName}')" title="حذف">🗑 حذف</button>
+              </div>
+            </div>`;
+            }).join('');
+        }
+
+        // ── بحث حي في الطلاب ──
+        function filterStudentsLive(q) {
+            const filtered = _allStudentsData.filter(s =>
+                s.fullName.includes(q) || s.circleName.includes(q)
+            );
+            renderStudentCards(filtered);
+        }
+
+        // ── تصفية بالمستوى ──
+        let _activeStudentFilter = 'all';
+        function setStudentFilter(filter, el) {
+            _activeStudentFilter = filter;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            if (el) el.classList.add('active');
+            const map = { all: null, beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم' };
+            const level = map[filter];
+            const filtered = level ? _allStudentsData.filter(s => s.level === level) : _allStudentsData;
+            renderStudentCards(filtered);
+        }
+
+        // ── تصفية بالحلقة (دورية) ──
+        let _circleFilterIdx = -1;
+        function cycleCircleFilter(el) {
+            if (!window._circles || !window._circles.length) return;
+            _circleFilterIdx = (_circleFilterIdx + 1) % (window._circles.length + 1);
+            if (_circleFilterIdx === window._circles.length) {
+                _circleFilterIdx = -1;
+                el.textContent = 'جميع الحلقات ◂';
+                renderStudentCards(_allStudentsData);
+            } else {
+                const c = window._circles[_circleFilterIdx];
+                el.textContent = c.name + ' ◂';
+                renderStudentCards(_allStudentsData.filter(s => s.circleName === c.name));
+            }
+        }
+
+        // ── حذف طالب ──
+        async function deleteStudent(id, name) {
+            if (!confirm(`هل تريد حذف الطالب "${name}"؟`)) return;
+            try {
+                const res = await fetch(`${API_URL}/students/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                if (!res.ok) throw new Error();
+                showToast('✅ تم حذف الطالب');
+                fetchStudents();
+            } catch { showToast('❌ فشل الحذف'); }
+        }
+
+        async function markAtt(studentId, status) {
+            try {
+                const res = await fetch(`${API_URL}/attendance?studentId=${studentId}&status=${status}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error();
+                showToast('✅ تم تسجيل الحضور');
+                fetchStats();
+            } catch {
+                showToast('❌ حدث خطأ');
+            }
+        }
+
+        // ===== NAVIGATION =====
+        function navigate(page, el) {
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const target = document.getElementById('page-' + page);
+            if (target) target.classList.add('active');
+            if (el) el.classList.add('active');
+
+            const titles = {
+                dashboard: ['لوحة التحكم', 'نظرة عامة على المركز'],
+                students: ['إدارة الطلاب', 'الطلاب المسجلون'],
+                teachers: ['إدارة المحفظين', 'فريق التحفيظ'],
+                circles: ['الحلقات الدراسية', 'جداول الحلقات'],
+                attendance: ['الحضور والغياب', 'تسجيل يومي'],
+                memorization: ['الحفظ والتسميع', 'سجلات التسميع'],
+                exams: ['الاختبارات والتقييمات', 'نتائج الاختبارات'],
+                announcements: ['الإعلانات', 'آخر الأخبار'],
+                studentView: ['بوابة الطالب', 'متابعة تقدمك'],
+                parentView: ['بوابة ولي الأمر', 'متابعة أبنائك'], // ✅ إصلاح 3
+            };
+            if (titles[page]) {
+                document.getElementById('pageTitle').textContent = titles[page][0];
+                document.getElementById('pageSubtitle').textContent = titles[page][1];
+            }
+
+            // تحميل بيانات الصفحة عند الانتقال إليها (مدمج هنا بدلاً من override منفصل)
+            if (page === 'attendance') fetchStudentsAttendance();
+            if (page === 'memorization') fetchMemorizationData();
+            if (page === 'exams') fetchExams();
+            if (page === 'studentView') fetchStudentView();
+            if (page === 'parentView') fetchParentView(); // ✅ إصلاح 3
+
+            // تحديث عنوان المتصفح
+            if (history.pushState) history.pushState({ page }, '', '#' + page);
+
+            closeSidebar();
+        }
+
+        // استعادة الصفحة عند الضغط على زر الرجوع في المتصفح
+        window.addEventListener('popstate', function (e) {
+            if (e.state && e.state.page) {
+                var navEl = document.querySelector('[onclick*="navigate(\'' + e.state.page + '\'"]');
+                navigate(e.state.page, navEl);
+            }
+        });
+
+        // ✅ إصلاح 5: الاستعادة من hash تتم الآن داخل checkAuth مباشرةً بعد التحقق من الجلسة
+
+        // ===== UI HELPERS =====
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        function showToast(msg) {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        }
+
+        // ===== INIT =====
+        checkAuth();
+        document.querySelector('.logout-btn').onclick = logout;
+
+        // ===== EXTENDED API CALLS =====
+        async function fetchTeachers() {
+            const teachersGrid = document.getElementById('teachersGrid');
+            if (teachersGrid) teachersGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+            const data = await apiFetch('/teachers'); // I need to create this controller
+            //const grid = document.getElementById('teachersGrid');
+            teachersGrid.innerHTML = data.map(t => `
+            <div class="student-card">
+              <div class="student-card-top">
+                <div class="student-avatar-lg" style="background:var(--gradient)">${t.fullName.slice(0, 2)}</div>
+                <div class="student-card-info">
+                  <h4>${t.fullName}</h4>
+                  <span>${t.circleName || 'بدون حلقة'}</span><br>
+                  <span style="font-size:11px;color:var(--text-muted)">${t.qualification}</span>
+                </div>
+              </div>
+              <div class="student-card-stats">
+                <div class="mini-stat"><label>الطلاب</label><p>${t.studentCount}</p></div>
+                <div class="mini-stat"><label>التقييم</label><p>⭐ 4.8</p></div>
+              </div>
+              <div class="student-card-actions">
+                <button class="btn btn-outline" onclick="viewTeacherProfile(${t.id})">الملف</button>
+                <button class="btn btn-primary" onclick="messageTeacher('${t.fullName}', '${t.email}')">مراسلة</button>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        async function fetchCircles() {
+            const data = await apiFetch('/circles');
+            window._circles = data; // تخزين عالمي للاستخدام في صفحة الحضور
+
+            const circlesGrid = document.getElementById('circlesGrid');
+            if (circlesGrid) {
+                circlesGrid.innerHTML = data.map(c => `
+            <div class="student-card">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+                <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:24px;">${c.icon || '⭕'}</div>
+                <div>
+                  <h4 style="font-size:15px;font-weight:800">${c.name}</h4>
+                  <span style="font-size:12px;color:var(--text-muted)">${c.teacherName}</span>
+                </div>
+              </div>
+              <div class="student-card-stats">
+                <div class="mini-stat"><label>الطلاب</label><p>${c.studentCount}</p></div>
+                <div class="mini-stat"><label>القاعة</label><p>${c.location || '—'}</p></div>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">⏰ ${c.time || '—'}</p>
+              <div class="student-card-actions">
+                <button class="btn btn-outline">التفاصيل</button>
+                <button class="btn btn-primary" onclick="navigate('attendance',null)">الحضور</button>
+              </div>
+            </div>
+          `).join('');
+            }
+
+            // ✅ إصلاح 2: تحديث select الحلقات في نموذج إضافة طالب بالبيانات الحقيقية
+            const halaqaSelect = document.getElementById('halaqa');
+            if (halaqaSelect && data.length > 0) {
+                halaqaSelect.innerHTML = data.map(c =>
+                    `<option value="${c.id}">${c.name}</option>`
+                ).join('');
+            }
+
+            // تحديث chips الحضور بالحلقات الحقيقية
+            const circleSelector = document.querySelector('.circle-selector');
+            if (circleSelector && data.length > 0) {
+                circleSelector.innerHTML = data.map((c, i) =>
+                    `<div class="circle-chip ${i === 0 ? 'active' : ''}" onclick="selectCircle(this)" data-id="${c.id}">${c.name}</div>`
+                ).join('');
+                selectedCircleId = data[0].id;
+            }
+        }
+
+        async function saveStudent() {
+
+            const modal =
+                document.getElementById('addStudentModal');
+
+            const firstName =
+                modal.querySelector('#firstName')?.value || '';
+
+            const lastName =
+                modal.querySelector('#lastName')?.value || '';
+
+            const fullName =
+                `${firstName} ${lastName}`.trim();
+
+            const parentPhone =
+                modal.querySelector('#parentPhone')?.value || '';
+
+            const phone =
+                modal.querySelector('#phone')?.value || '';
+
+            const birthDate =
+                modal.querySelector('#birthDate')?.value || '';
+
+            const halaqa =
+                modal.querySelector('#halaqa')?.value || '';
+
+            const level =
+                modal.querySelector('#level')?.value || '';
+
+            const notes =
+                modal.querySelector('#notes')?.value || '';
+
+            const email =
+                `${Date.now()}@noor.sa`;
+
+            if (!fullName || !parentPhone) {
+
+                showToast(
+                    '⚠️ يرجى إدخال الاسم ورقم ولي الأمر'
+                );
+
+                return;
+            }
+
+            showToast('⏳ جاري حفظ البيانات...');
+
+            try {
+
+                const res = await fetch(
+                    `${API_URL}/students`,
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'Authorization': `Bearer ${TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+
+                        body: JSON.stringify({
+                            fullName,
+                            email,
+                            parentPhone,
+                            phone,
+                            birthDate: birthDate || null,
+                            circleId: parseInt(halaqa, 10) || null,
+                            level,
+                            notes
+                        })
+                    }
+                );
+
+                if (res.ok) {
+
+                    closeModal('addStudentModal');
+
+                    showToast(
+                        '✅ تم إضافة الطالب بنجاح'
+                    );
+
+                    fetchStudents();
+
+                } else {
+
+                    const err = await res.json();
+
+                    showToast(
+                        '❌ فشل الإضافة: '
+                        + (err.message || 'خطأ في الخادم')
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(error);
+
+                showToast(
+                    '❌ تعذر الاتصال بالخادم'
+                );
+            }
+        }
+        async function saveAnn() {
+            const title = document.querySelector('#addAnnModal input[type="text"]').value;
+            const content = document.querySelector('#addAnnModal textarea').value;
+            const target = document.querySelector('#addAnnModal select').value;
+
+            try {
+                const res = await fetch(`${API_URL}/announcements`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, content, target })
+                });
+                if (!res.ok) throw new Error();
+                closeModal('addAnnModal');
+                showToast('📢 تم نشر الإعلان بنجاح');
+                fetchAnnouncements();
+            } catch {
+                showToast('❌ حدث خطأ أثناء النشر');
+            }
+        }
+
+        // ===== ROLE MODAL =====
+        function showRoleModal() {
+            openModal('roleModal');
+        }
+
+        function switchRole(role) {
+            USER.role = role === 'admin' ? 'Admin' : role === 'teacher' ? 'Teacher' : role === 'parent' ? 'Parent' : 'Student';
+            localStorage.setItem('noor_user', JSON.stringify(USER));
+            closeModal('roleModal');
+            updateUserInfo();
+            applyRoleUI();
+            showToast('✅ تم تبديل الدور إلى: ' + USER.role);
+        }
+
+        function applyRoleUI() {
+            const isAdmin = USER.role === 'Admin';
+            const isTeacher = USER.role === 'Teacher';
+            const isStudent = USER.role === 'Student';
+            const isParent = USER.role === 'Parent'; // ✅ إصلاح 3
+
+            const adminSection = document.getElementById('adminSection');
+            const studentSection = document.getElementById('studentSection');
+            const parentSection = document.getElementById('parentSection'); // ✅ إصلاح 3
+
+            if (isAdmin) {
+                adminSection.style.display = 'block';
+                studentSection.style.display = 'none';
+                if (parentSection) parentSection.style.display = 'none';
+            } else if (isTeacher) {
+                adminSection.style.display = 'none';
+                studentSection.style.display = 'none';
+                if (parentSection) parentSection.style.display = 'none';
+            } else if (isParent) {
+                // ✅ إصلاح 3: ولي الأمر يرى قسمه فقط
+                adminSection.style.display = 'none';
+                studentSection.style.display = 'none';
+                if (parentSection) parentSection.style.display = 'block';
+            } else {
+                adminSection.style.display = 'none';
+                studentSection.style.display = 'block';
+                if (parentSection) parentSection.style.display = 'none';
+            }
+
+            if (isStudent) {
+                navigate('studentView', document.querySelector('#studentSection .nav-item'));
+                fetchStudentView();
+            } else if (isParent) {
+                // ✅ إصلاح 3: توجيه ولي الأمر مباشرة لبوابته
+                navigate('parentView', document.querySelector('#parentSection .nav-item'));
+                fetchParentView();
+            } else {
+                navigate('dashboard', document.querySelector('.nav-item'));
+            }
+        }
+
+        // =====================================================
+        // الأولوية 1 — الدوال المفقودة
+        // =====================================================
+
+        // ─── 1. صفحة الحضور: تغيير التاريخ ───────────────────
+        let attendanceDate = new Date();
+        let selectedCircleId = null;
+
+        function changeDate(dir) {
+            attendanceDate.setDate(attendanceDate.getDate() + dir);
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent =
+                attendanceDate.toLocaleDateString('ar-SA', opts);
+            fetchAttendanceForDate();
+        }
+
+        // ─── 2. صفحة الحضور: اختيار الحلقة ──────────────────
+        function selectCircle(el) {
+            document.querySelectorAll('.circle-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            // استخدام data-id مباشرة بدلاً من البحث بالاسم النصي
+            selectedCircleId = parseInt(el.dataset.id, 10) || null;
+            fetchAttendanceForDate();
+        }
+
+        async function fetchAttendanceForDate() {
+            if (!selectedCircleId) {
+                // إذا لم تُختر حلقة نعرض كل الطلاب
+                fetchStudentsAttendance();
+                return;
+            }
+            try {
+                const dateStr = attendanceDate.toISOString().split('T')[0];
+                const data = await apiFetch(`/attendance/circle/${selectedCircleId}?date=${dateStr}`);
+                renderAttendanceTable(data);
+            } catch {
+                fetchStudentsAttendance();
+            }
+        }
+
+        async function fetchStudentsAttendance() {
+            const data = await apiFetch('/students');
+            renderAttendanceFromStudents(data);
+        }
+
+        function renderAttendanceFromStudents(students) {
+            const wrap = document.getElementById('attendanceList');
+            if (!students.length) {
+                wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد طلاب</p>';
+                return;
+            }
+            wrap.innerHTML = `
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr style="background:var(--bg);text-align:right">
+                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الطالب</th>
+                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحلقة</th>
+                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحالة</th>
+                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">تسجيل</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${students.map(s => `
+                  <tr style="border-bottom:1px solid var(--border)" id="att-row-${s.id}">
+                    <td style="padding:12px 16px">
+                      <div style="display:flex;align-items:center;gap:10px">
+                        <div style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">
+                          ${s.fullName.slice(0, 2)}
+                        </div>
+                        <span style="font-weight:600">${s.fullName}</span>
+                      </div>
+                    </td>
+                    <td style="padding:12px 16px;color:var(--text-muted);font-size:13px">${s.circleName}</td>
+                    <td style="padding:12px 16px" id="att-status-${s.id}">
+                      <span class="status-badge" style="background:#f1f5f9;color:#64748b">— لم يُسجّل</span>
+                    </td>
+                    <td style="padding:12px 16px">
+                      <div style="display:flex;gap:6px">
+                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px" onclick="recordAtt(${s.id},'Present')">✅ حاضر</button>
+                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#ef4444;color:#ef4444" onclick="recordAtt(${s.id},'Absent')">❌ غائب</button>
+                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#f59e0b;color:#f59e0b" onclick="recordAtt(${s.id},'Late')">⏰ متأخر</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+            updateAttendanceCounts();
+        }
+
+        async function recordAtt(studentId, status) {
+            try {
+                const res = await fetch(`${API_URL}/attendance?studentId=${studentId}&status=${status}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }
+                });
+                if (!res.ok) throw new Error();
+                const statusCell = document.getElementById(`att-status-${studentId}`);
+                const labels = { Present: ['✅ حاضر', '#dcfce7', '#16a34a'], Absent: ['❌ غائب', '#fee2e2', '#dc2626'], Late: ['⏰ متأخر', '#fef9c3', '#ca8a04'] };
+                const [label, bg, color] = labels[status];
+                statusCell.innerHTML = `<span class="status-badge" style="background:${bg};color:${color}">${label}</span>`;
+                updateAttendanceCounts();
+                showToast(`✅ تم تسجيل ${label} للطالب`);
+            } catch {
+                showToast('❌ حدث خطأ في التسجيل');
+            }
+        }
+
+        function updateAttendanceCounts() {
+            const present = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#dcfce7"]').length;
+            const absent = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#fee2e2"]').length;
+            const late = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#fef9c3"]').length;
+            const pEl = document.getElementById('presentCount');
+            const aEl = document.getElementById('absentCount');
+            const lEl = document.getElementById('lateCount');
+            if (pEl) pEl.textContent = present;
+            if (aEl) aEl.textContent = absent;
+            if (lEl) lEl.textContent = late;
+        }
+
+        // ─── 3. مودال التسميع: اختيار نوع الجلسة ─────────────
+        let sessionType = 'Memorization';
+        function selectSessionType(btn, label) {
+            document.querySelectorAll('#addMemModal .btn').forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline');
+            });
+            btn.classList.remove('btn-outline');
+            btn.classList.add('btn-primary');
+            sessionType = label === 'حفظ جديد' ? 'Memorization' : 'Revision';
+        }
+
+        // ─── 4. حفظ جلسة التسميع ─────────────────────────────
+        async function saveSession() {
+            const modal = document.getElementById('addMemModal');
+            const selects = modal.querySelectorAll('select');
+            const inputs = modal.querySelectorAll('input[type="number"]');
+            const notes = modal.querySelector('textarea')?.value || '';
+
+            const studentSelect = selects[0];
+            const surahSelect = selects[1];
+            const evalSelect = selects[2];
+
+            const surahName = surahSelect?.value || 'البقرة';
+            const fromVerse = inputs[0]?.value || '1';
+            const toVerse = inputs[1]?.value || '10';
+            const evalMap = { '⭐ ممتاز': 'ممتاز', '👍 جيد': 'جيد', '🔄 يحتاج مراجعة': 'يحتاج مراجعة' };
+            const evaluation = evalMap[evalSelect?.value] || 'جيد';
+
+            // قراءة studentId مباشرة من قيمة الـ select (رقمي موثوق)
+            const studentId = studentSelect ? parseInt(studentSelect.value, 10) : null;
+
+            if (!studentId || isNaN(studentId)) {
+                showToast('❌ يرجى تحديد الطالب بشكل صحيح');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/hifz`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId,
+                        surahName,
+                        verses: `${fromVerse}-${toVerse}`,
+                        type: sessionType,
+                        evaluation,
+                        notes,
+                        date: new Date().toISOString()
+                    })
+                });
+                if (!res.ok) throw new Error();
+                closeModal('addMemModal');
+                showToast('✅ تم حفظ جلسة التسميع بنجاح');
+                fetchMemorizationData();
+            } catch {
+                showToast('❌ حدث خطأ أثناء الحفظ');
+            }
+        }
+
+        // ─── 5. تحميل بيانات صفحة التسميع ────────────────────
+        async function fetchMemorizationData() {
+            const data = await apiFetch('/students');
+            window._students = data;
+
+            // تحديث قائمة الطلاب في المودال — value = id (ليس الاسم)
+            const sel = document.querySelector('#addMemModal select');
+            if (sel) sel.innerHTML = data.map(s =>
+                `<option value="${s.id}">${s.fullName}</option>`
+            ).join('');
+
+            // عرض آخر جلسات
+            const panel = document.getElementById('recentSessions');
+            if (panel && data.length > 0) {
+                try {
+                    // نجلب آخر الجلسات لكل الطلاب عبر endpoint مخصص
+                    const records = await apiFetch('/hifz/recent?count=8');
+                    panel.innerHTML = records.length ? records.map(r => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+                  <div>
+                    <p style="font-weight:700;font-size:13px">${r.studentName} — ${r.surahName} (${r.verses})</p>
+                    <p style="font-size:11px;color:var(--text-muted)">${new Date(r.date).toLocaleDateString('ar-SA')} · ${r.type === 'Memorization' ? 'حفظ جديد' : 'مراجعة'}</p>
+                  </div>
+                  <span class="status-badge ${r.evaluation === 'ممتاز' ? 'status-excellent' : 'status-good'}">${r.evaluation}</span>
+                </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px">لا توجد جلسات بعد</p>';
+                } catch { panel.innerHTML = '<p style="color:var(--text-muted);font-size:13px">لا توجد جلسات بعد</p>'; }
+            }
+        }
+
+        // ─── 6. صفحة الاختبارات ──────────────────────────────
+        async function fetchExams() {
+            try {
+                const data = await apiFetch('/exams');
+                const list = document.getElementById('examsList');
+                if (!list) return;
+                if (!data.length) {
+                    list.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد اختبارات بعد</p>';
+                    return;
+                }
+                list.innerHTML = data.map(e => `
+              <div class="chart-card" style="margin-bottom:16px">
+                <div class="card-header">
+                  <div>
+                    <h3>${e.title}</h3>
+                    <p>${new Date(e.date).toLocaleDateString('ar-SA')}</p>
+                  </div>
+                  <span class="status-badge status-excellent">${e.averageScore}% متوسط</span>
+                </div>
+                <div style="display:flex;gap:24px;margin-top:12px">
+                  <div class="mini-stat"><label>المشاركون</label><p>${e.participantsCount}</p></div>
+                  <div class="mini-stat"><label>المتوسط</label><p>${e.averageScore}%</p></div>
+                </div>
+                <p style="font-size:13px;color:var(--text-muted);margin-top:8px">${e.description || ''}</p>
+                <div style="margin-top:14px">
+                  <!-- ✅ إصلاح 4: زر إدخال النتائج -->
+                  <button class="btn btn-primary" style="font-size:12px;padding:8px 14px" onclick="openExamResults(${e.id}, '${e.title.replace(/'/g, "\\'")}')">
+                    📊 إدخال نتائج الطلاب
+                  </button>
+                </div>
+              </div>`).join('');
+            } catch {
+                showToast('❌ تعذر تحميل الاختبارات');
+            }
+        }
+
+        // ─── 7. صفحة بوابة الطالب — ربط بالـ API ─────────────
+        async function fetchStudentView() {
+            try {
+                const data = await apiFetch('/dashboard/student-summary');
+                // تحديث الإحصائيات
+                const stats = document.querySelectorAll('#page-studentView .stat-value');
+                if (stats.length >= 4) {
+                    stats[0].textContent = data.hifzProgress + '%';
+                    stats[1].textContent = data.attendancePercentage + '%';
+                    stats[2].textContent = data.recentGrades?.[0]?.score ?? '—';
+                    stats[3].textContent = '4.8'; // تقييم المحفظ ثابت حالياً
+                }
+                // تحديث اسم الطالب
+                const heroName = document.querySelector('#page-studentView h2');
+                if (heroName && data.fullName) heroName.textContent = data.fullName;
+            } catch { /* يبقى العرض الافتراضي */ }
+        }
+
+        // ─── 9. فتح مودال التسميع مع تحديد الطالب ───────────
+        function openMemModalForStudent(studentId, studentName) {
+            openModal('addMemModal');
+            const sel = document.querySelector('#addMemModal select');
+            if (sel) sel.value = studentId; // المقارنة بالـ ID مباشرة
+        }
+
+        // ─── 10. حفظ محفظ جديد ───────────────────────────────
+        async function saveTeacher() {
+            const modal = document.getElementById('addTeacherModal');
+            const inputs = modal.querySelectorAll('input');
+            const fullName = inputs[0]?.value?.trim();
+            const email = inputs[1]?.value?.trim();
+            const password = inputs[2]?.value?.trim() || 'Noor@1234';
+            const qualification = inputs[3]?.value?.trim() || '';
+
+            if (!fullName || !email) {
+                showToast('❌ يرجى ملء الاسم والبريد الإلكتروني');
+                return;
+            }
+            try {
+                // يُرسل للـ API الجديد POST /api/teachers
+                // الذي ينشئ User + Teacher في خطوة واحدة
+                const res = await fetch(`${API_URL}/teachers`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName, email, password, qualification })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast('❌ ' + (err.message || 'فشل الإضافة'));
+                    return;
+                }
+                // مسح الحقول بعد الحفظ
+                modal.querySelectorAll('input').forEach(i => i.value = '');
+                closeModal('addTeacherModal');
+                showToast('✅ تم إضافة المحفظ بنجاح');
+                fetchTeachers();
+            } catch {
+                showToast('❌ تعذر الاتصال بالخادم');
+            }
+        }
+
+        // ─── عرض ملف المحفظ ───────────────────────────────
+        async function viewTeacherProfile(teacherId) {
+            openModal('teacherProfileModal');
+            const body = document.getElementById('teacherProfileBody');
+            body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+            try {
+                const t = await apiFetch('/teachers/' + teacherId);
+                body.innerHTML = `
+                        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+                            <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px">${t.fullName.slice(0, 2)}</div>
+                            <div>
+                                <h3 style="font-size:17px;font-weight:800">${t.fullName}</h3>
+                                <p style="font-size:13px;color:var(--text-muted)">${t.email}</p>
+                                <p style="font-size:12px;color:var(--text-muted);margin-top:2px">📚 ${t.qualification || 'لم يحدد المؤهل'}</p>
+                            </div>
+                        </div>
+                        <div style="background:var(--bg);border-radius:12px;padding:16px;margin-bottom:16px">
+                            <p style="font-size:13px;font-weight:700;margin-bottom:12px">🔵 الحلقات المسندة (${t.circles?.length || 0})</p>
+                            ${t.circles?.length ? t.circles.map(c => `
+                                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+                                    <span>${c.name}</span>
+                                    <span style="color:var(--text-muted)">${c.studentCount} طالب</span>
+                                </div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">لا توجد حلقات مسندة</p>'}
+                        </div>`;
+            } catch {
+                body.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px">تعذر تحميل بيانات المحفظ</p>';
+            }
+        }
+
+        // ─── مراسلة المحفظ (فتح تطبيق البريد) ───────────
+        function messageTeacher(fullName, email) {
+            if (email && email !== 'undefined') {
+                window.location.href = `mailto:${email}?subject=رسالة من منصة نور&body=السلام عليكم أستاذ ${fullName}،`;
+            } else {
+                showToast('⚠️ لا يوجد بريد إلكتروني لهذا المحفظ');
+            }
+        }
+
+        // ─── إنشاء اختبار جديد ───────────────────────────────
+        async function saveExam() {
+            const title = document.getElementById('examTitle')?.value?.trim();
+            const date = document.getElementById('examDate')?.value;
+            const desc = document.getElementById('examDesc')?.value?.trim() || '';
+
+            if (!title || !date) {
+                showToast('❌ يرجى ملء العنوان والتاريخ');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/exams`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, date: new Date(date).toISOString(), description: desc })
+                });
+                if (!res.ok) throw new Error();
+                document.getElementById('examTitle').value = '';
+                document.getElementById('examDate').value = '';
+                document.getElementById('examDesc').value = '';
+                closeModal('addExamModal');
+                showToast('✅ تم إنشاء الاختبار بنجاح');
+                fetchExams();
+            } catch {
+                showToast('❌ حدث خطأ أثناء الإنشاء');
+            }
+        }
+
+        // ─── فحص انتهاء صلاحية الـ Token تلقائياً ───────────
+        function isTokenExpired(token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.exp * 1000 < Date.now();
+            } catch { return true; }
+        }
+
+        // فحص فوري عند التحميل — يجب قبل checkAuth
+        if (TOKEN && isTokenExpired(TOKEN)) {
+            logout();
+        }
+
+        // تحقق دوري كل دقيقة
+        if (TOKEN) {
+            setInterval(() => {
+                if (isTokenExpired(TOKEN)) {
+                    showToast('⚠️ انتهت جلستك، يرجى تسجيل الدخول مجدداً');
+                    setTimeout(logout, 2000);
+                }
+            }, 60_000);
+        }
+
+        // تحميل الحلقات يتم الآن داخل fetchCircles() مباشرةً (✅ إصلاح 2)
+
+        // ===================================================
+        // ✅ إصلاح 3: بوابة ولي الأمر — ربط بالـ API
+        // ===================================================
+        async function fetchParentView() {
+            const grid = document.getElementById('parentChildrenGrid');
+            if (!grid) return;
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">⏳ جاري تحميل بيانات الأبناء...</div>';
+            try {
+                const children = await apiFetch('/dashboard/parent-summary');
+                if (!children.length) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">لا يوجد أبناء مسجلون لحسابك</div>';
+                    return;
+                }
+                grid.innerHTML = children.map(c => `
+                        <div class="student-card">
+                            <div class="student-card-top">
+                                <div class="student-avatar-lg" style="background:var(--gradient)">${c.fullName.slice(0, 2)}</div>
+                                <div class="student-card-info">
+                                    <h4>${c.fullName}</h4>
+                                    <span class="status-badge status-excellent" style="margin-top:4px;display:inline-flex">تقدم الحفظ: ${c.progress}%</span>
+                                </div>
+                            </div>
+                            <div class="student-card-stats">
+                                <div class="mini-stat"><label>الحفظ</label><p>${c.progress}%</p></div>
+                                <div class="mini-stat"><label>الحضور</label><p>${c.attendance}%</p></div>
+                            </div>
+                            <div class="progress-wrap" style="margin-bottom:14px">
+                                <div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%"></div></div>
+                                <span class="progress-pct">${c.progress}%</span>
+                            </div>
+                            ${c.lastNote && c.lastNote !== 'لا توجد ملاحظات'
+                        ? `<div style="background:var(--green-light);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--green-dark);margin-bottom:10px">
+                                    💬 <strong>آخر ملاحظة:</strong> ${c.lastNote}
+                                   </div>`
+                        : ''}
+                        </div>
+                    `).join('');
+            } catch {
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#dc2626">❌ تعذر تحميل البيانات. تأكد من تسجيل الدخول كولي أمر.</div>';
+            }
+        }
+
+        // ===================================================
+        // ✅ إصلاح 4: نموذج إدخال نتائج الاختبار
+        // ===================================================
+        let _currentExamId = null;
+        let _currentExamStudents = [];
+
+        async function openExamResults(examId, examTitle) {
+            _currentExamId = examId;
+            openModal('addExamResultModal');
+            document.getElementById('examResultFormTitle').textContent = '📝 ' + examTitle;
+            const rowsEl = document.getElementById('examResultRows');
+            rowsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري تحميل الطلاب...</div>';
+
+            try {
+                const students = await apiFetch('/students');
+                _currentExamStudents = students;
+                rowsEl.innerHTML = `
+                        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-muted)">
+                            <span>الطالب</span><span>الدرجة</span><span>من</span><span>تعليق (اختياري)</span>
+                        </div>
+                        ${students.map(s => `
+                        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(226,232,240,0.5)">
+                            <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600">
+                                <div style="width:30px;height:30px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${s.fullName.slice(0, 2)}</div>
+                                ${s.fullName}
+                            </div>
+                            <input class="form-input er-score" data-sid="${s.id}" type="number" min="0" max="100" placeholder="0" style="padding:7px 10px;font-size:13px">
+                            <input class="form-input er-max" data-sid="${s.id}" type="number" min="1" value="100" style="padding:7px 10px;font-size:13px">
+                            <input class="form-input er-feedback" data-sid="${s.id}" type="text" placeholder="تعليق..." style="padding:7px 10px;font-size:13px">
+                        </div>`).join('')}`;
+            } catch {
+                rowsEl.innerHTML = '<p style="color:#dc2626;text-align:center;padding:20px">تعذر تحميل قائمة الطلاب</p>';
+            }
+        }
+
+        async function submitExamResults() {
+            if (!_currentExamId) return;
+            const scores = document.querySelectorAll('.er-score');
+            const maxes = document.querySelectorAll('.er-max');
+            const feedbacks = document.querySelectorAll('.er-feedback');
+
+            const results = [];
+            scores.forEach((inp, i) => {
+                const score = parseFloat(inp.value);
+                if (!isNaN(score) && score >= 0) {
+                    results.push({
+                        studentId: parseInt(inp.dataset.sid),
+                        score,
+                        maxScore: parseFloat(maxes[i].value) || 100,
+                        feedback: feedbacks[i].value.trim() || null
+                    });
+                }
+            });
+
+            if (!results.length) {
+                showToast('⚠️ يرجى إدخال درجة واحدة على الأقل');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/exams/${_currentExamId}/results`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(results)
+                });
+                if (!res.ok) throw new Error();
+                closeModal('addExamResultModal');
+                showToast(`✅ تم حفظ ${results.length} نتيجة بنجاح`);
+                fetchExams();
+            } catch {
+                showToast('❌ حدث خطأ أثناء حفظ النتائج');
+            }
+        }
+        // ─── renderAttendanceTable — عرض جدول حضور من API ─────
+        function renderAttendanceTable(records) {
+            const wrap = document.getElementById('attendanceList');
+            if (!records || !records.length) {
+                wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد سجلات حضور لهذا اليوم</p>';
+                return;
+            }
+            wrap.innerHTML = `
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr style="background:var(--bg);text-align:right">
+                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الطالب</th>
+                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحالة</th>
+                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">تسجيل</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${records.map(r => {
+                    const labels = { Present: ['✅ حاضر','#dcfce7','#16a34a'], Absent: ['❌ غائب','#fee2e2','#dc2626'], Late: ['⏰ متأخر','#fef9c3','#ca8a04'] };
+                    const [label, bg, color] = labels[r.status] || ['—','#f1f5f9','#64748b'];
+                    return `
+                  <tr style="border-bottom:1px solid var(--border)" id="att-row-${r.studentId}">
+                    <td style="padding:12px 16px">
+                      <div style="display:flex;align-items:center;gap:10px">
+                        <div style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">
+                          ${(r.studentName || '').slice(0, 2)}
+                        </div>
+                        <span style="font-weight:600">${r.studentName || 'طالب'}</span>
+                      </div>
+                    </td>
+                    <td style="padding:12px 16px" id="att-status-${r.studentId}">
+                      <span class="status-badge" style="background:${bg};color:${color}">${label}</span>
+                    </td>
+                    <td style="padding:12px 16px">
+                      <div style="display:flex;gap:6px">
+                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px" onclick="recordAtt(${r.studentId},'Present')">✅</button>
+                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#ef4444;color:#ef4444" onclick="recordAtt(${r.studentId},'Absent')">❌</button>
+                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#f59e0b;color:#f59e0b" onclick="recordAtt(${r.studentId},'Late')">⏰</button>
+                      </div>
+                    </td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>`;
+            updateAttendanceCounts();
+        }
+
+        // ─── filterStudent — فلترة قائمة التسميع ────────────
+        function filterStudent(name) {
+            const students = window._students || [];
+            if (!name) return;
+            const student = students.find(s => s.fullName === name);
+            if (student) {
+                const header = document.querySelector('.surah-progress-grid .card-header div h3');
+                if (header) header.textContent = 'تقدم الحفظ — ' + student.fullName;
+                const pct = document.querySelector('.surah-progress-grid .progress-pct');
+                if (pct) pct.textContent = student.progress + '%';
+                const fill = document.querySelector('.surah-progress-grid .progress-fill');
+                if (fill) fill.style.width = student.progress + '%';
+                const badge = document.querySelector('.surah-progress-grid .status-badge');
+                if (badge) badge.textContent = student.progress + '% مكتمل';
+            }
+        }
+
+        // ─── saveCircle — إنشاء حلقة جديدة ────────────────
+        async function saveCircle() {
+            const name = document.getElementById('circleName')?.value?.trim();
+            const teacherId = document.getElementById('circleTeacher')?.value || null;
+            const location = document.getElementById('circleLocation')?.value?.trim() || '';
+            const time = document.getElementById('circleTime')?.value?.trim() || '';
+            const capacity = parseInt(document.getElementById('circleCapacity')?.value) || 20;
+
+            if (!name) {
+                showToast('❌ يرجى إدخال اسم الحلقة');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/circles`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, teacherId: teacherId ? parseInt(teacherId) : null, location, time, capacity })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showToast('❌ ' + (err.message || 'فشل الإنشاء'));
+                    return;
+                }
+                // مسح الحقول
+                document.getElementById('circleName').value = '';
+                document.getElementById('circleLocation').value = '';
+                document.getElementById('circleTime').value = '';
+                document.getElementById('circleCapacity').value = '';
+                closeModal('addCircleModal');
+                showToast('✅ تم إنشاء الحلقة بنجاح');
+                fetchCircles();
+            } catch {
+                showToast('❌ تعذر الاتصال بالخادم');
+            }
+        }
+
+        // ─── Confirm Delete ──────────────────────────────────
+        let _deleteCallback = null;
+        function confirmDelete(message, callback) {
+            document.getElementById('confirmDeleteMsg').textContent = message;
+            _deleteCallback = callback;
+            openModal('confirmDeleteModal');
+        }
+        function executeDelete() {
+            closeModal('confirmDeleteModal');
+            if (_deleteCallback) _deleteCallback();
+            _deleteCallback = null;
+        }
+    </script>
+
+<!-- PWA Install Banner -->
+<div id="pwa-banner">
+  <span style="font-size:24px">📱</span>
+  <div>
+    <p style="font-weight:700;margin-bottom:2px">ثبّت منصة نور</p>
+    <p style="color:var(--text-muted);font-size:11px">للوصول السريع من هاتفك</p>
+  </div>
+  <div style="display:flex;gap:6px">
+    <button onclick="installPWA()" style="background:#10b981;color:white">تثبيت</button>
+    <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:var(--bg-secondary);color:var(--text)">لاحقاً</button>
+  </div>
+</div>
+
+<script>
+// ─── PWA ───
+let deferredPrompt;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('pwa-banner');
+  if (banner) banner.classList.add('show');
+});
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('pwa-banner').style.display = 'none';
+    });
+  }
+}
+
+// ─── الوضع الليلي ───
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('noor_dark', isDark ? '1' : '0');
+  document.getElementById('darkToggle').textContent = isDark ? '☀️' : '🌙';
+}
+// تطبيق الوضع المحفوظ عند التحميل
+if (localStorage.getItem('noor_dark') === '1') {
+  document.body.classList.add('dark-mode');
+  document.addEventListener('DOMContentLoaded', () => {
+    const t = document.getElementById('darkToggle');
+    if (t) t.textContent = '☀️';
+  });
+}
+
+// ─── خريطة الحفظ ───
+const SURAHS = [
+  {n:1,name:'الفاتحة',v:7},{n:2,name:'البقرة',v:286},{n:3,name:'آل عمران',v:200},
+  {n:4,name:'النساء',v:176},{n:5,name:'المائدة',v:120},{n:6,name:'الأنعام',v:165},
+  {n:7,name:'الأعراف',v:206},{n:8,name:'الأنفال',v:75},{n:9,name:'التوبة',v:129},
+  {n:10,name:'يونس',v:109},{n:11,name:'هود',v:123},{n:12,name:'يوسف',v:111},
+  {n:13,name:'الرعد',v:43},{n:14,name:'إبراهيم',v:52},{n:15,name:'الحجر',v:99},
+  {n:16,name:'النحل',v:128},{n:17,name:'الإسراء',v:111},{n:18,name:'الكهف',v:110},
+  {n:19,name:'مريم',v:98},{n:20,name:'طه',v:135},{n:21,name:'الأنبياء',v:112},
+  {n:22,name:'الحج',v:78},{n:23,name:'المؤمنون',v:118},{n:24,name:'النور',v:64},
+  {n:25,name:'الفرقان',v:77},{n:26,name:'الشعراء',v:227},{n:27,name:'النمل',v:93},
+  {n:28,name:'القصص',v:88},{n:29,name:'العنكبوت',v:69},{n:30,name:'الروم',v:60},
+  {n:31,name:'لقمان',v:34},{n:32,name:'السجدة',v:30},{n:33,name:'الأحزاب',v:73},
+  {n:34,name:'سبأ',v:54},{n:35,name:'فاطر',v:45},{n:36,name:'يس',v:83},
+  {n:37,name:'الصافات',v:182},{n:38,name:'ص',v:88},{n:39,name:'الزمر',v:75},
+  {n:40,name:'غافر',v:85},{n:41,name:'فصلت',v:54},{n:42,name:'الشورى',v:53},
+  {n:43,name:'الزخرف',v:89},{n:44,name:'الدخان',v:59},{n:45,name:'الجاثية',v:37},
+  {n:46,name:'الأحقاف',v:35},{n:47,name:'محمد',v:38},{n:48,name:'الفتح',v:29},
+  {n:49,name:'الحجرات',v:18},{n:50,name:'ق',v:45},{n:51,name:'الذاريات',v:60},
+  {n:52,name:'الطور',v:49},{n:53,name:'النجم',v:62},{n:54,name:'القمر',v:55},
+  {n:55,name:'الرحمن',v:78},{n:56,name:'الواقعة',v:96},{n:57,name:'الحديد',v:29},
+  {n:58,name:'المجادلة',v:22},{n:59,name:'الحشر',v:24},{n:60,name:'الممتحنة',v:13},
+  {n:61,name:'الصف',v:14},{n:62,name:'الجمعة',v:11},{n:63,name:'المنافقون',v:11},
+  {n:64,name:'التغابن',v:18},{n:65,name:'الطلاق',v:12},{n:66,name:'التحريم',v:12},
+  {n:67,name:'الملك',v:30},{n:68,name:'القلم',v:52},{n:69,name:'الحاقة',v:52},
+  {n:70,name:'المعارج',v:44},{n:71,name:'نوح',v:28},{n:72,name:'الجن',v:28},
+  {n:73,name:'المزمل',v:20},{n:74,name:'المدثر',v:56},{n:75,name:'القيامة',v:40},
+  {n:76,name:'الإنسان',v:31},{n:77,name:'المرسلات',v:50},{n:78,name:'النبأ',v:40},
+  {n:79,name:'النازعات',v:46},{n:80,name:'عبس',v:42},{n:81,name:'التكوير',v:29},
+  {n:82,name:'الانفطار',v:19},{n:83,name:'المطففين',v:36},{n:84,name:'الانشقاق',v:25},
+  {n:85,name:'البروج',v:22},{n:86,name:'الطارق',v:17},{n:87,name:'الأعلى',v:19},
+  {n:88,name:'الغاشية',v:26},{n:89,name:'الفجر',v:30},{n:90,name:'البلد',v:20},
+  {n:91,name:'الشمس',v:15},{n:92,name:'الليل',v:21},{n:93,name:'الضحى',v:11},
+  {n:94,name:'الشرح',v:8},{n:95,name:'التين',v:8},{n:96,name:'العلق',v:19},
+  {n:97,name:'القدر',v:5},{n:98,name:'البينة',v:8},{n:99,name:'الزلزلة',v:8},
+  {n:100,name:'العاديات',v:11},{n:101,name:'القارعة',v:11},{n:102,name:'التكاثر',v:8},
+  {n:103,name:'العصر',v:3},{n:104,name:'الهمزة',v:9},{n:105,name:'الفيل',v:5},
+  {n:106,name:'قريش',v:4},{n:107,name:'الماعون',v:7},{n:108,name:'الكوثر',v:3},
+  {n:109,name:'الكافرون',v:6},{n:110,name:'النصر',v:3},{n:111,name:'المسد',v:5},
+  {n:112,name:'الإخلاص',v:4},{n:113,name:'الفلق',v:5},{n:114,name:'الناس',v:6}
+];
+
+function renderQuranMap(hifzRecords) {
+  const grid = document.getElementById('surahGrid');
+  if (!grid) return;
+
+  // بناء خريطة السور من سجلات التسميع
+  const memorizedSurahs = {};
+  (hifzRecords || []).forEach(r => {
+    if (r.type === 'Memorization' || r.type === 0) {
+      const key = r.surahName;
+      if (!memorizedSurahs[key]) memorizedSurahs[key] = 0;
+      memorizedSurahs[key] += r.verseCount || HifzRecord_ParseVerseCount(r.verses || '');
+    }
+  });
+
+  grid.innerHTML = SURAHS.map(s => {
+    const memorized = memorizedSurahs[s.name] || 0;
+    let cls = 'empty', icon = '📖';
+    if (memorized >= s.v) { cls = 'memorized'; icon = '✅'; }
+    else if (memorized > 0) { cls = 'partial'; icon = '📝'; }
+    const pct = memorized > 0 ? Math.min(Math.round(memorized/s.v*100), 100) : 0;
+    const title = pct > 0 ? `${s.name}: ${memorized}/${s.v} آية (${pct}%)` : `${s.name}: لم يُحفظ`;
+    return `
+      <div class="surah-cell ${cls}" title="${title}">
+        <span class="surah-icon">${icon}</span>
+        <span>${s.name}</span>
+        <span class="surah-num">${s.n}</span>
+        ${pct > 0 ? `<span style="font-size:9px">${pct}%</span>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function HifzRecord_ParseVerseCount(verses) {
+  if (!verses) return 0;
+  const parts = verses.split('-');
+  if (parts.length === 2) {
+    const from = parseInt(parts[0]), to = parseInt(parts[1]);
+    if (!isNaN(from) && !isNaN(to) && to >= from) return to - from + 1;
+  }
+  const single = parseInt(verses);
+  return isNaN(single) ? 0 : single;
+}
+
+// واتساب — إرسال إشعار للولي عند تسجيل الغياب
+async function sendAbsenceWhatsApp(studentId) {
+  try {
+    await fetch('/api/notifications/absence', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId, date: new Date().toISOString() })
+    });
+  } catch { /* صامت في حالة الفشل */ }
+}
+
+// ─── Bottom Navigation ─────────────────────────────
+function navBottom(page, el) {
+    document.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    // تحديث sidebar nav أيضاً
+    const navEl = document.querySelector('[onclick*="navigate(\'' + page + '\'"]');
+    navigate(page, navEl);
+}
+
+// مزامنة bottom nav مع sidebar nav
+const _origNavigate = navigate;
+navigate = function(page, el) {
+    _origNavigate(page, el);
+    // تحديث bottom nav
+    const bnMap = { dashboard:0, students:1, attendance:2, memorization:3, announcements:4 };
+    const bnItems = document.querySelectorAll('.bottom-nav-item');
+    bnItems.forEach(i => i.classList.remove('active'));
+    if (bnMap[page] !== undefined && bnItems[bnMap[page]]) {
+        bnItems[bnMap[page]].classList.add('active');
+    }
+};
+
+// ─── FAB Toggle ─────────────────────────────────────
+function toggleFab() {
+    const btn  = document.getElementById('fabBtn');
+    const menu = document.getElementById('fabMenu');
+    if (!btn || !menu) return;
+    const isOpen = menu.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    btn.textContent = isOpen ? '✕' : '☰';
+}
+// إغلاق FAB عند النقر خارجه
+document.addEventListener('click', (e) => {
+    const fab = document.getElementById('fabContainer');
+    if (fab && !fab.contains(e.target)) {
+        document.getElementById('fabMenu')?.classList.remove('open');
+        const btn = document.getElementById('fabBtn');
+        if (btn) { btn.classList.remove('open'); btn.textContent = '☰'; }
+    }
+});
+
+// ─── Topbar Date ─────────────────────────────────────
+(function setTopbarDate() {
+    const el = document.getElementById('topbarDate');
+    if (!el) return;
+    const now  = new Date();
+    const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                    'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    el.textContent = days[now.getDay()] + '، ' + now.getDate() + ' ' + months[now.getMonth()];
+})();
+
+// ─── Topbar Avatar Initials ───────────────────────────
+function updateTopbarAvatar() {
+    const av = document.getElementById('topbarAvatar');
+    if (av && USER && USER.fullName) av.textContent = USER.fullName.slice(0, 2);
+}
+
+// ─── Splash Screen ──────────────────────────────────
+window.addEventListener('load', () => {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+        setTimeout(() => splash.classList.add('hide'), 1200);
+        setTimeout(() => splash.remove(), 1800);
+    }
+});
+
+// ─── Enhanced Toast ─────────────────────────────────
+// Override showToast for colored toasts
+const _origShowToast = showToast;
+showToast = function(msg) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    // Auto-detect type
+    if (msg.includes('✅') || msg.includes('تم')) t.classList.add('toast-success');
+    else if (msg.includes('❌') || msg.includes('خطأ') || msg.includes('فشل')) t.classList.add('toast-error');
+    else if (msg.includes('⚠️') || msg.includes('يرجى')) t.classList.add('toast-warning');
+    else t.classList.add('toast-info');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+};
+
+// ─── Dynamic Date ───────────────────────────────────
+const dateOpts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+const todayStr = new Date().toLocaleDateString('ar-SA', dateOpts);
+const subEl = document.getElementById('pageSubtitle');
+if (subEl) subEl.textContent = todayStr;
+const dateEl = document.getElementById('currentDate');
+if (dateEl) dateEl.textContent = todayStr;
+
+// ─── Populate Circle Teacher Select ────────────────
+async function populateCircleTeacherSelect() {
+    try {
+        const teachers = await apiFetch('/teachers');
+        const sel = document.getElementById('circleTeacher');
+        if (sel && teachers.length) {
+            sel.innerHTML = '<option value="">— اختر محفظاً —</option>' +
+                teachers.map(t => `<option value="${t.id}">${t.fullName}</option>`).join('');
+        }
+    } catch {}
+}
+// تحميل المحفظين عند فتح modal الحلقات
+const _origOpenModal = openModal;
+openModal = function(id) {
+    _origOpenModal(id);
+    if (id === 'addCircleModal') populateCircleTeacherSelect();
+};
+
+// ─── Export to CSV ──────────────────────────────────
+function exportStudentsCSV() {
+    const students = window._students || [];
+    if (!students.length) {
+        showToast('⚠️ لا توجد بيانات لتصديرها');
+        return;
+    }
+    
+    // إعداد ترويسة الأعمدة
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for Arabic support
+    csvContent += "الرقم,اسم الطالب,رقم ولي الأمر,الحلقة,المستوى\n";
+    
+    // إضافة البيانات
+    students.forEach(s => {
+        const row = [
+            s.id,
+            `"${s.fullName}"`,
+            `"${s.parentPhone || ''}"`,
+            `"${s.circleName || 'غير محدد'}"`,
+            `"${s.level || ''}"`
+        ];
+        csvContent += row.join(",") + "\n";
+    });
+    
+    // تنزيل الملف
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `طلاب_نور_${new Date().toLocaleDateString('en-CA')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('✅ تم التصدير بنجاح');
+}
+
+// ─── Global Search ──────────────────────────────────
+function handleGlobalSearch() {
+    const query = document.getElementById('globalSearchInput').value.toLowerCase();
+    
+    // فلترة الجداول النشطة حسب الصفحة المعروضة
+    const activePageId = document.querySelector('.page.active')?.id;
+    if (!activePageId) return;
+
+    const tableRows = document.querySelectorAll(`#${activePageId} tbody tr`);
+    let found = 0;
+    
+    tableRows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(query)) {
+            row.style.display = '';
+            found++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+</body>
+</html>

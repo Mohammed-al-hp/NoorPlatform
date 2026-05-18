@@ -1,0 +1,173 @@
+@model NoorPlatform.Web.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "لوحة التحكم";
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-black mb-0">@Model.StudentCount</h2>
+                    <span class="text-muted">طالب مسجل</span>
+                </div>
+                <div class="bg-light-success p-3 rounded-4" style="background: #D1FAE5; color: #10B981">
+                    <i class="fa-solid fa-user-graduate fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-black mb-0">@Model.TeacherCount</h2>
+                    <span class="text-muted">محفظ</span>
+                </div>
+                <div class="bg-light-primary p-3 rounded-4" style="background: #DBEAFE; color: #3B82F6">
+                    <i class="fa-solid fa-chalkboard-user fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-black mb-0">@Model.CircleCount</h2>
+                    <span class="text-muted">حلقات نشطة</span>
+                </div>
+                <div class="bg-light-warning p-3 rounded-4" style="background: #FEF3C7; color: #D97706">
+                    <i class="fa-solid fa-users-rectangle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-black mb-0">@Model.AttendancePercentage%</h2>
+                    <span class="text-muted">نسبة الحضور</span>
+                </div>
+                <div class="bg-light-danger p-3 rounded-4" style="background: #FEE2E2; color: #EF4444">
+                    <i class="fa-solid fa-check-double fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4 h-100">
+            <h5 class="fw-bold mb-4">آخر عمليات التسميع</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th>الطالب</th>
+                            <th>السورة</th>
+                            <th>المقدار</th>
+                            <th>التقييم</th>
+                            <th>التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentHifzRecords.Any())
+                        {
+                            foreach (var record in Model.RecentHifzRecords)
+                            {
+                                <tr>
+                                    <td>@(record.Student?.User?.FullName ?? "غير معروف")</td>
+                                    <td>@record.SurahName</td>
+                                    <td>@record.Verses</td>
+                                    <td>
+                                        @{
+                                            var badgeClass = record.Evaluation == "ممتاز" ? "bg-success-subtle text-success" :
+                                                             record.Evaluation == "جيد جداً" ? "bg-primary-subtle text-primary" :
+                                                             "bg-warning-subtle text-warning";
+                                        }
+                                        <span class="badge @badgeClass px-3 rounded-pill">@record.Evaluation</span>
+                                    </td>
+                                    <td class="text-muted small">@record.Date.ToString("yyyy/MM/dd")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">لا توجد سجلات تسميع حديثة</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4 h-100">
+            <h5 class="fw-bold mb-4">أعلى الطلاب تميزاً</h5>
+            @* سنستخدم بيانات افتراضية مؤقتاً حتى نضيف نظام النقاط *@
+            <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded-4">
+                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">1</div>
+                <div>
+                    <div class="fw-bold">فهد محمد</div>
+                    <small class="text-muted">حلقة الفجر • 120 نقطة</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded-4">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">2</div>
+                <div>
+                    <div class="fw-bold">ياسر القحطاني</div>
+                    <small class="text-muted">حلقة المغرب • 115 نقطة</small>
+                </div>
+            </div>
+
+            <h5 class="fw-bold mb-3 mt-4">توزيع الإحصائيات</h5>
+            <div style="height: 200px;">
+                <canvas id="statsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var ctx = document.getElementById('statsChart').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['الطلاب', 'المحفظين', 'الحلقات'],
+                    datasets: [{
+                        data: [@Model.StudentCount, @Model.TeacherCount, @Model.CircleCount],
+                        backgroundColor: [
+                            '#10B981', // Success Green
+                            '#3B82F6', // Primary Blue
+                            '#F59E0B'  // Warning Orange
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { family: 'Tajawal' },
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        });
+    </script>
+}
