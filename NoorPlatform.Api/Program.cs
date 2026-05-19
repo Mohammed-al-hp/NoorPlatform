@@ -132,6 +132,23 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// ─── Global Exception Handler ───
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json; charset=utf-8";
+        var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        var message = app.Environment.IsDevelopment()
+            ? error?.Error?.Message ?? "خطأ غير متوقع"
+            : "حدث خطأ في الخادم. يرجى المحاولة لاحقاً.";
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionHandler");
+        logger.LogError(error?.Error, "Unhandled exception at {Path}", context.Request.Path);
+        await context.Response.WriteAsJsonAsync(new { message, statusCode = 500 });
+    });
+});
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseHttpsRedirection();

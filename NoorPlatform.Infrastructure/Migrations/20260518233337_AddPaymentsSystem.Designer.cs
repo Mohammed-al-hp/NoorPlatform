@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NoorPlatform.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using NoorPlatform.Infrastructure.Data;
 namespace NoorPlatform.Infrastructure.Migrations
 {
     [DbContext(typeof(NoorDbContext))]
-    partial class NoorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260518233337_AddPaymentsSystem")]
+    partial class AddPaymentsSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -393,51 +396,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.ToTable("HifzRecords");
                 });
 
-            modelBuilder.Entity("NoorPlatform.Core.Entities.LibraryItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("CircleId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DownloadCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PdfFilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UploadedByUserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CircleId");
-
-                    b.HasIndex("UploadedByUserId");
-
-                    b.ToTable("LibraryItems");
-                });
-
             modelBuilder.Entity("NoorPlatform.Core.Entities.Parent", b =>
                 {
                     b.Property<int>("Id")
@@ -517,9 +475,6 @@ namespace NoorPlatform.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Level")
                         .IsRequired()
@@ -762,24 +717,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("NoorPlatform.Core.Entities.LibraryItem", b =>
-                {
-                    b.HasOne("NoorPlatform.Core.Entities.Circle", "Circle")
-                        .WithMany()
-                        .HasForeignKey("CircleId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("NoorPlatform.Core.Entities.User", "UploadedByUser")
-                        .WithMany()
-                        .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Circle");
-
-                    b.Navigation("UploadedByUser");
                 });
 
             modelBuilder.Entity("NoorPlatform.Core.Entities.Parent", b =>

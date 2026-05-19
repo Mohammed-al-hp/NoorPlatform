@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -23,20 +24,32 @@ public class StudentsController : ControllerBase
 
     // GET /api/students
     [HttpGet]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetAll()
     {
-        var students = await _context.Students
+        var isTeacher = User.IsInRole("Teacher");
+        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+
+        var query = _context.Students
             .Include(s => s.User)
             .Include(s => s.Circle)
             .Include(s => s.Attendances)
             .Include(s => s.HifzRecords)
-            .ToListAsync();
+            .AsQueryable();
+
+        if (isTeacher)
+        {
+            query = query.Where(s => s.Circle!.Teacher!.UserId == userId);
+        }
+
+        var students = await query.ToListAsync();
 
         var result = students.Select(s => new
         {
             s.Id,
             s.User.FullName,
             s.User.Email,
+            s.ParentPhone,
             CircleName = s.Circle?.Name ?? "بدون حلقة",
             s.Level,
             Attendance = s.Attendances.Any()
@@ -116,10 +129,22 @@ public class StudentsController : ControllerBase
             UserId = user.Id,
             Level = request.Level ?? "مبتدئ",
             CircleId = request.CircleId,
-            ParentId = request.ParentId
+            ParentId = request.ParentId,
+            ParentPhone = request.ParentPhone ?? string.Empty
         };
 
         _context.Students.Add(student);
+
+        // ActivityFeed
+        _context.ActivityFeeds.Add(new ActivityFeed {
+            UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),
+            UserName = User.Identity?.Name ?? "User",
+            ActivityType = "Student",
+            Description = $"تمت إضافة الطالب الجديد {request.FullName}",
+            Icon = "🎓",
+            Color = "blue"
+        });
+
         await _context.SaveChangesAsync();
 
         return Ok(new
@@ -161,8 +186,70 @@ public class StudentsController : ControllerBase
         if (student == null)
             return NotFound(new { message = "الطالب غير موجود" });
 
-        await _userManager.DeleteAsync(student.User);
-        return Ok(new { message = "تم حذف الطالب" });
+        student.IsDeleted = true;
+        
+        _context.ActivityFeeds.Add(new ActivityFeed {
+            UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            UserName = User.Identity?.Name ?? "Admin",
+            ActivityType = "أرشفة طالب",
+            Description = $"تم أرشفة الطالب {student.User.FullName}",
+            Icon = "📦",
+            Color = "text-gray-500"
+        });
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "تم أرشفة الطالب بنجاح" });
+    }
+
+    [HttpGet("archived")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetArchivedStudents()
+    {
+        var students = await _context.Students
+            .IgnoreQueryFilters()
+            .Where(s => s.IsDeleted)
+            .Include(s => s.User)
+            .Include(s => s.Circle)
+            .Select(s => new
+            {
+                s.Id,
+                s.User.FullName,
+                s.User.UserName,
+                s.Level,
+                CircleName = s.Circle != null ? s.Circle.Name : "بدون حلقة",
+                s.ParentPhone,
+                s.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(students);
+    }
+
+    [HttpPost("{id}/restore")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RestoreStudent(int id)
+    {
+        var student = await _context.Students
+            .IgnoreQueryFilters()
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.Id == id && s.IsDeleted);
+
+        if (student == null)
+            return NotFound(new { message = "الطالب غير موجود في الأرشيف" });
+
+        student.IsDeleted = false;
+
+        _context.ActivityFeeds.Add(new ActivityFeed {
+            UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            UserName = User.Identity?.Name ?? "Admin",
+            ActivityType = "استعادة طالب",
+            Description = $"تمت استعادة الطالب {student.User.FullName} من الأرشيف",
+            Icon = "🔄",
+            Color = "text-green-500"
+        });
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "تم استعادة الطالب بنجاح" });
     }
 
     // ─────────────────────────────────────────────────
@@ -190,6 +277,7 @@ public class CreateStudentRequest
     public string? Level { get; set; }
     public int? CircleId { get; set; }
     public int? ParentId { get; set; }
+    public string? ParentPhone { get; set; }
 }
 
 public class UpdateStudentRequest

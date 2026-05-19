@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Core.Entities;
@@ -64,6 +65,7 @@ public class AttendanceController : ControllerBase
     // يدعم query string للتوافق مع الكود الحالي في Frontend
     // ─────────────────────────────────────────────────
     [HttpPost]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> MarkAttendance(
         [FromQuery] int? studentId,
         [FromQuery] string? status,
@@ -96,6 +98,22 @@ public class AttendanceController : ControllerBase
                 Status = parsedStatus
             };
             _context.Attendances.Add(record);
+            
+            // Gamification & ActivityFeed
+            var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == sid.Value);
+            if (student != null)
+            {
+                if (parsedStatus == AttendanceStatus.Present) student.Points += 10;
+                
+                _context.ActivityFeeds.Add(new ActivityFeed {
+                    UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),
+                    UserName = User.Identity?.Name ?? "User",
+                    ActivityType = "Attendance",
+                    Description = $"تم تسجيل حضور الطالب {student.User.FullName}",
+                    Icon = "✅",
+                    Color = "green"
+                });
+            }
         }
 
         await _context.SaveChangesAsync();

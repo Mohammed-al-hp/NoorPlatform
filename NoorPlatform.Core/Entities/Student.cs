@@ -14,6 +14,10 @@ public class Student
     public Circle? Circle { get; set; }
     public string ParentPhone { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsDeleted { get; set; } = false;
+
+    public int Points { get; set; }
+    public string? Badges { get; set; }
 
     public List<Attendance> Attendances { get; set; } = new();
     public List<HifzRecord> HifzRecords { get; set; } = new();

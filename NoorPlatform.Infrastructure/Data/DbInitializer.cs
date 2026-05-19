@@ -63,7 +63,7 @@ public static class DbInitializer
         context.Circles.Add(circle);
         await context.SaveChangesAsync();
 
-        var student = new Student { UserId = studentUser.Id, ParentId = parent.Id, CircleId = circle.Id, Level = "متقدم" };
+        var student = new Student { UserId = studentUser.Id, ParentId = parent.Id, CircleId = circle.Id, Level = "متقدم", Points = 150, Badges = "متميز,مبادر" };
         context.Students.Add(student);
         await context.SaveChangesAsync();
 
@@ -75,6 +75,27 @@ public static class DbInitializer
             Content = "تم إطلاق النسخة الجديدة من النظام بنجاح.",
             CreatedAt = DateTime.UtcNow
         });
+
+        // Seed ActivityFeed
+        context.ActivityFeeds.Add(new ActivityFeed
+        {
+            UserId = adminUser.Id,
+            UserName = adminUser.FullName,
+            ActivityType = "System",
+            Description = "تم تهيئة النظام وبدء الاستخدام",
+            Icon = "🚀",
+            Color = "purple"
+        });
+        context.ActivityFeeds.Add(new ActivityFeed
+        {
+            UserId = studentUser.Id,
+            UserName = studentUser.FullName,
+            ActivityType = "Hifz",
+            Description = "أكمل الطالب أحمد حفظ سورة البقرة (1-10)",
+            Icon = "📖",
+            Color = "green"
+        });
+        
         await context.SaveChangesAsync();
     }
 }

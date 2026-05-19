@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Core.Entities;
@@ -18,10 +18,31 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<Exam> Exams => Set<Exam>();
     public DbSet<ExamResult> ExamResults => Set<ExamResult>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
-
+    public DbSet<ActivityFeed> ActivityFeeds => Set<ActivityFeed>();
+    public DbSet<Payment> Payments { get; set; } = null!;
+    public DbSet<LibraryItem> LibraryItems { get; set; } = null!;
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // 🟢 Global Query Filter for Soft Delete
+        modelBuilder.Entity<Student>().HasQueryFilter(s => !s.IsDeleted);
+
+        modelBuilder.Entity<Payment>()
+            .Property(p => p.Amount)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Payment>()
+            .HasOne(p => p.Student)
+            .WithMany()
+            .HasForeignKey(p => p.StudentId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Payment>()
+            .HasOne(p => p.Parent)
+            .WithMany()
+            .HasForeignKey(p => p.ParentId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         // ─────────────────────────────────────────────
         // العلاقات
@@ -87,6 +108,24 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .WithMany(s => s.ExamResults)
             .HasForeignKey(er => er.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ActivityFeed>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<LibraryItem>()
+            .HasOne(l => l.UploadedByUser)
+            .WithMany()
+            .HasForeignKey(l => l.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<LibraryItem>()
+            .HasOne(l => l.Circle)
+            .WithMany()
+            .HasForeignKey(l => l.CircleId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // ─────────────────────────────────────────────
         // Indexes — لتسريع الاستعلامات الشائعة

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +50,6 @@ public class ReportsController : ControllerBase
         var circleName = student.Circle?.Name ?? "—";
         var achievement = surah ?? GetAchievementText(progress);
 
-        // ─── توليد HTML للشهادة ثم تحويلها لـ PDF ───
         var html = GenerateCertificateHtml(
             studentName: student.User.FullName,
             teacherName: teacherName,
@@ -58,6 +58,28 @@ public class ReportsController : ControllerBase
             progress: progress,
             date: DateTime.Now.ToString("yyyy/MM/dd")
         );
+
+        // Gamification: Grant a Badge
+        var badgeToGrant = "شهادة " + achievement;
+        if (string.IsNullOrEmpty(student.Badges))
+        {
+            student.Badges = badgeToGrant;
+        }
+        else if (!student.Badges.Contains(badgeToGrant))
+        {
+            student.Badges += $",{badgeToGrant}";
+        }
+
+        // ActivityFeed for certificate
+        _context.ActivityFeeds.Add(new ActivityFeed {
+            UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),
+            UserName = User.Identity?.Name ?? "User",
+            ActivityType = "Certificate",
+            Description = $"تم إصدار شهادة تقدير للطالب {student.User.FullName} ({achievement})",
+            Icon = "📜",
+            Color = "teal"
+        });
+        await _context.SaveChangesAsync();
 
         // إرجاع HTML للطباعة (بديل عن PDF حتى تُثبَّت QuestPDF)
         return Content(html, "text/html", Encoding.UTF8);

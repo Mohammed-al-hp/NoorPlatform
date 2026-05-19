@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,11 +21,23 @@ public class CirclesController : ControllerBase
 
     // GET /api/circles
     [HttpGet]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetCircles()
     {
-        var circles = await _context.Circles
+        var isTeacher = User.IsInRole("Teacher");
+        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+
+        var query = _context.Circles
             .Include(c => c.Teacher).ThenInclude(t => t.User)
             .Include(c => c.Students)
+            .AsQueryable();
+
+        if (isTeacher)
+        {
+            query = query.Where(c => c.Teacher!.UserId == userId);
+        }
+
+        var circles = await query
             .Select(c => new
             {
                 c.Id,
@@ -43,6 +56,7 @@ public class CirclesController : ControllerBase
 
     // GET /api/circles/{id}
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetById(int id)
     {
         var circle = await _context.Circles

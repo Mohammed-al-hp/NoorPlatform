@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Core.Entities;
@@ -119,6 +120,34 @@ public class ExamsController : ControllerBase
         }).ToList();
 
         _context.ExamResults.AddRange(examResults);
+        
+        // Gamification & ActivityFeed
+        var studentIds = examResults.Select(r => r.StudentId).Distinct().ToList();
+        var students = await _context.Students.Include(s => s.User).Where(s => studentIds.Contains(s.Id)).ToListAsync();
+        
+        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+        var userName = User.Identity?.Name ?? "User";
+
+        foreach (var r in examResults)
+        {
+            var student = students.FirstOrDefault(s => s.Id == r.StudentId);
+            if (student != null)
+            {
+                var percentage = (r.Score / r.MaxScore) * 100;
+                if (percentage >= 90) student.Points += 100;
+                else if (percentage >= 80) student.Points += 50;
+
+                _context.ActivityFeeds.Add(new ActivityFeed {
+                    UserId = userId,
+                    UserName = userName,
+                    ActivityType = "Exam",
+                    Description = $"تم رصد درجة {r.Score} للطالب {student.User.FullName} في اختبار {exam.Title}",
+                    Icon = "📝",
+                    Color = "purple"
+                });
+            }
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new { message = $"تم تسجيل {examResults.Count} نتيجة بنجاح" });

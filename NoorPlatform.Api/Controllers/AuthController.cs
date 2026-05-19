@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using NoorPlatform.Core.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using NoorPlatform.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -15,12 +17,14 @@ public class AuthController : ControllerBase
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _configuration;
+    private readonly NoorDbContext _context;
 
-    public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration)
+    public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration, NoorDbContext context)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
+        _context = context;
     }
 
     // POST /api/auth/login
@@ -34,6 +38,13 @@ public class AuthController : ControllerBase
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
         if (!result.Succeeded)
             return Unauthorized(new { message = "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+
+        if (user.Role == UserRole.Student)
+        {
+            var isDeleted = await _context.Students.IgnoreQueryFilters().AnyAsync(s => s.UserId == user.Id && s.IsDeleted);
+            if (isDeleted)
+                return Unauthorized(new { message = "هذا الحساب مؤرشف ولا يمكن تسجيل الدخول إليه." });
+        }
 
         var token = GenerateJwtToken(user);
         return Ok(new

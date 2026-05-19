@@ -137,7 +137,11 @@ public class TeachersController : ControllerBase
         if (teacher.Circles.Any())
             return BadRequest(new { message = $"لا يمكن حذف المحفظ لأنه مرتبط بـ {teacher.Circles.Count} حلقة. يرجى إعادة تعيين الحلقات أولاً." });
 
-        await _userManager.DeleteAsync(teacher.User);
+        var user = teacher.User;
+        _context.Teachers.Remove(teacher);
+        await _context.SaveChangesAsync();
+
+        await _userManager.DeleteAsync(user);
 
         return Ok(new { message = "تم حذف المحفظ" });
     }
