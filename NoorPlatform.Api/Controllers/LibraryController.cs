@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 using System.Security.Claims;
@@ -22,7 +23,7 @@ namespace NoorPlatform.Api.Controllers
 
         // GET /api/library
         [HttpGet]
-        [Authorize(Roles = "Admin,Teacher,Student")]
+        [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> GetAll([FromQuery] string? category, [FromQuery] string? search)
         {
             var query = _context.LibraryItems
@@ -55,6 +56,8 @@ namespace NoorPlatform.Api.Controllers
         // POST /api/library/upload
         [HttpPost("upload")]
         [Authorize(Roles = "Admin,Teacher")]
+        [RequestSizeLimit(52_428_800)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 52_428_800)]
         public async Task<IActionResult> Upload([FromForm] UploadLibraryRequest request)
         {
             if (request.File == null || request.File.Length == 0)
@@ -63,8 +66,8 @@ namespace NoorPlatform.Api.Controllers
             if (Path.GetExtension(request.File.FileName).ToLower() != ".pdf")
                 return BadRequest(new { message = "يسمح فقط برفع ملفات PDF" });
 
-            if (request.File.Length > 20 * 1024 * 1024) // 20 MB Limit
-                return BadRequest(new { message = "حجم الملف يتجاوز الحد المسموح (20MB)" });
+            if (request.File.Length > 50 * 1024 * 1024)
+                return BadRequest(new { message = "حجم الملف يتجاوز الحد المسموح (50MB)" });
 
             // Ensure directory exists
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "library");
@@ -131,9 +134,28 @@ namespace NoorPlatform.Api.Controllers
             return Ok(new { message = "تم حذف الملف بنجاح" });
         }
 
+        // GET /api/library/{id}/file — تحميل PDF مع التحقق من الصلاحية
+        [HttpGet("{id}/file")]
+        [Authorize(Roles = "Admin,Teacher,Student,Parent")]
+        public async Task<IActionResult> GetFile(int id)
+        {
+            var item = await _context.LibraryItems.FindAsync(id);
+            if (item == null)
+                return NotFound(new { message = "الملف غير موجود" });
+
+            var physicalPath = Path.Combine(_env.WebRootPath, item.PdfFilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (!System.IO.File.Exists(physicalPath))
+                return NotFound(new { message = "الملف غير موجود على الخادم" });
+
+            item.DownloadCount++;
+            await _context.SaveChangesAsync();
+
+            return PhysicalFile(physicalPath, "application/pdf", $"{item.Title}.pdf");
+        }
+
         // POST /api/library/{id}/download
         [HttpPost("{id}/download")]
-        [Authorize(Roles = "Admin,Teacher,Student")]
+        [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> RecordDownload(int id)
         {
             var item = await _context.LibraryItems.FindAsync(id);

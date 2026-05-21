@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 
@@ -13,16 +14,19 @@ namespace NoorPlatform.Api.Controllers;
 public class TeachersController : ControllerBase
 {
     private readonly NoorDbContext _context;
+    private readonly AccountProvisioningService _accounts;
     private readonly UserManager<User> _userManager;
 
-    public TeachersController(NoorDbContext context, UserManager<User> userManager)
+    public TeachersController(NoorDbContext context, AccountProvisioningService accounts, UserManager<User> userManager)
     {
         _context = context;
+        _accounts = accounts;
         _userManager = userManager;
     }
 
     // GET /api/teachers
     [HttpGet]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetTeachers()
     {
         var teachers = await _context.Teachers
@@ -69,22 +73,14 @@ public class TeachersController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] CreateTeacherRequest request)
     {
-        var existing = await _userManager.FindByEmailAsync(request.Email);
-        if (existing != null)
-            return BadRequest(new { message = "هذا البريد الإلكتروني مستخدم بالفعل" });
+        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone))
+            return BadRequest(new { message = "الاسم ورقم الهاتف مطلوبان" });
 
-        var user = new User
-        {
-            UserName = request.Email,
-            Email = request.Email,
-            FullName = request.FullName,
-            Role = UserRole.Teacher,
-            EmailConfirmed = true
-        };
+        var (user, tempPassword, err) = await _accounts.CreateUserAsync(
+            request.Phone, request.FullName, UserRole.Teacher);
 
-        var result = await _userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-            return BadRequest(new { message = string.Join("، ", result.Errors.Select(e => e.Description)) });
+        if (err != null)
+            return BadRequest(new { message = err });
 
         var teacher = new Teacher
         {
@@ -95,7 +91,18 @@ public class TeachersController : ControllerBase
         _context.Teachers.Add(teacher);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "تم إضافة المحفظ بنجاح", teacherId = teacher.Id });
+        return Ok(new
+        {
+            message = "تم إضافة المحفظ بنجاح",
+            teacherId = teacher.Id,
+            credentials = new AccountCredentialsDto(
+                request.FullName,
+                user.UserName!,
+                AccountProvisioningService.ToDisplayPhone(user.UserName!),
+                tempPassword,
+                UserRole.Teacher.ToString(),
+                true)
+        });
     }
 
     // PUT /api/teachers/{id}
@@ -150,8 +157,7 @@ public class TeachersController : ControllerBase
 public class CreateTeacherRequest
 {
     public string FullName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = "Noor@1234";
+    public string Phone { get; set; } = string.Empty;
     public string? Qualification { get; set; }
 }
 

@@ -9,7 +9,7 @@
   "theme_color": "#10b981",
   "lang": "ar",
   "dir": "rtl",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "icon-192.png",

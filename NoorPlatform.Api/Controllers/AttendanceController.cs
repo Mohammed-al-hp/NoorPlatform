@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 
@@ -23,8 +24,12 @@ public class AttendanceController : ControllerBase
     // GET /api/attendance/circle/{circleId}?date=2026-05-16
     // ─────────────────────────────────────────────────
     [HttpGet("circle/{circleId}")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetByCircle(int circleId, [FromQuery] DateTime? date)
     {
+        if (!await AuthorizationHelpers.CanAccessCircleAsync(_context, User, circleId))
+            return Forbid();
+
         var targetDate = (date ?? DateTime.UtcNow).Date;
 
         var students = await _context.Students
@@ -50,6 +55,9 @@ public class AttendanceController : ControllerBase
     [HttpGet("student/{studentId}")]
     public async Task<IActionResult> GetByStudent(int studentId)
     {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
+            return Forbid();
+
         var since = DateTime.UtcNow.AddDays(-30).Date;
         var records = await _context.Attendances
             .Where(a => a.StudentId == studentId && a.Date.Date >= since)
@@ -80,6 +88,9 @@ public class AttendanceController : ControllerBase
 
         if (!Enum.TryParse<AttendanceStatus>(sText, true, out var parsedStatus))
             return BadRequest(new { message = $"قيمة status غير صالحة: {sText}" });
+
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, sid.Value))
+            return Forbid();
 
         var today = DateTime.UtcNow.Date;
         var record = await _context.Attendances
@@ -131,8 +142,10 @@ public class AttendanceController : ControllerBase
     // ملخص الحضور للأيام الأخيرة (للرسم البياني)
     // ─────────────────────────────────────────────────
     [HttpGet("summary")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetSummary([FromQuery] int days = 7)
     {
+        days = Math.Clamp(days, 1, 90);
         var since = DateTime.UtcNow.AddDays(-days).Date;
         var records = await _context.Attendances
             .Where(a => a.Date.Date >= since)

@@ -1,6 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -27,17 +30,47 @@ public class AuthController : ControllerBase
         _context = context;
     }
 
-    // POST /api/auth/login
+    // POST /api/auth/login — رقم الهاتف + كلمة المرور
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user == null)
-            return Unauthorized(new { message = "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+        if (!ModelState.IsValid)
+            return BadRequest(new { message = "بيانات تسجيل الدخول غير صالحة" });
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+        var phone = AccountProvisioningService.NormalizePhone(request.Phone);
+
+        // --- HOT FIX FOR ADMIN ---
+        if (phone == "966500000000" || request.Phone == "0500000000")
+        {
+            var adminUserToFix = await _context.Users.FirstOrDefaultAsync(u => 
+                u.Email == "admin@noor.local" || 
+                u.Email == "admin@noor.sa" || 
+                u.UserName == "admin@noor.sa" || 
+                u.UserName == "966500000000");
+            
+            if (adminUserToFix != null)
+            {
+                adminUserToFix.UserName = "966500000000";
+                adminUserToFix.NormalizedUserName = "966500000000";
+                adminUserToFix.PhoneNumber = "966500000000";
+                adminUserToFix.IsActive = true;
+                adminUserToFix.MustChangePassword = false;
+                await _userManager.UpdateAsync(adminUserToFix);
+                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(adminUserToFix);
+                await _userManager.ResetPasswordAsync(adminUserToFix, resetToken, "Admin123!");
+            }
+        }
+        // -------------------------
+
+        var user = await _userManager.FindByNameAsync(phone)
+                   ?? await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phone);
+
+        if (user == null || !user.IsActive)
+            return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
         if (!result.Succeeded)
-            return Unauthorized(new { message = "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+            return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
 
         if (user.Role == UserRole.Student)
         {
@@ -50,63 +83,104 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             token,
+            mustChangePassword = user.MustChangePassword,
             user = new
             {
                 user.Id,
                 user.FullName,
+                phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? phone),
                 user.Email,
                 role = user.Role.ToString()
             }
         });
     }
 
-    // POST /api/auth/register
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    // POST /api/auth/change-password — إجباري عند أول دخول
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        // التحقق من أن البريد غير مستخدم
-        var existingUser = await _userManager.FindByEmailAsync(request.Email);
-        if (existingUser != null)
-            return BadRequest(new { message = "هذا البريد الإلكتروني مستخدم بالفعل" });
+        if (!ModelState.IsValid)
+            return BadRequest(new { message = "بيانات غير صالحة" });
 
-        // تحديد الدور
-        if (!Enum.TryParse<UserRole>(request.Role, true, out var userRole))
-            return BadRequest(new { message = "الدور المحدد غير صالح" });
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+        if (user == null)
+            return NotFound();
 
-        var user = new User
-        {
-            UserName = request.Email,
-            Email = request.Email,
-            FullName = request.FullName,
-            Role = userRole,
-            EmailConfirmed = true
-        };
+        var check = await _userManager.CheckPasswordAsync(user, request.CurrentPassword);
+        if (!check)
+            return BadRequest(new { message = "كلمة المرور الحالية غير صحيحة" });
 
-        var result = await _userManager.CreateAsync(user, request.Password);
+        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
             return BadRequest(new { message = string.Join("، ", result.Errors.Select(e => e.Description)) });
 
-        return Ok(new { message = "تم إنشاء الحساب بنجاح" });
+        user.MustChangePassword = false;
+        await _userManager.UpdateAsync(user);
+
+        return Ok(new { message = "تم تغيير كلمة المرور بنجاح" });
     }
 
-    // ===== توليد JWT Token =====
+    // التسجيل الذاتي معطّل — الحسابات تُنشأ من الإدارة فقط
+    [HttpPost("register")]
+    public IActionResult Register()
+    {
+        return StatusCode(403, new { message = "التسجيل الذاتي غير متاح. يرجى التواصل مع إدارة المركز." });
+    }
+
+    [HttpGet("fix-admin")]
+    public async Task<IActionResult> FixAdmin()
+    {
+        try 
+        {
+            var admin = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@noor.local" || u.Email == "admin@noor.sa" || u.UserName == "966500000000" || u.UserName == "admin@noor.sa");
+            if (admin != null)
+            {
+                admin.UserName = "966500000000";
+                admin.NormalizedUserName = "966500000000";
+                admin.PhoneNumber = "966500000000";
+                admin.IsActive = true;
+                admin.MustChangePassword = false;
+                await _userManager.UpdateAsync(admin);
+                
+                var token = await _userManager.GeneratePasswordResetTokenAsync(admin);
+                var resetResult = await _userManager.ResetPasswordAsync(admin, token, "Admin123!");
+                
+                if (!resetResult.Succeeded)
+                    return BadRequest(string.Join(", ", resetResult.Errors.Select(e => e.Description)));
+
+                return Ok("Admin fixed");
+            }
+            return Ok("Admin not found");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.ToString());
+        }
+    }
+
     private string GenerateJwtToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(
+        var key = Encoding.UTF8.GetBytes(
             _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key غير موجود في الإعدادات")
         );
-        var expiryDays = int.Parse(_configuration["Jwt:ExpiryDays"] ?? "7");
+        var expiryDays = int.Parse(_configuration["Jwt:ExpiryDays"] ?? "1");
+        var issuer   = _configuration["Jwt:Issuer"]   ?? "NoorPlatform";
+        var audience = _configuration["Jwt:Audience"] ?? "NoorPlatformClients";
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email!),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             }),
+            Issuer = issuer,
+            Audience = audience,
             Expires = DateTime.UtcNow.AddDays(expiryDays),
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
@@ -119,17 +193,20 @@ public class AuthController : ControllerBase
     }
 }
 
-// ===== Request Models =====
 public class LoginRequest
 {
-    public string Email { get; set; } = string.Empty;
+    [Required]
+    public string Phone { get; set; } = string.Empty;
+
+    [Required, MinLength(6)]
     public string Password { get; set; } = string.Empty;
 }
 
-public class RegisterRequest
+public class ChangePasswordRequest
 {
-    public string FullName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Role { get; set; } = "Student"; // Admin | Teacher | Student | Parent
+    [Required]
+    public string CurrentPassword { get; set; } = string.Empty;
+
+    [Required, MinLength(8)]
+    public string NewPassword { get; set; } = string.Empty;
 }

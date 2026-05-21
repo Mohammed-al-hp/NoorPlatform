@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Infrastructure.Data;
 using NoorPlatform.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +24,9 @@ public class HifzController : ControllerBase
     [HttpGet("student/{studentId}")]
     public async Task<IActionResult> GetStudentRecords(int studentId)
     {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
+            return Forbid();
+
         var records = await _context.HifzRecords
             .Where(r => r.StudentId == studentId)
             .OrderByDescending(r => r.Date)
@@ -44,8 +48,10 @@ public class HifzController : ControllerBase
 
     // GET /api/hifz/recent?count=10
     [HttpGet("recent")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetRecent([FromQuery] int count = 10)
     {
+        count = Math.Clamp(count, 1, 50);
         var records = await _context.HifzRecords
             .Include(r => r.Student).ThenInclude(s => s.User)
             .OrderByDescending(r => r.Date)
@@ -69,8 +75,12 @@ public class HifzController : ControllerBase
 
     // POST /api/hifz
     [HttpPost]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> AddRecord([FromBody] AddHifzRecordRequest request)
     {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, request.StudentId))
+            return Forbid();
+
         var studentExists = await _context.Students.AnyAsync(s => s.Id == request.StudentId);
         if (!studentExists)
             return NotFound(new { message = "الطالب غير موجود" });

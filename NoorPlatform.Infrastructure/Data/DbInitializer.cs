@@ -12,21 +12,27 @@ public static class DbInitializer
         // ===== USERS via UserManager (يملأ NormalizedEmail تلقائياً) =====
         var adminUser = new User
         {
-            UserName = "admin@noor.sa",
-            Email = "admin@noor.sa",
+            UserName = "966500000000",
+            Email = "admin@noor.local",
+            PhoneNumber = "966500000000",
             FullName = "المشرف العام",
             Role = UserRole.Admin,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            MustChangePassword = false,
+            IsActive = true
         };
         await userManager.CreateAsync(adminUser, "Admin123!");
 
         var teacherUser = new User
         {
-            UserName = "teacher@noor.sa",
-            Email = "teacher@noor.sa",
+            UserName = "966500000001",
+            PhoneNumber = "966500000001",
+            Email = "teacher@noor.local",
             FullName = "عبدالله السلمي",
             Role = UserRole.Teacher,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            MustChangePassword = false,
+            IsActive = true
         };
         await userManager.CreateAsync(teacherUser, "Teacher123!");
 

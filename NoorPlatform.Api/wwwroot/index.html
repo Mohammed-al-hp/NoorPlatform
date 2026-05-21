@@ -14,6 +14,60 @@
         href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Amiri:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    <script>
+        /* Core shell — navigation & modals (loads before main app script) */
+        (function () {
+            function openModal(id) {
+                var el = document.getElementById(id);
+                if (el) el.classList.add('open');
+            }
+            function closeModal(id) {
+                var el = document.getElementById(id);
+                if (el) el.classList.remove('open');
+            }
+            function closeSidebar() {
+                var sb = document.getElementById('sidebar');
+                var ov = document.getElementById('sidebarOverlay');
+                if (sb) sb.classList.remove('open');
+                if (ov) ov.classList.remove('open');
+            }
+            function navigate(page, el) {
+                document.querySelectorAll('.content').forEach(function (c) { c.classList.remove('active'); });
+                document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+                var target = document.getElementById('page-' + page);
+                if (target) target.classList.add('active');
+                if (el) el.classList.add('active');
+                var titles = {
+                    dashboard: ['لوحة التحكم', 'نظرة عامة على المركز'],
+                    students: ['إدارة الطلاب', 'الطلاب المسجلون'],
+                    teachers: ['إدارة المحفظين', 'فريق التحفيظ'],
+                    circles: ['الحلقات الدراسية', 'جداول الحلقات'],
+                    attendance: ['الحضور والغياب', 'تسجيل يومي'],
+                    memorization: ['الحفظ والتسميع', 'سجلات التسميع'],
+                    exams: ['الاختبارات والتقييمات', 'نتائج الاختبارات'],
+                    announcements: ['الإعلانات', 'آخر الأخبار'],
+                    studentView: ['بوابة الطالب', 'متابعة تقدمك'],
+                    parentView: ['بوابة ولي الأمر', 'متابعة أبنائك'],
+                    payments: ['إدارة المدفوعات', 'الفواتير والرسوم'],
+                    parentFees: ['الرسوم الدراسية', 'فواتير الأبناء'],
+                    library: ['المكتبة الرقمية', 'ملفات ومراجع التحفيظ']
+                };
+                if (titles[page]) {
+                    var pt = document.getElementById('pageTitle');
+                    var ps = document.getElementById('pageSubtitle');
+                    if (pt) pt.textContent = titles[page][0];
+                    if (ps) ps.textContent = titles[page][1];
+                }
+                if (typeof window._onNavigatePage === 'function') window._onNavigatePage(page);
+                if (history.pushState) history.pushState({ page: page }, '', '#' + page);
+                closeSidebar();
+            }
+            window.openModal = openModal;
+            window.closeModal = closeModal;
+            window.navigate = navigate;
+            window.closeSidebar = closeSidebar;
+        })();
+    </script>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#10b981">
@@ -41,6 +95,9 @@
             --gradient: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
             --sidebar-w: 260px;
             --bg-secondary: #e8f5f0;
+            --surface: #ffffff;
+            --amber-light: #fef3c7;
+            --amber-dark: #b45309;
         }
 
         /* ===== LOGIN SCREEN ===== */
@@ -3175,19 +3232,19 @@
             <p>مرحباً بك في منصة نور لتحفيظ القرآن</p>
             <div id="loginForm">
                 <div class="form-group">
-                    <label>البريد الإلكتروني</label>
-                    <input type="email" id="loginEmail" class="form-control" placeholder="example@noor.sa"
-                        value="admin@noor.sa">
+                    <label>رقم الجوال</label>
+                    <input type="tel" id="loginPhone" class="form-control" placeholder="05xxxxxxxx"
+                        autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label>كلمة المرور</label>
                     <input type="password" id="loginPassword" class="form-control" placeholder="••••••••"
-                        value="Admin123!">
+                        autocomplete="current-password">
                 </div>
                 <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;"
                     onclick="handleLogin()">دخول</button>
-                <div class="login-footer">
-                    ليس لديك حساب؟ <a href="#" onclick="toggleAuthMode('register')">إنشاء حساب جديد</a>
+                <div class="login-footer" style="font-size:12px">
+                    الحسابات تُنشأ من قبل إدارة المركز فقط. للتسجيل تواصل معنا.
                 </div>
             </div>
             <div id="registerForm" style="display:none">
@@ -3206,8 +3263,8 @@
                 <div class="form-group">
                     <label>نوع الحساب</label>
                     <select id="regRole" class="form-control">
-                        <option value="Student">طالب / ولي أمر</option>
-                        <option value="Teacher">محفظ</option>
+                        <option value="Student">طالب</option>
+                        <option value="Parent">ولي أمر</option>
                     </select>
                 </div>
                 <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;"
@@ -3435,7 +3492,8 @@
                 </div>
                 <div style="overflow-x: auto; padding: 10px 20px;">
                     <div id="leaderboardWrap" style="display: flex; flex-direction: column; gap: 12px;">
-                        <div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري تحميل المتصدرين...</div>
+                        <div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري تحميل المتصدرين...
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3525,11 +3583,13 @@
                     <h2>إدارة الطلاب</h2>
                     <p id="studentsCount">247 طالب مسجل في المركز</p>
                 </div>
-                <div style="display:flex;gap:8px;align-items:center">
-                    <button class="btn btn-outline" onclick="exportStudentsCSV()"
+                <div style="display:flex;gap:8px;align-items:center" id="studentsHeaderActions">
+                    <button class="btn btn-outline" onclick="exportStudentsCSV()" id="btnExportStudents"
                         style="padding:9px 16px;font-size:13px">📥 تصدير</button>
-                    <button class="btn btn-primary" onclick="openModal('addStudentModal')"
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" id="btnAddStudent"
                         style="padding:9px 16px;font-size:13px">➕ إضافة طالب</button>
+                    <button class="btn btn-primary" onclick="openWaitingListModal()" id="btnAddWaiting"
+                        style="display:none;padding:9px 16px;font-size:13px">➕ إضافة لقائمة الانتظار</button>
                 </div>
             </div>
 
@@ -3548,8 +3608,12 @@
                     <div class="filter-chip" onclick="setStudentFilter('beginner', this)">مبتدئ ◂</div>
                     <div class="filter-chip" onclick="setStudentFilter('intermediate', this)">متوسط</div>
                     <div class="filter-chip" onclick="setStudentFilter('advanced', this)">متقدم</div>
-                    <div class="filter-chip" id="circleFilterChip" onclick="cycleCircleFilter(this)">جميع الحلقات ◂</div>
-                    <div class="filter-chip" onclick="setStudentFilter('archived', this)" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5">الأرشيف 📦</div>
+                    <div class="filter-chip" id="circleFilterChip" onclick="cycleCircleFilter(this)">جميع الحلقات ◂
+                    </div>
+                    <div class="filter-chip" onclick="setStudentFilter('archived', this)"
+                        style="background:#fee2e2;color:#dc2626;border-color:#fca5a5">الأرشيف 📦</div>
+                    <div class="filter-chip" onclick="setStudentFilter('waiting', this)"
+                        style="background:#fef3c7;color:#b45309;border-color:#fcd34d">قائمة الانتظار ⏳</div>
                 </div>
             </div>
 
@@ -3592,7 +3656,8 @@
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-primary" id="jlwm2x" onclick="markAllPresent()">✅ تحديد الجميع حضور</button>
                     <button class="btn btn-outline" id="jlwm4m" onclick="saveAttendance()">💾 حفظ</button>
-                    <button class="btn btn-outline" id="jlwm5q" onclick="showToast('تم البحث عن التقارير')">🔍 بحث</button>
+                    <button class="btn btn-outline" id="jlwm5q" onclick="showToast('تم البحث عن التقارير')">🔍
+                        بحث</button>
                     <button class="btn btn-outline" id="jlwm6k" onclick="printAttendance()">🖨️ طباعة</button>
                 </div>
             </div>
@@ -3605,7 +3670,8 @@
                         <div class="circle-chip" onclick="selectCircle(this)">حلقة الصباح</div>
                         <div class="circle-chip" onclick="selectCircle(this)">حلقة المغرب</div>
                         <div class="circle-chip" onclick="selectCircle(this)">حلقة العشاء</div>
-                        <button class="btn btn-primary" id="qjlwm1" onclick="fetchStudentsAttendance()" style="padding: 4px 12px; font-size: 12px;">بحث</button>
+                        <button class="btn btn-primary" id="qjlwm1" onclick="fetchStudentsAttendance()"
+                            style="padding: 4px 12px; font-size: 12px;">بحث</button>
                     </div>
                     <!-- Summary badges -->
                     <div style="display:flex;gap:10px;margin-top:4px">
@@ -3615,7 +3681,10 @@
                     </div>
                 </div>
                 <div class="date-nav" style="display:flex;align-items:center;gap:15px">
-                    <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;border-color:#ef4444;color:#ef4444" onclick="sendBulkAbsenceNotifs(1)" title="إرسال إشعارات غياب جماعية لأولياء الأمور للطلاب الغائبين اليوم">
+                    <button class="btn btn-outline"
+                        style="padding:6px 12px;font-size:12px;border-color:#ef4444;color:#ef4444"
+                        onclick="sendBulkAbsenceNotifs(1)"
+                        title="إرسال إشعارات غياب جماعية لأولياء الأمور للطلاب الغائبين اليوم">
                         🔔 إشعار غياب جماعي
                     </button>
                     <div>
@@ -3637,7 +3706,8 @@
                     <p>متابعة تقدم الطلاب في حفظ القرآن الكريم</p>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-outline" id="jlwmab" onclick="showToast('تم فتح واجهة الإنجاز الجماعي')">👥 الإنجاز الجماعي</button>
+                    <button class="btn btn-outline" id="jlwmab" onclick="showToast('تم فتح واجهة الإنجاز الجماعي')">👥
+                        الإنجاز الجماعي</button>
                     <button class="btn btn-primary" onclick="openModal('addMemModal')">➕ تسجيل تسميع</button>
                 </div>
             </div>
@@ -3715,17 +3785,21 @@
             <div class="page-header">
                 <div>
                     <h2>📚 مكتبة الطلاب</h2>
-                    <p style="color:var(--text-muted);font-size:13px;margin-top:4px">الكتب، المتون، مناهج المركز، وملفات الحفظ والمراجعة</p>
+                    <p style="color:var(--text-muted);font-size:13px;margin-top:4px">الكتب، المتون، مناهج المركز، وملفات
+                        الحفظ والمراجعة</p>
                 </div>
                 <div class="actions admin-only teacher-only" id="libraryAdminActions" style="display:none;">
-                    <button class="btn btn-primary" onclick="openUploadLibraryModal()">➕ إضافة ملف جديد</button>
+                    <button type="button" id="btnAddLibraryFile" class="btn btn-primary"
+                        onclick="openUploadLibraryModal()">➕ إضافة ملف جديد</button>
                 </div>
             </div>
 
             <!-- شريط البحث والفلترة -->
             <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                <input type="text" id="librarySearchInput" class="form-control" placeholder="ابحث عن كتاب أو ملف..." style="flex:1; min-width:200px" onkeyup="filterLibraryItems()">
-                <select id="libraryCategoryFilter" class="form-control" style="width:150px" onchange="filterLibraryItems()">
+                <input type="text" id="librarySearchInput" class="form-control" placeholder="ابحث عن كتاب أو ملف..."
+                    style="flex:1; min-width:200px" onkeyup="filterLibraryItems()">
+                <select id="libraryCategoryFilter" class="form-control" style="width:150px"
+                    onchange="filterLibraryItems()">
                     <option value="">كل التصنيفات</option>
                     <option value="مصحف">مصحف</option>
                     <option value="متن">متن</option>
@@ -3736,13 +3810,17 @@
                 </select>
             </div>
 
-            <div class="grid-container" id="libraryCards" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            <div class="grid-container" id="libraryCards"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
                 <!-- البطاقات تُضاف هنا عبر JS -->
             </div>
-            <div id="libraryEmptyState" style="display:none; text-align:center; padding:50px; background:var(--surface); border-radius:16px; border:1px solid var(--border)">
+            <div id="libraryEmptyState"
+                style="display:none; text-align:center; padding:50px; background:var(--surface); border-radius:16px; border:1px solid var(--border)">
                 <div style="font-size:48px; margin-bottom:16px">📂</div>
                 <h3>المكتبة فارغة</h3>
                 <p style="color:var(--text-muted); font-size:14px; margin-top:8px">لم يتم إضافة أي ملفات حتى الآن.</p>
+                <button type="button" class="btn btn-primary" style="margin-top:16px" id="btnAddLibraryFileEmpty"
+                    onclick="openUploadLibraryModal()">➕ إضافة ملف جديد</button>
             </div>
         </div>
 
@@ -4237,20 +4315,16 @@
                         <input class="form-input" type="text" placeholder="عبدالله السلمي">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">البريد الإلكتروني *</label>
-                        <input class="form-input" type="email" placeholder="teacher@noor.sa">
+                        <label class="form-label">رقم الجوال *</label>
+                        <input class="form-input" type="tel" placeholder="05xxxxxxxx">
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">كلمة المرور *</label>
-                        <input class="form-input" type="password" placeholder="Noor@1234">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">التخصص / المؤهل</label>
-                        <input class="form-input" type="text" placeholder="حافظ للقرآن الكريم كاملاً">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">التخصص / المؤهل</label>
+                    <input class="form-input" type="text" placeholder="حافظ للقرآن الكريم كاملاً">
                 </div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px">يُنشأ حساب تلقائياً بكلمة مرور مؤقتة:
+                    Noor@123</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('addTeacherModal')">إلغاء</button>
@@ -4372,7 +4446,8 @@
                 <label>تاريخ الاستحقاق</label>
                 <input type="date" id="invoiceDueDate" class="form-control">
             </div>
-            <button class="btn btn-primary" onclick="submitInvoice()" style="width:100%; justify-content:center; margin-top:15px;">إصدار الفاتورة</button>
+            <button class="btn btn-primary" onclick="submitInvoice()"
+                style="width:100%; justify-content:center; margin-top:15px;">إصدار الفاتورة</button>
         </div>
     </div>
 
@@ -4396,7 +4471,7 @@
     </div> <!-- End App Wrapper -->
 
     <!-- ─── مودال إضافة ملف للمكتبة ─── -->
-    <div class="modal-overlay" id="uploadLibraryModalOverlay" onclick="closeUploadLibraryModal()">
+    <div class="modal-overlay" id="uploadLibraryModal" onclick="if(event.target===this) closeUploadLibraryModal()">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <h3>📚 إضافة ملف للمكتبة</h3>
@@ -4420,12 +4495,13 @@
                 </div>
                 <div class="form-group">
                     <label>الوصف (اختياري)</label>
-                    <textarea class="form-control" name="description" rows="2" placeholder="وصف مختصر للملف..."></textarea>
+                    <textarea class="form-control" name="description" rows="2"
+                        placeholder="وصف مختصر للملف..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>ملف PDF</label>
                     <input type="file" class="form-control" name="file" accept=".pdf" required>
-                    <small style="color:var(--text-muted)">يسمح بملفات PDF فقط (الحد الأقصى 20 ميجابايت).</small>
+                    <small style="color:var(--text-muted)">يسمح بملفات PDF فقط (الحد الأقصى 50 ميجابايت).</small>
                 </div>
                 <div style="margin-top:20px; text-align:left">
                     <button type="button" class="btn btn-outline" onclick="closeUploadLibraryModal()">إلغاء</button>
@@ -4436,12 +4512,132 @@
     </div>
 
     <!-- ─── عارض الـ PDF الداخلي ─── -->
-    <div class="modal-overlay" id="pdfViewerModalOverlay" onclick="closePdfViewerModal()" style="z-index: 10000; padding: 20px;">
-        <div class="modal" onclick="event.stopPropagation()" style="max-width: 900px; width: 100%; height: 90vh; display: flex; flex-direction: column;">
+    <!-- مودال بيانات الحساب الجديد -->
+    <div class="modal-overlay" id="accountCredentialsModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🔐 بيانات الدخول</h3>
+                <button class="close-modal" onclick="closeModal('accountCredentialsModal')">×</button>
+            </div>
+            <div class="modal-body" id="accountCredentialsBody" style="text-align:right;line-height:1.8"></div>
+            <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
+                <button type="button" class="btn btn-outline" onclick="copyAccountCredentials()">📋 نسخ</button>
+                <button type="button" class="btn btn-outline" onclick="printAccountCredentials()">🖨 طباعة</button>
+                <button type="button" class="btn btn-primary" onclick="sendAccountCredentialsWhatsApp()">💬
+                    واتساب</button>
+                <button type="button" class="btn btn-primary"
+                    onclick="closeModal('accountCredentialsModal')">تم</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تغيير كلمة المرور (أول دخول) -->
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🔒 تغيير كلمة المرور</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color:var(--text-muted);margin-bottom:16px">يجب تغيير كلمة المرور المؤقتة قبل المتابعة.</p>
+                <div class="form-group">
+                    <label>كلمة المرور الحالية</label>
+                    <input type="password" id="currentPasswordInput" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور الجديدة</label>
+                    <input type="password" id="newPasswordInput" class="form-control" placeholder="8 أحرف على الأقل">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitChangePassword()" style="width:100%">حفظ
+                    ومتابعة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال إضافة/تعديل قائمة الانتظار -->
+    <div class="modal-overlay" id="waitingListFormModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="waitingListFormTitle">⏳ إضافة لقائمة الانتظار</h3>
+                <button class="close-modal" onclick="closeModal('waitingListFormModal')">×</button>
+            </div>
+            <form id="waitingListForm" onsubmit="saveWaitingListEntry(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="waitingEntryId" value="">
+                    <div class="form-group"><label>اسم الطالب *</label><input class="form-control" id="wlFullName"
+                            required></div>
+                    <div class="form-row" style="display:flex;gap:12px">
+                        <div class="form-group" style="flex:1"><label>هاتف الطالب *</label><input class="form-control"
+                                id="wlPhone" type="tel" required placeholder="05xxxxxxxx"></div>
+                        <div class="form-group" style="flex:1"><label>العمر</label><input class="form-control"
+                                id="wlAge" type="number" min="4" max="80"></div>
+                    </div>
+                    <div class="form-group"><label>اسم ولي الأمر</label><input class="form-control" id="wlParentName">
+                    </div>
+                    <div class="form-group"><label>هاتف ولي الأمر</label><input class="form-control" id="wlParentPhone"
+                            type="tel" placeholder="05xxxxxxxx"></div>
+                    <div class="form-row" style="display:flex;gap:12px">
+                        <div class="form-group" style="flex:1"><label>المستوى المطلوب</label>
+                            <select class="form-control" id="wlLevel">
+                                <option>مبتدئ</option>
+                                <option>متوسط</option>
+                                <option>متقدم</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1"><label>الوقت المفضل</label><input class="form-control"
+                                id="wlPreferredTime" placeholder="بعد العصر"></div>
+                    </div>
+                    <div class="form-group" id="wlStatusGroup" style="display:none"><label>الحالة</label>
+                        <select class="form-control" id="wlStatus">
+                            <option value="Pending">قيد الانتظار</option>
+                            <option value="Contacted">تم التواصل</option>
+                            <option value="Rejected">مرفوض</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ملاحظات</label><textarea class="form-control" id="wlNotes"
+                            rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline"
+                        onclick="closeModal('waitingListFormModal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">💾 حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال تحويل إلى طالب -->
+    <div class="modal-overlay" id="convertWaitingModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🎓 تحويل إلى طالب</h3>
+                <button class="close-modal" onclick="closeModal('convertWaitingModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="convertWaitingName" style="margin-bottom:12px;font-weight:700"></p>
+                <div class="form-group">
+                    <label>اختر الحلقة *</label>
+                    <select class="form-control" id="convertCircleId" required></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('convertWaitingModal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="confirmConvertWaiting()">✅ تحويل وإنشاء
+                    حساب</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="pdfViewerModal" onclick="if(event.target===this) closePdfViewerModal()"
+        style="z-index: 10000; padding: 20px;">
+        <div class="modal" onclick="event.stopPropagation()"
+            style="max-width: 900px; width: 100%; height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h3 id="pdfViewerTitle">عرض الملف</h3>
                 <div style="display: flex; gap: 10px;">
-                    <a href="#" id="pdfViewerDownloadBtn" class="btn btn-primary" style="padding: 4px 12px; text-decoration: none; font-size: 13px;" download>تنزيل ⬇</a>
+                    <a href="#" id="pdfViewerDownloadBtn" class="btn btn-primary"
+                        style="padding: 4px 12px; text-decoration: none; font-size: 13px;" download>تنزيل ⬇</a>
                     <button class="close-modal" onclick="closePdfViewerModal()">×</button>
                 </div>
             </div>
@@ -4462,10 +4658,32 @@
         // ===== API CONFIG =====
         const API_URL = '/api';
         let TOKEN = localStorage.getItem('noor_token');
-        let USER = JSON.parse(localStorage.getItem('noor_user') || '{}');
+        let USER = {};
+        try { USER = JSON.parse(localStorage.getItem('noor_user') || '{}'); } catch { USER = {}; }
+
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function isTokenExpired(token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.exp * 1000 < Date.now();
+            } catch { return true; }
+        }
 
         // ===== AUTH =====
         function checkAuth() {
+            if (TOKEN && isTokenExpired(TOKEN)) {
+                logout();
+                return;
+            }
             if (!TOKEN) {
                 document.getElementById('loginScreen').style.display = 'flex';
             } else {
@@ -4505,13 +4723,11 @@
         }
 
         async function handleLogin() {
-            const emailInput = document.getElementById('loginEmail');
+            const phoneInput = document.getElementById('loginPhone');
             const passInput = document.getElementById('loginPassword');
-            // Clear previous validation
             clearValidation(document.getElementById('loginForm'));
-            // Validate
             const isValid = validateForm([
-                { id: 'loginEmail', required: true, requiredMsg: 'يرجى إدخال البريد الإلكتروني', pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, patternMsg: 'صيغة بريد إلكتروني غير صحيحة' },
+                { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الجوال', pattern: /^05\d{8}$/, patternMsg: 'الرقم يجب أن يبدأ بـ 05 ويتكون من 10 أرقام' },
                 { id: 'loginPassword', required: true, requiredMsg: 'يرجى إدخال كلمة المرور', minLength: 6, minLengthMsg: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' }
             ]);
             if (!isValid) return;
@@ -4523,31 +4739,116 @@
                 const res = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: emailInput.value, password: passInput.value })
+                    body: JSON.stringify({ phone: phoneInput.value.trim(), password: passInput.value })
                 });
 
                 if (res.status === 503 || res.status === 502 || res.status === 500) {
-                    throw new Error('الخادم غير متوفر حالياً (الباك-إند متوقف). يرجى التأكد من تشغيل الخادم.');
+                    throw new Error('الخادم غير متوفر حالياً. يرجى التأكد من تشغيل الخادم.');
                 }
 
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+                    throw new Error(errData.message || 'رقم الجوال أو كلمة المرور غير صحيحة');
                 }
 
                 const data = await res.json();
                 TOKEN = data.token;
-                USER = { fullName: data.user?.fullName || data.fullName, role: data.user?.role || data.role };
+                USER = {
+                    fullName: data.user?.fullName || data.fullName,
+                    role: data.user?.role || data.role,
+                    phone: data.user?.phone
+                };
                 localStorage.setItem('noor_token', TOKEN);
                 localStorage.setItem('noor_user', JSON.stringify(USER));
 
-                showToast('✅ تم تسجيل الدخول بنجاح');
-                checkAuth();
+                if (data.mustChangePassword) {
+                    openModal('changePasswordModal');
+                    showToast('⚠️ يرجى تغيير كلمة المرور المؤقتة');
+                } else {
+                    showToast('✅ تم تسجيل الدخول بنجاح');
+                    checkAuth();
+                }
             } catch (err) {
                 showToast('❌ ' + err.message);
             } finally {
                 btnLoading(loginBtn, false);
             }
+        }
+
+        async function submitChangePassword() {
+            const current = document.getElementById('currentPasswordInput').value;
+            const newPass = document.getElementById('newPasswordInput').value;
+            if (!current || newPass.length < 8) {
+                showToast('⚠️ كلمة المرور الجديدة 8 أحرف على الأقل');
+                return;
+            }
+            try {
+                await apiFetch('/auth/change-password', 'POST', { currentPassword: current, newPassword: newPass });
+                closeModal('changePasswordModal');
+                showToast('✅ تم تغيير كلمة المرور');
+                checkAuth();
+            } catch (e) {
+                showToast('❌ ' + (e.message || 'فشل التغيير'));
+            }
+        }
+    </script>
+
+    <script>
+        let _lastAccountCredentials = null;
+
+        function showAccountCredentialsModal(credentials, whatsappPhone) {
+            _lastAccountCredentials = { ...credentials, whatsappPhone: whatsappPhone || credentials.displayPhone || credentials.phone };
+            const body = document.getElementById('accountCredentialsBody');
+            body.innerHTML = `
+                <p><strong>الاسم:</strong> ${escapeHtml(credentials.fullName)}</p>
+                <p><strong>رقم الهاتف (تسجيل الدخول):</strong> <code>${escapeHtml(credentials.displayPhone || credentials.phone)}</code></p>
+                <p><strong>كلمة المرور المؤقتة:</strong> <code>${escapeHtml(credentials.tempPassword)}</code></p>
+                <p style="color:var(--text-muted);font-size:13px">يجب تغيير كلمة المرور بعد أول تسجيل دخول.</p>`;
+            openModal('accountCredentialsModal');
+        }
+
+        function copyAccountCredentials() {
+            if (!_lastAccountCredentials) return;
+            const c = _lastAccountCredentials;
+            const text = `منصة نور\nالاسم: ${c.fullName}\nرقم الهاتف: ${c.displayPhone || c.phone}\nكلمة المرور: ${c.tempPassword}`;
+            navigator.clipboard.writeText(text).then(() => showToast('✅ تم النسخ'));
+        }
+
+        function printAccountCredentials() {
+            if (!_lastAccountCredentials) return;
+            const c = _lastAccountCredentials;
+            const w = window.open('', '_blank');
+            if (!w) return;
+            const d = w.document;
+            d.open();
+            d.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><\/head>');
+            d.write('<body style="font-family:Tajawal,sans-serif;padding:24px">');
+            d.write('<h2>بيانات الدخول — منصة نور<\/h2>');
+            d.write('<p>الاسم: ' + escapeHtml(c.fullName) + '<\/p>');
+            d.write('<p>رقم الهاتف: ' + escapeHtml(c.displayPhone || c.phone) + '<\/p>');
+            d.write('<p>كلمة المرور: ' + escapeHtml(c.tempPassword) + '<\/p>');
+            d.write('<\/body><\/html>');
+            d.close();
+            w.print();
+        }
+
+        function sendAccountCredentialsWhatsApp() {
+            if (!_lastAccountCredentials) return;
+            const c = _lastAccountCredentials;
+            const phone = (c.whatsappPhone || c.displayPhone || '').replace(/\D/g, '').replace(/^0/, '966');
+            const msg = `السلام عليكم ورحمة الله وبركاته
+
+تم إنشاء حسابكم في منصة نور لتحفيظ القرآن الكريم.
+
+بيانات الدخول:
+
+رقم الهاتف: ${c.displayPhone || c.phone}
+كلمة المرور المؤقتة: ${c.tempPassword}
+
+يرجى تغيير كلمة المرور بعد أول تسجيل دخول.
+
+بارك الله فيكم.`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         async function handleRegister() {
@@ -4703,7 +5004,7 @@
                 timeline.innerHTML = activities.map(a => {
                     const timeStr = new Date(a.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
                     const dotClass = a.color === 'green' ? 'nd-green' : a.color === 'blue' ? 'nd-blue' : a.color === 'amber' ? 'nd-amber' : 'nd-red';
-                    
+
                     return `
                     <div class="notif-item">
                         <div class="notif-dot-wrap">
@@ -4712,10 +5013,10 @@
                         </div>
                         <div class="notif-content">
                             <div class="notif-content-top">
-                                <p>${a.description}</p>
+                                <p>${escapeHtml(a.description)}</p>
                                 <div class="notif-green-dot" style="background-color: var(--${a.color});"></div>
                             </div>
-                            <div class="notif-time">${timeStr} — ${a.userName}</div>
+                            <div class="notif-time">${timeStr} — ${escapeHtml(a.userName)}</div>
                         </div>
                     </div>`;
                 }).join('');
@@ -4728,19 +5029,22 @@
             const data = await apiFetch('/announcements');
             const list = document.getElementById('annList');
             list.innerHTML = data.map(a => `
-            <div class="ann-card" onclick="showToast('📢 ${a.title}')">
+            <div class="ann-card" data-title="${escapeHtml(a.title)}">
               ${a.isUnread ? '<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;background:#ef4444;border-radius:50%"></div>' : ''}
               <div class="ann-indicator" style="background:${a.color}"></div>
               <div class="ann-card-content">
                 <div class="ann-card-top">
-                  <h4>${a.title}</h4>
+                  <h4>${escapeHtml(a.title)}</h4>
                   <time>${new Date(a.createdAt).toLocaleDateString('ar-SA')}</time>
                 </div>
-                <p>${a.content}</p>
-                <div class="ann-target" style="color:${a.color}">🎯 ${a.target}</div>
+                <p>${escapeHtml(a.content)}</p>
+                <div class="ann-target" style="color:${escapeHtml(a.color)}">🎯 ${escapeHtml(a.target)}</div>
               </div>
             </div>
           `).join('');
+            list.querySelectorAll('.ann-card').forEach(card => {
+                card.addEventListener('click', () => showToast('📢 ' + card.dataset.title));
+            });
         }
 
         // ─── المدفوعات والرسوم ──────────────────────────────────────
@@ -4846,8 +5150,11 @@
         }
 
         let _allStudentsData = [];
+        let _waitingListData = [];
         let _activeStudentFilter = 'all';
         let _isArchiveMode = false;
+        let _isWaitingMode = false;
+        let _convertWaitingId = null;
 
         async function fetchStudents() {
             const grid = document.getElementById('studentsGrid')
@@ -4859,16 +5166,16 @@
             const url = _isArchiveMode ? '/students/archived' : '/students';
             const data = await apiFetch(url);
             _allStudentsData = data;
-            
+
             const map = { all: null, beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم' };
             const level = map[_activeStudentFilter];
             const filtered = (level && !_isArchiveMode) ? _allStudentsData.filter(s => s.level === level) : _allStudentsData;
-            
+
             renderStudentCards(filtered);
             const cnt = document.getElementById('studentsCount');
             if (cnt) {
-                 if (_isArchiveMode) cnt.textContent = data.length + ' طالب في الأرشيف';
-                 else cnt.textContent = data.length + ' طالب مسجل في المركز';
+                if (_isArchiveMode) cnt.textContent = data.length + ' طالب في الأرشيف';
+                else cnt.textContent = data.length + ' طالب مسجل في المركز';
             }
         }
 
@@ -4917,12 +5224,12 @@
               </div>
               <div class="student-card-actions">
                 ${_isArchiveMode ? `
-                  <button class="btn btn-primary" onclick="restoreStudent(${s.id},'${s.fullName.replace(/'/g,"\\'")}')" style="flex:1">🔄 استعادة من الأرشيف</button>
+                  <button class="btn btn-primary" onclick="restoreStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}')" style="flex:1">🔄 استعادة من الأرشيف</button>
                 ` : `
                   <button class="btn btn-view" onclick="viewStudentDetails(${s.id})" title="عرض التفاصيل">👁 عرض</button>
-                  <button class="btn btn-edit" onclick="editStudent(${s.id},'${s.fullName.replace(/'/g,"\\'")}','${s.level}',${s.circleId || 'null'})" title="تعديل">✏️ تعديل</button>
+                  <button class="btn btn-edit" onclick="editStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}','${s.level}',${s.circleId || 'null'})" title="تعديل">✏️ تعديل</button>
                   <button class="btn-pdf" onclick="exportStudentPDF(${s.id})" title="تقرير PDF">📄 PDF</button>
-                  <button class="btn btn-delete" onclick="deleteStudent(${s.id},'${s.fullName.replace(/'/g,"\\'")}')" title="أرشفة">📦 أرشفة</button>
+                  <button class="btn btn-delete" onclick="deleteStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}')" title="أرشفة">📦 أرشفة</button>
                 `}
               </div>
             </div>`;
@@ -4931,6 +5238,7 @@
 
         // ── بحث حي في الطلاب ──
         function filterStudentsLive(q) {
+            if (_isWaitingMode) return;
             const filtered = _allStudentsData.filter(s =>
                 s.fullName.includes(q) || s.circleName.includes(q)
             );
@@ -4940,14 +5248,175 @@
         // ── تصفية بالمستوى ──
         function setStudentFilter(filter, el) {
             _activeStudentFilter = filter;
-            if (filter === 'archived') {
-                _isArchiveMode = true;
-            } else {
-                _isArchiveMode = false;
-            }
+            _isArchiveMode = filter === 'archived';
+            _isWaitingMode = filter === 'waiting';
+
+            document.getElementById('btnAddStudent').style.display = _isWaitingMode ? 'none' : 'inline-flex';
+            document.getElementById('btnAddWaiting').style.display = _isWaitingMode ? 'inline-flex' : 'none';
+            document.getElementById('btnExportStudents').style.display = _isWaitingMode ? 'none' : 'inline-flex';
+            document.getElementById('studentSearchInput').closest('.students-search-bar').style.display =
+                _isWaitingMode ? 'none' : 'block';
+
             document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
             if (el) el.classList.add('active');
-            fetchStudents();
+
+            if (_isWaitingMode) fetchWaitingList();
+            else fetchStudents();
+        }
+
+        async function fetchWaitingList() {
+            const grid = document.getElementById('studentsGrid');
+            if (!grid) return;
+            grid.innerHTML = `<div style="grid-column:1/-1">${[1, 2, 3].map(() => '<div class="skeleton" style="height:160px;border-radius:20px;margin-bottom:12px"></div>').join('')}</div>`;
+            try {
+                const data = await apiFetch('/waiting-list');
+                _waitingListData = data;
+                const cnt = document.getElementById('studentsCount');
+                if (cnt) cnt.textContent = data.length + ' في قائمة الانتظار (الأقدم أولاً)';
+                renderWaitingListCards(data);
+            } catch (e) {
+                showToast('❌ ' + (e.message || 'فشل تحميل قائمة الانتظار'));
+            }
+        }
+
+        function renderWaitingListCards(data) {
+            const grid = document.getElementById('studentsGrid');
+            if (!data.length) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+                    <div class="empty-state-icon">⏳</div>
+                    <div class="empty-state-title">قائمة الانتظار فارغة</div>
+                    <div class="empty-state-desc">لا يوجد طلاب بانتظار مقعد في الحلقات</div>
+                    <button class="btn btn-primary" style="margin-top:16px" onclick="openWaitingListModal()">➕ إضافة طالب</button>
+                </div>`;
+                return;
+            }
+            const statusMap = { Pending: 'قيد الانتظار', Contacted: 'تم التواصل', Accepted: 'مقبول', Rejected: 'مرفوض' };
+            grid.innerHTML = data.map((w, i) => `
+            <div class="student-card waiting-card" style="animation-delay:${i * 0.04}s" data-waiting-id="${w.id}">
+              <div class="student-card-top">
+                <div class="student-avatar-lg" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${escapeHtml(w.fullName.slice(0, 2))}</div>
+                <div class="student-card-info" style="flex:1">
+                  <h4>${escapeHtml(w.fullName)}</h4>
+                  <span style="font-size:11px">📱 ${escapeHtml(w.displayPhone || w.phone)}</span>
+                  <div style="margin-top:6px">
+                    <span class="status-badge status-late" style="font-size:10px">${statusMap[w.status] || w.status}</span>
+                    <span class="status-badge status-good" style="font-size:10px;margin-right:4px">${escapeHtml(w.requestedLevel)}</span>
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">
+                <div>👤 ولي الأمر: ${escapeHtml(w.parentName || '—')} ${w.displayParentPhone ? ' · ' + escapeHtml(w.displayParentPhone) : ''}</div>
+                <div>🕐 تسجيل: ${new Date(w.registrationDate).toLocaleDateString('ar-SA')}</div>
+                ${w.preferredTime ? `<div>⏰ الوقت المفضل: ${escapeHtml(w.preferredTime)}</div>` : ''}
+              </div>
+              <div class="student-card-actions" style="flex-wrap:wrap">
+                <button type="button" class="btn btn-primary btn-convert-waiting" data-id="${w.id}" style="flex:1;min-width:120px">🎓 تحويل لطالب</button>
+                <button type="button" class="btn btn-outline btn-wa-waiting" data-phone="${escapeHtml(w.displayParentPhone || w.displayPhone || '')}" data-name="${escapeHtml(w.fullName)}">💬 واتساب</button>
+                <button type="button" class="btn btn-edit btn-edit-waiting" data-id="${w.id}">✏️</button>
+                <button type="button" class="btn btn-delete btn-del-waiting" data-id="${w.id}">🗑</button>
+              </div>
+            </div>`).join('');
+        }
+
+        if (!window._waitingListBound) {
+            window._waitingListBound = true;
+            document.getElementById('studentsGrid')?.addEventListener('click', e => {
+                const convert = e.target.closest('.btn-convert-waiting');
+                if (convert) { openConvertWaitingModal(parseInt(convert.dataset.id, 10)); return; }
+                const edit = e.target.closest('.btn-edit-waiting');
+                if (edit) { openEditWaitingModal(parseInt(edit.dataset.id, 10)); return; }
+                const del = e.target.closest('.btn-del-waiting');
+                if (del) { deleteWaitingEntry(parseInt(del.dataset.id, 10)); return; }
+                const wa = e.target.closest('.btn-wa-waiting');
+                if (wa) {
+                    const phone = wa.dataset.phone?.replace(/\D/g, '').replace(/^0/, '966');
+                    const msg = encodeURIComponent(`السلام عليكم ${wa.dataset.name}، نتواصل معكم بخصوص التسجيل في منصة نور لتحفيظ القرآن.`);
+                    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+                }
+            });
+        }
+
+        function openWaitingListModal() {
+            document.getElementById('waitingListFormTitle').textContent = '⏳ إضافة لقائمة الانتظار';
+            document.getElementById('waitingEntryId').value = '';
+            document.getElementById('waitingListForm').reset();
+            document.getElementById('wlStatusGroup').style.display = 'none';
+            openModal('waitingListFormModal');
+        }
+
+        function openEditWaitingModal(id) {
+            const w = _waitingListData.find(x => x.id === id);
+            if (!w) return;
+            document.getElementById('waitingListFormTitle').textContent = '✏️ تعديل قائمة الانتظار';
+            document.getElementById('waitingEntryId').value = w.id;
+            document.getElementById('wlFullName').value = w.fullName;
+            document.getElementById('wlPhone').value = w.displayPhone || w.phone;
+            document.getElementById('wlAge').value = w.age || '';
+            document.getElementById('wlParentName').value = w.parentName || '';
+            document.getElementById('wlParentPhone').value = w.displayParentPhone || w.parentPhone || '';
+            document.getElementById('wlLevel').value = w.requestedLevel || 'مبتدئ';
+            document.getElementById('wlPreferredTime').value = w.preferredTime || '';
+            document.getElementById('wlNotes').value = w.notes || '';
+            document.getElementById('wlStatus').value = w.status || 'Pending';
+            document.getElementById('wlStatusGroup').style.display = 'block';
+            openModal('waitingListFormModal');
+        }
+
+        async function saveWaitingListEntry(e) {
+            e.preventDefault();
+            const id = document.getElementById('waitingEntryId').value;
+            const payload = {
+                fullName: document.getElementById('wlFullName').value.trim(),
+                phone: document.getElementById('wlPhone').value.trim(),
+                parentName: document.getElementById('wlParentName').value.trim(),
+                parentPhone: document.getElementById('wlParentPhone').value.trim(),
+                age: parseInt(document.getElementById('wlAge').value, 10) || null,
+                requestedLevel: document.getElementById('wlLevel').value,
+                preferredTime: document.getElementById('wlPreferredTime').value.trim(),
+                notes: document.getElementById('wlNotes').value.trim(),
+                status: document.getElementById('wlStatus').value
+            };
+            try {
+                if (id) await apiFetch(`/waiting-list/${id}`, 'PUT', payload);
+                else await apiFetch('/waiting-list', 'POST', payload);
+                closeModal('waitingListFormModal');
+                showToast('✅ تم الحفظ');
+                fetchWaitingList();
+            } catch (err) {
+                showToast('❌ ' + err.message);
+            }
+        }
+
+        async function deleteWaitingEntry(id) {
+            if (!confirm('حذف هذا السجل من قائمة الانتظار؟')) return;
+            try {
+                await apiFetch(`/waiting-list/${id}`, 'DELETE');
+                showToast('✅ تم الحذف');
+                fetchWaitingList();
+            } catch (e) { showToast('❌ ' + e.message); }
+        }
+
+        function openConvertWaitingModal(id) {
+            _convertWaitingId = id;
+            const w = _waitingListData.find(x => x.id === id);
+            if (!w) return;
+            document.getElementById('convertWaitingName').textContent = 'تحويل: ' + w.fullName;
+            const sel = document.getElementById('convertCircleId');
+            sel.innerHTML = (window._circles || []).map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+            openModal('convertWaitingModal');
+        }
+
+        async function confirmConvertWaiting() {
+            const circleId = parseInt(document.getElementById('convertCircleId').value, 10);
+            if (!_convertWaitingId || !circleId) return;
+            try {
+                const res = await apiFetch(`/waiting-list/${_convertWaitingId}/convert-to-student`, 'POST', { circleId });
+                closeModal('convertWaitingModal');
+                showToast('✅ ' + (res.message || 'تم التحويل'));
+                if (res.credentials) showAccountCredentialsModal(res.credentials, res.credentials.displayPhone);
+                _isWaitingMode = false;
+                setStudentFilter('all', document.querySelector('.filter-chip'));
+            } catch (e) { showToast('❌ ' + e.message); }
         }
 
         // ── تصفية بالحلقة (دورية) ──
@@ -5028,7 +5497,7 @@
                     let medal = '';
                     let bgColor = 'var(--card)';
                     let borderColor = 'var(--border)';
-                    
+
                     if (s.rank === 1) { medal = '🥇'; bgColor = '#fffbeb'; borderColor = '#fcd34d'; }
                     else if (s.rank === 2) { medal = '🥈'; bgColor = '#f8fafc'; borderColor = '#cbd5e1'; }
                     else if (s.rank === 3) { medal = '🥉'; bgColor = '#fff7ed'; borderColor = '#fdba74'; }
@@ -5060,50 +5529,18 @@
             }
         }
 
-        // ===== NAVIGATION =====
-        function navigate(page, el) {
-            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            const target = document.getElementById('page-' + page);
-            if (target) target.classList.add('active');
-            if (el) el.classList.add('active');
-
-            const titles = {
-                dashboard: ['لوحة التحكم', 'نظرة عامة على المركز'],
-                students: ['إدارة الطلاب', 'الطلاب المسجلون'],
-                teachers: ['إدارة المحفظين', 'فريق التحفيظ'],
-                circles: ['الحلقات الدراسية', 'جداول الحلقات'],
-                attendance: ['الحضور والغياب', 'تسجيل يومي'],
-                memorization: ['الحفظ والتسميع', 'سجلات التسميع'],
-                exams: ['الاختبارات والتقييمات', 'نتائج الاختبارات'],
-                announcements: ['الإعلانات', 'آخر الأخبار'],
-                studentView: ['بوابة الطالب', 'متابعة تقدمك'],
-                parentView: ['بوابة ولي الأمر', 'متابعة أبنائك'], // ✅ إصلاح 3
-                payments: ['إدارة المدفوعات', 'الفواتير والرسوم'],
-                parentFees: ['الرسوم الدراسية', 'فواتير الأبناء'],
-            };
-            if (titles[page]) {
-                document.getElementById('pageTitle').textContent = titles[page][0];
-                document.getElementById('pageSubtitle').textContent = titles[page][1];
-            }
-
-            // تحميل بيانات الصفحة عند الانتقال إليها (مدمج هنا بدلاً من override منفصل)
+        // ===== NAVIGATION (page data loaders — shell is in head script) =====
+        window._onNavigatePage = function (page) {
             if (page === 'attendance') fetchStudentsAttendance();
             if (page === 'memorization') fetchMemorizationData();
             if (page === 'library') fetchLibraryItems();
             if (page === 'exams') fetchExams();
             if (page === 'studentView') fetchStudentView();
-            if (page === 'parentView') fetchParentView(); // ✅ إصلاح 3
+            if (page === 'parentView') fetchParentView();
             if (page === 'payments') fetchPayments();
             if (page === 'parentFees') fetchParentFees();
+        };
 
-            // تحديث عنوان المتصفح
-            if (history.pushState) history.pushState({ page }, '', '#' + page);
-
-            closeSidebar();
-        }
-
-        // استعادة الصفحة عند الضغط على زر الرجوع في المتصفح
         window.addEventListener('popstate', function (e) {
             if (e.state && e.state.page) {
                 var navEl = document.querySelector('[onclick*="navigate(\'' + e.state.page + '\'"]');
@@ -5111,11 +5548,7 @@
             }
         });
 
-        // ✅ إصلاح 5: الاستعادة من hash تتم الآن داخل checkAuth مباشرةً بعد التحقق من الجلسة
-
         // ===== UI HELPERS =====
-        function openModal(id) { document.getElementById(id).classList.add('open'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
         function showToast(msg) {
             const c = document.getElementById('toastContainer');
             const t = document.createElement('div');
@@ -5128,13 +5561,9 @@
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('sidebarOverlay').classList.toggle('open');
         }
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('open');
-        }
 
         // ─── CRUD Functions (Full Integration) ────────────────────────
-        
+
         // عرض تفاصيل الطالب (GET /students/{id})
         async function viewStudentDetails(id) {
             try {
@@ -5144,10 +5573,10 @@
                         <span>${h.surahName} (${h.verses})</span><span class="status-badge status-excellent">${h.evaluation}</span>
                        </div>`).join('')
                     : '<p style="color:var(--text-muted)">لا توجد سجلات تسميع</p>';
-                
+
                 document.getElementById('teacherProfileContent').innerHTML = `
                     <div style="text-align:center;margin-bottom:20px">
-                        <div class="student-avatar-lg" style="background:var(--gradient);width:64px;height:64px;font-size:24px;margin:0 auto 10px">${s.fullName.slice(0,2)}</div>
+                        <div class="student-avatar-lg" style="background:var(--gradient);width:64px;height:64px;font-size:24px;margin:0 auto 10px">${s.fullName.slice(0, 2)}</div>
                         <h3>${s.fullName}</h3>
                         <p style="color:var(--text-muted)">${s.email} | ${s.circleName}</p>
                     </div>
@@ -5160,7 +5589,7 @@
                     ${hifzHtml}
                 `;
                 openModal('teacherProfileModal');
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // تعديل بيانات الطالب (PUT /students/{id})
@@ -5176,7 +5605,7 @@
                 });
                 showToast('✅ تم تحديث بيانات الطالب');
                 fetchStudents();
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // تعديل بيانات المحفظ (PUT /teachers/{id})
@@ -5191,7 +5620,7 @@
                 });
                 showToast('✅ تم تحديث بيانات المحفظ');
                 fetchTeachers();
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // حذف المحفظ (DELETE /teachers/{id})
@@ -5201,7 +5630,7 @@
                 await apiFetch(`/teachers/${id}`, 'DELETE');
                 showToast('✅ تم حذف المحفظ');
                 fetchTeachers();
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // تعديل بيانات الحلقة (PUT /circles/{id})
@@ -5219,7 +5648,7 @@
                 });
                 showToast('✅ تم تحديث الحلقة');
                 fetchCircles();
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // حذف الحلقة (DELETE /circles/{id})
@@ -5229,7 +5658,7 @@
                 await apiFetch(`/circles/${id}`, 'DELETE');
                 showToast('✅ تم حذف الحلقة');
                 fetchCircles();
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // حذف سجل تسميع (DELETE /hifz/{id})
@@ -5239,7 +5668,7 @@
                 await apiFetch(`/hifz/${id}`, 'DELETE');
                 showToast('✅ تم حذف السجل');
                 fetchMemorizationData();
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // حذف اختبار (DELETE /exams/{id})
@@ -5249,7 +5678,7 @@
                 await apiFetch(`/exams/${id}`, 'DELETE');
                 showToast('✅ تم حذف الاختبار');
                 fetchExams();
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // إشعار غياب جماعي (POST /notifications/bulk-absence)
@@ -5258,7 +5687,7 @@
             try {
                 const res = await apiFetch('/notifications/bulk-absence', 'POST', { circleId });
                 showToast(`✅ ${res.message}`);
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // إشعار مديح حفظ (POST /notifications/hifz-praise)
@@ -5266,12 +5695,16 @@
             try {
                 await apiFetch('/notifications/hifz-praise', 'POST', { studentId, surahName, verses, evaluation });
                 showToast('✅ تم إرسال رسالة المديح لولي الأمر');
-            } catch(err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast('❌ ' + err.message); }
         }
 
         // ===== INIT =====
-        checkAuth();
         document.querySelector('.logout-btn').onclick = logout;
+        ['btnAddLibraryFile', 'btnAddLibraryFileEmpty'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.addEventListener('click', e => { e.preventDefault(); openUploadLibraryModal(); });
+        });
+        checkAuth();
 
         // ===== EXTENDED API CALLS =====
         async function fetchTeachers() {
@@ -5295,8 +5728,8 @@
               </div>
               <div class="student-card-actions">
                 <button class="btn btn-outline" onclick="viewTeacherProfile(${t.id})">الملف</button>
-                <button class="btn btn-edit" onclick="editTeacher(${t.id},'${t.fullName.replace(/'/g,"\\'")}','${(t.qualification||'').replace(/'/g,"\\'")}')">✏️ تعديل</button>
-                <button class="btn btn-delete" onclick="deleteTeacher(${t.id},'${t.fullName}')">🗑 حذف</button>
+                <button class="btn btn-edit" onclick="editTeacher(${t.id},'${t.fullName.replace(/'/g, "\\'")}','${(t.qualification || '').replace(/'/g, "\\'")}')">✏️ تعديل</button>
+                <button class="btn btn-delete" onclick="deleteTeacher(${t.id},${JSON.stringify(t.fullName)})">🗑 حذف</button>
               </div>
             </div>
           `).join('');
@@ -5323,7 +5756,7 @@
               </div>
               <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">⏰ ${c.time || '—'}</p>
               <div class="student-card-actions">
-                <button class="btn btn-outline" onclick="editCircle(${c.id},'${c.name.replace(/'/g,"\\'")}','${(c.time||'').replace(/'/g,"\\'")}','${(c.location||'').replace(/'/g,"\\'")}',${c.teacherId || 'null'})">✏️ تعديل</button>
+                <button class="btn btn-outline" onclick="editCircle(${c.id},'${c.name.replace(/'/g, "\\'")}','${(c.time || '').replace(/'/g, "\\'")}','${(c.location || '').replace(/'/g, "\\'")}',${c.teacherId || 'null'})">✏️ تعديل</button>
                 <button class="btn btn-primary" onclick="navigate('attendance',null)">الحضور</button>
                 <button class="btn btn-delete" onclick="deleteCircle(${c.id},'${c.name}')">🗑 حذف</button>
               </div>
@@ -5381,22 +5814,18 @@
             const notes =
                 modal.querySelector('#notes')?.value || '';
 
-            const email =
-                `${Date.now()}@noor.sa`;
-
-            if (!fullName || !parentPhone) {
+            if (!fullName || !phone || !parentPhone) {
 
                 // Validate with visual feedback
                 clearValidation(modal);
                 const isValid = validateForm([
                     { selector: '#firstName', required: true, requiredMsg: 'يرجى إدخال الاسم الأول' },
                     { selector: '#lastName', required: true, requiredMsg: 'يرجى إدخال اسم العائلة' },
-                    { selector: '#parentPhone', required: true, requiredMsg: 'يرجى إدخال رقم ولي الأمر', pattern: /^05\d{8}$/, patternMsg: 'الرقم يجب أن يبدأ ب~ 05 ويتكون من 10 أرقام' }
+                    { selector: '#phone', required: true, requiredMsg: 'يرجى إدخال رقم الطالب', pattern: /^05\d{8}$/, patternMsg: 'رقم الجوال غير صالح' },
+                    { selector: '#parentPhone', required: true, requiredMsg: 'يرجى إدخال رقم ولي الأمر', pattern: /^05\d{8}$/, patternMsg: 'رقم ولي الأمر غير صالح' }
                 ]);
 
-                showToast(
-                    '⚠️ يرجى إدخال الاسم ورقم ولي الأمر'
-                );
+                showToast('⚠️ يرجى إدخال الاسم وأرقام الهواتف');
 
                 return;
             }
@@ -5417,35 +5846,23 @@
 
                         body: JSON.stringify({
                             fullName,
-                            email,
-                            parentPhone,
                             phone,
-                            birthDate: birthDate || null,
+                            parentPhone,
+                            parentName: 'ولي أمر',
                             circleId: parseInt(halaqa, 10) || null,
-                            level,
-                            notes
+                            level
                         })
                     }
                 );
 
+                const data = await res.json().catch(() => ({}));
                 if (res.ok) {
-
                     closeModal('addStudentModal');
-
-                    showToast(
-                        '✅ تم إضافة الطالب بنجاح'
-                    );
-
+                    showToast('✅ تم إضافة الطالب بنجاح');
+                    if (data.credentials) showAccountCredentialsModal(data.credentials, parentPhone);
                     fetchStudents();
-
                 } else {
-
-                    const err = await res.json();
-
-                    showToast(
-                        '❌ فشل الإضافة: '
-                        + (err.message || 'خطأ في الخادم')
-                    );
+                    showToast('❌ فشل الإضافة: ' + (data.message || 'خطأ في الخادم'));
                 }
 
             } catch (error) {
@@ -5510,12 +5927,13 @@
                 adminSection.style.display = 'none';
                 studentSection.style.display = 'none';
                 if (parentSection) parentSection.style.display = 'block';
-                if (libraryNavSection) libraryNavSection.style.display = 'none';
+                if (libraryNavSection) libraryNavSection.style.display = 'block';
                 if (libraryAdminActions) libraryAdminActions.style.display = 'none';
             } else {
                 adminSection.style.display = 'none';
                 studentSection.style.display = 'block';
                 if (parentSection) parentSection.style.display = 'none';
+                if (libraryNavSection) libraryNavSection.style.display = 'block';
                 if (libraryAdminActions) libraryAdminActions.style.display = 'none';
             }
 
@@ -5771,15 +6189,19 @@
             if (!container || !emptyState) return;
 
             const data = window._libraryItems || [];
+            const canUpload = USER.role === 'Admin' || USER.role === 'Teacher';
+            const emptyBtn = document.getElementById('btnAddLibraryFileEmpty');
+            if (emptyBtn) emptyBtn.style.display = canUpload ? 'inline-flex' : 'none';
+
             if (data.length === 0) {
                 container.style.display = 'none';
                 emptyState.style.display = 'block';
             } else {
                 container.style.display = 'grid';
                 emptyState.style.display = 'none';
-                
+
                 const isAdminOrTeacher = USER.role === 'Admin' || USER.role === 'Teacher';
-                
+
                 container.innerHTML = data.map(item => `
                     <div class="student-card">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start">
@@ -5804,7 +6226,8 @@
                         </div>
 
                         <div class="actions" style="margin-top:auto; display:flex; gap:8px">
-                            <button class="btn btn-primary" style="flex:1; padding:8px" onclick="viewPdf(${item.id}, '${item.pdfFilePath}', '${item.title.replace(/'/g, "\\'")}')">👁 عرض</button>
+                            <button type="button" class="btn btn-primary btn-view-pdf" style="flex:1; padding:8px"
+                                data-library-id="${item.id}">👁 عرض</button>
                             ${isAdminOrTeacher ? `
                                 <button class="btn btn-outline" style="padding:8px 12px; color:#ef4444; border-color:#ef4444" onclick="deleteLibraryItem(${item.id})">🗑</button>
                             ` : ''}
@@ -5814,13 +6237,36 @@
             }
         }
 
+        // تفويض أحداث أزرار عرض PDF (يعمل بعد إعادة رسم البطاقات)
+        if (!window._libraryViewBound) {
+            window._libraryViewBound = true;
+            document.getElementById('libraryCards')?.addEventListener('click', e => {
+                const btn = e.target.closest('.btn-view-pdf');
+                if (!btn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const id = parseInt(btn.getAttribute('data-library-id'), 10);
+                if (!id) return;
+                const item = (window._libraryItems || []).find(x => x.id === id);
+                viewLibraryPdf(id, item?.title || 'ملف');
+            });
+        }
+
         function openUploadLibraryModal() {
+            if (!TOKEN) {
+                showToast('⚠️ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            if (USER.role !== 'Admin' && USER.role !== 'Teacher') {
+                showToast('⚠️ غير مصرح لك بإضافة ملفات');
+                return;
+            }
             document.getElementById('uploadLibraryForm').reset();
-            document.getElementById('uploadLibraryModalOverlay').classList.add('active');
+            openModal('uploadLibraryModal');
         }
 
         function closeUploadLibraryModal() {
-            document.getElementById('uploadLibraryModalOverlay').classList.remove('active');
+            closeModal('uploadLibraryModal');
         }
 
         async function handleUploadLibrary(e) {
@@ -5833,15 +6279,27 @@
                 btn.disabled = true;
                 btn.innerHTML = 'جاري الرفع... ⏳';
 
-                const token = localStorage.getItem('token');
+                const fileInput = form.querySelector('input[name="file"]');
+                if (fileInput?.files[0] && fileInput.files[0].size > 50 * 1024 * 1024) {
+                    throw new Error('حجم الملف يتجاوز 50 ميجابايت');
+                }
+
                 const response = await fetch(API_URL + '/library/upload', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    headers: { 'Authorization': `Bearer ${TOKEN}` },
                     body: formData
                 });
 
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'فشل الرفع');
+                let data = {};
+                const ct = response.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    data = await response.json();
+                }
+                if (!response.ok) {
+                    throw new Error(data.message || (response.status === 413
+                        ? 'حجم الملف كبير جداً — الحد الأقصى 50MB'
+                        : 'فشل الرفع — تحقق من الاتصال وحجم الملف'));
+                }
 
                 showToast('✅ ' + data.message);
                 closeUploadLibraryModal();
@@ -5865,26 +6323,59 @@
             }
         }
 
-        function viewPdf(id, path, title) {
+        async function viewLibraryPdf(id, title) {
+            if (!TOKEN) {
+                showToast('⚠️ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+
             const iframe = document.getElementById('pdfViewerIframe');
             const titleEl = document.getElementById('pdfViewerTitle');
             const downBtn = document.getElementById('pdfViewerDownloadBtn');
-            
-            iframe.src = path;
-            titleEl.textContent = title;
-            downBtn.href = path;
+            if (!iframe || !titleEl || !downBtn) {
+                showToast('❌ عارض الملف غير متوفر');
+                return;
+            }
 
-            document.getElementById('pdfViewerModalOverlay').classList.add('active');
+            titleEl.textContent = title || 'عرض الملف';
+            iframe.src = '';
+            openModal('pdfViewerModal');
 
-            // تسجيل إحصائية التحميل/العرض في الخلفية
-            apiFetch(`/library/${id}/download`, 'POST').catch(e => console.log('Failed to record download'));
-            // Refresh to update count
-            setTimeout(() => fetchLibraryItems(), 1000);
+            try {
+                const res = await fetch(`${API_URL}/library/${id}/file`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                if (res.status === 401) { logout(); return; }
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || 'تعذر تحميل الملف');
+                }
+                const blob = await res.blob();
+                if (!blob.size) throw new Error('الملف فارغ أو تالف');
+
+                const blobUrl = URL.createObjectURL(blob);
+                if (iframe._blobUrl) URL.revokeObjectURL(iframe._blobUrl);
+                iframe._blobUrl = blobUrl;
+                iframe.src = blobUrl;
+                downBtn.href = blobUrl;
+                downBtn.download = (title || 'document').replace(/[^\w\u0600-\u06FF\s.-]/g, '') + '.pdf';
+            } catch (err) {
+                showToast('❌ ' + (err.message || 'فشل عرض الملف'));
+                closePdfViewerModal();
+            }
         }
 
+        // للتوافق مع أي استدعاءات قديمة
+        window.viewPdf = viewLibraryPdf;
+
         function closePdfViewerModal() {
-            document.getElementById('pdfViewerModalOverlay').classList.remove('active');
-            document.getElementById('pdfViewerIframe').src = '';
+            closeModal('pdfViewerModal');
+            const iframe = document.getElementById('pdfViewerIframe');
+            if (iframe._blobUrl) {
+                URL.revokeObjectURL(iframe._blobUrl);
+                iframe._blobUrl = null;
+            }
+            iframe.src = '';
         }
 
         // ─── 6. صفحة الاختبارات ──────────────────────────────
@@ -5970,34 +6461,22 @@
             const modal = document.getElementById('addTeacherModal');
             const inputs = modal.querySelectorAll('input');
             const fullName = inputs[0]?.value?.trim();
-            const email = inputs[1]?.value?.trim();
-            const password = inputs[2]?.value?.trim() || 'Noor@1234';
-            const qualification = inputs[3]?.value?.trim() || '';
+            const phone = inputs[1]?.value?.trim();
+            const qualification = inputs[2]?.value?.trim() || '';
 
-            if (!fullName || !email) {
-                showToast('❌ يرجى ملء الاسم والبريد الإلكتروني');
+            if (!fullName || !/^05\d{8}$/.test(phone || '')) {
+                showToast('❌ يرجى ملء الاسم ورقم الجوال (05xxxxxxxx)');
                 return;
             }
             try {
-                // يُرسل للـ API الجديد POST /api/teachers
-                // الذي ينشئ User + Teacher في خطوة واحدة
-                const res = await fetch(`${API_URL}/teachers`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fullName, email, password, qualification })
-                });
-                if (!res.ok) {
-                    const err = await res.json();
-                    showToast('❌ ' + (err.message || 'فشل الإضافة'));
-                    return;
-                }
-                // مسح الحقول بعد الحفظ
+                const data = await apiFetch('/teachers', 'POST', { fullName, phone, qualification });
                 modal.querySelectorAll('input').forEach(i => i.value = '');
                 closeModal('addTeacherModal');
                 showToast('✅ تم إضافة المحفظ بنجاح');
+                if (data.credentials) showAccountCredentialsModal(data.credentials, phone);
                 fetchTeachers();
-            } catch {
-                showToast('❌ تعذر الاتصال بالخادم');
+            } catch (e) {
+                showToast('❌ ' + (e.message || 'تعذر الاتصال بالخادم'));
             }
         }
 
@@ -6067,20 +6546,7 @@
             }
         }
 
-        // ─── فحص انتهاء صلاحية الـ Token تلقائياً ───────────
-        function isTokenExpired(token) {
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                return payload.exp * 1000 < Date.now();
-            } catch { return true; }
-        }
-
-        // فحص فوري عند التحميل — يجب قبل checkAuth
-        if (TOKEN && isTokenExpired(TOKEN)) {
-            logout();
-        }
-
-        // تحقق دوري كل دقيقة
+        // تحقق دوري كل دقيقة من انتهاء الجلسة
         if (TOKEN) {
             setInterval(() => {
                 if (isTokenExpired(TOKEN)) {

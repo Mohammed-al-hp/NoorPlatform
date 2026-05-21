@@ -1,13 +1,38 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.IIS;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NoorPlatform.Api.Middleware;
+using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 using System.Text;
 
+const long MaxUploadBytes = 52_428_800; // 50 MB
+
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = MaxUploadBytes;
+});
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = MaxUploadBytes;
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartHeadersLengthLimit = int.MaxValue;
+});
+
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = MaxUploadBytes;
+});
+
+builder.Services.AddScoped<AccountProvisioningService>();
 builder.Services.AddControllers();
 
 // قاعدة البيانات
@@ -17,11 +42,13 @@ builder.Services.AddDbContext<NoorDbContext>(options =>
 // Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 {
-    options.Password.RequireDigit           = false;
-    options.Password.RequiredLength         = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase       = false;
-    options.Password.RequireLowercase       = false;
+    options.Password.RequireDigit           = true;
+    options.Password.RequiredLength         = 8;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase       = true;
+    options.Password.RequireLowercase       = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan  = TimeSpan.FromMinutes(15);
 })
 .AddEntityFrameworkStores<NoorDbContext>()
 .AddDefaultTokenProviders();
@@ -31,7 +58,10 @@ var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
     throw new InvalidOperationException("Jwt:Key غير موجود في appsettings.json");
 
-var key = Encoding.ASCII.GetBytes(jwtKey);
+var jwtIssuer   = builder.Configuration["Jwt:Issuer"]   ?? "NoorPlatform";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "NoorPlatformClients";
+var key         = Encoding.UTF8.GetBytes(jwtKey);
+
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -45,9 +75,11 @@ builder.Services.AddAuthentication(x =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey         = new SymmetricSecurityKey(key),
-        ValidateIssuer           = false,
-        ValidateAudience         = false,
-        ClockSkew                = TimeSpan.Zero
+        ValidateIssuer           = true,
+        ValidIssuer              = jwtIssuer,
+        ValidateAudience         = true,
+        ValidAudience            = jwtAudience,
+        ClockSkew                = TimeSpan.FromMinutes(1)
     };
     x.Events = new JwtBearerEvents
     {
@@ -118,7 +150,7 @@ using (var scope = app.Services.CreateScope())
     var services    = scope.ServiceProvider;
     var context     = services.GetRequiredService<NoorDbContext>();
     var userManager = services.GetRequiredService<UserManager<User>>();
-    await context.Database.EnsureCreatedAsync();
+    await context.Database.MigrateAsync();
     await DbInitializer.SeedAsync(context, userManager);
 }
 
@@ -149,6 +181,11 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
+
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<BlockLibraryUploadsMiddleware>();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseHttpsRedirection();

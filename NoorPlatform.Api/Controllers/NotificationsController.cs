@@ -171,10 +171,11 @@ public class NotificationsController : ControllerBase
             var token   = _configuration["WhatsApp:AccessToken"];
 
             // إذا لم تُعيَّن الإعدادات — وضع المحاكاة (للتطوير)
-            if (string.IsNullOrEmpty(phoneId) || string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(phoneId) || string.IsNullOrEmpty(token) ||
+                token.StartsWith("EAABXXXX", StringComparison.Ordinal))
             {
-                _logger.LogWarning("⚠️ واتساب غير مُعيَّن — محاكاة الإرسال لـ {Phone}: {Message}", phone, message);
-                return true; // نُرجع true في التطوير حتى لا يتوقف العمل
+                _logger.LogWarning("⚠️ واتساب غير مُعيَّن — تم تخطي الإرسال لـ {Phone}", phone);
+                return false;
             }
 
             // تنظيف رقم الهاتف (إزالة + والمسافات)
@@ -189,11 +190,12 @@ public class NotificationsController : ControllerBase
                 text = new { body = message }
             };
 
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            using var request = new HttpRequestMessage(HttpMethod.Post,
+                $"https://graph.facebook.com/v19.0/{phoneId}/messages");
+            request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {token}");
+            request.Content = JsonContent.Create(payload);
 
-            var response = await _httpClient.PostAsJsonAsync(
-                $"https://graph.facebook.com/v19.0/{phoneId}/messages", payload);
+            var response = await _httpClient.SendAsync(request);
 
             return response.IsSuccessStatusCode;
         }

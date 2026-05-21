@@ -21,6 +21,8 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<ActivityFeed> ActivityFeeds => Set<ActivityFeed>();
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<LibraryItem> LibraryItems { get; set; } = null!;
+    public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -145,5 +147,17 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.Entity<Student>()
             .HasIndex(s => s.CircleId)
             .HasDatabaseName("IX_Student_CircleId");
+
+        modelBuilder.Entity<WaitingListEntry>()
+            .HasIndex(w => w.RegistrationDate)
+            .HasDatabaseName("IX_WaitingList_RegistrationDate");
+
+        modelBuilder.Entity<WaitingListEntry>()
+            .HasIndex(w => w.Phone)
+            .HasDatabaseName("IX_WaitingList_Phone");
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.PhoneNumber)
+            .HasDatabaseName("IX_User_PhoneNumber");
     }
 }

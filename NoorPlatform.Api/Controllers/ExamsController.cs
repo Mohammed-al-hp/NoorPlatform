@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 
@@ -24,6 +25,7 @@ public class ExamsController : ControllerBase
     // جميع الاختبارات مع عدد المشاركين ومتوسط الدرجات
     // ─────────────────────────────────────────────────
     [HttpGet]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetAll()
     {
         var exams = await _context.Exams
@@ -50,6 +52,7 @@ public class ExamsController : ControllerBase
     // تفاصيل اختبار معين مع نتائج الطلاب
     // ─────────────────────────────────────────────────
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetById(int id)
     {
         var exam = await _context.Exams
@@ -109,6 +112,12 @@ public class ExamsController : ControllerBase
         var exam = await _context.Exams.FindAsync(id);
         if (exam == null)
             return NotFound(new { message = "الاختبار غير موجود" });
+
+        foreach (var r in results)
+        {
+            if (r.MaxScore <= 0)
+                return BadRequest(new { message = "الدرجة الكاملة يجب أن تكون أكبر من صفر" });
+        }
 
         var examResults = results.Select(r => new ExamResult
         {

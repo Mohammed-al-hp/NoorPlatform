@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 using System.Text;
@@ -30,8 +31,12 @@ public class ReportsController : ControllerBase
     // شهادة إتمام حفظ جزء أو سورة — تُنزَّل كـ PDF
     // ─────────────────────────────────────────────────
     [HttpGet("certificate/{studentId}")]
-    public async Task<IActionResult> GetCertificate(int studentId, [FromQuery] string? surah)
+    [Authorize(Roles = "Admin,Teacher,Parent,Student")]
+    public async Task<IActionResult> GetCertificate(int studentId, [FromQuery] string? surah, [FromQuery] bool grantBadge = false)
     {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
+            return Forbid();
+
         var student = await _context.Students
             .Include(s => s.User)
             .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t.User)
@@ -59,27 +64,30 @@ public class ReportsController : ControllerBase
             date: DateTime.Now.ToString("yyyy/MM/dd")
         );
 
-        // Gamification: Grant a Badge
-        var badgeToGrant = "شهادة " + achievement;
-        if (string.IsNullOrEmpty(student.Badges))
+        if (grantBadge && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
         {
-            student.Badges = badgeToGrant;
-        }
-        else if (!student.Badges.Contains(badgeToGrant))
-        {
-            student.Badges += $",{badgeToGrant}";
-        }
+            var badgeToGrant = "شهادة " + achievement;
+            if (string.IsNullOrEmpty(student.Badges))
+                student.Badges = badgeToGrant;
+            else if (!student.Badges.Contains(badgeToGrant))
+                student.Badges += $",{badgeToGrant}";
 
-        // ActivityFeed for certificate
-        _context.ActivityFeeds.Add(new ActivityFeed {
-            UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),
-            UserName = User.Identity?.Name ?? "User",
-            ActivityType = "Certificate",
-            Description = $"تم إصدار شهادة تقدير للطالب {student.User.FullName} ({achievement})",
-            Icon = "📜",
-            Color = "teal"
-        });
-        await _context.SaveChangesAsync();
+            var userId = AuthorizationHelpers.GetUserId(User);
+            if (userId != null)
+            {
+                _context.ActivityFeeds.Add(new ActivityFeed
+                {
+                    UserId = userId.Value,
+                    UserName = User.Identity?.Name ?? "User",
+                    ActivityType = "Certificate",
+                    Description = $"تم إصدار شهادة تقدير للطالب {student.User.FullName} ({achievement})",
+                    Icon = "📜",
+                    Color = "teal"
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
 
         // إرجاع HTML للطباعة (بديل عن PDF حتى تُثبَّت QuestPDF)
         return Content(html, "text/html", Encoding.UTF8);

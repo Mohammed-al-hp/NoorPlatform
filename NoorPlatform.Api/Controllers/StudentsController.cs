@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
+using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 
@@ -14,12 +16,12 @@ namespace NoorPlatform.Api.Controllers;
 public class StudentsController : ControllerBase
 {
     private readonly NoorDbContext _context;
-    private readonly UserManager<User> _userManager;
+    private readonly AccountProvisioningService _accounts;
 
-    public StudentsController(NoorDbContext context, UserManager<User> userManager)
+    public StudentsController(NoorDbContext context, AccountProvisioningService accounts)
     {
         _context = context;
-        _userManager = userManager;
+        _accounts = accounts;
     }
 
     // GET /api/students
@@ -68,6 +70,9 @@ public class StudentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, id))
+            return Forbid();
+
         var student = await _context.Students
             .Include(s => s.User)
             .Include(s => s.Circle)
@@ -107,37 +112,44 @@ public class StudentsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
     {
-        var existingUser = await _userManager.FindByEmailAsync(request.Email);
-        if (existingUser != null)
-            return BadRequest(new { message = "هذا البريد الإلكتروني مستخدم بالفعل" });
+        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone))
+            return BadRequest(new { message = "الاسم ورقم الهاتف مطلوبان" });
 
-        var user = new User
+        var (user, tempPassword, err) = await _accounts.CreateUserAsync(
+            request.Phone, request.FullName, UserRole.Student);
+
+        if (err != null)
+            return BadRequest(new { message = err });
+
+        Parent? parent = null;
+        if (!string.IsNullOrWhiteSpace(request.ParentPhone))
         {
-            UserName = request.Email,
-            Email = request.Email,
-            FullName = request.FullName,
-            Role = UserRole.Student,
-            EmailConfirmed = true
-        };
-
-        var createResult = await _userManager.CreateAsync(user, request.Password);
-        if (!createResult.Succeeded)
-            return BadRequest(new { message = string.Join("، ", createResult.Errors.Select(e => e.Description)) });
+            var (p, pErr) = await _accounts.EnsureParentAsync(
+                request.ParentName ?? "ولي أمر",
+                request.ParentPhone);
+            if (pErr != null)
+                return BadRequest(new { message = pErr });
+            parent = p;
+        }
+        else if (request.ParentId.HasValue)
+        {
+            parent = await _context.Parents.FindAsync(request.ParentId.Value);
+        }
 
         var student = new Student
         {
             UserId = user.Id,
             Level = request.Level ?? "مبتدئ",
             CircleId = request.CircleId,
-            ParentId = request.ParentId,
-            ParentPhone = request.ParentPhone ?? string.Empty
+            ParentId = parent?.Id ?? request.ParentId,
+            ParentPhone = AccountProvisioningService.NormalizePhone(request.ParentPhone ?? string.Empty)
         };
 
         _context.Students.Add(student);
 
-        // ActivityFeed
-        _context.ActivityFeeds.Add(new ActivityFeed {
-            UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),
+        _context.ActivityFeeds.Add(new ActivityFeed
+        {
+            UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
             UserName = User.Identity?.Name ?? "User",
             ActivityType = "Student",
             Description = $"تمت إضافة الطالب الجديد {request.FullName}",
@@ -151,7 +163,14 @@ public class StudentsController : ControllerBase
         {
             message = "تم إضافة الطالب بنجاح",
             studentId = student.Id,
-            userId = user.Id
+            userId = user.Id,
+            credentials = new AccountCredentialsDto(
+                request.FullName,
+                user.UserName!,
+                AccountProvisioningService.ToDisplayPhone(user.UserName!),
+                tempPassword,
+                UserRole.Student.ToString(),
+                true)
         });
     }
 
@@ -272,12 +291,12 @@ public class StudentsController : ControllerBase
 public class CreateStudentRequest
 {
     public string FullName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = "Noor@1234";
+    public string Phone { get; set; } = string.Empty;
+    public string? ParentName { get; set; }
+    public string? ParentPhone { get; set; }
     public string? Level { get; set; }
     public int? CircleId { get; set; }
     public int? ParentId { get; set; }
-    public string? ParentPhone { get; set; }
 }
 
 public class UpdateStudentRequest
