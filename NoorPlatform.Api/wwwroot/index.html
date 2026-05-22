@@ -60,7 +60,9 @@
                     parentView: ['بوابة ولي الأمر', 'متابعة أبنائك'],
                     payments: ['إدارة المدفوعات', 'الفواتير والرسوم'],
                     parentFees: ['الرسوم الدراسية', 'فواتير الأبناء'],
-                    library: ['المكتبة الرقمية', 'ملفات ومراجع التحفيظ']
+                    library: ['المكتبة الرقمية', 'ملفات ومراجع التحفيظ'],
+                    parents: ['إدارة أولياء الأمور', 'ربط الأبناء بالحسابات'],
+                    users: ['إدارة المستخدمين', 'جميع حسابات المنصة']
                 };
                 if (titles[page]) {
                     var pt = document.getElementById('pageTitle');
@@ -81,6 +83,7 @@
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#10b981">
+    <link rel="stylesheet" href="/css/responsive.css">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -3348,11 +3351,22 @@
                 </div>
             </div>
 
-            <div class="nav-section" id="adminSection">
+            <div class="nav-section" id="staffSection">
                 <div class="nav-section-label">الإدارة</div>
                 <div class="nav-item" onclick="navigate('students', this)">
                     <div class="nav-icon">👨‍🎓</div>
                     <span>الطلاب</span>
+                </div>
+            </div>
+            <div class="nav-section" id="adminOnlySection" style="display:none">
+                <div class="nav-section-label">المستخدمون</div>
+                <div class="nav-item" onclick="navigate('users', this)">
+                    <div class="nav-icon">👥</div>
+                    <span>المستخدمون</span>
+                </div>
+                <div class="nav-item" onclick="navigate('parents', this)">
+                    <div class="nav-icon">👨‍👦</div>
+                    <span>أولياء الأمور</span>
                 </div>
                 <div class="nav-item" onclick="navigate('teachers', this)">
                     <div class="nav-icon">👨‍🏫</div>
@@ -3661,6 +3675,95 @@
             </div>
         </div>
 
+        <!-- ===== PARENTS ===== -->
+        <div class="content" id="page-parents">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة أولياء الأمور</h2>
+                    <p>ربط أولياء الأمور بالطلاب وحسابات المنصة</p>
+                </div>
+                <button class="btn btn-primary" onclick="NoorParents.openAddParentModal()">➕ إضافة ولي أمر</button>
+            </div>
+            <div class="students-search-bar" style="margin-bottom:16px">
+                <div class="search-row">
+                    <input type="text" class="students-search-input" placeholder="بحث بالاسم أو رقم الجوال..."
+                        oninput="NoorParents.searchParents(this.value)">
+                </div>
+            </div>
+            <div class="data-table-wrap" id="parentsTableWrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الجوال</th>
+                            <th>عدد الأبناء</th>
+                            <th>الحساب</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="parentsTableBody"></tbody>
+                </table>
+            </div>
+            <div class="empty-state-box" id="parentsEmptyState" style="display:none">
+                <div class="empty-icon">👨‍👦</div>
+                <p>لا يوجد أولياء أمور</p>
+            </div>
+            <div class="pagination-bar">
+                <button class="btn btn-outline" id="parentsPrevBtn" onclick="NoorParents.changeParentsPage(-1)">السابق</button>
+                <span id="parentsPageInfo" style="font-size:13px;color:var(--text-muted)"></span>
+                <button class="btn btn-outline" id="parentsNextBtn" onclick="NoorParents.changeParentsPage(1)">التالي</button>
+            </div>
+        </div>
+
+        <!-- ===== USERS ===== -->
+        <div class="content" id="page-users">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة المستخدمين</h2>
+                    <p>جميع حسابات المنصة والصلاحيات</p>
+                </div>
+            </div>
+            <div class="students-search-bar" style="margin-bottom:16px">
+                <div class="search-row">
+                    <input type="text" class="students-search-input" placeholder="بحث..."
+                        oninput="NoorUsers.searchUsers(this.value)">
+                </div>
+                <div class="filter-chips" style="margin-top:10px">
+                    <div class="filter-chip active" onclick="NoorUsers.filterUsersRole('')">الكل</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Admin')">مشرف</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Teacher')">محفظ</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Student')">طالب</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Parent')">ولي أمر</div>
+                </div>
+            </div>
+            <div class="data-table-wrap" id="usersTableWrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الدور</th>
+                            <th>الجوال</th>
+                            <th>آخر دخول</th>
+                            <th>الحالة</th>
+                            <th>تغيير كلمة المرور</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+            <div class="empty-state-box" id="usersEmptyState" style="display:none">
+                <div class="empty-icon">👥</div>
+                <p>لا يوجد مستخدمون</p>
+            </div>
+            <div class="pagination-bar">
+                <button class="btn btn-outline" id="usersPrevBtn" onclick="NoorUsers.changeUsersPage(-1)">السابق</button>
+                <span id="usersPageInfo" style="font-size:13px;color:var(--text-muted)"></span>
+                <button class="btn btn-outline" id="usersNextBtn" onclick="NoorUsers.changeUsersPage(1)">التالي</button>
+            </div>
+        </div>
+
         <!-- ===== TEACHERS ===== -->
         <div class="content" id="page-teachers">
             <div class="page-header">
@@ -3703,14 +3806,8 @@
 
             <div class="attendance-header">
                 <div>
-                    <div class="circle-selector">
-                        <div class="circle-chip active" onclick="selectCircle(this)">حلقة الفجر</div>
-                        <div class="circle-chip" onclick="selectCircle(this)">حلقة النور</div>
-                        <div class="circle-chip" onclick="selectCircle(this)">حلقة الصباح</div>
-                        <div class="circle-chip" onclick="selectCircle(this)">حلقة المغرب</div>
-                        <div class="circle-chip" onclick="selectCircle(this)">حلقة العشاء</div>
-                        <button class="btn btn-primary" id="qjlwm1" onclick="fetchStudentsAttendance()"
-                            style="padding: 4px 12px; font-size: 12px;">بحث</button>
+                    <div class="circle-selector" id="attendanceCircleChips">
+                        <span style="font-size:13px;color:var(--text-muted);padding:8px">جاري تحميل الحلقات...</span>
                     </div>
                     <!-- Summary badges -->
                     <div style="display:flex;gap:10px;margin-top:4px">
@@ -3753,13 +3850,8 @@
             <div class="memorize-layout">
                 <div>
                     <div class="filter-bar" style="margin-bottom:14px">
-                        <select class="filter-select" onchange="filterStudent(this.value)">
+                        <select class="filter-select" id="memStudentFilter" onchange="filterStudent(this.value)">
                             <option value="">— اختر طالباً —</option>
-                            <option>أحمد محمد الزهراني</option>
-                            <option>سارة عبدالله القحطاني</option>
-                            <option>عمر خالد الدوسري</option>
-                            <option>منى عبدالرحمن العتيبي</option>
-                            <option>فيصل سعد المالكي</option>
                         </select>
                     </div>
                     <div class="surah-progress-grid">
@@ -3767,18 +3859,18 @@
                             style="border-radius:0;border:none;box-shadow:none;border-bottom:1px solid var(--border)">
                             <div class="card-header" style="margin-bottom:0">
                                 <div>
-                                    <h3>تقدم الحفظ — أحمد الزهراني</h3>
-                                    <p>الجزء الأول والثاني</p>
+                                    <h3 id="memProgressTitle">تقدم الحفظ</h3>
+                                    <p id="memProgressSub">اختر طالباً لعرض التقدم</p>
                                 </div>
-                                <span class="status-badge status-excellent">78% مكتمل</span>
+                                <span class="status-badge status-excellent" id="memProgressBadge">—</span>
                             </div>
                             <div style="margin-top:16px">
                                 <div class="progress-wrap">
                                     <div class="progress-bar" style="height:10px">
-                                        <div class="progress-fill" style="width:78%"></div>
+                                        <div class="progress-fill" id="memProgressFill" style="width:0%"></div>
                                     </div>
-                                    <span class="progress-pct"
-                                        style="font-size:14px;font-weight:900;color:var(--green)">78%</span>
+                                    <span class="progress-pct" id="memProgressPct"
+                                        style="font-size:14px;font-weight:900;color:var(--green)">0%</span>
                                 </div>
                             </div>
                         </div>
@@ -4235,69 +4327,197 @@
 
     <!-- Add Memorization Modal -->
     <div class="modal-overlay" id="addMemModal">
-        <div class="modal">
+        <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
             <div class="modal-header">
-                <h3 id="jlwm8u">📖 تسجيل جلسة تسميع (سجل متابعة شامل)</h3>
-                <button class="close-modal" onclick="closeModal('addMemModal')">×</button>
+                <h3>📖 تسجيل جلسة تسميع</h3>
                 <button class="modal-close" onclick="closeModal('addMemModal')">✕</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
+                    <label class="form-label">الحلقة *</label>
+                    <select class="form-input" id="hifzCircleSelect"></select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">الطالب *</label>
-                    <select class="form-input">
-                        <option>أحمد محمد الزهراني</option>
-                        <option>سارة عبدالله القحطاني</option>
-                        <option>عمر خالد الدوسري</option>
+                    <select class="form-input" id="hifzStudentSelect" disabled>
+                        <option value="">— اختر الحلقة أولاً —</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">نوع الجلسة</label>
-                    <div style="display:flex;gap:8px">
-                        <button class="btn btn-primary" style="flex:1;padding:10px"
-                            onclick="selectSessionType(this, 'حفظ جديد')">📗 حفظ جديد</button>
-                        <button class="btn btn-outline" style="flex:1;padding:10px"
-                            onclick="selectSessionType(this, 'مراجعة')">🔄 مراجعة</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button type="button" class="btn btn-primary" style="flex:1;min-width:120px;padding:10px"
+                            data-session-type="Memorization">📗 حفظ جديد</button>
+                        <button type="button" class="btn btn-outline" style="flex:1;min-width:120px;padding:10px"
+                            data-session-type="Revision">🔄 مراجعة</button>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">السورة *</label>
-                        <select class="form-input">
-                            <option>الفاتحة</option>
-                            <option>البقرة</option>
-                            <option>آل عمران</option>
-                            <option>النساء</option>
-                            <option>المائدة</option>
-                            <option>الكهف</option>
-                        </select>
+                <div id="hifzMemorizationPanel">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">من سورة *</label>
+                            <select class="form-input" id="hifzFromSurah"></select>
+                        </div>
+                        <div class="form-group" id="hifzToSurahWrap" style="display:none">
+                            <label class="form-label">إلى سورة</label>
+                            <select class="form-input" id="hifzToSurah"></select>
+                        </div>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px">
+                        <input type="checkbox" id="hifzShowToSurah"> تسميع يشمل أكثر من سورة
+                    </label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">من آية</label>
+                            <input class="form-input" id="hifzFromVerse" type="number" min="1" placeholder="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">إلى آية</label>
+                            <input class="form-input" id="hifzToVerse" type="number" min="1" placeholder="10">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">التقييم *</label>
-                        <select class="form-input">
-                            <option>⭐ ممتاز</option>
-                            <option>👍 جيد</option>
-                            <option>🔄 يحتاج مراجعة</option>
-                        </select>
+                        <label class="form-label">نص بداية الآية</label>
+                        <input class="form-input" id="hifzStartText" type="text" placeholder="اقرأ من قوله تعالى...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نص نهاية الآية</label>
+                        <input class="form-input" id="hifzEndText" type="text" placeholder="...إلى قوله">
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">من الآية</label>
-                        <input class="form-input" type="number" placeholder="1">
+                <div id="hifzRevisionPanel" style="display:none">
+                    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                        <button type="button" class="btn btn-primary" data-revision-mode="Sequential">📋 مراجعة بالترتيب</button>
+                        <button type="button" class="btn btn-outline" data-revision-mode="Questions">❓ نظام الأسئلة</button>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">إلى الآية</label>
-                        <input class="form-input" type="number" placeholder="20">
+                    <div id="hifzSequentialPanel" class="hifz-revision-panel">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">من سورة</label>
+                                <select class="form-input" id="hifzSeqFromSurah"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى سورة</label>
+                                <select class="form-input" id="hifzSeqToSurah"></select>
+                            </div>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">السور التي سيتم تسميعها:</p>
+                        <div class="hifz-seq-preview" id="hifzSeqPreview"></div>
+                    </div>
+                    <div id="hifzQuestionsPanel" class="hifz-revision-panel" style="display:none">
+                        <div id="hifzQuestionsList"></div>
+                        <button type="button" class="btn btn-outline" id="btnAddRevisionQuestion" style="width:100%;margin-top:8px">➕ إضافة سؤال</button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">ملاحظة للطالب / ولي الأمر</label>
-                    <textarea class="form-input" rows="3" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+                    <label class="form-label">التقييم *</label>
+                    <select class="form-input" id="hifzEvaluation">
+                        <option value="excellent">ممتاز</option>
+                        <option value="good">جيد</option>
+                        <option value="review">يحتاج مراجعة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ملاحظة</label>
+                    <textarea class="form-input" id="hifzNotes" rows="2" placeholder="ملاحظات للطالب أو ولي الأمر..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('addMemModal')">إلغاء</button>
                 <button class="btn btn-primary" onclick="saveSession()">💾 حفظ الجلسة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parent modals -->
+    <div class="modal-overlay" id="parentFormModal">
+        <div class="modal" style="max-width:480px">
+            <div class="modal-header">
+                <h3 id="parentFormTitle">ولي أمر</h3>
+                <button class="modal-close" onclick="closeModal('parentFormModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="parentEditId">
+                <div class="form-group">
+                    <label class="form-label">الاسم *</label>
+                    <input class="form-input" id="parentFullName" type="text">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رقم الجوال *</label>
+                    <input class="form-input" id="parentPhone" type="tel" placeholder="05xxxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ربط بالأبناء</label>
+                    <div id="parentChildrenCheckboxes" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('parentFormModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="NoorParents.saveParentForm()">حفظ</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="parentDetailModal">
+        <div class="modal" style="max-width:440px">
+            <div class="modal-header">
+                <h3>تفاصيل ولي الأمر</h3>
+                <button class="modal-close" onclick="closeModal('parentDetailModal')">✕</button>
+            </div>
+            <div class="modal-body" id="parentDetailBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('parentDetailModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User modals -->
+    <div class="modal-overlay" id="userDetailModal">
+        <div class="modal" style="max-width:440px">
+            <div class="modal-header">
+                <h3>تفاصيل المستخدم</h3>
+                <button class="modal-close" onclick="closeModal('userDetailModal')">✕</button>
+            </div>
+            <div class="modal-body" id="userDetailBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('userDetailModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="userEditModal">
+        <div class="modal" style="max-width:440px">
+            <div class="modal-header">
+                <h3>تعديل المستخدم</h3>
+                <button class="modal-close" onclick="closeModal('userEditModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="userEditId">
+                <div class="form-group">
+                    <label class="form-label">الاسم</label>
+                    <input class="form-input" id="userEditFullName" type="text">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الجوال</label>
+                    <input class="form-input" id="userEditPhone" type="tel">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الدور</label>
+                    <select class="form-input" id="userEditRole">
+                        <option value="Admin">مشرف</option>
+                        <option value="Teacher">محفظ</option>
+                        <option value="Student">طالب</option>
+                        <option value="Parent">ولي أمر</option>
+                    </select>
+                </div>
+                <label style="display:flex;gap:8px;font-size:13px;margin:8px 0">
+                    <input type="checkbox" id="userEditActive"> حساب نشط
+                </label>
+                <label style="display:flex;gap:8px;font-size:13px">
+                    <input type="checkbox" id="userEditMustChange"> يجب تغيير كلمة المرور
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('userEditModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="NoorUsers.saveUserEdit()">حفظ</button>
             </div>
         </div>
     </div>
@@ -4777,6 +4997,10 @@
         <p class="loading-label" id="loadingText">جاري التحميل...</p>
     </div>
 
+    <script src="/js/utils.js"></script>
+    <script src="/js/hifz.js"></script>
+    <script src="/js/parents.js"></script>
+    <script src="/js/users.js"></script>
     <script>
         // ===== API CONFIG =====
         const API_URL = '/api';
@@ -5210,7 +5434,7 @@
               <div class="ann-card-content">
                 <div class="ann-card-top">
                   <h4>${escapeHtml(a.title)}</h4>
-                  <time>${new Date(a.createdAt).toLocaleDateString('ar-SA')}</time>
+                  <time>${formatDateEnGb(a.createdAt)}</time>
                 </div>
                 <p>${escapeHtml(a.content)}</p>
                 <div class="ann-target" style="color:${escapeHtml(a.color)}">🎯 ${escapeHtml(a.target)}</div>
@@ -5239,7 +5463,7 @@
                         <div class="card-body">
                             <p><strong>المبلغ:</strong> ${p.amount} ريال</p>
                             <p><strong>البيان:</strong> ${escapeHtml(p.description)}</p>
-                            <p><strong>الاستحقاق:</strong> ${new Date(p.dueDate).toLocaleDateString('ar-SA')}</p>
+                            <p><strong>الاستحقاق:</strong> ${formatDateEnGb(p.dueDate)}</p>
                         </div>
                     </div>
                 `).join('');
@@ -5264,7 +5488,7 @@
                         <div class="card-body">
                             <p><strong>المبلغ:</strong> ${p.amount} ريال</p>
                             <p><strong>البيان:</strong> ${escapeHtml(p.description)}</p>
-                            <p><strong>الاستحقاق:</strong> ${new Date(p.dueDate).toLocaleDateString('ar-SA')}</p>
+                            <p><strong>الاستحقاق:</strong> ${formatDateEnGb(p.dueDate)}</p>
                             ${p.status !== 'Paid' ? `<button class="btn btn-primary" style="margin-top:10px; width:100%; justify-content:center" onclick="payInvoice(${p.id})">💳 سداد الآن</button>` : ''}
                         </div>
                     </div>
@@ -5497,7 +5721,7 @@
               </div>
               <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">
                 <div>👤 ولي الأمر: ${escapeHtml(w.parentName || '—')} ${w.displayParentPhone ? ' · ' + escapeHtml(w.displayParentPhone) : ''}</div>
-                <div>🕐 تسجيل: ${new Date(w.registrationDate).toLocaleDateString('ar-SA')}</div>
+                <div>🕐 تسجيل: ${formatDateEnGb(w.registrationDate)}</div>
                 ${w.preferredTime ? `<div>⏰ الوقت المفضل: ${escapeHtml(w.preferredTime)}</div>` : ''}
               </div>
               <div class="student-card-actions" style="flex-wrap:wrap">
@@ -5722,7 +5946,10 @@
 
         // ===== NAVIGATION (page data loaders — shell is in head script) =====
         window._onNavigatePage = function (page) {
-            if (page === 'attendance') fetchStudentsAttendance();
+            if (page === 'attendance') {
+                renderAttendanceCircleChips();
+                fetchStudentsAttendance();
+            }
             if (page === 'memorization') fetchMemorizationData();
             if (page === 'library') fetchLibraryItems();
             if (page === 'exams') fetchExams();
@@ -5730,6 +5957,8 @@
             if (page === 'parentView') fetchParentView();
             if (page === 'payments') fetchPayments();
             if (page === 'parentFees') fetchParentFees();
+            if (page === 'parents' && USER.role === 'Admin') NoorParents.fetchParents();
+            if (page === 'users' && USER.role === 'Admin') NoorUsers.fetchUsers();
         };
 
         window.addEventListener('popstate', function (e) {
@@ -6154,35 +6383,35 @@
             const isAdmin = USER.role === 'Admin';
             const isTeacher = USER.role === 'Teacher';
             const isStudent = USER.role === 'Student';
-            const isParent = USER.role === 'Parent'; // ✅ إصلاح 3
+            const isParent = USER.role === 'Parent';
 
-            const adminSection = document.getElementById('adminSection');
+            const staffSection = document.getElementById('staffSection');
+            const adminOnlySection = document.getElementById('adminOnlySection');
             const studentSection = document.getElementById('studentSection');
-            const parentSection = document.getElementById('parentSection'); // ✅ إصلاح 3
+            const parentSection = document.getElementById('parentSection');
             const libraryNavSection = document.getElementById('libraryNavSection');
             const libraryAdminActions = document.getElementById('libraryAdminActions');
+            const isStaff = isAdmin || isTeacher;
+
+            if (staffSection) staffSection.style.display = isStaff ? 'block' : 'none';
+            if (adminOnlySection) adminOnlySection.style.display = isAdmin ? 'block' : 'none';
 
             if (isAdmin) {
-                adminSection.style.display = 'block';
                 studentSection.style.display = 'none';
                 if (parentSection) parentSection.style.display = 'none';
                 if (libraryNavSection) libraryNavSection.style.display = 'block';
                 if (libraryAdminActions) libraryAdminActions.style.display = 'flex';
             } else if (isTeacher) {
-                adminSection.style.display = 'none';
                 studentSection.style.display = 'none';
                 if (parentSection) parentSection.style.display = 'none';
                 if (libraryNavSection) libraryNavSection.style.display = 'block';
                 if (libraryAdminActions) libraryAdminActions.style.display = 'flex';
             } else if (isParent) {
-                // ✅ إصلاح 3: ولي الأمر يرى قسمه فقط
-                adminSection.style.display = 'none';
                 studentSection.style.display = 'none';
                 if (parentSection) parentSection.style.display = 'block';
                 if (libraryNavSection) libraryNavSection.style.display = 'block';
                 if (libraryAdminActions) libraryAdminActions.style.display = 'none';
             } else {
-                adminSection.style.display = 'none';
                 studentSection.style.display = 'block';
                 if (parentSection) parentSection.style.display = 'none';
                 if (libraryNavSection) libraryNavSection.style.display = 'block';
@@ -6212,7 +6441,7 @@
         function initAttendanceDateDisplay() {
             const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const el = document.getElementById('currentDate');
-            if (el) el.textContent = attendanceDate.toLocaleDateString('ar-SA', opts);
+            if (el) el.textContent = formatDateEnGb(attendanceDate, opts);
         }
         initAttendanceDateDisplay();
 
@@ -6327,76 +6556,14 @@
             if (lEl) lEl.textContent = late;
         }
 
-        // ─── 3. مودال التسميع: اختيار نوع الجلسة ─────────────
-        let sessionType = 'Memorization';
-        function selectSessionType(btn, label) {
-            document.querySelectorAll('#addMemModal .btn').forEach(b => {
-                b.classList.remove('btn-primary');
-                b.classList.add('btn-outline');
-            });
-            btn.classList.remove('btn-outline');
-            btn.classList.add('btn-primary');
-            sessionType = label === 'حفظ جديد' ? 'Memorization' : 'Revision';
-        }
-
-        // ─── 4. حفظ جلسة التسميع ─────────────────────────────
-        async function saveSession() {
-            const modal = document.getElementById('addMemModal');
-            const selects = modal.querySelectorAll('select');
-            const inputs = modal.querySelectorAll('input[type="number"]');
-            const notes = modal.querySelector('textarea')?.value || '';
-
-            const studentSelect = selects[0];
-            const surahSelect = selects[1];
-            const evalSelect = selects[2];
-
-            const surahName = surahSelect?.value || 'البقرة';
-            const fromVerse = inputs[0]?.value || '1';
-            const toVerse = inputs[1]?.value || '10';
-            const evalMap = { '⭐ ممتاز': 'ممتاز', '👍 جيد': 'جيد', '🔄 يحتاج مراجعة': 'يحتاج مراجعة' };
-            const evaluation = evalMap[evalSelect?.value] || 'جيد';
-
-            // قراءة studentId مباشرة من قيمة الـ select (رقمي موثوق)
-            const studentId = studentSelect ? parseInt(studentSelect.value, 10) : null;
-
-            if (!studentId || isNaN(studentId)) {
-                showToast('❌ يرجى تحديد الطالب بشكل صحيح');
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_URL}/hifz`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        studentId,
-                        surahName,
-                        verses: `${fromVerse}-${toVerse}`,
-                        type: sessionType,
-                        evaluation,
-                        notes,
-                        date: new Date().toISOString()
-                    })
-                });
-                if (!res.ok) throw new Error();
-                closeModal('addMemModal');
-                showToast('✅ تم حفظ جلسة التسميع بنجاح');
-                fetchMemorizationData();
-            } catch {
-                showToast('❌ حدث خطأ أثناء الحفظ');
-            }
-        }
-
-        // ─── 5. تحميل بيانات صفحة التسميع ────────────────────
+        // ─── تحميل بيانات صفحة التسميع ────────────────────
         async function fetchMemorizationData() {
             const data = await apiFetch('/students');
             window._students = data;
-
-            // تحديث قائمة الطلاب في المودال — value = id (ليس الاسم)
-            const sel = document.querySelector('#addMemModal select');
-            if (sel) sel.innerHTML = data.map(s =>
-                `<option value="${s.id}">${s.fullName}</option>`
-            ).join('');
+            if (window.NoorHifz) {
+                NoorHifz.populateMemorizationFilter();
+                NoorHifz.initHifzModal();
+            }
 
             // عرض آخر جلسات
             const panel = document.getElementById('recentSessions');
@@ -6408,7 +6575,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
                   <div>
                     <p style="font-weight:700;font-size:13px">${r.studentName} — ${r.surahName} (${r.verses})</p>
-                    <p style="font-size:11px;color:var(--text-muted)">${new Date(r.date).toLocaleDateString('ar-SA')} · ${r.type === 'Memorization' ? 'حفظ جديد' : 'مراجعة'}</p>
+                    <p style="font-size:11px;color:var(--text-muted)">${formatDateEnGb(r.date)} · ${r.type === 'Memorization' ? 'حفظ جديد' : 'مراجعة'}</p>
                   </div>
                   <div style="display:flex;align-items:center;gap:8px">
                       <span class="status-badge ${r.evaluation === 'ممتاز' ? 'status-excellent' : 'status-good'}">${r.evaluation}</span>
@@ -6470,7 +6637,7 @@
                         
                         <div class="stats-row" style="margin-bottom:16px">
                             <div class="stat-item">
-                                <div class="stat-value" style="font-size:12px">${new Date(item.createdAt).toLocaleDateString('ar-SA')}</div>
+                                <div class="stat-value" style="font-size:12px">${formatDateEnGb(item.createdAt)}</div>
                                 <div class="stat-label">تاريخ الرفع</div>
                             </div>
                             <div class="stat-item">
@@ -6651,7 +6818,7 @@
                 <div class="card-header">
                   <div>
                     <h3>${e.title}</h3>
-                    <p>${new Date(e.date).toLocaleDateString('ar-SA')}</p>
+                    <p>${formatDateEnGb(e.date)}</p>
                   </div>
                   <span class="status-badge status-excellent">${e.averageScore}% متوسط</span>
                 </div>
@@ -7013,20 +7180,24 @@
             updateAttendanceCounts();
         }
 
-        // ─── filterStudent — فلترة قائمة التسميع ────────────
-        function filterStudent(name) {
-            const students = window._students || [];
-            if (!name) return;
-            const student = students.find(s => s.fullName === name);
-            if (student) {
-                const header = document.querySelector('.surah-progress-grid .card-header div h3');
-                if (header) header.textContent = 'تقدم الحفظ — ' + student.fullName;
-                const pct = document.querySelector('.surah-progress-grid .progress-pct');
-                if (pct) pct.textContent = student.progress + '%';
-                const fill = document.querySelector('.surah-progress-grid .progress-fill');
-                if (fill) fill.style.width = student.progress + '%';
-                const badge = document.querySelector('.surah-progress-grid .status-badge');
-                if (badge) badge.textContent = student.progress + '% مكتمل';
+        async function renderAttendanceCircleChips() {
+            const wrap = document.getElementById('attendanceCircleChips');
+            if (!wrap) return;
+            try {
+                const circles = await apiFetch('/circles');
+                if (!circles.length) {
+                    wrap.innerHTML = '<span style="font-size:13px;color:var(--text-muted)">لا توجد حلقات</span>';
+                    return;
+                }
+                wrap.innerHTML = circles.map((c, i) =>
+                    `<div class="circle-chip${i === 0 ? ' active' : ''}" data-id="${c.id}" onclick="selectCircle(this)">${escapeHtml(c.name)}</div>`
+                ).join('');
+                const first = wrap.querySelector('.circle-chip');
+                if (first) {
+                    selectedCircleId = parseInt(first.dataset.id, 10);
+                }
+            } catch (e) {
+                wrap.innerHTML = '<span style="color:var(--text-muted)">تعذر تحميل الحلقات</span>';
             }
         }
 
@@ -7371,7 +7542,7 @@
 
         // ─── Dynamic Date ───────────────────────────────────
         const dateOpts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const todayStr = new Date().toLocaleDateString('ar-SA', dateOpts);
+        const todayStr = formatDateEnGb(new Date(), dateOpts);
         const subEl = document.getElementById('pageSubtitle');
         if (subEl) subEl.textContent = todayStr;
         const dateEl = document.getElementById('currentDate');

@@ -13,7 +13,14 @@ public class HifzRecord
     public Student Student { get; set; } = null!;
     public DateTime Date { get; set; } = DateTime.UtcNow;
     public string SurahName { get; set; } = string.Empty;
+    public string? ToSurahName { get; set; }
     public string Verses { get; set; } = string.Empty; // e.g., "1-10"
+    public string StartVerseText { get; set; } = string.Empty;
+    public string EndVerseText { get; set; } = string.Empty;
+    /// <summary>Questions | Sequential — للمراجعة فقط</summary>
+    public string? RevisionMode { get; set; }
+    /// <summary>JSON: أسئلة المراجعة أو تفاصيل إضافية</summary>
+    public string? SessionDetailsJson { get; set; }
 
     // ✅ إصلاح 1: عدد الآيات الفعلي يُحسب تلقائياً من حقل Verses
     public int VerseCount { get; set; } = 0;

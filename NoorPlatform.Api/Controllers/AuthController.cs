@@ -49,6 +49,9 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
 
+        user.LastLoginAt = DateTime.UtcNow;
+        await _userManager.UpdateAsync(user);
+
         if (user.Role == UserRole.Student)
         {
             var isDeleted = await _context.Students.IgnoreQueryFilters().AnyAsync(s => s.UserId == user.Id && s.IsDeleted);

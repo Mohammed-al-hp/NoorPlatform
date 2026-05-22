@@ -17,4 +17,5 @@ public class User : IdentityUser<int>
     public bool MustChangePassword { get; set; } = true;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastLoginAt { get; set; }
 }

@@ -36,11 +36,16 @@ public class HifzController : ControllerBase
                 r.StudentId,
                 r.Date,
                 r.SurahName,
+                r.ToSurahName,
                 r.Verses,
                 r.VerseCount,
+                r.StartVerseText,
+                r.EndVerseText,
+                r.RevisionMode,
                 Type = r.Type.ToString(),
                 r.Evaluation,
-                r.Notes
+                r.Notes,
+                r.SessionDetailsJson
             })
             .ToListAsync();
         return Ok(records);
@@ -63,11 +68,16 @@ public class HifzController : ControllerBase
                 StudentName = r.Student.User.FullName,
                 r.Date,
                 r.SurahName,
+                r.ToSurahName,
                 r.Verses,
                 r.VerseCount,
+                r.StartVerseText,
+                r.EndVerseText,
+                r.RevisionMode,
                 Type = r.Type.ToString(),
                 r.Evaluation,
-                r.Notes
+                r.Notes,
+                r.SessionDetailsJson
             })
             .ToListAsync();
         return Ok(records);
@@ -97,8 +107,13 @@ public class HifzController : ControllerBase
         {
             StudentId = request.StudentId,
             SurahName = request.SurahName?.Trim() ?? string.Empty,
+            ToSurahName = request.ToSurahName?.Trim(),
             Verses = verses,
             VerseCount = verseCount,
+            StartVerseText = request.StartVerseText?.Trim() ?? string.Empty,
+            EndVerseText = request.EndVerseText?.Trim() ?? string.Empty,
+            RevisionMode = request.RevisionMode?.Trim(),
+            SessionDetailsJson = request.SessionDetailsJson,
             Type = recordType,
             Evaluation = request.Evaluation?.Trim() ?? string.Empty,
             Notes = request.Notes?.Trim() ?? string.Empty,
@@ -159,7 +174,12 @@ public class AddHifzRecordRequest
 {
     public int StudentId { get; set; }
     public string SurahName { get; set; } = string.Empty;
+    public string? ToSurahName { get; set; }
     public string Verses { get; set; } = string.Empty;  // مثال: "1-10"
+    public string? StartVerseText { get; set; }
+    public string? EndVerseText { get; set; }
+    public string? RevisionMode { get; set; }
+    public string? SessionDetailsJson { get; set; }
     public string Type { get; set; } = "Memorization";
     public string Evaluation { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
