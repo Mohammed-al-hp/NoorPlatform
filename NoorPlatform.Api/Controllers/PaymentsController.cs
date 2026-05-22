@@ -24,8 +24,7 @@ public class PaymentsController : ControllerBase
     public async Task<IActionResult> GetAllPayments()
     {
         var payments = await _context.Payments
-            .Include(p => p.Student)
-            .Include(p => p.Student.User)
+            .Include(p => p.Student).ThenInclude(s => s.User)
             .Select(p => new
             {
                 p.Id,
@@ -52,8 +51,7 @@ public class PaymentsController : ControllerBase
         if (parent == null) return NotFound("Parent not found");
 
         var payments = await _context.Payments
-            .Include(p => p.Student)
-            .Include(p => p.Student.User)
+            .Include(p => p.Student).ThenInclude(s => s.User)
             .Where(p => p.ParentId == parent.Id)
             .Select(p => new
             {
@@ -96,7 +94,7 @@ public class PaymentsController : ControllerBase
             Amount = dto.Amount,
             Description = dto.Description,
             DueDate = dto.DueDate,
-            Status = "Pending"
+            Status = PaymentStatus.Pending
         };
 
         _context.Payments.Add(payment);
@@ -116,10 +114,10 @@ public class PaymentsController : ControllerBase
         var payment = await _context.Payments.FirstOrDefaultAsync(p => p.Id == id && p.ParentId == parent.Id);
         if (payment == null) return NotFound("Payment not found");
 
-        if (payment.Status == "Paid")
+        if (payment.Status == PaymentStatus.Paid)
             return BadRequest("الفاتورة مدفوعة مسبقاً");
 
-        payment.Status = "Paid";
+        payment.Status = PaymentStatus.Paid;
         payment.PaidDate = DateTime.UtcNow;
 
         // تسجيل نشاط

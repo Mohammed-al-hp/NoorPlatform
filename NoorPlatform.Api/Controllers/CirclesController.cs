@@ -28,13 +28,13 @@ public class CirclesController : ControllerBase
         var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
 
         var query = _context.Circles
-            .Include(c => c.Teacher).ThenInclude(t => t.User)
+            .Include(c => c.Teacher!).ThenInclude(t => t!.User)
             .Include(c => c.Students)
             .AsQueryable();
 
         if (isTeacher)
         {
-            query = query.Where(c => c.Teacher!.UserId == userId);
+            query = query.Where(c => c.Teacher != null && c.Teacher.UserId == userId);
         }
 
         var circles = await query
@@ -60,7 +60,7 @@ public class CirclesController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var circle = await _context.Circles
-            .Include(c => c.Teacher).ThenInclude(t => t.User)
+            .Include(c => c.Teacher!).ThenInclude(t => t!.User)
             .Include(c => c.Students).ThenInclude(s => s.User)
             .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -106,7 +106,7 @@ public class CirclesController : ControllerBase
             Time      = request.Time?.Trim()     ?? string.Empty,
             Location  = request.Location?.Trim() ?? string.Empty,
             Icon      = request.Icon             ?? "⭕",
-            TeacherId = request.TeacherId ?? 0
+            TeacherId = request.TeacherId
         };
 
         _context.Circles.Add(circle);

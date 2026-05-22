@@ -35,6 +35,11 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasPrecision(18, 2);
 
         modelBuilder.Entity<Payment>()
+            .Property(p => p.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<Payment>()
             .HasOne(p => p.Student)
             .WithMany()
             .HasForeignKey(p => p.StudentId)
@@ -73,7 +78,8 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasOne(c => c.Teacher)
             .WithMany(t => t.Circles)
             .HasForeignKey(c => c.TeacherId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<Student>()
             .HasOne(s => s.Circle)
@@ -159,5 +165,29 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.Entity<User>()
             .HasIndex(u => u.PhoneNumber)
             .HasDatabaseName("IX_User_PhoneNumber");
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.UserName)
+            .HasDatabaseName("IX_User_UserName");
+
+        modelBuilder.Entity<Payment>()
+            .HasIndex(p => new { p.ParentId, p.Status })
+            .HasDatabaseName("IX_Payment_ParentId_Status");
+
+        modelBuilder.Entity<Payment>()
+            .HasIndex(p => p.DueDate)
+            .HasDatabaseName("IX_Payment_DueDate");
+
+        modelBuilder.Entity<Circle>()
+            .HasIndex(c => c.TeacherId)
+            .HasDatabaseName("IX_Circle_TeacherId");
+
+        modelBuilder.Entity<LibraryItem>()
+            .HasIndex(l => l.CreatedAt)
+            .HasDatabaseName("IX_LibraryItem_CreatedAt");
+
+        modelBuilder.Entity<ActivityFeed>()
+            .HasIndex(a => a.CreatedAt)
+            .HasDatabaseName("IX_ActivityFeed_CreatedAt");
     }
 }

@@ -32,36 +32,32 @@ public class StudentsController : ControllerBase
         var isTeacher = User.IsInRole("Teacher");
         var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
 
-        var query = _context.Students
-            .Include(s => s.User)
-            .Include(s => s.Circle)
-            .Include(s => s.Attendances)
-            .Include(s => s.HifzRecords)
-            .AsQueryable();
+        var query = _context.Students.AsQueryable();
 
         if (isTeacher)
         {
             query = query.Where(s => s.Circle!.Teacher!.UserId == userId);
         }
 
-        var students = await query.ToListAsync();
-
-        var result = students.Select(s => new
+        var result = await query.Select(s => new
         {
             s.Id,
-            s.User.FullName,
+            FullName = s.User.FullName,
             s.User.Email,
             s.ParentPhone,
-            CircleName = s.Circle?.Name ?? "بدون حلقة",
+            s.CircleId,
+            CircleName = s.Circle != null ? s.Circle.Name : "بدون حلقة",
             s.Level,
             Attendance = s.Attendances.Any()
                 ? (int)Math.Round(
                     (double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present)
                     / s.Attendances.Count * 100)
                 : 0,
-            // ✅ إصلاح 1: استخدام VerseCount الفعلي
-            Progress = CalculateHifzProgress(s.HifzRecords)
-        });
+            Progress = (int)Math.Min(100, Math.Round(
+                (double)s.HifzRecords
+                    .Where(r => r.Type == RecordType.Memorization)
+                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0) / 6236.0 * 100))
+        }).ToListAsync();
 
         return Ok(result);
     }

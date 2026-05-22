@@ -10,10 +10,20 @@
     <title>منصة نور — مركز تحفيظ القرآن الكريم</title>
     <link rel="icon" href="/icon-192.png" type="image/png">
     <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Amiri:wght@400;700&display=swap"
-        rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+        href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    </noscript>
+    <script src="/js/asset-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof loadHtml2Pdf === 'function') loadHtml2Pdf().catch(function () { });
+        });
+    </script>
     <script>
         /* Core shell — navigation & modals (loads before main app script) */
         (function () {
@@ -183,7 +193,7 @@
         }
 
         body {
-            font-family: 'Tajawal', sans-serif;
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, 'Arial Unicode MS', sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
@@ -1137,22 +1147,49 @@
 
         /* ===== ATTENDANCE PAGE ===== */
         .attendance-header {
-            display: grid;
-            grid-template-columns: 1fr auto;
+            display: flex;
+            flex-wrap: wrap;
             gap: 16px;
-            align-items: start;
+            align-items: flex-start;
+            justify-content: space-between;
             margin-bottom: 24px;
+        }
+
+        .attendance-header > div:first-child {
+            flex: 1 1 280px;
+            min-width: 0;
         }
 
         .date-nav {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 12px;
+            justify-content: flex-end;
+            gap: 10px;
             background: #fff;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 8px 16px;
+            padding: 10px 14px;
             box-shadow: var(--shadow);
+            flex: 0 1 auto;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn-bulk-absence {
+            font-size: 11px;
+            line-height: 1.35;
+            padding: 6px 10px !important;
+            white-space: normal;
+            max-width: 150px;
+            flex-shrink: 1;
+        }
+
+        .date-nav-dates {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         .date-nav button {
@@ -3422,7 +3459,7 @@
                 <div class="stat-card blue">
                     <div class="stat-icon">👨‍🏫</div>
                     <div class="stat-card-body">
-                        <div class="stat-value" id="dashTeachers">18</div>
+                        <div class="stat-value" id="dashTeachers">—</div>
                         <div class="stat-label">المحفظون النشطون</div>
                         <div class="stat-trend trend-up">↑ 2 جديد</div>
                     </div>
@@ -3430,7 +3467,7 @@
                 <div class="stat-card teal">
                     <div class="stat-icon">⭕</div>
                     <div class="stat-card-body">
-                        <div class="stat-value" id="dashCircles">24</div>
+                        <div class="stat-value" id="dashCircles">—</div>
                         <div class="stat-label">الحلقات الفعالة</div>
                         <div class="stat-trend trend-up">نشط</div>
                     </div>
@@ -3583,7 +3620,9 @@
                     <h2>إدارة الطلاب</h2>
                     <p id="studentsCount">247 طالب مسجل في المركز</p>
                 </div>
-                <div style="display:flex;gap:8px;align-items:center" id="studentsHeaderActions">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="studentsHeaderActions">
+                    <button type="button" class="btn btn-outline" id="waitingBackBtn" style="display:none"
+                        onclick="exitWaitingList()">← رجوع</button>
                     <button class="btn btn-outline" onclick="exportStudentsCSV()" id="btnExportStudents"
                         style="padding:9px 16px;font-size:13px">📥 تصدير</button>
                     <button class="btn btn-primary" onclick="openModal('addStudentModal')" id="btnAddStudent"
@@ -3627,7 +3666,7 @@
             <div class="page-header">
                 <div>
                     <h2>إدارة المحفظين</h2>
-                    <p>18 محفظ نشط</p>
+                    <p id="teachersPageCount">جاري التحميل...</p>
                 </div>
                 <button class="btn btn-primary" onclick="openModal('addTeacherModal')">➕ إضافة محفظ</button>
             </div>
@@ -3639,7 +3678,7 @@
             <div class="page-header">
                 <div>
                     <h2>إدارة الحلقات</h2>
-                    <p>24 حلقة فعالة</p>
+                    <p id="circlesPageCount">جاري التحميل...</p>
                 </div>
                 <button class="btn btn-primary" onclick="openModal('addCircleModal')">➕ إنشاء حلقة</button>
             </div>
@@ -3680,17 +3719,16 @@
                         <span class="status-badge status-late">⏰ متأخر: <span id="lateCount">0</span></span>
                     </div>
                 </div>
-                <div class="date-nav" style="display:flex;align-items:center;gap:15px">
-                    <button class="btn btn-outline"
-                        style="padding:6px 12px;font-size:12px;border-color:#ef4444;color:#ef4444"
-                        onclick="sendBulkAbsenceNotifs(1)"
-                        title="إرسال إشعارات غياب جماعية لأولياء الأمور للطلاب الغائبين اليوم">
+                <div class="date-nav">
+                    <button type="button" class="btn btn-outline btn-bulk-absence"
+                        onclick="sendBulkAbsenceNotifs(selectedCircleId)"
+                        title="إرسال إشعارات غياب جماعية لأولياء الأمور للطلاب الغائبين في اليوم المحدد">
                         🔔 إشعار غياب جماعي
                     </button>
-                    <div>
-                        <button onclick="changeDate(-1)">‹</button>
-                        <span id="currentDate">الأربعاء، 13 مايو 2026</span>
-                        <button onclick="changeDate(1)">›</button>
+                    <div class="date-nav-dates">
+                        <button type="button" onclick="changeDate(-1)" aria-label="اليوم السابق">‹</button>
+                        <span id="currentDate">—</span>
+                        <button type="button" onclick="changeDate(1)" aria-label="اليوم التالي">›</button>
                     </div>
                 </div>
             </div>
@@ -4312,16 +4350,16 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">الاسم *</label>
-                        <input class="form-input" type="text" placeholder="عبدالله السلمي">
+                        <input id="teacherFullName" class="form-input" type="text" placeholder="عبدالله السلمي" autocomplete="name">
                     </div>
                     <div class="form-group">
                         <label class="form-label">رقم الجوال *</label>
-                        <input class="form-input" type="tel" placeholder="05xxxxxxxx">
+                        <input id="teacherPhone" class="form-input" type="tel" placeholder="05xxxxxxxx" inputmode="numeric" maxlength="10" autocomplete="tel">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">التخصص / المؤهل</label>
-                    <input class="form-input" type="text" placeholder="حافظ للقرآن الكريم كاملاً">
+                    <input id="teacherQualification" class="form-input" type="text" placeholder="حافظ للقرآن الكريم كاملاً">
                 </div>
                 <p style="font-size:12px;color:var(--text-muted);margin-top:8px">يُنشأ حساب تلقائياً بكلمة مرور مؤقتة:
                     Noor@123</p>
@@ -4368,7 +4406,7 @@
     <div class="modal-overlay" id="teacherProfileModal">
         <div class="modal" style="max-width:480px">
             <div class="modal-header">
-                <h3>📋 ملف المحفظ</h3>
+                <h3 id="profileModalTitle">📋 ملف المحفظ</h3>
                 <button class="modal-close" onclick="closeModal('teacherProfileModal')">✕</button>
             </div>
             <div class="modal-body" id="teacherProfileBody">
@@ -4448,6 +4486,91 @@
             </div>
             <button class="btn btn-primary" onclick="submitInvoice()"
                 style="width:100%; justify-content:center; margin-top:15px;">إصدار الفاتورة</button>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div class="modal-overlay" id="editStudentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ تعديل بيانات الطالب</h3>
+                <button class="modal-close" onclick="closeModal('editStudentModal')">✕</button>
+            </div>
+            <input type="hidden" id="editStudentId">
+            <div class="form-group">
+                <label>الاسم الكامل</label>
+                <input type="text" id="editStudentName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>المستوى</label>
+                <select id="editStudentLevel" class="form-control">
+                    <option value="مبتدئ">مبتدئ</option>
+                    <option value="متوسط">متوسط</option>
+                    <option value="متقدم">متقدم</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>الحلقة</label>
+                <select id="editStudentCircle" class="form-control"></select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editStudentModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitEditStudent()">💾 حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Teacher Modal -->
+    <div class="modal-overlay" id="editTeacherModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ تعديل بيانات المحفظ</h3>
+                <button class="modal-close" onclick="closeModal('editTeacherModal')">✕</button>
+            </div>
+            <input type="hidden" id="editTeacherId">
+            <div class="form-group">
+                <label>الاسم الكامل</label>
+                <input type="text" id="editTeacherName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>المؤهل</label>
+                <input type="text" id="editTeacherQual" class="form-control">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editTeacherModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitEditTeacher()">💾 حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Circle Modal -->
+    <div class="modal-overlay" id="editCircleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ تعديل الحلقة</h3>
+                <button class="modal-close" onclick="closeModal('editCircleModal')">✕</button>
+            </div>
+            <input type="hidden" id="editCircleId">
+            <div class="form-group">
+                <label>اسم الحلقة</label>
+                <input type="text" id="editCircleName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>الوقت</label>
+                <input type="text" id="editCircleTime" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>المكان</label>
+                <input type="text" id="editCircleLocation" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>المحفظ</label>
+                <select id="editCircleTeacher" class="form-control"></select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editCircleModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitEditCircle()">💾 حفظ</button>
+            </div>
         </div>
     </div>
 
@@ -4657,9 +4780,20 @@
     <script>
         // ===== API CONFIG =====
         const API_URL = '/api';
-        let TOKEN = localStorage.getItem('noor_token');
+        // ترحيل التوكن القديم من localStorage إلى sessionStorage (جلسة التبويب فقط)
+        (function migrateAuthStorage() {
+            const legacyToken = localStorage.getItem('noor_token');
+            const legacyUser = localStorage.getItem('noor_user');
+            if (legacyToken && !sessionStorage.getItem('noor_token')) {
+                sessionStorage.setItem('noor_token', legacyToken);
+                if (legacyUser) sessionStorage.setItem('noor_user', legacyUser);
+            }
+            localStorage.removeItem('noor_token');
+            localStorage.removeItem('noor_user');
+        })();
+        let TOKEN = sessionStorage.getItem('noor_token');
         let USER = {};
-        try { USER = JSON.parse(localStorage.getItem('noor_user') || '{}'); } catch { USER = {}; }
+        try { USER = JSON.parse(sessionStorage.getItem('noor_user') || '{}'); } catch { USER = {}; }
 
         function escapeHtml(str) {
             if (str == null) return '';
@@ -4669,6 +4803,31 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        }
+
+        /** تاريخ محلي yyyy-MM-dd بدون انزياح UTC */
+        function formatLocalDateYmd(d) {
+            const dt = d instanceof Date ? d : new Date();
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth() + 1).padStart(2, '0');
+            const day = String(dt.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        /** حقن HTML في مودال مع التحقق من وجود العنصر */
+        function setModalBody(modalBodyId, html, modalTitle) {
+            const body = document.getElementById(modalBodyId);
+            if (!body) {
+                showToast('❌ تعذر فتح نافذة العرض — العنصر غير موجود');
+                console.warn('Missing modal body:', modalBodyId);
+                return false;
+            }
+            body.innerHTML = html;
+            if (modalTitle) {
+                const titleEl = document.getElementById('profileModalTitle');
+                if (titleEl) titleEl.textContent = modalTitle;
+            }
+            return true;
         }
 
         function isTokenExpired(token) {
@@ -4758,8 +4917,8 @@
                     role: data.user?.role || data.role,
                     phone: data.user?.phone
                 };
-                localStorage.setItem('noor_token', TOKEN);
-                localStorage.setItem('noor_user', JSON.stringify(USER));
+                sessionStorage.setItem('noor_token', TOKEN);
+                sessionStorage.setItem('noor_user', JSON.stringify(USER));
 
                 if (data.mustChangePassword) {
                     openModal('changePasswordModal');
@@ -4874,8 +5033,8 @@
         }
 
         function logout() {
-            localStorage.removeItem('noor_token');
-            localStorage.removeItem('noor_user');
+            sessionStorage.removeItem('noor_token');
+            sessionStorage.removeItem('noor_user');
             TOKEN = null;
             USER = {};
             location.reload();
@@ -4892,6 +5051,10 @@
 
         // ===== DATA FETCHING =====
         async function apiFetch(endpoint, method = 'GET', body = null) {
+            if (!TOKEN) {
+                logout();
+                throw new Error('يرجى تسجيل الدخول');
+            }
             const options = {
                 method,
                 headers: {
@@ -4900,13 +5063,24 @@
                 }
             };
             if (body && method !== 'GET') options.body = JSON.stringify(body);
-            const res = await fetch(`${API_URL}${endpoint}`, options);
-            if (res.status === 401) logout();
+            let res;
+            try {
+                res = await fetch(`${API_URL}${endpoint}`, options);
+            } catch {
+                throw new Error('لا يوجد اتصال بالإنترنت أو الخادم غير متاح');
+            }
+            if (res.status === 401) { logout(); throw new Error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً'); }
+            if (res.headers.get('Token-Expired') === 'true') {
+                logout();
+                throw new Error('انتهت صلاحية الجلسة');
+            }
             if (!res.ok) {
                 const err = await res.json().catch(() => ({ message: 'حدث خطأ' }));
                 throw new Error(err.message || `HTTP ${res.status}`);
             }
-            return await res.json();
+            if (res.status === 204) return null;
+            const text = await res.text();
+            return text ? JSON.parse(text) : null;
         }
 
         async function fetchStats() {
@@ -4974,12 +5148,13 @@
                         tbody.innerHTML = data.recentHifz.map((r, i) => {
                             const evalClass = r.evaluation === 'ممتاز' ? 'status-excellent' : r.evaluation === 'جيد' ? 'status-good' : 'status-late';
                             const evalIcon = r.evaluation === 'ممتاز' ? '⭐' : r.evaluation === 'جيد' ? '👍' : '🔄';
+                            const initials = escapeHtml((r.studentName || '').slice(0, 2));
                             return `<tr>
                                 <td>${i + 1}</td>
-                                <td><div class="student-cell"><div class="avatar" style="background:${gradients[i % 5]}">${r.studentName.slice(0, 2)}</div><span>${r.studentName}</span></div></td>
-                                <td>${r.circleName}</td>
-                                <td>${r.surahName} (${r.verses})</td>
-                                <td><span class="status-badge ${evalClass}">${evalIcon} ${r.evaluation}</span></td>
+                                <td><div class="student-cell"><div class="avatar" style="background:${gradients[i % 5]}">${initials}</div><span>${escapeHtml(r.studentName)}</span></div></td>
+                                <td>${escapeHtml(r.circleName)}</td>
+                                <td>${escapeHtml(r.surahName)} (${escapeHtml(r.verses)})</td>
+                                <td><span class="status-badge ${evalClass}">${evalIcon} ${escapeHtml(r.evaluation)}</span></td>
                             </tr>`;
                         }).join('');
                     }
@@ -5056,14 +5231,14 @@
                 grid.innerHTML = data.length === 0 ? '<div class="empty-state">لا توجد فواتير</div>' : data.map(p => `
                     <div class="card">
                         <div class="card-header">
-                            <h3>${p.studentName}</h3>
+                            <h3>${escapeHtml(p.studentName)}</h3>
                             <span class="status-badge ${p.status === 'Paid' ? 'sb-paid' : p.status === 'Pending' ? 'sb-pending' : 'sb-unpaid'}">
-                                ${p.status === 'Paid' ? 'مدفوعة' : p.status === 'Pending' ? 'بانتظار الدفع' : 'متأخرة'}
+                                ${p.status === 'Paid' ? 'مدفوعة' : p.status === 'Pending' ? 'بانتظار الدفع' : p.status === 'Overdue' ? 'متأخرة' : escapeHtml(p.status)}
                             </span>
                         </div>
                         <div class="card-body">
                             <p><strong>المبلغ:</strong> ${p.amount} ريال</p>
-                            <p><strong>البيان:</strong> ${p.description}</p>
+                            <p><strong>البيان:</strong> ${escapeHtml(p.description)}</p>
                             <p><strong>الاستحقاق:</strong> ${new Date(p.dueDate).toLocaleDateString('ar-SA')}</p>
                         </div>
                     </div>
@@ -5081,14 +5256,14 @@
                 grid.innerHTML = data.length === 0 ? '<div class="empty-state">لا توجد رسوم مستحقة</div>' : data.map(p => `
                     <div class="card">
                         <div class="card-header">
-                            <h3>${p.studentName}</h3>
+                            <h3>${escapeHtml(p.studentName)}</h3>
                             <span class="status-badge ${p.status === 'Paid' ? 'sb-paid' : p.status === 'Pending' ? 'sb-pending' : 'sb-unpaid'}">
-                                ${p.status === 'Paid' ? 'مدفوعة' : p.status === 'Pending' ? 'بانتظار الدفع' : 'متأخرة'}
+                                ${p.status === 'Paid' ? 'مدفوعة' : p.status === 'Pending' ? 'بانتظار الدفع' : p.status === 'Overdue' ? 'متأخرة' : escapeHtml(p.status)}
                             </span>
                         </div>
                         <div class="card-body">
                             <p><strong>المبلغ:</strong> ${p.amount} ريال</p>
-                            <p><strong>البيان:</strong> ${p.description}</p>
+                            <p><strong>البيان:</strong> ${escapeHtml(p.description)}</p>
                             <p><strong>الاستحقاق:</strong> ${new Date(p.dueDate).toLocaleDateString('ar-SA')}</p>
                             ${p.status !== 'Paid' ? `<button class="btn btn-primary" style="margin-top:10px; width:100%; justify-content:center" onclick="payInvoice(${p.id})">💳 سداد الآن</button>` : ''}
                         </div>
@@ -5103,7 +5278,7 @@
             try {
                 const students = await apiFetch('/students');
                 const select = document.getElementById('invoiceStudentId');
-                select.innerHTML = '<option value="">اختر الطالب...</option>' + students.map(s => `<option value="${s.id}">${s.user.fullName}</option>`).join('');
+                select.innerHTML = '<option value="">اختر الطالب...</option>' + students.map(s => `<option value="${s.id}">${escapeHtml(s.fullName || s.user?.fullName || '')}</option>`).join('');
                 document.getElementById('invoiceAmount').value = '';
                 document.getElementById('invoiceDesc').value = '';
                 document.getElementById('invoiceDueDate').value = '';
@@ -5192,7 +5367,7 @@
                 return;
             }
             grid.innerHTML = data.map((s, i) => {
-                const initials = s.fullName.slice(0, 2);
+                const initials = escapeHtml((s.fullName || '').slice(0, 2));
                 const gradients = [
                     'linear-gradient(135deg,#10b981,#3b82f6)',
                     'linear-gradient(135deg,#8b5cf6,#3b82f6)',
@@ -5206,11 +5381,11 @@
               <div class="student-card-top">
                 <div class="student-avatar-lg" style="background:${grad};font-size:18px">${initials}</div>
                 <div class="student-card-info" style="flex:1">
-                  <h4 style="margin-bottom:2px">${s.fullName}</h4>
-                  <span style="font-size:11px">${s.circleName}</span>
+                  <h4 style="margin-bottom:2px">${escapeHtml(s.fullName)}</h4>
+                  <span style="font-size:11px">${escapeHtml(s.circleName)}</span>
                   <div style="margin-top:6px">
                     <span class="status-badge ${s.level === 'متقدم' ? 'status-excellent' : s.level === 'متوسط' ? 'status-good' : 'status-late'}"
-                          style="font-size:10px">${s.level}</span>
+                          style="font-size:10px">${escapeHtml(s.level)}</span>
                   </div>
                 </div>
               </div>
@@ -5227,7 +5402,7 @@
                   <button class="btn btn-primary" onclick="restoreStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}')" style="flex:1">🔄 استعادة من الأرشيف</button>
                 ` : `
                   <button class="btn btn-view" onclick="viewStudentDetails(${s.id})" title="عرض التفاصيل">👁 عرض</button>
-                  <button class="btn btn-edit" onclick="editStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}','${s.level}',${s.circleId || 'null'})" title="تعديل">✏️ تعديل</button>
+                  <button class="btn btn-edit" data-id="${s.id}" data-name="${escapeHtml(s.fullName)}" data-level="${escapeHtml(s.level)}" data-circle="${s.circleId || ''}" onclick="editStudent(this.dataset.id, this.dataset.name, this.dataset.level, this.dataset.circle || null)" title="تعديل">✏️ تعديل</button>
                   <button class="btn-pdf" onclick="exportStudentPDF(${s.id})" title="تقرير PDF">📄 PDF</button>
                   <button class="btn btn-delete" onclick="deleteStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}')" title="أرشفة">📦 أرشفة</button>
                 `}
@@ -5256,12 +5431,28 @@
             document.getElementById('btnExportStudents').style.display = _isWaitingMode ? 'none' : 'inline-flex';
             document.getElementById('studentSearchInput').closest('.students-search-bar').style.display =
                 _isWaitingMode ? 'none' : 'block';
+            const backBtn = document.getElementById('waitingBackBtn');
+            if (backBtn) backBtn.style.display = _isWaitingMode ? 'inline-flex' : 'none';
 
             document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
             if (el) el.classList.add('active');
 
-            if (_isWaitingMode) fetchWaitingList();
-            else fetchStudents();
+            if (_isWaitingMode) {
+                if (location.hash !== '#waiting') history.replaceState({ noorFilter: 'waiting' }, '', '#waiting');
+                fetchWaitingList();
+            } else {
+                if (location.hash === '#waiting') history.replaceState(null, '', '#students');
+                fetchStudents();
+            }
+        }
+
+        function exitWaitingList() {
+            if (window.history.length > 1) {
+                history.back();
+                return;
+            }
+            const allChip = document.querySelector('.filter-chips .filter-chip');
+            setStudentFilter('all', allChip);
         }
 
         async function fetchWaitingList() {
@@ -5570,54 +5761,72 @@
                 const s = await apiFetch(`/students/${id}`);
                 const hifzHtml = s.recentHifz && s.recentHifz.length > 0
                     ? s.recentHifz.map(h => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-                        <span>${h.surahName} (${h.verses})</span><span class="status-badge status-excellent">${h.evaluation}</span>
+                        <span>${escapeHtml(h.surahName)} (${escapeHtml(h.verses)})</span><span class="status-badge status-excellent">${escapeHtml(h.evaluation)}</span>
                        </div>`).join('')
                     : '<p style="color:var(--text-muted)">لا توجد سجلات تسميع</p>';
 
-                document.getElementById('teacherProfileContent').innerHTML = `
+                const html = `
                     <div style="text-align:center;margin-bottom:20px">
-                        <div class="student-avatar-lg" style="background:var(--gradient);width:64px;height:64px;font-size:24px;margin:0 auto 10px">${s.fullName.slice(0, 2)}</div>
-                        <h3>${s.fullName}</h3>
-                        <p style="color:var(--text-muted)">${s.email} | ${s.circleName}</p>
+                        <div class="student-avatar-lg" style="background:var(--gradient);width:64px;height:64px;font-size:24px;margin:0 auto 10px">${escapeHtml((s.fullName || '').slice(0, 2))}</div>
+                        <h3>${escapeHtml(s.fullName)}</h3>
+                        <p style="color:var(--text-muted)">${escapeHtml(s.email || '')} | ${escapeHtml(s.circleName || '')}</p>
                     </div>
                     <div class="student-card-stats" style="margin-bottom:16px">
-                        <div class="mini-stat"><label>الحفظ</label><p>${s.progress}%</p></div>
-                        <div class="mini-stat"><label>الحضور</label><p>${s.attendance}%</p></div>
-                        <div class="mini-stat"><label>المستوى</label><p>${s.level}</p></div>
+                        <div class="mini-stat"><label>الحفظ</label><p>${s.progress ?? 0}%</p></div>
+                        <div class="mini-stat"><label>الحضور</label><p>${s.attendance ?? 0}%</p></div>
+                        <div class="mini-stat"><label>المستوى</label><p>${escapeHtml(s.level || '—')}</p></div>
                     </div>
                     <h4 style="margin-bottom:8px">آخر سجلات التسميع</h4>
-                    ${hifzHtml}
-                `;
-                openModal('teacherProfileModal');
+                    ${hifzHtml}`;
+                if (setModalBody('teacherProfileBody', html, '👤 بيانات الطالب')) {
+                    openModal('teacherProfileModal');
+                }
             } catch (err) { showToast('❌ ' + err.message); }
         }
 
-        // تعديل بيانات الطالب (PUT /students/{id})
-        async function editStudent(id, name, level, circleId) {
-            const newName = prompt('اسم الطالب:', name);
-            if (!newName) return;
-            const newLevel = prompt('المستوى (مبتدئ / متوسط / متقدم):', level);
+        function editStudent(id, name, level, circleId) {
+            document.getElementById('editStudentId').value = id;
+            document.getElementById('editStudentName').value = name || '';
+            document.getElementById('editStudentLevel').value = level || 'مبتدئ';
+            const circleSel = document.getElementById('editStudentCircle');
+            if (circleSel) {
+                circleSel.innerHTML = (window._circles || []).map(c =>
+                    `<option value="${c.id}">${escapeHtml(c.name)}</option>`
+                ).join('');
+                if (circleId) circleSel.value = String(circleId);
+            }
+            openModal('editStudentModal');
+        }
+
+        async function submitEditStudent() {
+            const id = document.getElementById('editStudentId').value;
+            const fullName = document.getElementById('editStudentName').value.trim();
+            const level = document.getElementById('editStudentLevel').value;
+            const circleId = parseInt(document.getElementById('editStudentCircle').value, 10);
+            if (!fullName) { showToast('⚠️ الاسم مطلوب'); return; }
             try {
-                await apiFetch(`/students/${id}`, 'PUT', {
-                    fullName: newName,
-                    level: newLevel || level,
-                    circleId: circleId
-                });
+                await apiFetch(`/students/${id}`, 'PUT', { fullName, level, circleId });
+                closeModal('editStudentModal');
                 showToast('✅ تم تحديث بيانات الطالب');
                 fetchStudents();
             } catch (err) { showToast('❌ ' + err.message); }
         }
 
-        // تعديل بيانات المحفظ (PUT /teachers/{id})
-        async function editTeacher(id, name, qualification) {
-            const newName = prompt('اسم المحفظ:', name);
-            if (!newName) return;
-            const newQual = prompt('المؤهل:', qualification);
+        function editTeacher(id, name, qualification) {
+            document.getElementById('editTeacherId').value = id;
+            document.getElementById('editTeacherName').value = name || '';
+            document.getElementById('editTeacherQual').value = qualification || '';
+            openModal('editTeacherModal');
+        }
+
+        async function submitEditTeacher() {
+            const id = document.getElementById('editTeacherId').value;
+            const fullName = document.getElementById('editTeacherName').value.trim();
+            const qualification = document.getElementById('editTeacherQual').value.trim();
+            if (!fullName) { showToast('⚠️ الاسم مطلوب'); return; }
             try {
-                await apiFetch(`/teachers/${id}`, 'PUT', {
-                    fullName: newName,
-                    qualification: newQual || qualification
-                });
+                await apiFetch(`/teachers/${id}`, 'PUT', { fullName, qualification });
+                closeModal('editTeacherModal');
                 showToast('✅ تم تحديث بيانات المحفظ');
                 fetchTeachers();
             } catch (err) { showToast('❌ ' + err.message); }
@@ -5625,27 +5834,51 @@
 
         // حذف المحفظ (DELETE /teachers/{id})
         async function deleteTeacher(id, name) {
-            if (!confirm(`هل أنت متأكد من حذف المحفظ "${name}"؟`)) return;
+            const teacherId = parseInt(id, 10);
+            if (!teacherId || isNaN(teacherId)) {
+                showToast('❌ معرّف المحفظ غير صالح');
+                return;
+            }
+            const label = name || 'هذا المحفظ';
+            if (!confirm(`هل أنت متأكد من حذف المحفظ «${label}»؟`)) return;
             try {
-                await apiFetch(`/teachers/${id}`, 'DELETE');
+                await apiFetch(`/teachers/${teacherId}`, 'DELETE');
                 showToast('✅ تم حذف المحفظ');
                 fetchTeachers();
-            } catch (err) { showToast('❌ ' + err.message); }
+            } catch (err) {
+                showToast('❌ ' + (err.message || 'فشل الحذف'));
+            }
         }
 
-        // تعديل بيانات الحلقة (PUT /circles/{id})
         async function editCircle(id, name, time, location, teacherId) {
-            const newName = prompt('اسم الحلقة:', name);
-            if (!newName) return;
-            const newTime = prompt('الوقت:', time);
-            const newLoc = prompt('المكان:', location);
+            document.getElementById('editCircleId').value = id;
+            document.getElementById('editCircleName').value = name || '';
+            document.getElementById('editCircleTime').value = time || '';
+            document.getElementById('editCircleLocation').value = location || '';
+            const teacherSel = document.getElementById('editCircleTeacher');
+            try {
+                const teachers = await apiFetch('/teachers');
+                teacherSel.innerHTML = '<option value="">— بدون محفظ —</option>' + teachers.map(t =>
+                    `<option value="${t.id}">${escapeHtml(t.fullName)}</option>`
+                ).join('');
+                if (teacherId) teacherSel.value = String(teacherId);
+            } catch { teacherSel.innerHTML = '<option value="">—</option>'; }
+            openModal('editCircleModal');
+        }
+
+        async function submitEditCircle() {
+            const id = document.getElementById('editCircleId').value;
+            const name = document.getElementById('editCircleName').value.trim();
+            if (!name) { showToast('⚠️ اسم الحلقة مطلوب'); return; }
+            const teacherVal = document.getElementById('editCircleTeacher').value;
             try {
                 await apiFetch(`/circles/${id}`, 'PUT', {
-                    name: newName,
-                    time: newTime || time,
-                    location: newLoc || location,
-                    teacherId: teacherId
+                    name,
+                    time: document.getElementById('editCircleTime').value.trim(),
+                    location: document.getElementById('editCircleLocation').value.trim(),
+                    teacherId: teacherVal ? parseInt(teacherVal, 10) : null
                 });
+                closeModal('editCircleModal');
                 showToast('✅ تم تحديث الحلقة');
                 fetchCircles();
             } catch (err) { showToast('❌ ' + err.message); }
@@ -5683,9 +5916,14 @@
 
         // إشعار غياب جماعي (POST /notifications/bulk-absence)
         async function sendBulkAbsenceNotifs(circleId) {
+            const cid = parseInt(circleId, 10);
+            if (!cid || isNaN(cid)) {
+                showToast('⚠️ اختر حلقة أولاً من القائمة أعلاه');
+                return;
+            }
             if (!confirm('إرسال إشعارات غياب لجميع أولياء الأمور؟')) return;
             try {
-                const res = await apiFetch('/notifications/bulk-absence', 'POST', { circleId });
+                const res = await apiFetch('/notifications/bulk-absence', 'POST', { circleId: cid });
                 showToast(`✅ ${res.message}`);
             } catch (err) { showToast('❌ ' + err.message); }
         }
@@ -5712,14 +5950,17 @@
             if (teachersGrid) teachersGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
             const data = await apiFetch('/teachers'); // I need to create this controller
             //const grid = document.getElementById('teachersGrid');
+            const countEl = document.getElementById('teachersPageCount');
+            if (countEl) countEl.textContent = `${data.length} محفظ مسجل`;
+
             teachersGrid.innerHTML = data.map(t => `
             <div class="student-card">
               <div class="student-card-top">
-                <div class="student-avatar-lg" style="background:var(--gradient)">${t.fullName.slice(0, 2)}</div>
+                <div class="student-avatar-lg" style="background:var(--gradient)">${escapeHtml((t.fullName || '').slice(0, 2))}</div>
                 <div class="student-card-info">
-                  <h4>${t.fullName}</h4>
-                  <span>${t.circleName || 'بدون حلقة'}</span><br>
-                  <span style="font-size:11px;color:var(--text-muted)">${t.qualification}</span>
+                  <h4>${escapeHtml(t.fullName)}</h4>
+                  <span>${escapeHtml(t.circleName || 'بدون حلقة')}</span><br>
+                  <span style="font-size:11px;color:var(--text-muted)">${escapeHtml(t.qualification || '')}</span>
                 </div>
               </div>
               <div class="student-card-stats">
@@ -5727,12 +5968,21 @@
                 <div class="mini-stat"><label>التقييم</label><p>⭐ 4.8</p></div>
               </div>
               <div class="student-card-actions">
-                <button class="btn btn-outline" onclick="viewTeacherProfile(${t.id})">الملف</button>
-                <button class="btn btn-edit" onclick="editTeacher(${t.id},'${t.fullName.replace(/'/g, "\\'")}','${(t.qualification || '').replace(/'/g, "\\'")}')">✏️ تعديل</button>
-                <button class="btn btn-delete" onclick="deleteTeacher(${t.id},${JSON.stringify(t.fullName)})">🗑 حذف</button>
+                <button type="button" class="btn btn-outline" onclick="viewTeacherProfile(${t.id})">الملف</button>
+                <button type="button" class="btn btn-edit" data-id="${t.id}" data-name="${escapeHtml(t.fullName)}" data-qual="${escapeHtml(t.qualification || '')}" onclick="editTeacher(this.dataset.id, this.dataset.name, this.dataset.qual)">✏️ تعديل</button>
+                <button type="button" class="btn btn-delete btn-delete-teacher" data-id="${t.id}" data-name="${escapeHtml(t.fullName)}">🗑 حذف</button>
               </div>
             </div>
           `).join('');
+
+            if (!window._teachersGridBound) {
+                window._teachersGridBound = true;
+                teachersGrid.addEventListener('click', e => {
+                    const btn = e.target.closest('.btn-delete-teacher');
+                    if (!btn) return;
+                    deleteTeacher(btn.dataset.id, btn.dataset.name);
+                });
+            }
         }
 
         async function fetchCircles() {
@@ -5740,25 +5990,27 @@
             window._circles = data; // تخزين عالمي للاستخدام في صفحة الحضور
 
             const circlesGrid = document.getElementById('circlesGrid');
+            const circlesCountEl = document.getElementById('circlesPageCount');
+            if (circlesCountEl) circlesCountEl.textContent = `${data.length} حلقة مسجلة`;
             if (circlesGrid) {
                 circlesGrid.innerHTML = data.map(c => `
             <div class="student-card">
               <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-                <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:24px;">${c.icon || '⭕'}</div>
+                <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:24px;">${escapeHtml(c.icon || '⭕')}</div>
                 <div>
-                  <h4 style="font-size:15px;font-weight:800">${c.name}</h4>
-                  <span style="font-size:12px;color:var(--text-muted)">${c.teacherName}</span>
+                  <h4 style="font-size:15px;font-weight:800">${escapeHtml(c.name)}</h4>
+                  <span style="font-size:12px;color:var(--text-muted)">${escapeHtml(c.teacherName)}</span>
                 </div>
               </div>
               <div class="student-card-stats">
                 <div class="mini-stat"><label>الطلاب</label><p>${c.studentCount}</p></div>
-                <div class="mini-stat"><label>القاعة</label><p>${c.location || '—'}</p></div>
+                <div class="mini-stat"><label>القاعة</label><p>${escapeHtml(c.location || '—')}</p></div>
               </div>
-              <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">⏰ ${c.time || '—'}</p>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">⏰ ${escapeHtml(c.time || '—')}</p>
               <div class="student-card-actions">
-                <button class="btn btn-outline" onclick="editCircle(${c.id},'${c.name.replace(/'/g, "\\'")}','${(c.time || '').replace(/'/g, "\\'")}','${(c.location || '').replace(/'/g, "\\'")}',${c.teacherId || 'null'})">✏️ تعديل</button>
+                <button class="btn btn-outline" data-id="${c.id}" data-name="${escapeHtml(c.name)}" data-time="${escapeHtml(c.time || '')}" data-loc="${escapeHtml(c.location || '')}" data-teacher="${c.teacherId || ''}" onclick="editCircle(this.dataset.id, this.dataset.name, this.dataset.time, this.dataset.loc, this.dataset.teacher || null)">✏️ تعديل</button>
                 <button class="btn btn-primary" onclick="navigate('attendance',null)">الحضور</button>
-                <button class="btn btn-delete" onclick="deleteCircle(${c.id},'${c.name}')">🗑 حذف</button>
+                <button class="btn btn-delete" onclick="deleteCircle(${c.id},${JSON.stringify(c.name)})">🗑 حذف</button>
               </div>
             </div>
           `).join('');
@@ -5768,7 +6020,7 @@
             const halaqaSelect = document.getElementById('halaqa');
             if (halaqaSelect && data.length > 0) {
                 halaqaSelect.innerHTML = data.map(c =>
-                    `<option value="${c.id}">${c.name}</option>`
+                    `<option value="${c.id}">${escapeHtml(c.name)}</option>`
                 ).join('');
             }
 
@@ -5776,7 +6028,7 @@
             const circleSelector = document.querySelector('.circle-selector');
             if (circleSelector && data.length > 0) {
                 circleSelector.innerHTML = data.map((c, i) =>
-                    `<div class="circle-chip ${i === 0 ? 'active' : ''}" onclick="selectCircle(this)" data-id="${c.id}">${c.name}</div>`
+                    `<div class="circle-chip ${i === 0 ? 'active' : ''}" onclick="selectCircle(this)" data-id="${c.id}">${escapeHtml(c.name)}</div>`
                 ).join('');
                 selectedCircleId = data[0].id;
             }
@@ -5957,11 +6209,16 @@
         let attendanceDate = new Date();
         let selectedCircleId = null;
 
+        function initAttendanceDateDisplay() {
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const el = document.getElementById('currentDate');
+            if (el) el.textContent = attendanceDate.toLocaleDateString('ar-SA', opts);
+        }
+        initAttendanceDateDisplay();
+
         function changeDate(dir) {
             attendanceDate.setDate(attendanceDate.getDate() + dir);
-            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('currentDate').textContent =
-                attendanceDate.toLocaleDateString('ar-SA', opts);
+            initAttendanceDateDisplay();
             fetchAttendanceForDate();
         }
 
@@ -5981,7 +6238,7 @@
                 return;
             }
             try {
-                const dateStr = attendanceDate.toISOString().split('T')[0];
+                const dateStr = formatLocalDateYmd(attendanceDate);
                 const data = await apiFetch(`/attendance/circle/${selectedCircleId}?date=${dateStr}`);
                 renderAttendanceTable(data);
             } catch {
@@ -6041,7 +6298,8 @@
 
         async function recordAtt(studentId, status) {
             try {
-                const res = await fetch(`${API_URL}/attendance?studentId=${studentId}&status=${status}`, {
+                const dateStr = formatLocalDateYmd(attendanceDate);
+                const res = await fetch(`${API_URL}/attendance?studentId=${studentId}&status=${status}&date=${dateStr}`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }
                 });
@@ -6458,19 +6716,26 @@
 
         // ─── 10. حفظ محفظ جديد ───────────────────────────────
         async function saveTeacher() {
-            const modal = document.getElementById('addTeacherModal');
-            const inputs = modal.querySelectorAll('input');
-            const fullName = inputs[0]?.value?.trim();
-            const phone = inputs[1]?.value?.trim();
-            const qualification = inputs[2]?.value?.trim() || '';
+            const fullName = document.getElementById('teacherFullName')?.value?.trim() || '';
+            const phone = document.getElementById('teacherPhone')?.value?.trim() || '';
+            const qualification = document.getElementById('teacherQualification')?.value?.trim() || '';
 
-            if (!fullName || !/^05\d{8}$/.test(phone || '')) {
-                showToast('❌ يرجى ملء الاسم ورقم الجوال (05xxxxxxxx)');
+            if (!fullName) {
+                showToast('❌ يرجى إدخال اسم المحفظ');
+                document.getElementById('teacherFullName')?.focus();
+                return;
+            }
+            if (!/^05\d{8}$/.test(phone)) {
+                showToast('❌ رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
+                document.getElementById('teacherPhone')?.focus();
                 return;
             }
             try {
                 const data = await apiFetch('/teachers', 'POST', { fullName, phone, qualification });
-                modal.querySelectorAll('input').forEach(i => i.value = '');
+                ['teacherFullName', 'teacherPhone', 'teacherQualification'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
                 closeModal('addTeacherModal');
                 showToast('✅ تم إضافة المحفظ بنجاح');
                 if (data.credentials) showAccountCredentialsModal(data.credentials, phone);
@@ -6483,7 +6748,10 @@
         // ─── عرض ملف المحفظ ───────────────────────────────
         async function viewTeacherProfile(teacherId) {
             openModal('teacherProfileModal');
+            const titleEl = document.getElementById('profileModalTitle');
+            if (titleEl) titleEl.textContent = '📋 ملف المحفظ';
             const body = document.getElementById('teacherProfileBody');
+            if (!body) { showToast('❌ نافذة العرض غير متوفرة'); return; }
             body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
             try {
                 const t = await apiFetch('/teachers/' + teacherId);
@@ -6697,6 +6965,10 @@
         // ─── renderAttendanceTable — عرض جدول حضور من API ─────
         function renderAttendanceTable(records) {
             const wrap = document.getElementById('attendanceList');
+            if (!wrap) {
+                showToast('❌ جدول الحضور غير موجود في الصفحة');
+                return;
+            }
             if (!records || !records.length) {
                 wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد سجلات حضور لهذا اليوم</p>';
                 return;
@@ -6822,13 +7094,14 @@
             showToast('تم جلب التقرير بنجاح 📊');
         }
 
-        function printAttendance() {
+        async function printAttendance() {
             const el = document.getElementById('attendanceList');
             if (!el || !el.innerHTML.trim()) {
                 showToast('لا توجد بيانات لطباعتها');
                 return;
             }
-            if (typeof html2pdf !== 'undefined') {
+            const hasPdf = typeof ensureHtml2Pdf === 'function' ? await ensureHtml2Pdf() : typeof html2pdf !== 'undefined';
+            if (hasPdf) {
                 const opt = {
                     margin: 10,
                     filename: 'تقرير_الحضور.pdf',
@@ -6836,7 +7109,7 @@
                     html2canvas: { scale: 2 },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
-                html2pdf().set(opt).from(el).save();
+                await html2pdf().set(opt).from(el).save();
                 showToast('جاري طباعة التقرير... 🖨️');
             } else {
                 window.print();
@@ -6862,7 +7135,20 @@
         // ─── PWA ───
         let deferredPrompt;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => { });
+            navigator.serviceWorker.register('/sw.js?v=6').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const nw = reg.installing;
+                    if (!nw) return;
+                    nw.addEventListener('statechange', () => {
+                        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                            showToast('🔄 تحديث جديد متوفر — أعد تحميل الصفحة');
+                        }
+                    });
+                });
+            }).catch(() => { });
+            navigator.serviceWorker.addEventListener('message', e => {
+                if (e.data?.type === 'SW_UPDATED') showToast('🔄 تم تحديث التطبيق — أعد التحميل للحصول على آخر نسخة');
+            });
         }
         window.addEventListener('beforeinstallprompt', e => {
             e.preventDefault();
@@ -7229,6 +7515,9 @@
         async function exportStudentPDF(studentId) {
             showLoading('جاري إنشاء التقرير...');
             try {
+                const hasPdf = typeof ensureHtml2Pdf === 'function' ? await ensureHtml2Pdf() : typeof html2pdf !== 'undefined';
+                if (!hasPdf) throw new Error('مكتبة PDF غير متوفرة — تحقق من الاتصال أو أعد تحميل الصفحة');
+
                 const res = await fetch(`${API_URL}/reports/monthly/${studentId}`, {
                     headers: { 'Authorization': `Bearer ${TOKEN}` }
                 });
@@ -7256,6 +7545,9 @@
         async function exportCertificatePDF(studentId) {
             showLoading('جاري إنشاء الشهادة...');
             try {
+                const hasPdf = typeof ensureHtml2Pdf === 'function' ? await ensureHtml2Pdf() : typeof html2pdf !== 'undefined';
+                if (!hasPdf) throw new Error('مكتبة PDF غير متوفرة');
+
                 const res = await fetch(`${API_URL}/reports/certificate/${studentId}`, {
                     headers: { 'Authorization': `Bearer ${TOKEN}` }
                 });

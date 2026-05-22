@@ -20,22 +20,20 @@ public class AttendanceController : ControllerBase
         _context = context;
     }
 
-    // ─────────────────────────────────────────────────
     // GET /api/attendance/circle/{circleId}?date=2026-05-16
-    // ─────────────────────────────────────────────────
     [HttpGet("circle/{circleId}")]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> GetByCircle(int circleId, [FromQuery] DateTime? date)
+    public async Task<IActionResult> GetByCircle(int circleId, [FromQuery] string? date)
     {
         if (!await AuthorizationHelpers.CanAccessCircleAsync(_context, User, circleId))
             return Forbid();
 
-        var targetDate = (date ?? DateTime.UtcNow).Date;
+        var (dayStart, dayEnd) = ParseAttendanceDayRange(date);
 
         var students = await _context.Students
             .Where(s => s.CircleId == circleId)
             .Include(s => s.User)
-            .Include(s => s.Attendances.Where(a => a.Date.Date == targetDate))
+            .Include(s => s.Attendances.Where(a => a.Date >= dayStart && a.Date < dayEnd))
             .ToListAsync();
 
         var result = students.Select(s => new
@@ -48,10 +46,6 @@ public class AttendanceController : ControllerBase
         return Ok(result);
     }
 
-    // ─────────────────────────────────────────────────
-    // GET /api/attendance/student/{studentId}
-    // سجل حضور طالب معين (آخر 30 يوم)
-    // ─────────────────────────────────────────────────
     [HttpGet("student/{studentId}")]
     public async Task<IActionResult> GetByStudent(int studentId)
     {
@@ -60,7 +54,7 @@ public class AttendanceController : ControllerBase
 
         var since = DateTime.UtcNow.AddDays(-30).Date;
         var records = await _context.Attendances
-            .Where(a => a.StudentId == studentId && a.Date.Date >= since)
+            .Where(a => a.StudentId == studentId && a.Date >= since)
             .OrderByDescending(a => a.Date)
             .Select(a => new { a.Date, Status = a.Status.ToString() })
             .ToListAsync();
@@ -68,20 +62,17 @@ public class AttendanceController : ControllerBase
         return Ok(records);
     }
 
-    // ─────────────────────────────────────────────────
-    // POST /api/attendance?studentId=1&status=Present
-    // يدعم query string للتوافق مع الكود الحالي في Frontend
-    // ─────────────────────────────────────────────────
     [HttpPost]
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> MarkAttendance(
         [FromQuery] int? studentId,
         [FromQuery] string? status,
+        [FromQuery] string? date,
         [FromBody] MarkAttendanceRequest? body)
     {
-        // يقبل الطلب من query string أو من body
         var sid = studentId ?? body?.StudentId;
         var sText = status ?? body?.Status;
+        var dateText = date ?? body?.Date;
 
         if (sid == null || string.IsNullOrEmpty(sText))
             return BadRequest(new { message = "studentId و status مطلوبان" });
@@ -92,9 +83,10 @@ public class AttendanceController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, sid.Value))
             return Forbid();
 
-        var today = DateTime.UtcNow.Date;
+        var (dayStart, dayEnd) = ParseAttendanceDayRange(dateText);
+
         var record = await _context.Attendances
-            .FirstOrDefaultAsync(a => a.StudentId == sid && a.Date.Date == today);
+            .FirstOrDefaultAsync(a => a.StudentId == sid && a.Date >= dayStart && a.Date < dayEnd);
 
         if (record != null)
         {
@@ -105,19 +97,19 @@ public class AttendanceController : ControllerBase
             record = new Attendance
             {
                 StudentId = sid.Value,
-                Date = today,
+                Date = dayStart,
                 Status = parsedStatus
             };
             _context.Attendances.Add(record);
-            
-            // Gamification & ActivityFeed
+
             var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == sid.Value);
             if (student != null)
             {
                 if (parsedStatus == AttendanceStatus.Present) student.Points += 10;
-                
-                _context.ActivityFeeds.Add(new ActivityFeed {
-                    UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),
+
+                _context.ActivityFeeds.Add(new ActivityFeed
+                {
+                    UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
                     UserName = User.Identity?.Name ?? "User",
                     ActivityType = "Attendance",
                     Description = $"تم تسجيل حضور الطالب {student.User.FullName}",
@@ -137,10 +129,6 @@ public class AttendanceController : ControllerBase
         });
     }
 
-    // ─────────────────────────────────────────────────
-    // GET /api/attendance/summary?days=7
-    // ملخص الحضور للأيام الأخيرة (للرسم البياني)
-    // ─────────────────────────────────────────────────
     [HttpGet("summary")]
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetSummary([FromQuery] int days = 7)
@@ -148,7 +136,7 @@ public class AttendanceController : ControllerBase
         days = Math.Clamp(days, 1, 90);
         var since = DateTime.UtcNow.AddDays(-days).Date;
         var records = await _context.Attendances
-            .Where(a => a.Date.Date >= since)
+            .Where(a => a.Date >= since)
             .GroupBy(a => a.Date.Date)
             .Select(g => new
             {
@@ -163,10 +151,33 @@ public class AttendanceController : ControllerBase
 
         return Ok(records);
     }
+
+    /// <summary>
+    /// يحوّل تاريخ الاستعلام (yyyy-MM-dd) إلى نطاق يوم كامل بدون انزياح UTC.
+    /// </summary>
+    private static (DateTime Start, DateTime End) ParseAttendanceDayRange(string? date)
+    {
+        if (string.IsNullOrWhiteSpace(date))
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            var start = today.ToDateTime(TimeOnly.MinValue);
+            return (start, start.AddDays(1));
+        }
+
+        if (DateOnly.TryParse(date, out var day))
+        {
+            var start = day.ToDateTime(TimeOnly.MinValue);
+            return (start, start.AddDays(1));
+        }
+
+        var fallback = DateOnly.FromDateTime(DateTime.Now).ToDateTime(TimeOnly.MinValue);
+        return (fallback, fallback.AddDays(1));
+    }
 }
 
 public class MarkAttendanceRequest
 {
     public int StudentId { get; set; }
     public string Status { get; set; } = "Present";
+    public string? Date { get; set; }
 }

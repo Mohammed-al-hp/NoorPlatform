@@ -16,6 +16,5 @@ public class Payment
     public DateTime DueDate { get; set; }
     public DateTime? PaidDate { get; set; }
     
-    // Status: "Pending", "Paid", "Overdue"
-    public string Status { get; set; } = "Pending";
+    public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 }

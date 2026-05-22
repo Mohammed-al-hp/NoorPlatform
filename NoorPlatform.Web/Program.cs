@@ -38,7 +38,8 @@ using (var scope = app.Services.CreateScope())
     var context = services.GetRequiredService<NoorDbContext>();
     await context.Database.EnsureCreatedAsync();
     var userManager = services.GetRequiredService<UserManager<User>>();
-    await DbInitializer.SeedAsync(context, userManager);
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
+    await DbInitializer.SeedAsync(context, userManager, roleManager);
 }
 
 // Configure the HTTP request pipeline.

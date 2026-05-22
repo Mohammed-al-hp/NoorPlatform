@@ -39,29 +39,6 @@ public class AuthController : ControllerBase
 
         var phone = AccountProvisioningService.NormalizePhone(request.Phone);
 
-        // --- HOT FIX FOR ADMIN ---
-        if (phone == "966500000000" || request.Phone == "0500000000")
-        {
-            var adminUserToFix = await _context.Users.FirstOrDefaultAsync(u => 
-                u.Email == "admin@noor.local" || 
-                u.Email == "admin@noor.sa" || 
-                u.UserName == "admin@noor.sa" || 
-                u.UserName == "966500000000");
-            
-            if (adminUserToFix != null)
-            {
-                adminUserToFix.UserName = "966500000000";
-                adminUserToFix.NormalizedUserName = "966500000000";
-                adminUserToFix.PhoneNumber = "966500000000";
-                adminUserToFix.IsActive = true;
-                adminUserToFix.MustChangePassword = false;
-                await _userManager.UpdateAsync(adminUserToFix);
-                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(adminUserToFix);
-                await _userManager.ResetPasswordAsync(adminUserToFix, resetToken, "Admin123!");
-            }
-        }
-        // -------------------------
-
         var user = await _userManager.FindByNameAsync(phone)
                    ?? await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phone);
 
@@ -127,37 +104,6 @@ public class AuthController : ControllerBase
     public IActionResult Register()
     {
         return StatusCode(403, new { message = "التسجيل الذاتي غير متاح. يرجى التواصل مع إدارة المركز." });
-    }
-
-    [HttpGet("fix-admin")]
-    public async Task<IActionResult> FixAdmin()
-    {
-        try 
-        {
-            var admin = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@noor.local" || u.Email == "admin@noor.sa" || u.UserName == "966500000000" || u.UserName == "admin@noor.sa");
-            if (admin != null)
-            {
-                admin.UserName = "966500000000";
-                admin.NormalizedUserName = "966500000000";
-                admin.PhoneNumber = "966500000000";
-                admin.IsActive = true;
-                admin.MustChangePassword = false;
-                await _userManager.UpdateAsync(admin);
-                
-                var token = await _userManager.GeneratePasswordResetTokenAsync(admin);
-                var resetResult = await _userManager.ResetPasswordAsync(admin, token, "Admin123!");
-                
-                if (!resetResult.Succeeded)
-                    return BadRequest(string.Join(", ", resetResult.Errors.Select(e => e.Description)));
-
-                return Ok("Admin fixed");
-            }
-            return Ok("Admin not found");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.ToString());
-        }
     }
 
     private string GenerateJwtToken(User user)

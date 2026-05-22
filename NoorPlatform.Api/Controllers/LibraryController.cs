@@ -26,9 +26,7 @@ namespace NoorPlatform.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> GetAll([FromQuery] string? category, [FromQuery] string? search)
         {
-            var query = _context.LibraryItems
-                .Include(l => l.UploadedByUser)
-                .AsQueryable();
+            var query = _context.LibraryItems.AsQueryable();
 
             if (!string.IsNullOrEmpty(category))
                 query = query.Where(l => l.Category == category);
@@ -36,19 +34,20 @@ namespace NoorPlatform.Api.Controllers
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(l => l.Title.Contains(search) || l.Description.Contains(search));
 
-            var items = await query.OrderByDescending(l => l.CreatedAt).ToListAsync();
-
-            var result = items.Select(l => new
-            {
-                l.Id,
-                l.Title,
-                l.Description,
-                l.Category,
-                l.PdfFilePath,
-                UploadedBy = l.UploadedByUser?.FullName ?? "غير معروف",
-                l.DownloadCount,
-                l.CreatedAt
-            });
+            var result = await query
+                .OrderByDescending(l => l.CreatedAt)
+                .Select(l => new
+                {
+                    l.Id,
+                    l.Title,
+                    l.Description,
+                    l.Category,
+                    l.PdfFilePath,
+                    UploadedBy = l.UploadedByUser != null ? l.UploadedByUser.FullName : "غير معروف",
+                    l.DownloadCount,
+                    l.CreatedAt
+                })
+                .ToListAsync();
 
             return Ok(result);
         }
@@ -63,22 +62,21 @@ namespace NoorPlatform.Api.Controllers
             if (request.File == null || request.File.Length == 0)
                 return BadRequest(new { message = "الرجاء اختيار ملف" });
 
-            if (Path.GetExtension(request.File.FileName).ToLower() != ".pdf")
+            if (Path.GetExtension(request.File.FileName).ToLowerInvariant() != ".pdf")
                 return BadRequest(new { message = "يسمح فقط برفع ملفات PDF" });
 
             if (request.File.Length > 50 * 1024 * 1024)
                 return BadRequest(new { message = "حجم الملف يتجاوز الحد المسموح (50MB)" });
 
-            // Ensure directory exists
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "library");
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
+            Directory.CreateDirectory(uploadsFolder);
 
-            // Generate unique filename
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(request.File.FileName);
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            var safeName = SafePathHelper.SanitizeUploadFileName(request.File.FileName);
+            var uniqueFileName = $"{Guid.NewGuid():N}_{safeName}";
+            if (!SafePathHelper.TryResolveUnderWebRoot(_env.WebRootPath, Path.Combine("uploads", "library", uniqueFileName), out var filePath))
+                return BadRequest(new { message = "مسار الملف غير صالح" });
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            await using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await request.File.CopyToAsync(stream);
             }
@@ -87,8 +85,8 @@ namespace NoorPlatform.Api.Controllers
 
             var item = new LibraryItem
             {
-                Title = request.Title,
-                Description = request.Description ?? "",
+                Title = request.Title.Trim(),
+                Description = request.Description?.Trim() ?? "",
                 Category = request.Category,
                 PdfFilePath = $"/uploads/library/{uniqueFileName}",
                 UploadedByUserId = userId,
@@ -97,7 +95,6 @@ namespace NoorPlatform.Api.Controllers
 
             _context.LibraryItems.Add(item);
 
-            // Activity Feed
             _context.ActivityFeeds.Add(new ActivityFeed
             {
                 UserId = userId,
@@ -121,9 +118,8 @@ namespace NoorPlatform.Api.Controllers
             var item = await _context.LibraryItems.FindAsync(id);
             if (item == null) return NotFound(new { message = "الملف غير موجود" });
 
-            // Delete physical file
-            var physicalPath = Path.Combine(_env.WebRootPath, item.PdfFilePath.TrimStart('/'));
-            if (System.IO.File.Exists(physicalPath))
+            if (SafePathHelper.TryResolveUnderWebRoot(_env.WebRootPath, item.PdfFilePath.TrimStart('/'), out var physicalPath)
+                && System.IO.File.Exists(physicalPath))
             {
                 System.IO.File.Delete(physicalPath);
             }
@@ -143,8 +139,8 @@ namespace NoorPlatform.Api.Controllers
             if (item == null)
                 return NotFound(new { message = "الملف غير موجود" });
 
-            var physicalPath = Path.Combine(_env.WebRootPath, item.PdfFilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (!System.IO.File.Exists(physicalPath))
+            if (!SafePathHelper.TryResolveUnderWebRoot(_env.WebRootPath, item.PdfFilePath.TrimStart('/'), out var physicalPath)
+                || !System.IO.File.Exists(physicalPath))
                 return NotFound(new { message = "الملف غير موجود على الخادم" });
 
             item.DownloadCount++;
@@ -153,7 +149,7 @@ namespace NoorPlatform.Api.Controllers
             return PhysicalFile(physicalPath, "application/pdf", $"{item.Title}.pdf");
         }
 
-        // POST /api/library/{id}/download
+        // POST /api/library/{id}/download — للتوافق مع العملاء القديمة (لا يُضاعف العداد إن استُخدم /file)
         [HttpPost("{id}/download")]
         [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> RecordDownload(int id)
@@ -164,7 +160,7 @@ namespace NoorPlatform.Api.Controllers
             item.DownloadCount++;
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Download recorded" });
+            return Ok(new { message = "Download recorded", downloadCount = item.DownloadCount });
         }
     }
 

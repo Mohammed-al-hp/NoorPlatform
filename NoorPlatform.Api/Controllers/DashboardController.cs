@@ -99,8 +99,6 @@ public class DashboardController : ControllerBase
 
         // ── آخر 5 جلسات تسميع (جدول النشاط) ──
         var recentHifz = await hifzQuery
-            .Include(r => r.Student).ThenInclude(s => s.User)
-            .Include(r => r.Student).ThenInclude(s => s.Circle)
             .OrderByDescending(r => r.Date)
             .Take(5)
             .Select(r => new
@@ -206,7 +204,7 @@ public class DashboardController : ControllerBase
         // جلب الفواتير المتأخرة وغير المدفوعة
         var overduePayments = await _context.Payments
             .Include(p => p.Student).ThenInclude(s => s.User)
-            .Where(p => p.ParentId == parent.Id && p.Status != "Paid")
+            .Where(p => p.ParentId == parent.Id && p.Status != PaymentStatus.Paid)
             .Select(p => new
             {
                 p.Id,
@@ -215,18 +213,18 @@ public class DashboardController : ControllerBase
                 p.Description,
                 p.DueDate,
                 p.Status,
-                isOverdue = p.DueDate < DateTime.UtcNow && p.Status != "Paid"
+                isOverdue = p.DueDate < DateTime.UtcNow && p.Status != PaymentStatus.Paid
             })
             .OrderByDescending(p => p.DueDate)
             .ToListAsync();
 
         // تحديث حالة الفواتير المتأخرة تلقائياً
         var overduePending = await _context.Payments
-            .Where(p => p.ParentId == parent.Id && p.Status == "Pending" && p.DueDate < DateTime.UtcNow)
+            .Where(p => p.ParentId == parent.Id && p.Status == PaymentStatus.Pending && p.DueDate < DateTime.UtcNow)
             .ToListAsync();
         foreach (var op in overduePending)
         {
-            op.Status = "Overdue";
+            op.Status = PaymentStatus.Overdue;
         }
         if (overduePending.Any()) await _context.SaveChangesAsync();
 
@@ -281,27 +279,35 @@ public class DashboardController : ControllerBase
     [HttpGet("leaderboard")]
     public async Task<IActionResult> GetLeaderboard()
     {
-        var students = await _context.Students
-            .Include(s => s.User)
-            .Include(s => s.Circle)
-            .Include(s => s.Attendances)
-            .Include(s => s.HifzRecords)
+        var leaderboardRaw = await _context.Students
             .OrderByDescending(s => s.Points)
             .Take(10)
+            .Select(s => new
+            {
+                studentId = s.Id,
+                fullName = s.User.FullName,
+                circleName = s.Circle != null ? s.Circle.Name : "بدون حلقة",
+                points = s.Points,
+                badges = s.Badges,
+                attendanceRate = s.Attendances.Any()
+                    ? Math.Round((double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present) / s.Attendances.Count * 100, 1)
+                    : 0.0,
+                memorizedVerses = s.HifzRecords
+                    .Where(r => r.Type == RecordType.Memorization)
+                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0)
+            })
             .ToListAsync();
 
-        var leaderboard = students.Select((s, index) => new
+        var leaderboard = leaderboardRaw.Select((s, index) => new
         {
             rank = index + 1,
-            studentId = s.Id,
-            fullName = s.User.FullName,
-            circleName = s.Circle?.Name ?? "بدون حلقة",
-            points = s.Points,
-            badges = s.Badges,
-            attendanceRate = s.Attendances.Any()
-                ? Math.Round((double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present) / s.Attendances.Count * 100, 1)
-                : 0,
-            hifzProgress = CalculateHifzProgress(s.HifzRecords)
+            s.studentId,
+            s.fullName,
+            s.circleName,
+            s.points,
+            s.badges,
+            s.attendanceRate,
+            hifzProgress = Math.Min((int)Math.Round((double)s.memorizedVerses / 6236 * 100), 100)
         });
 
         return Ok(leaderboard);

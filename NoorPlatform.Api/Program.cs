@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
@@ -9,7 +11,6 @@ using NoorPlatform.Api.Middleware;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
-using System.Text;
 
 const long MaxUploadBytes = 52_428_800; // 50 MB
 
@@ -33,7 +34,8 @@ builder.Services.Configure<IISServerOptions>(options =>
 });
 
 builder.Services.AddScoped<AccountProvisioningService>();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // قاعدة البيانات
 builder.Services.AddDbContext<NoorDbContext>(options =>
@@ -53,10 +55,13 @@ builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 .AddEntityFrameworkStores<NoorDbContext>()
 .AddDefaultTokenProviders();
 
-// JWT
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace(jwtKey))
-    throw new InvalidOperationException("Jwt:Key غير موجود في appsettings.json");
+// JWT — من User Secrets (تطوير) أو متغيرات البيئة Jwt__Key / NOOR_JWT_KEY (إنتاج)
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? Environment.GetEnvironmentVariable("JWT__Key")
+    ?? Environment.GetEnvironmentVariable("NOOR_JWT_KEY");
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+    throw new InvalidOperationException(
+        "Jwt:Key غير موجود أو قصير. عيّنه عبر: dotnet user-secrets set \"Jwt:Key\" \"<مفتاح-32-حرفاً-على-الأقل>\" أو متغير البيئة Jwt__Key");
 
 var jwtIssuer   = builder.Configuration["Jwt:Issuer"]   ?? "NoorPlatform";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "NoorPlatformClients";
@@ -150,8 +155,9 @@ using (var scope = app.Services.CreateScope())
     var services    = scope.ServiceProvider;
     var context     = services.GetRequiredService<NoorDbContext>();
     var userManager = services.GetRequiredService<UserManager<User>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
     await context.Database.MigrateAsync();
-    await DbInitializer.SeedAsync(context, userManager);
+    await DbInitializer.SeedAsync(context, userManager, roleManager);
 }
 
 if (app.Environment.IsDevelopment())
@@ -184,17 +190,19 @@ app.UseExceptionHandler(errorApp =>
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
 
+app.UseHttpsRedirection();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<BlockLibraryUploadsMiddleware>();
-app.UseDefaultFiles();
-app.UseStaticFiles();
-app.UseHttpsRedirection();
 
 var corsPolicy = app.Environment.IsDevelopment() ? "Development" : "Production";
 app.UseCors(corsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
 
 app.Run();
