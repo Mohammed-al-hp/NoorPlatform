@@ -131,6 +131,7 @@ public class WaitingListController : ControllerBase
     /// تحويل سجل قائمة الانتظار إلى طالب مسجل مع إنشاء الحسابات تلقائياً.
     /// </summary>
     [HttpPost("{id}/convert-to-student")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ConvertToStudent(int id, [FromBody] ConvertWaitingListRequest request)
     {
         var entry = await _context.WaitingListEntries.FindAsync(id);
@@ -153,7 +154,7 @@ public class WaitingListController : ControllerBase
         Parent? parent = null;
         if (!string.IsNullOrWhiteSpace(entry.ParentPhone))
         {
-            var (p, pErr) = await _accounts.EnsureParentAsync(entry.ParentName, entry.ParentPhone);
+            var (p, _, pErr) = await _accounts.EnsureParentAsync(entry.ParentName, entry.ParentPhone);
             if (pErr != null)
                 return BadRequest(new { message = pErr });
             parent = p;
@@ -180,7 +181,7 @@ public class WaitingListController : ControllerBase
             ActivityType = "WaitingList",
             Description = $"تم تحويل {entry.FullName} من قائمة الانتظار إلى طالب",
             Icon = "🎓",
-            Color = "green"
+            Color = "text-green-500"
         });
 
         await _context.SaveChangesAsync();

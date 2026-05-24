@@ -28,6 +28,7 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#10b981">
     <link rel="stylesheet" href="/css/responsive.css">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -4384,11 +4385,11 @@
                 <input type="hidden" id="parentEditId">
                 <div class="form-group">
                     <label class="form-label">الاسم *</label>
-                    <input class="form-input" id="parentFullName" type="text">
+                    <input class="form-input" id="parentFormFullName" type="text">
                 </div>
                 <div class="form-group">
                     <label class="form-label">رقم الجوال *</label>
-                    <input class="form-input" id="parentPhone" type="tel" placeholder="09xxxxxxxx">
+                    <input class="form-input" id="parentFormPhone" type="tel" placeholder="09xxxxxxxx">
                 </div>
                 <div class="form-group">
                     <label class="form-label">ربط بالأبناء</label>
@@ -6005,7 +6006,7 @@
         // تحقق دوري كل دقيقة من انتهاء الجلسة
         if (TOKEN) {
             setInterval(() => {
-                if (isTokenExpired(TOKEN)) {
+                if (NoorApp.isTokenExpired(TOKEN)) {
                     showToast('⚠️ انتهت جلستك، يرجى تسجيل الدخول مجدداً');
                     setTimeout(logout, 2000);
                 }

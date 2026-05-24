@@ -56,10 +56,10 @@ public class ReportsController : ControllerBase
         var achievement = surah ?? GetAchievementText(progress);
 
         var html = GenerateCertificateHtml(
-            studentName: student.User.FullName,
-            teacherName: teacherName,
-            circleName: circleName,
-            achievement: achievement,
+            studentName: System.Net.WebUtility.HtmlEncode(student.User.FullName),
+            teacherName: System.Net.WebUtility.HtmlEncode(teacherName),
+            circleName: System.Net.WebUtility.HtmlEncode(circleName),
+            achievement: System.Net.WebUtility.HtmlEncode(achievement),
             progress: progress,
             date: DateTime.Now.ToString("yyyy/MM/dd")
         );
@@ -82,7 +82,7 @@ public class ReportsController : ControllerBase
                     ActivityType = "Certificate",
                     Description = $"تم إصدار شهادة تقدير للطالب {student.User.FullName} ({achievement})",
                     Icon = "📜",
-                    Color = "teal"
+                    Color = "text-teal-500"
                 });
             }
 
@@ -101,6 +101,9 @@ public class ReportsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetMonthlyReport(int studentId, [FromQuery] int? month, [FromQuery] int? year)
     {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
+            return Forbid();
+
         var targetMonth = month ?? DateTime.Now.Month;
         var targetYear = year ?? DateTime.Now.Year;
 

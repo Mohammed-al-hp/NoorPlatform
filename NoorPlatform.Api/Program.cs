@@ -39,7 +39,10 @@ builder.Services.AddControllers()
 
 // قاعدة البيانات
 builder.Services.AddDbContext<NoorDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
 
 // Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -157,7 +160,15 @@ using (var scope = app.Services.CreateScope())
     var userManager = services.GetRequiredService<UserManager<User>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
     await context.Database.MigrateAsync();
-    await DbInitializer.SeedAsync(context, userManager, roleManager);
+    await DbInitializer.SeedAsync(context, userManager, roleManager, app.Environment.IsProduction());
+
+    // TEMP: Reset password
+    var pUser = await userManager.FindByNameAsync("218911437635");
+    if (pUser != null)
+    {
+        var token = await userManager.GeneratePasswordResetTokenAsync(pUser);
+        await userManager.ResetPasswordAsync(pUser, token, "Parent123!");
+    }
 }
 
 if (app.Environment.IsDevelopment())

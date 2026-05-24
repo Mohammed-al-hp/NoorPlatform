@@ -109,7 +109,7 @@ public class ParentsController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var (parent, err) = await _accounts.EnsureParentAsync(request.FullName, request.Phone);
+        var (parent, tempPassword, err) = await _accounts.EnsureParentAsync(request.FullName, request.Phone);
         if (err != null)
             return BadRequest(new { message = err });
 
@@ -133,7 +133,20 @@ public class ParentsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "تم إضافة ولي الأمر", parent.Id });
+        object? credentials = null;
+        if (!string.IsNullOrEmpty(tempPassword))
+        {
+            credentials = new AccountCredentialsDto(
+                parent.User.FullName,
+                parent.User.UserName!,
+                AccountProvisioningService.ToDisplayPhone(parent.User.UserName!),
+                tempPassword,
+                "Parent",
+                true
+            );
+        }
+
+        return Ok(new { message = "تم إضافة ولي الأمر", parent.Id, credentials });
     }
 
     [HttpPut("{id}")]

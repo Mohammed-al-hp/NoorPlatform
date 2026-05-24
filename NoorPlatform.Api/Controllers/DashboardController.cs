@@ -218,15 +218,8 @@ public class DashboardController : ControllerBase
             .OrderByDescending(p => p.DueDate)
             .ToListAsync();
 
-        // تحديث حالة الفواتير المتأخرة تلقائياً
-        var overduePending = await _context.Payments
-            .Where(p => p.ParentId == parent.Id && p.Status == PaymentStatus.Pending && p.DueDate < DateTime.UtcNow)
-            .ToListAsync();
-        foreach (var op in overduePending)
-        {
-            op.Status = PaymentStatus.Overdue;
-        }
-        if (overduePending.Any()) await _context.SaveChangesAsync();
+        // تم حذف منطق تحديث حالة الفواتير المتأخرة التلقائي من هنا (GetParentSummary)
+        // وتم نقله إلى PATCH /api/payments/mark-overdue
 
         return Ok(new
         {
@@ -277,6 +270,7 @@ public class DashboardController : ControllerBase
 
     // GET /api/dashboard/leaderboard
     [HttpGet("leaderboard")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetLeaderboard()
     {
         var leaderboardRaw = await _context.Students

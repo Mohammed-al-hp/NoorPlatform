@@ -120,7 +120,7 @@ public class StudentsController : ControllerBase
         Parent? parent = null;
         if (!string.IsNullOrWhiteSpace(request.ParentPhone))
         {
-            var (p, pErr) = await _accounts.EnsureParentAsync(
+            var (p, _, pErr) = await _accounts.EnsureParentAsync(
                 request.ParentName ?? "ولي أمر",
                 request.ParentPhone);
             if (pErr != null)

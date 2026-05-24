@@ -130,9 +130,14 @@ public class AuthController : ControllerBase
     private string GenerateJwtToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(
-            _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key غير موجود في الإعدادات")
-        );
+        var keyStr = _configuration["Jwt:Key"] 
+                     ?? Environment.GetEnvironmentVariable("JWT__Key") 
+                     ?? Environment.GetEnvironmentVariable("NOOR_JWT_KEY");
+
+        if (string.IsNullOrEmpty(keyStr))
+            throw new InvalidOperationException("JWT Key is missing from configuration and environment variables.");
+
+        var key = Encoding.UTF8.GetBytes(keyStr);
         var expiryDays = int.Parse(_configuration["Jwt:ExpiryDays"] ?? "1");
         var issuer   = _configuration["Jwt:Issuer"]   ?? "NoorPlatform";
         var audience = _configuration["Jwt:Audience"] ?? "NoorPlatformClients";

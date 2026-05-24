@@ -7,7 +7,22 @@ namespace NoorPlatform.Api.Services;
 
 public class AccountProvisioningService
 {
-    public const string DefaultTempPassword = "Noor@123";
+    public static string GenerateSecurePassword(int length = 12)
+    {
+        const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*";
+        var res = new System.Text.StringBuilder();
+        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            var uintBuffer = new byte[sizeof(uint)];
+            while (length-- > 0)
+            {
+                rng.GetBytes(uintBuffer);
+                var num = BitConverter.ToUInt32(uintBuffer, 0);
+                res.Append(validChars[(int)(num % (uint)validChars.Length)]);
+            }
+        }
+        return res.ToString() + "aA1!"; 
+    }
 
     private readonly UserManager<User> _userManager;
     private readonly NoorDbContext _context;
@@ -48,7 +63,7 @@ public class AccountProvisioningService
             IsActive = true
         };
 
-        var tempPassword = DefaultTempPassword;
+        var tempPassword = GenerateSecurePassword();
         var result = await _userManager.CreateAsync(user, tempPassword);
         if (!result.Succeeded)
             return (null!, string.Empty, string.Join("، ", result.Errors.Select(e => e.Description)));
@@ -56,35 +71,36 @@ public class AccountProvisioningService
         return (user, tempPassword, null);
     }
 
-    public async Task<(Parent? Parent, string? Error)> EnsureParentAsync(string parentName, string parentPhone)
+    public async Task<(Parent? Parent, string? TempPassword, string? Error)> EnsureParentAsync(string parentName, string parentPhone)
     {
         var normalized = NormalizePhone(parentPhone);
         if (string.IsNullOrEmpty(normalized))
-            return (null, null);
+            return (null, null, null);
 
         var existing = await _context.Parents
             .Include(p => p.User)
             .FirstOrDefaultAsync(p => p.Phone == normalized || p.User.UserName == normalized);
 
         if (existing != null)
-            return (existing, null);
+            return (existing, null, null);
 
-        var (parentUser, _, err) = await CreateUserAsync(
+        var (parentUser, tempPassword, err) = await CreateUserAsync(
             normalized,
             string.IsNullOrWhiteSpace(parentName) ? "ولي أمر" : parentName.Trim(),
             UserRole.Parent);
 
         if (err != null)
-            return (null, err);
+            return (null, null, err);
 
         var parent = new Parent
         {
             UserId = parentUser.Id,
-            Phone = normalized
+            Phone = normalized,
+            User = parentUser
         };
         _context.Parents.Add(parent);
         await _context.SaveChangesAsync();
-        return (parent, null);
+        return (parent, tempPassword, null);
     }
 }
 

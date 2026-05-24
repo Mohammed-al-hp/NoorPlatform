@@ -107,8 +107,8 @@
     async function openAddParentModal() {
         document.getElementById('parentFormTitle').textContent = '➕ إضافة ولي أمر';
         document.getElementById('parentEditId').value = '';
-        document.getElementById('parentFullName').value = '';
-        document.getElementById('parentPhone').value = '';
+        document.getElementById('parentFormFullName').value = '';
+        document.getElementById('parentFormPhone').value = '';
         await loadParentStudentCheckboxes([]);
         global.openModal('parentFormModal');
     }
@@ -118,8 +118,8 @@
             const p = await global.apiFetch(`/parents/${id}`);
             document.getElementById('parentFormTitle').textContent = '✏️ تعديل ولي أمر';
             document.getElementById('parentEditId').value = String(p.id);
-            document.getElementById('parentFullName').value = p.fullName;
-            document.getElementById('parentPhone').value = p.phone;
+            document.getElementById('parentFormFullName').value = p.fullName;
+            document.getElementById('parentFormPhone').value = p.phone;
             await loadParentStudentCheckboxes((p.children || []).map(c => c.id));
             global.openModal('parentFormModal');
         } catch (e) {
@@ -147,8 +147,8 @@
 
     async function saveParentForm() {
         const id = document.getElementById('parentEditId').value;
-        const fullName = document.getElementById('parentFullName').value.trim();
-        const phone = document.getElementById('parentPhone').value.trim();
+        const fullName = document.getElementById('parentFormFullName').value.trim();
+        const phone = document.getElementById('parentFormPhone').value.trim();
         const childIds = [...document.querySelectorAll('#parentChildrenCheckboxes input:checked')].map(cb => parseInt(cb.value, 10));
 
         if (!fullName || !phone) {
@@ -161,8 +161,11 @@
                 await global.apiFetch(`/parents/${id}`, 'PUT', { fullName, phone, childStudentIds: childIds });
                 global.showToast('✅ تم تحديث ولي الأمر');
             } else {
-                await global.apiFetch('/parents', 'POST', { fullName, phone, childStudentIds: childIds });
+                const res = await global.apiFetch('/parents', 'POST', { fullName, phone, childStudentIds: childIds });
                 global.showToast('✅ تم إضافة ولي الأمر');
+                if (res && res.credentials && typeof global.showAccountCredentialsModal === 'function') {
+                    global.showAccountCredentialsModal(res.credentials, res.credentials.Phone || res.credentials.phone);
+                }
             }
             global.closeModal('parentFormModal');
             fetchParents();

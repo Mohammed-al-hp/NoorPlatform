@@ -136,4 +136,24 @@ public class PaymentsController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { message = "تم الدفع بنجاح", payment });
     }
+
+    [HttpPatch("mark-overdue")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> MarkOverduePayments()
+    {
+        var overduePending = await _context.Payments
+            .Where(p => p.Status == PaymentStatus.Pending && p.DueDate < DateTime.UtcNow)
+            .ToListAsync();
+
+        if (!overduePending.Any())
+            return Ok(new { message = "لا توجد فواتير متأخرة تحتاج للتحديث" });
+
+        foreach (var op in overduePending)
+        {
+            op.Status = PaymentStatus.Overdue;
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = $"تم تحديث {overduePending.Count} فاتورة كمتأخرة" });
+    }
 }

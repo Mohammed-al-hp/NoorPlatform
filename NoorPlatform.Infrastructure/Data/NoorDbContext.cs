@@ -28,6 +28,10 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         base.OnModelCreating(modelBuilder);
 
         // 🟢 Global Query Filter for Soft Delete
+        modelBuilder.Entity<Student>()
+            .HasIndex(s => s.IsDeleted)
+            .HasDatabaseName("IX_Student_IsDeleted");
+
         modelBuilder.Entity<Student>().HasQueryFilter(s => !s.IsDeleted);
 
         modelBuilder.Entity<Payment>()

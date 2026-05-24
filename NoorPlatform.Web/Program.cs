@@ -10,7 +10,10 @@ builder.Services.AddControllersWithViews();
 
 // Database
 builder.Services.AddDbContext<NoorDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
 
 // Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options => {
@@ -39,7 +42,7 @@ using (var scope = app.Services.CreateScope())
     await context.Database.EnsureCreatedAsync();
     var userManager = services.GetRequiredService<UserManager<User>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
-    await DbInitializer.SeedAsync(context, userManager, roleManager);
+    await DbInitializer.SeedAsync(context, userManager, roleManager, app.Environment.IsProduction());
 }
 
 // Configure the HTTP request pipeline.

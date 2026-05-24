@@ -10,7 +10,8 @@ public static class DbInitializer
     public static async Task SeedAsync(
         NoorDbContext context,
         UserManager<User> userManager,
-        RoleManager<IdentityRole<int>> roleManager)
+        RoleManager<IdentityRole<int>> roleManager,
+        bool isProduction)
     {
         foreach (var roleName in IdentityRoles)
         {
@@ -26,7 +27,10 @@ public static class DbInitializer
                 await userManager.AddToRoleAsync(user, roleName);
         }
 
-        await EnsureTestLoginAccountsAsync(userManager, roleManager);
+        if (!isProduction)
+        {
+            await EnsureTestLoginAccountsAsync(userManager, roleManager);
+        }
 
         if (context.Users.Any()) return;
 
@@ -90,7 +94,7 @@ public static class DbInitializer
         context.Teachers.Add(teacher);
         await context.SaveChangesAsync();
 
-        var parent = new Parent { UserId = parentUser.Id, Phone = "0505551234" };
+        var parent = new Parent { UserId = parentUser.Id, Phone = "2189505551234" };
         context.Parents.Add(parent);
         await context.SaveChangesAsync();
 
@@ -150,9 +154,9 @@ public static class DbInitializer
             role: UserRole.Teacher,
             password: "Teacher123!");
 
-        // محمد النعاس — حساب محفّظ موجود مسبقاً (UserName: 966912984190)
+        // محمد النعاس — حساب محفّظ موجود مسبقاً (UserName: 218912984190)
         await EnsureLoginAccountAsync(userManager, roleManager,
-            userName: "966912984190",
+            userName: "218912984190",
             fullName: "محمد النعاس",
             role: UserRole.Teacher,
             password: "Teacher123!");

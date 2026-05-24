@@ -168,6 +168,9 @@
                 ui().showToast('⚠️ يرجى تغيير كلمة المرور المؤقتة');
             } else {
                 ui().showToast('✅ تم تسجيل الدخول بنجاح');
+                // إخفاء شاشة الدخول فوراً
+                const ls = document.getElementById('loginScreen');
+                if (ls) ls.style.display = 'none';
                 checkAuth();
             }
         } catch (err) {

@@ -138,7 +138,7 @@
             global.showToast('✅ تم التحديث');
             fetchUsers();
         } catch (e) {
-            global.showToast('❌ فشل التحديث');
+            global.handleApiError(e);
         }
     }
 
@@ -148,7 +148,7 @@
             global.showToast('✅ تم تحديث الحالة');
             fetchUsers();
         } catch (e) {
-            global.showToast('❌ فشل التحديث');
+            global.handleApiError(e);
         }
     }
 
@@ -159,7 +159,7 @@
             global.showToast('✅ تم تعطيل الحساب');
             fetchUsers();
         } catch (e) {
-            global.showToast('❌ فشل الحذف');
+            global.handleApiError(e);
         }
     }
 
