@@ -1,6 +1,6 @@
 // sw.js — Service Worker لمنصة نور (v6)
-const CACHE_NAME = 'noor-v6';
-const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/js/asset-loader.js', '/lib/html2pdf.bundle.min.js'];
+const CACHE_NAME = 'noor-v7';
+const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/js/asset-loader.js', '/js/app.js', '/js/utils.js', '/js/api.js', '/js/ui.js', '/lib/html2pdf.bundle.min.js'];
 const FONT_CACHE = 'noor-fonts-v1';
 const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
 

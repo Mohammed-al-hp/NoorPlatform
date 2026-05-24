@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 
@@ -180,7 +181,8 @@ public class NotificationsController : ControllerBase
 
             // تنظيف رقم الهاتف (إزالة + والمسافات)
             phone = phone.Replace("+", "").Replace(" ", "").Replace("-", "");
-            if (!phone.StartsWith("966")) phone = "966" + phone.TrimStart('0');
+            phone = LibyanPhone.ForWhatsApp(phone);
+            if (string.IsNullOrEmpty(phone)) return false;
 
             var payload = new
             {

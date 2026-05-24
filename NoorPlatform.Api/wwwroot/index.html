@@ -24,62 +24,6 @@
             if (typeof loadHtml2Pdf === 'function') loadHtml2Pdf().catch(function () { });
         });
     </script>
-    <script>
-        /* Core shell — navigation & modals (loads before main app script) */
-        (function () {
-            function openModal(id) {
-                var el = document.getElementById(id);
-                if (el) el.classList.add('open');
-            }
-            function closeModal(id) {
-                var el = document.getElementById(id);
-                if (el) el.classList.remove('open');
-            }
-            function closeSidebar() {
-                var sb = document.getElementById('sidebar');
-                var ov = document.getElementById('sidebarOverlay');
-                if (sb) sb.classList.remove('open');
-                if (ov) ov.classList.remove('open');
-            }
-            function navigate(page, el) {
-                document.querySelectorAll('.content').forEach(function (c) { c.classList.remove('active'); });
-                document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
-                var target = document.getElementById('page-' + page);
-                if (target) target.classList.add('active');
-                if (el) el.classList.add('active');
-                var titles = {
-                    dashboard: ['لوحة التحكم', 'نظرة عامة على المركز'],
-                    students: ['إدارة الطلاب', 'الطلاب المسجلون'],
-                    teachers: ['إدارة المحفظين', 'فريق التحفيظ'],
-                    circles: ['الحلقات الدراسية', 'جداول الحلقات'],
-                    attendance: ['الحضور والغياب', 'تسجيل يومي'],
-                    memorization: ['الحفظ والتسميع', 'سجلات التسميع'],
-                    exams: ['الاختبارات والتقييمات', 'نتائج الاختبارات'],
-                    announcements: ['الإعلانات', 'آخر الأخبار'],
-                    studentView: ['بوابة الطالب', 'متابعة تقدمك'],
-                    parentView: ['بوابة ولي الأمر', 'متابعة أبنائك'],
-                    payments: ['إدارة المدفوعات', 'الفواتير والرسوم'],
-                    parentFees: ['الرسوم الدراسية', 'فواتير الأبناء'],
-                    library: ['المكتبة الرقمية', 'ملفات ومراجع التحفيظ'],
-                    parents: ['إدارة أولياء الأمور', 'ربط الأبناء بالحسابات'],
-                    users: ['إدارة المستخدمين', 'جميع حسابات المنصة']
-                };
-                if (titles[page]) {
-                    var pt = document.getElementById('pageTitle');
-                    var ps = document.getElementById('pageSubtitle');
-                    if (pt) pt.textContent = titles[page][0];
-                    if (ps) ps.textContent = titles[page][1];
-                }
-                if (typeof window._onNavigatePage === 'function') window._onNavigatePage(page);
-                if (history.pushState) history.pushState({ page: page }, '', '#' + page);
-                closeSidebar();
-            }
-            window.openModal = openModal;
-            window.closeModal = closeModal;
-            window.navigate = navigate;
-            window.closeSidebar = closeSidebar;
-        })();
-    </script>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#10b981">
@@ -3273,7 +3217,7 @@
             <div id="loginForm">
                 <div class="form-group">
                     <label>رقم الجوال</label>
-                    <input type="tel" id="loginPhone" class="form-control" placeholder="05xxxxxxxx"
+                    <input type="tel" id="loginPhone" class="form-control" placeholder="09xxxxxxxx"
                         autocomplete="username">
                 </div>
                 <div class="form-group">
@@ -4258,7 +4202,7 @@
                     <div class="form-group">
                         <label class="form-label">رقم الهاتف</label>
 
-                        <input id="phone" class="form-input" type="tel" placeholder="05xxxxxxxx">
+                        <input id="phone" class="form-input" type="tel" placeholder="09xxxxxxxx">
                     </div>
 
                 </div>
@@ -4296,7 +4240,7 @@
                         رقم هاتف ولي الأمر *
                     </label>
 
-                    <input id="parentPhone" class="form-input" type="tel" placeholder="05xxxxxxxx">
+                    <input id="parentPhone" class="form-input" type="tel" placeholder="09xxxxxxxx">
                 </div>
 
                 <!-- الملاحظات -->
@@ -4444,7 +4388,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">رقم الجوال *</label>
-                    <input class="form-input" id="parentPhone" type="tel" placeholder="05xxxxxxxx">
+                    <input class="form-input" id="parentPhone" type="tel" placeholder="09xxxxxxxx">
                 </div>
                 <div class="form-group">
                     <label class="form-label">ربط بالأبناء</label>
@@ -4574,7 +4518,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">رقم الجوال *</label>
-                        <input id="teacherPhone" class="form-input" type="tel" placeholder="05xxxxxxxx" inputmode="numeric" maxlength="10" autocomplete="tel">
+                        <input id="teacherPhone" class="form-input" type="tel" placeholder="09xxxxxxxx" inputmode="numeric" maxlength="10" autocomplete="tel">
                     </div>
                 </div>
                 <div class="form-group">
@@ -4912,14 +4856,14 @@
                             required></div>
                     <div class="form-row" style="display:flex;gap:12px">
                         <div class="form-group" style="flex:1"><label>هاتف الطالب *</label><input class="form-control"
-                                id="wlPhone" type="tel" required placeholder="05xxxxxxxx"></div>
+                                id="wlPhone" type="tel" required placeholder="09xxxxxxxx"></div>
                         <div class="form-group" style="flex:1"><label>العمر</label><input class="form-control"
                                 id="wlAge" type="number" min="4" max="80"></div>
                     </div>
                     <div class="form-group"><label>اسم ولي الأمر</label><input class="form-control" id="wlParentName">
                     </div>
                     <div class="form-group"><label>هاتف ولي الأمر</label><input class="form-control" id="wlParentPhone"
-                            type="tel" placeholder="05xxxxxxxx"></div>
+                            type="tel" placeholder="09xxxxxxxx"></div>
                     <div class="form-row" style="display:flex;gap:12px">
                         <div class="form-group" style="flex:1"><label>المستوى المطلوب</label>
                             <select class="form-control" id="wlLevel">
@@ -4997,184 +4941,19 @@
         <p class="loading-label" id="loadingText">جاري التحميل...</p>
     </div>
 
+    <script src="/js/app.js"></script>
     <script src="/js/utils.js"></script>
+    <script>if (typeof syncNoorUtils === 'function') syncNoorUtils();</script>
+    <script src="/js/api.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/modals.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/students.js"></script>
+    <script src="/js/attendance.js"></script>
     <script src="/js/hifz.js"></script>
     <script src="/js/parents.js"></script>
     <script src="/js/users.js"></script>
-    <script>
-        // ===== API CONFIG =====
-        const API_URL = '/api';
-        // ترحيل التوكن القديم من localStorage إلى sessionStorage (جلسة التبويب فقط)
-        (function migrateAuthStorage() {
-            const legacyToken = localStorage.getItem('noor_token');
-            const legacyUser = localStorage.getItem('noor_user');
-            if (legacyToken && !sessionStorage.getItem('noor_token')) {
-                sessionStorage.setItem('noor_token', legacyToken);
-                if (legacyUser) sessionStorage.setItem('noor_user', legacyUser);
-            }
-            localStorage.removeItem('noor_token');
-            localStorage.removeItem('noor_user');
-        })();
-        let TOKEN = sessionStorage.getItem('noor_token');
-        let USER = {};
-        try { USER = JSON.parse(sessionStorage.getItem('noor_user') || '{}'); } catch { USER = {}; }
-
-        function escapeHtml(str) {
-            if (str == null) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        /** تاريخ محلي yyyy-MM-dd بدون انزياح UTC */
-        function formatLocalDateYmd(d) {
-            const dt = d instanceof Date ? d : new Date();
-            const y = dt.getFullYear();
-            const m = String(dt.getMonth() + 1).padStart(2, '0');
-            const day = String(dt.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        }
-
-        /** حقن HTML في مودال مع التحقق من وجود العنصر */
-        function setModalBody(modalBodyId, html, modalTitle) {
-            const body = document.getElementById(modalBodyId);
-            if (!body) {
-                showToast('❌ تعذر فتح نافذة العرض — العنصر غير موجود');
-                console.warn('Missing modal body:', modalBodyId);
-                return false;
-            }
-            body.innerHTML = html;
-            if (modalTitle) {
-                const titleEl = document.getElementById('profileModalTitle');
-                if (titleEl) titleEl.textContent = modalTitle;
-            }
-            return true;
-        }
-
-        function isTokenExpired(token) {
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                return payload.exp * 1000 < Date.now();
-            } catch { return true; }
-        }
-
-        // ===== AUTH =====
-        function checkAuth() {
-            if (TOKEN && isTokenExpired(TOKEN)) {
-                logout();
-                return;
-            }
-            if (!TOKEN) {
-                document.getElementById('loginScreen').style.display = 'flex';
-            } else {
-                document.getElementById('loginScreen').style.display = 'none';
-                updateUserInfo();
-                applyRoleUI(); // Enforce strict RBAC on frontend
-
-                // Only load admin/teacher data if authorized
-                if (USER.role === 'Admin' || USER.role === 'Teacher') {
-                    fetchStats();
-                    fetchLeaderboard();
-                    fetchAnnouncements();
-                    fetchStudents();
-                    fetchTeachers();
-                    fetchCircles();
-                }
-
-                // Restore hash state if applicable
-                var hash = location.hash.replace('#', '');
-                if (hash && document.getElementById('page-' + hash)) {
-                    setTimeout(function () {
-                        var navEl = document.querySelector('[onclick*="navigate(\'' + hash + '\'"]');
-                        if (navEl) navigate(hash, navEl);
-                    }, 100);
-                }
-            }
-        }
-
-        function toggleAuthMode(mode) {
-            if (mode === 'register') {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('registerForm').style.display = 'block';
-            } else {
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('registerForm').style.display = 'none';
-            }
-        }
-
-        async function handleLogin() {
-            const phoneInput = document.getElementById('loginPhone');
-            const passInput = document.getElementById('loginPassword');
-            clearValidation(document.getElementById('loginForm'));
-            const isValid = validateForm([
-                { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الجوال', pattern: /^05\d{8}$/, patternMsg: 'الرقم يجب أن يبدأ بـ 05 ويتكون من 10 أرقام' },
-                { id: 'loginPassword', required: true, requiredMsg: 'يرجى إدخال كلمة المرور', minLength: 6, minLengthMsg: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' }
-            ]);
-            if (!isValid) return;
-
-            const loginBtn = document.querySelector('#loginForm .btn-primary');
-            btnLoading(loginBtn, true);
-
-            try {
-                const res = await fetch(`${API_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phoneInput.value.trim(), password: passInput.value })
-                });
-
-                if (res.status === 503 || res.status === 502 || res.status === 500) {
-                    throw new Error('الخادم غير متوفر حالياً. يرجى التأكد من تشغيل الخادم.');
-                }
-
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.message || 'رقم الجوال أو كلمة المرور غير صحيحة');
-                }
-
-                const data = await res.json();
-                TOKEN = data.token;
-                USER = {
-                    fullName: data.user?.fullName || data.fullName,
-                    role: data.user?.role || data.role,
-                    phone: data.user?.phone
-                };
-                sessionStorage.setItem('noor_token', TOKEN);
-                sessionStorage.setItem('noor_user', JSON.stringify(USER));
-
-                if (data.mustChangePassword) {
-                    openModal('changePasswordModal');
-                    showToast('⚠️ يرجى تغيير كلمة المرور المؤقتة');
-                } else {
-                    showToast('✅ تم تسجيل الدخول بنجاح');
-                    checkAuth();
-                }
-            } catch (err) {
-                showToast('❌ ' + err.message);
-            } finally {
-                btnLoading(loginBtn, false);
-            }
-        }
-
-        async function submitChangePassword() {
-            const current = document.getElementById('currentPasswordInput').value;
-            const newPass = document.getElementById('newPasswordInput').value;
-            if (!current || newPass.length < 8) {
-                showToast('⚠️ كلمة المرور الجديدة 8 أحرف على الأقل');
-                return;
-            }
-            try {
-                await apiFetch('/auth/change-password', 'POST', { currentPassword: current, newPassword: newPass });
-                closeModal('changePasswordModal');
-                showToast('✅ تم تغيير كلمة المرور');
-                checkAuth();
-            } catch (e) {
-                showToast('❌ ' + (e.message || 'فشل التغيير'));
-            }
-        }
-    </script>
 
     <script>
         let _lastAccountCredentials = null;
@@ -5218,7 +4997,7 @@
         function sendAccountCredentialsWhatsApp() {
             if (!_lastAccountCredentials) return;
             const c = _lastAccountCredentials;
-            const phone = (c.whatsappPhone || c.displayPhone || '').replace(/\D/g, '').replace(/^0/, '966');
+            const phone = toWhatsAppLibyanPhone(c.whatsappPhone || c.displayPhone || '');
             const msg = `السلام عليكم ورحمة الله وبركاته
 
 تم إنشاء حسابكم في منصة نور لتحفيظ القرآن الكريم.
@@ -5274,178 +5053,6 @@
         }
 
         // ===== DATA FETCHING =====
-        async function apiFetch(endpoint, method = 'GET', body = null) {
-            if (!TOKEN) {
-                logout();
-                throw new Error('يرجى تسجيل الدخول');
-            }
-            const options = {
-                method,
-                headers: {
-                    'Authorization': `Bearer ${TOKEN}`,
-                    'Content-Type': 'application/json'
-                }
-            };
-            if (body && method !== 'GET') options.body = JSON.stringify(body);
-            let res;
-            try {
-                res = await fetch(`${API_URL}${endpoint}`, options);
-            } catch {
-                throw new Error('لا يوجد اتصال بالإنترنت أو الخادم غير متاح');
-            }
-            if (res.status === 401) { logout(); throw new Error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً'); }
-            if (res.headers.get('Token-Expired') === 'true') {
-                logout();
-                throw new Error('انتهت صلاحية الجلسة');
-            }
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({ message: 'حدث خطأ' }));
-                throw new Error(err.message || `HTTP ${res.status}`);
-            }
-            if (res.status === 204) return null;
-            const text = await res.text();
-            return text ? JSON.parse(text) : null;
-        }
-
-        async function fetchStats() {
-            const data = await apiFetch('/dashboard/stats');
-            // ── تحديث بطاقات الإحصائيات ──
-            const el = id => document.getElementById(id);
-            if (el('dashStudents')) el('dashStudents').textContent = data.students;
-            if (el('dashTeachers')) el('dashTeachers').textContent = data.teachers;
-            if (el('dashCircles')) el('dashCircles').textContent = data.circles;
-            if (el('dashAttendance')) el('dashAttendance').textContent = data.attendanceToday || '0%';
-
-            // ── الرسم البياني الأسبوعي (ديناميكي) ──
-            if (data.weeklyAttendance) {
-                const barChart = document.getElementById('weeklyBarChart');
-                if (barChart) {
-                    barChart.innerHTML = data.weeklyAttendance.map(d => `
-                        <div class="bar-col">
-                            <div class="bar" style="height:${Math.max(d.percentage, 5)}%;background:${d.percentage > 70 ? 'var(--gradient)' : 'linear-gradient(135deg,#94a3b8,#cbd5e1)'}" title="${d.percentage}%"></div>
-                            <div class="bar-label">${d.dayName}</div>
-                        </div>
-                    `).join('');
-                }
-            }
-
-            // ── Donut Chart — توزيع المستويات (ديناميكي) ──
-            if (data.levelDistribution) {
-                const ld = data.levelDistribution;
-                const total = ld.advanced + ld.intermediate + ld.beginner;
-                if (total > 0) {
-                    const advPct = Math.round(ld.advanced / total * 100);
-                    const intPct = Math.round(ld.intermediate / total * 100);
-                    const begPct = 100 - advPct - intPct;
-                    const svg = document.getElementById('donutSvg');
-                    if (svg) {
-                        svg.innerHTML = `
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" stroke-width="3"/>
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10b981" stroke-width="3"
-                                stroke-dasharray="${advPct} ${100 - advPct}" stroke-dashoffset="25" stroke-linecap="round"/>
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#3b82f6" stroke-width="3"
-                                stroke-dasharray="${intPct} ${100 - intPct}" stroke-dashoffset="${25 - advPct}" stroke-linecap="round"/>
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f59e0b" stroke-width="3"
-                                stroke-dasharray="${begPct} ${100 - begPct}" stroke-dashoffset="${25 - advPct - intPct}" stroke-linecap="round"/>
-                            <text x="18" y="20" text-anchor="middle" font-size="5" fill="var(--text)" font-weight="bold" font-family="Tajawal,sans-serif">${total}</text>`;
-                    }
-                    const legend = document.getElementById('donutLegend');
-                    if (legend) {
-                        legend.innerHTML = `
-                            <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><span>متقدم</span><span class="legend-val">${ld.advanced}</span></div>
-                            <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>متوسط</span><span class="legend-val">${ld.intermediate}</span></div>
-                            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span>مبتدئ</span><span class="legend-val">${ld.beginner}</span></div>`;
-                    }
-                }
-                const centerEl = document.getElementById('donutCenter');
-                if (centerEl) centerEl.textContent = (ld.advanced + ld.intermediate + ld.beginner);
-            }
-
-            // ── جدول نشاط التسميع (ديناميكي) ──
-            if (data.recentHifz) {
-                const tbody = document.getElementById('recentHifzBody');
-                if (tbody) {
-                    if (!data.recentHifz.length) {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد جلسات تسميع بعد</td></tr>';
-                    } else {
-                        const gradients = ['linear-gradient(135deg,#10b981,#3b82f6)', 'linear-gradient(135deg,#14b8a6,#3b82f6)', 'linear-gradient(135deg,#8b5cf6,#3b82f6)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#ec4899,#8b5cf6)'];
-                        tbody.innerHTML = data.recentHifz.map((r, i) => {
-                            const evalClass = r.evaluation === 'ممتاز' ? 'status-excellent' : r.evaluation === 'جيد' ? 'status-good' : 'status-late';
-                            const evalIcon = r.evaluation === 'ممتاز' ? '⭐' : r.evaluation === 'جيد' ? '👍' : '🔄';
-                            const initials = escapeHtml((r.studentName || '').slice(0, 2));
-                            return `<tr>
-                                <td>${i + 1}</td>
-                                <td><div class="student-cell"><div class="avatar" style="background:${gradients[i % 5]}">${initials}</div><span>${escapeHtml(r.studentName)}</span></div></td>
-                                <td>${escapeHtml(r.circleName)}</td>
-                                <td>${escapeHtml(r.surahName)} (${escapeHtml(r.verses)})</td>
-                                <td><span class="status-badge ${evalClass}">${evalIcon} ${escapeHtml(r.evaluation)}</span></td>
-                            </tr>`;
-                        }).join('');
-                    }
-                }
-            }
-
-            // Fetch activity feed
-            fetchActivities();
-        }
-
-        async function fetchActivities() {
-            try {
-                const activities = await apiFetch('/dashboard/activities');
-                const timeline = document.getElementById('notifTimeline');
-                if (!timeline) return;
-
-                if (!activities || activities.length === 0) {
-                    timeline.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد نشاطات مؤخراً</div>';
-                    return;
-                }
-
-                timeline.innerHTML = activities.map(a => {
-                    const timeStr = new Date(a.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-                    const dotClass = a.color === 'green' ? 'nd-green' : a.color === 'blue' ? 'nd-blue' : a.color === 'amber' ? 'nd-amber' : 'nd-red';
-
-                    return `
-                    <div class="notif-item">
-                        <div class="notif-dot-wrap">
-                            <div class="notif-dot ${dotClass}" style="background-color: var(--${a.color}-light); color: var(--${a.color}-dark);">${a.icon}</div>
-                            <div class="notif-line"></div>
-                        </div>
-                        <div class="notif-content">
-                            <div class="notif-content-top">
-                                <p>${escapeHtml(a.description)}</p>
-                                <div class="notif-green-dot" style="background-color: var(--${a.color});"></div>
-                            </div>
-                            <div class="notif-time">${timeStr} — ${escapeHtml(a.userName)}</div>
-                        </div>
-                    </div>`;
-                }).join('');
-            } catch (err) {
-                console.error('Failed to fetch activities:', err);
-            }
-        }
-
-        async function fetchAnnouncements() {
-            const data = await apiFetch('/announcements');
-            const list = document.getElementById('annList');
-            list.innerHTML = data.map(a => `
-            <div class="ann-card" data-title="${escapeHtml(a.title)}">
-              ${a.isUnread ? '<div style="position:absolute;top:14px;right:14px;width:8px;height:8px;background:#ef4444;border-radius:50%"></div>' : ''}
-              <div class="ann-indicator" style="background:${a.color}"></div>
-              <div class="ann-card-content">
-                <div class="ann-card-top">
-                  <h4>${escapeHtml(a.title)}</h4>
-                  <time>${formatDateEnGb(a.createdAt)}</time>
-                </div>
-                <p>${escapeHtml(a.content)}</p>
-                <div class="ann-target" style="color:${escapeHtml(a.color)}">🎯 ${escapeHtml(a.target)}</div>
-              </div>
-            </div>
-          `).join('');
-            list.querySelectorAll('.ann-card').forEach(card => {
-                card.addEventListener('click', () => showToast('📢 ' + card.dataset.title));
-            });
-        }
-
         // ─── المدفوعات والرسوم ──────────────────────────────────────
         async function fetchPayments() {
             try {
@@ -5548,402 +5155,7 @@
             }
         }
 
-        let _allStudentsData = [];
-        let _waitingListData = [];
-        let _activeStudentFilter = 'all';
-        let _isArchiveMode = false;
-        let _isWaitingMode = false;
-        let _convertWaitingId = null;
-
-        async function fetchStudents() {
-            const grid = document.getElementById('studentsGrid')
-                || document.querySelector('#page-students .cards-grid');
-            if (grid) grid.innerHTML = `
-                <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:12px;padding:20px 0">
-                    ${[1, 2, 3].map(() => `<div class="skeleton" style="height:160px;border-radius:20px"></div>`).join('')}
-                </div>`;
-            const url = _isArchiveMode ? '/students/archived' : '/students';
-            const data = await apiFetch(url);
-            _allStudentsData = data;
-
-            const map = { all: null, beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم' };
-            const level = map[_activeStudentFilter];
-            const filtered = (level && !_isArchiveMode) ? _allStudentsData.filter(s => s.level === level) : _allStudentsData;
-
-            renderStudentCards(filtered);
-            const cnt = document.getElementById('studentsCount');
-            if (cnt) {
-                if (_isArchiveMode) cnt.textContent = data.length + ' طالب في الأرشيف';
-                else cnt.textContent = data.length + ' طالب مسجل في المركز';
-            }
-        }
-
-        function renderStudentCards(data) {
-            const grid = document.getElementById('studentsGrid')
-                || document.querySelector('#page-students .cards-grid');
-            if (!grid) return;
-            if (!data.length) {
-                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-                    <div class="empty-state-icon">🎓</div>
-                    <div class="empty-state-title">لا يوجد طلاب</div>
-                    <div class="empty-state-desc">لا توجد نتائج تطابق معايير البحث</div>
-                </div>`;
-                return;
-            }
-            grid.innerHTML = data.map((s, i) => {
-                const initials = escapeHtml((s.fullName || '').slice(0, 2));
-                const gradients = [
-                    'linear-gradient(135deg,#10b981,#3b82f6)',
-                    'linear-gradient(135deg,#8b5cf6,#3b82f6)',
-                    'linear-gradient(135deg,#f59e0b,#ef4444)',
-                    'linear-gradient(135deg,#14b8a6,#10b981)',
-                    'linear-gradient(135deg,#ec4899,#8b5cf6)',
-                ];
-                const grad = gradients[i % gradients.length];
-                return `
-            <div class="student-card" style="animation-delay:${i * 0.04}s">
-              <div class="student-card-top">
-                <div class="student-avatar-lg" style="background:${grad};font-size:18px">${initials}</div>
-                <div class="student-card-info" style="flex:1">
-                  <h4 style="margin-bottom:2px">${escapeHtml(s.fullName)}</h4>
-                  <span style="font-size:11px">${escapeHtml(s.circleName)}</span>
-                  <div style="margin-top:6px">
-                    <span class="status-badge ${s.level === 'متقدم' ? 'status-excellent' : s.level === 'متوسط' ? 'status-good' : 'status-late'}"
-                          style="font-size:10px">${escapeHtml(s.level)}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="student-card-stats">
-                <div class="mini-stat"><label>الحفظ</label><p>${s.progress}%</p></div>
-                <div class="mini-stat"><label>الحضور</label><p>${s.attendance}%</p></div>
-              </div>
-              <div class="progress-wrap" style="margin-bottom:14px">
-                <div class="progress-bar"><div class="progress-fill" style="width:${s.progress}%"></div></div>
-                <span class="progress-pct">${s.progress}%</span>
-              </div>
-              <div class="student-card-actions">
-                ${_isArchiveMode ? `
-                  <button class="btn btn-primary" onclick="restoreStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}')" style="flex:1">🔄 استعادة من الأرشيف</button>
-                ` : `
-                  <button class="btn btn-view" onclick="viewStudentDetails(${s.id})" title="عرض التفاصيل">👁 عرض</button>
-                  <button class="btn btn-edit" data-id="${s.id}" data-name="${escapeHtml(s.fullName)}" data-level="${escapeHtml(s.level)}" data-circle="${s.circleId || ''}" onclick="editStudent(this.dataset.id, this.dataset.name, this.dataset.level, this.dataset.circle || null)" title="تعديل">✏️ تعديل</button>
-                  <button class="btn-pdf" onclick="exportStudentPDF(${s.id})" title="تقرير PDF">📄 PDF</button>
-                  <button class="btn btn-delete" onclick="deleteStudent(${s.id},'${s.fullName.replace(/'/g, "\\'")}')" title="أرشفة">📦 أرشفة</button>
-                `}
-              </div>
-            </div>`;
-            }).join('');
-        }
-
-        // ── بحث حي في الطلاب ──
-        function filterStudentsLive(q) {
-            if (_isWaitingMode) return;
-            const filtered = _allStudentsData.filter(s =>
-                s.fullName.includes(q) || s.circleName.includes(q)
-            );
-            renderStudentCards(filtered);
-        }
-
-        // ── تصفية بالمستوى ──
-        function setStudentFilter(filter, el) {
-            _activeStudentFilter = filter;
-            _isArchiveMode = filter === 'archived';
-            _isWaitingMode = filter === 'waiting';
-
-            document.getElementById('btnAddStudent').style.display = _isWaitingMode ? 'none' : 'inline-flex';
-            document.getElementById('btnAddWaiting').style.display = _isWaitingMode ? 'inline-flex' : 'none';
-            document.getElementById('btnExportStudents').style.display = _isWaitingMode ? 'none' : 'inline-flex';
-            document.getElementById('studentSearchInput').closest('.students-search-bar').style.display =
-                _isWaitingMode ? 'none' : 'block';
-            const backBtn = document.getElementById('waitingBackBtn');
-            if (backBtn) backBtn.style.display = _isWaitingMode ? 'inline-flex' : 'none';
-
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            if (el) el.classList.add('active');
-
-            if (_isWaitingMode) {
-                if (location.hash !== '#waiting') history.replaceState({ noorFilter: 'waiting' }, '', '#waiting');
-                fetchWaitingList();
-            } else {
-                if (location.hash === '#waiting') history.replaceState(null, '', '#students');
-                fetchStudents();
-            }
-        }
-
-        function exitWaitingList() {
-            if (window.history.length > 1) {
-                history.back();
-                return;
-            }
-            const allChip = document.querySelector('.filter-chips .filter-chip');
-            setStudentFilter('all', allChip);
-        }
-
-        async function fetchWaitingList() {
-            const grid = document.getElementById('studentsGrid');
-            if (!grid) return;
-            grid.innerHTML = `<div style="grid-column:1/-1">${[1, 2, 3].map(() => '<div class="skeleton" style="height:160px;border-radius:20px;margin-bottom:12px"></div>').join('')}</div>`;
-            try {
-                const data = await apiFetch('/waiting-list');
-                _waitingListData = data;
-                const cnt = document.getElementById('studentsCount');
-                if (cnt) cnt.textContent = data.length + ' في قائمة الانتظار (الأقدم أولاً)';
-                renderWaitingListCards(data);
-            } catch (e) {
-                showToast('❌ ' + (e.message || 'فشل تحميل قائمة الانتظار'));
-            }
-        }
-
-        function renderWaitingListCards(data) {
-            const grid = document.getElementById('studentsGrid');
-            if (!data.length) {
-                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-                    <div class="empty-state-icon">⏳</div>
-                    <div class="empty-state-title">قائمة الانتظار فارغة</div>
-                    <div class="empty-state-desc">لا يوجد طلاب بانتظار مقعد في الحلقات</div>
-                    <button class="btn btn-primary" style="margin-top:16px" onclick="openWaitingListModal()">➕ إضافة طالب</button>
-                </div>`;
-                return;
-            }
-            const statusMap = { Pending: 'قيد الانتظار', Contacted: 'تم التواصل', Accepted: 'مقبول', Rejected: 'مرفوض' };
-            grid.innerHTML = data.map((w, i) => `
-            <div class="student-card waiting-card" style="animation-delay:${i * 0.04}s" data-waiting-id="${w.id}">
-              <div class="student-card-top">
-                <div class="student-avatar-lg" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${escapeHtml(w.fullName.slice(0, 2))}</div>
-                <div class="student-card-info" style="flex:1">
-                  <h4>${escapeHtml(w.fullName)}</h4>
-                  <span style="font-size:11px">📱 ${escapeHtml(w.displayPhone || w.phone)}</span>
-                  <div style="margin-top:6px">
-                    <span class="status-badge status-late" style="font-size:10px">${statusMap[w.status] || w.status}</span>
-                    <span class="status-badge status-good" style="font-size:10px;margin-right:4px">${escapeHtml(w.requestedLevel)}</span>
-                  </div>
-                </div>
-              </div>
-              <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">
-                <div>👤 ولي الأمر: ${escapeHtml(w.parentName || '—')} ${w.displayParentPhone ? ' · ' + escapeHtml(w.displayParentPhone) : ''}</div>
-                <div>🕐 تسجيل: ${formatDateEnGb(w.registrationDate)}</div>
-                ${w.preferredTime ? `<div>⏰ الوقت المفضل: ${escapeHtml(w.preferredTime)}</div>` : ''}
-              </div>
-              <div class="student-card-actions" style="flex-wrap:wrap">
-                <button type="button" class="btn btn-primary btn-convert-waiting" data-id="${w.id}" style="flex:1;min-width:120px">🎓 تحويل لطالب</button>
-                <button type="button" class="btn btn-outline btn-wa-waiting" data-phone="${escapeHtml(w.displayParentPhone || w.displayPhone || '')}" data-name="${escapeHtml(w.fullName)}">💬 واتساب</button>
-                <button type="button" class="btn btn-edit btn-edit-waiting" data-id="${w.id}">✏️</button>
-                <button type="button" class="btn btn-delete btn-del-waiting" data-id="${w.id}">🗑</button>
-              </div>
-            </div>`).join('');
-        }
-
-        if (!window._waitingListBound) {
-            window._waitingListBound = true;
-            document.getElementById('studentsGrid')?.addEventListener('click', e => {
-                const convert = e.target.closest('.btn-convert-waiting');
-                if (convert) { openConvertWaitingModal(parseInt(convert.dataset.id, 10)); return; }
-                const edit = e.target.closest('.btn-edit-waiting');
-                if (edit) { openEditWaitingModal(parseInt(edit.dataset.id, 10)); return; }
-                const del = e.target.closest('.btn-del-waiting');
-                if (del) { deleteWaitingEntry(parseInt(del.dataset.id, 10)); return; }
-                const wa = e.target.closest('.btn-wa-waiting');
-                if (wa) {
-                    const phone = wa.dataset.phone?.replace(/\D/g, '').replace(/^0/, '966');
-                    const msg = encodeURIComponent(`السلام عليكم ${wa.dataset.name}، نتواصل معكم بخصوص التسجيل في منصة نور لتحفيظ القرآن.`);
-                    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-                }
-            });
-        }
-
-        function openWaitingListModal() {
-            document.getElementById('waitingListFormTitle').textContent = '⏳ إضافة لقائمة الانتظار';
-            document.getElementById('waitingEntryId').value = '';
-            document.getElementById('waitingListForm').reset();
-            document.getElementById('wlStatusGroup').style.display = 'none';
-            openModal('waitingListFormModal');
-        }
-
-        function openEditWaitingModal(id) {
-            const w = _waitingListData.find(x => x.id === id);
-            if (!w) return;
-            document.getElementById('waitingListFormTitle').textContent = '✏️ تعديل قائمة الانتظار';
-            document.getElementById('waitingEntryId').value = w.id;
-            document.getElementById('wlFullName').value = w.fullName;
-            document.getElementById('wlPhone').value = w.displayPhone || w.phone;
-            document.getElementById('wlAge').value = w.age || '';
-            document.getElementById('wlParentName').value = w.parentName || '';
-            document.getElementById('wlParentPhone').value = w.displayParentPhone || w.parentPhone || '';
-            document.getElementById('wlLevel').value = w.requestedLevel || 'مبتدئ';
-            document.getElementById('wlPreferredTime').value = w.preferredTime || '';
-            document.getElementById('wlNotes').value = w.notes || '';
-            document.getElementById('wlStatus').value = w.status || 'Pending';
-            document.getElementById('wlStatusGroup').style.display = 'block';
-            openModal('waitingListFormModal');
-        }
-
-        async function saveWaitingListEntry(e) {
-            e.preventDefault();
-            const id = document.getElementById('waitingEntryId').value;
-            const payload = {
-                fullName: document.getElementById('wlFullName').value.trim(),
-                phone: document.getElementById('wlPhone').value.trim(),
-                parentName: document.getElementById('wlParentName').value.trim(),
-                parentPhone: document.getElementById('wlParentPhone').value.trim(),
-                age: parseInt(document.getElementById('wlAge').value, 10) || null,
-                requestedLevel: document.getElementById('wlLevel').value,
-                preferredTime: document.getElementById('wlPreferredTime').value.trim(),
-                notes: document.getElementById('wlNotes').value.trim(),
-                status: document.getElementById('wlStatus').value
-            };
-            try {
-                if (id) await apiFetch(`/waiting-list/${id}`, 'PUT', payload);
-                else await apiFetch('/waiting-list', 'POST', payload);
-                closeModal('waitingListFormModal');
-                showToast('✅ تم الحفظ');
-                fetchWaitingList();
-            } catch (err) {
-                showToast('❌ ' + err.message);
-            }
-        }
-
-        async function deleteWaitingEntry(id) {
-            if (!confirm('حذف هذا السجل من قائمة الانتظار؟')) return;
-            try {
-                await apiFetch(`/waiting-list/${id}`, 'DELETE');
-                showToast('✅ تم الحذف');
-                fetchWaitingList();
-            } catch (e) { showToast('❌ ' + e.message); }
-        }
-
-        function openConvertWaitingModal(id) {
-            _convertWaitingId = id;
-            const w = _waitingListData.find(x => x.id === id);
-            if (!w) return;
-            document.getElementById('convertWaitingName').textContent = 'تحويل: ' + w.fullName;
-            const sel = document.getElementById('convertCircleId');
-            sel.innerHTML = (window._circles || []).map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-            openModal('convertWaitingModal');
-        }
-
-        async function confirmConvertWaiting() {
-            const circleId = parseInt(document.getElementById('convertCircleId').value, 10);
-            if (!_convertWaitingId || !circleId) return;
-            try {
-                const res = await apiFetch(`/waiting-list/${_convertWaitingId}/convert-to-student`, 'POST', { circleId });
-                closeModal('convertWaitingModal');
-                showToast('✅ ' + (res.message || 'تم التحويل'));
-                if (res.credentials) showAccountCredentialsModal(res.credentials, res.credentials.displayPhone);
-                _isWaitingMode = false;
-                setStudentFilter('all', document.querySelector('.filter-chip'));
-            } catch (e) { showToast('❌ ' + e.message); }
-        }
-
-        // ── تصفية بالحلقة (دورية) ──
-        let _circleFilterIdx = -1;
-        function cycleCircleFilter(el) {
-            if (!window._circles || !window._circles.length) return;
-            _circleFilterIdx = (_circleFilterIdx + 1) % (window._circles.length + 1);
-            if (_circleFilterIdx === window._circles.length) {
-                _circleFilterIdx = -1;
-                el.textContent = 'جميع الحلقات ◂';
-                renderStudentCards(_allStudentsData);
-            } else {
-                const c = window._circles[_circleFilterIdx];
-                el.textContent = c.name + ' ◂';
-                renderStudentCards(_allStudentsData.filter(s => s.circleName === c.name));
-            }
-        }
-
-        // ── حذف طالب ──
-        async function deleteStudent(id, name) {
-            if (!confirm(`هل تريد أرشفة الطالب "${name}"؟`)) return;
-            try {
-                const res = await fetch(`${API_URL}/students/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${TOKEN}` }
-                });
-                if (!res.ok) throw new Error();
-                showToast('✅ تم أرشفة الطالب بنجاح');
-                fetchStudents();
-                fetchStats();
-            } catch { showToast('❌ فشل الأرشفة'); }
-        }
-
-        async function restoreStudent(id, name) {
-            if (!confirm(`هل تريد استعادة الطالب "${name}" من الأرشيف؟`)) return;
-            try {
-                const res = await fetch(`${API_URL}/students/${id}/restore`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${TOKEN}` }
-                });
-                if (!res.ok) throw new Error();
-                showToast('✅ تمت استعادة الطالب بنجاح');
-                fetchStudents();
-                fetchStats();
-            } catch { showToast('❌ فشل الاستعادة'); }
-        }
-
-        async function markAtt(studentId, status) {
-            try {
-                const res = await fetch(`${API_URL}/attendance?studentId=${studentId}&status=${status}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${TOKEN}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (!res.ok) throw new Error();
-                showToast('✅ تم تسجيل الحضور');
-                fetchStats();
-            } catch {
-                showToast('❌ حدث خطأ');
-            }
-        }
-
         // ─── 🏆 Leaderboard Logic ───
-        async function fetchLeaderboard() {
-            try {
-                const data = await apiFetch('/dashboard/leaderboard');
-                const wrap = document.getElementById('leaderboardWrap');
-                if (!wrap) return;
-
-                if (!data || data.length === 0) {
-                    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد طلاب لعرضهم</div>';
-                    return;
-                }
-
-                wrap.innerHTML = data.map(s => {
-                    let medal = '';
-                    let bgColor = 'var(--card)';
-                    let borderColor = 'var(--border)';
-
-                    if (s.rank === 1) { medal = '🥇'; bgColor = '#fffbeb'; borderColor = '#fcd34d'; }
-                    else if (s.rank === 2) { medal = '🥈'; bgColor = '#f8fafc'; borderColor = '#cbd5e1'; }
-                    else if (s.rank === 3) { medal = '🥉'; bgColor = '#fff7ed'; borderColor = '#fdba74'; }
-                    else { medal = `#${s.rank}`; }
-
-                    return `
-                    <div style="display:flex;align-items:center;gap:15px;padding:12px;background:${bgColor};border:1px solid ${borderColor};border-radius:12px;transition:transform 0.2s;cursor:default" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                        <div style="font-size:24px;font-weight:bold;width:40px;text-align:center">${medal}</div>
-                        <div style="width:48px;height:48px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:18px">
-                            ${s.fullName.slice(0, 2)}
-                        </div>
-                        <div style="flex:1">
-                            <div style="font-weight:700;color:var(--text);font-size:15px">${s.fullName}</div>
-                            <div style="font-size:12px;color:var(--text-muted)">${s.circleName} • حضور: ${s.attendanceRate}%</div>
-                        </div>
-                        <div style="text-align:left">
-                            <div style="font-weight:800;color:var(--green);font-size:18px">${s.points} <span style="font-size:12px;color:var(--text-muted);font-weight:normal">نقطة</span></div>
-                            <div style="font-size:12px;background:#e0e7ff;color:#4f46e5;padding:2px 8px;border-radius:12px;display:inline-block;margin-top:4px">
-                                ${s.badges || 'مجتهد'}
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
-            } catch (e) {
-                console.error("Leaderboard Error:", e);
-                const wrap = document.getElementById('leaderboardWrap');
-                if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">❌ خطأ في تحميل المتصدرين</div>';
-            }
-        }
-
         // ===== NAVIGATION (page data loaders — shell is in head script) =====
         window._onNavigatePage = function (page) {
             if (page === 'attendance') {
@@ -5967,20 +5179,6 @@
                 navigate(e.state.page, navEl);
             }
         });
-
-        // ===== UI HELPERS =====
-        function showToast(msg) {
-            const c = document.getElementById('toastContainer');
-            const t = document.createElement('div');
-            t.className = 'toast';
-            t.textContent = msg;
-            c.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
-        }
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('open');
-        }
 
         // ─── CRUD Functions (Full Integration) ────────────────────────
 
@@ -6302,8 +5500,8 @@
                 const isValid = validateForm([
                     { selector: '#firstName', required: true, requiredMsg: 'يرجى إدخال الاسم الأول' },
                     { selector: '#lastName', required: true, requiredMsg: 'يرجى إدخال اسم العائلة' },
-                    { selector: '#phone', required: true, requiredMsg: 'يرجى إدخال رقم الطالب', pattern: /^05\d{8}$/, patternMsg: 'رقم الجوال غير صالح' },
-                    { selector: '#parentPhone', required: true, requiredMsg: 'يرجى إدخال رقم ولي الأمر', pattern: /^05\d{8}$/, patternMsg: 'رقم ولي الأمر غير صالح' }
+                    { selector: '#phone', required: true, requiredMsg: 'يرجى إدخال رقم الطالب', patternLibyan: true, patternMsg: 'رقم الجوال غير صالح' },
+                    { selector: '#parentPhone', required: true, requiredMsg: 'يرجى إدخال رقم ولي الأمر', patternLibyan: true, patternMsg: 'رقم ولي الأمر غير صالح' }
                 ]);
 
                 showToast('⚠️ يرجى إدخال الاسم وأرقام الهواتف');
@@ -6379,183 +5577,6 @@
         }
 
         // Duplicate logout removed
-        function applyRoleUI() {
-            const isAdmin = USER.role === 'Admin';
-            const isTeacher = USER.role === 'Teacher';
-            const isStudent = USER.role === 'Student';
-            const isParent = USER.role === 'Parent';
-
-            const staffSection = document.getElementById('staffSection');
-            const adminOnlySection = document.getElementById('adminOnlySection');
-            const studentSection = document.getElementById('studentSection');
-            const parentSection = document.getElementById('parentSection');
-            const libraryNavSection = document.getElementById('libraryNavSection');
-            const libraryAdminActions = document.getElementById('libraryAdminActions');
-            const isStaff = isAdmin || isTeacher;
-
-            if (staffSection) staffSection.style.display = isStaff ? 'block' : 'none';
-            if (adminOnlySection) adminOnlySection.style.display = isAdmin ? 'block' : 'none';
-
-            if (isAdmin) {
-                studentSection.style.display = 'none';
-                if (parentSection) parentSection.style.display = 'none';
-                if (libraryNavSection) libraryNavSection.style.display = 'block';
-                if (libraryAdminActions) libraryAdminActions.style.display = 'flex';
-            } else if (isTeacher) {
-                studentSection.style.display = 'none';
-                if (parentSection) parentSection.style.display = 'none';
-                if (libraryNavSection) libraryNavSection.style.display = 'block';
-                if (libraryAdminActions) libraryAdminActions.style.display = 'flex';
-            } else if (isParent) {
-                studentSection.style.display = 'none';
-                if (parentSection) parentSection.style.display = 'block';
-                if (libraryNavSection) libraryNavSection.style.display = 'block';
-                if (libraryAdminActions) libraryAdminActions.style.display = 'none';
-            } else {
-                studentSection.style.display = 'block';
-                if (parentSection) parentSection.style.display = 'none';
-                if (libraryNavSection) libraryNavSection.style.display = 'block';
-                if (libraryAdminActions) libraryAdminActions.style.display = 'none';
-            }
-
-            if (isStudent) {
-                navigate('studentView', document.querySelector('#studentSection .nav-item'));
-                fetchStudentView();
-            } else if (isParent) {
-                // ✅ إصلاح 3: توجيه ولي الأمر مباشرة لبوابته
-                navigate('parentView', document.querySelector('#parentSection .nav-item'));
-                fetchParentView();
-            } else {
-                navigate('dashboard', document.querySelector('.nav-item'));
-            }
-        }
-
-        // =====================================================
-        // الأولوية 1 — الدوال المفقودة
-        // =====================================================
-
-        // ─── 1. صفحة الحضور: تغيير التاريخ ───────────────────
-        let attendanceDate = new Date();
-        let selectedCircleId = null;
-
-        function initAttendanceDateDisplay() {
-            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const el = document.getElementById('currentDate');
-            if (el) el.textContent = formatDateEnGb(attendanceDate, opts);
-        }
-        initAttendanceDateDisplay();
-
-        function changeDate(dir) {
-            attendanceDate.setDate(attendanceDate.getDate() + dir);
-            initAttendanceDateDisplay();
-            fetchAttendanceForDate();
-        }
-
-        // ─── 2. صفحة الحضور: اختيار الحلقة ──────────────────
-        function selectCircle(el) {
-            document.querySelectorAll('.circle-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            // استخدام data-id مباشرة بدلاً من البحث بالاسم النصي
-            selectedCircleId = parseInt(el.dataset.id, 10) || null;
-            fetchAttendanceForDate();
-        }
-
-        async function fetchAttendanceForDate() {
-            if (!selectedCircleId) {
-                // إذا لم تُختر حلقة نعرض كل الطلاب
-                fetchStudentsAttendance();
-                return;
-            }
-            try {
-                const dateStr = formatLocalDateYmd(attendanceDate);
-                const data = await apiFetch(`/attendance/circle/${selectedCircleId}?date=${dateStr}`);
-                renderAttendanceTable(data);
-            } catch {
-                fetchStudentsAttendance();
-            }
-        }
-
-        async function fetchStudentsAttendance() {
-            const data = await apiFetch('/students');
-            renderAttendanceFromStudents(data);
-        }
-
-        function renderAttendanceFromStudents(students) {
-            const wrap = document.getElementById('attendanceList');
-            if (!students.length) {
-                wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد طلاب</p>';
-                return;
-            }
-            wrap.innerHTML = `
-            <table style="width:100%;border-collapse:collapse">
-              <thead>
-                <tr style="background:var(--bg);text-align:right">
-                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الطالب</th>
-                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحلقة</th>
-                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحالة</th>
-                  <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">تسجيل</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${students.map(s => `
-                  <tr style="border-bottom:1px solid var(--border)" id="att-row-${s.id}">
-                    <td style="padding:12px 16px">
-                      <div style="display:flex;align-items:center;gap:10px">
-                        <div style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">
-                          ${s.fullName.slice(0, 2)}
-                        </div>
-                        <span style="font-weight:600">${s.fullName}</span>
-                      </div>
-                    </td>
-                    <td style="padding:12px 16px;color:var(--text-muted);font-size:13px">${s.circleName}</td>
-                    <td style="padding:12px 16px" id="att-status-${s.id}">
-                      <span class="status-badge" style="background:#f1f5f9;color:#64748b">— لم يُسجّل</span>
-                    </td>
-                    <td style="padding:12px 16px">
-                      <div style="display:flex;gap:6px">
-                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px" onclick="recordAtt(${s.id},'Present')">✅ حاضر</button>
-                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#ef4444;color:#ef4444" onclick="recordAtt(${s.id},'Absent')">❌ غائب</button>
-                        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#f59e0b;color:#f59e0b" onclick="recordAtt(${s.id},'Late')">⏰ متأخر</button>
-                      </div>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>`;
-            updateAttendanceCounts();
-        }
-
-        async function recordAtt(studentId, status) {
-            try {
-                const dateStr = formatLocalDateYmd(attendanceDate);
-                const res = await fetch(`${API_URL}/attendance?studentId=${studentId}&status=${status}&date=${dateStr}`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) throw new Error();
-                const statusCell = document.getElementById(`att-status-${studentId}`);
-                const labels = { Present: ['✅ حاضر', '#dcfce7', '#16a34a'], Absent: ['❌ غائب', '#fee2e2', '#dc2626'], Late: ['⏰ متأخر', '#fef9c3', '#ca8a04'] };
-                const [label, bg, color] = labels[status];
-                statusCell.innerHTML = `<span class="status-badge" style="background:${bg};color:${color}">${label}</span>`;
-                updateAttendanceCounts();
-                showToast(`✅ تم تسجيل ${label} للطالب`);
-            } catch {
-                showToast('❌ حدث خطأ في التسجيل');
-            }
-        }
-
-        function updateAttendanceCounts() {
-            const present = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#dcfce7"]').length;
-            const absent = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#fee2e2"]').length;
-            const late = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#fef9c3"]').length;
-            const pEl = document.getElementById('presentCount');
-            const aEl = document.getElementById('absentCount');
-            const lEl = document.getElementById('lateCount');
-            if (pEl) pEl.textContent = present;
-            if (aEl) aEl.textContent = absent;
-            if (lEl) lEl.textContent = late;
-        }
-
         // ─── تحميل بيانات صفحة التسميع ────────────────────
         async function fetchMemorizationData() {
             const data = await apiFetch('/students');
@@ -6892,8 +5913,8 @@
                 document.getElementById('teacherFullName')?.focus();
                 return;
             }
-            if (!/^05\d{8}$/.test(phone)) {
-                showToast('❌ رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
+            if (!isValidLibyanPhone(phone)) {
+                showToast('❌ ' + (libyanPhonePatternMsg?.() || 'رقم الجوال يجب أن يبدأ بـ 09 ويتكون من 10 أرقام'));
                 document.getElementById('teacherPhone')?.focus();
                 return;
             }
@@ -7623,7 +6644,8 @@
             });
         }
         // ─── Validation System ────────────────────────────
-        function clearValidation(container) {
+        /* validateForm/clearValidation → ui.js (legacy copy below — remove when verified) */
+        function _legacy_clearValidation(container) {
             container.querySelectorAll('.input-error,.input-success').forEach(el => {
                 el.classList.remove('input-error', 'input-success');
             });
@@ -7649,6 +6671,7 @@
         }
 
         function validateForm(rules) {
+            if (window.NoorApp?.ui?.validateForm) return NoorApp.ui.validateForm(rules);
             let valid = true;
             rules.forEach(rule => {
                 const input = document.getElementById(rule.id) || document.querySelector(rule.selector);
@@ -7656,6 +6679,9 @@
                 const val = input.value.trim();
                 if (rule.required && !val) {
                     showFieldError(input, rule.requiredMsg || 'هذا الحقل مطلوب');
+                    valid = false;
+                } else if ((rule.patternLibyan || rule.patternLibyan === true) && val && !isValidLibyanPhone(val)) {
+                    showFieldError(input, rule.patternMsg || libyanPhonePatternMsg());
                     valid = false;
                 } else if (rule.pattern && val && !rule.pattern.test(val)) {
                     showFieldError(input, rule.patternMsg || 'صيغة غير صحيحة');

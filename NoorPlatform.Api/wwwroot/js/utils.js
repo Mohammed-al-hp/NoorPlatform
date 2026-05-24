@@ -98,6 +98,46 @@
         return SURAHS.slice(start, end + 1);
     }
 
+    const LIBYAN_PHONE_PATTERN = /^09\d{8}$/;
+
+    function digitsOnly(value) {
+        return String(value || '').replace(/\D/g, '');
+    }
+
+    function isValidLibyanPhone(phone) {
+        const d = digitsOnly(phone);
+        if (d.length === 10 && d.startsWith('09')) return true;
+        if (d.length === 12 && d.startsWith('218') && d[3] === '9') return true;
+        if (d.length === 9 && d.startsWith('9')) return true;
+        return false;
+    }
+
+    function normalizeLibyanPhone(phone) {
+        const d = digitsOnly(phone);
+        if (!d) return '';
+        if (d.startsWith('218') && d.length >= 12) return d.slice(0, 12);
+        if (d.startsWith('09') && d.length === 10) return '218' + d.slice(1);
+        if (d.startsWith('9') && d.length === 9) return '218' + d;
+        if (d.startsWith('0') && d.length === 10) return '218' + d.slice(1);
+        return d;
+    }
+
+    function toDisplayLibyanPhone(phone) {
+        const n = normalizeLibyanPhone(phone);
+        if (n.startsWith('218') && n.length >= 12) return '0' + n.slice(3);
+        const d = digitsOnly(phone);
+        if (d.startsWith('09') && d.length === 10) return d;
+        return phone || '';
+    }
+
+    function toWhatsAppLibyanPhone(phone) {
+        return normalizeLibyanPhone(phone);
+    }
+
+    function libyanPhonePatternMsg() {
+        return 'الرقم يجب أن يبدأ بـ 09 ويتكون من 10 أرقام (مثال: 0912345678)';
+    }
+
     function parseVerseCount(verses) {
         if (!verses) return 0;
         const parts = String(verses).split('-');
@@ -110,15 +150,42 @@
         return isNaN(single) ? 0 : single;
     }
 
-    global.NoorUtils = {
+    const utilsApi = {
         SURAHS,
+        LIBYAN_PHONE_PATTERN,
         escapeHtml,
         formatLocalDateYmd,
         formatDateEnGb,
         formatDateTimeEnGb,
         surahOptionsHtml,
         getSurahsInRange,
-        parseVerseCount
+        parseVerseCount,
+        isValidLibyanPhone,
+        normalizeLibyanPhone,
+        toDisplayLibyanPhone,
+        toWhatsAppLibyanPhone,
+        libyanPhonePatternMsg
+    };
+
+    function attachToApp() {
+        const app = global.NoorApp || (global.NoorApp = { state: {}, utils: {}, api: {}, ui: {} });
+        app.utils = Object.assign({}, app.utils, utilsApi);
+        return app.utils;
+    }
+
+    attachToApp();
+    global.NoorUtils = utilsApi;
+
+    /** مصدر موحّد — يضمن وجود الدوال حتى مع cache قديم أو utils فارغ */
+    global.getNoorUtils = function getNoorUtils() {
+        if (global.NoorUtils?.isValidLibyanPhone && global.NoorUtils?.formatDateEnGb) {
+            attachToApp();
+            return global.NoorUtils;
+        }
+        const app = global.NoorApp;
+        if (app?.utils?.isValidLibyanPhone && app.utils.formatDateEnGb) return app.utils;
+        attachToApp();
+        return global.NoorUtils;
     };
 
     global.escapeHtml = escapeHtml;
@@ -126,4 +193,8 @@
     global.formatDateEnGb = formatDateEnGb;
     global.formatDateTimeEnGb = formatDateTimeEnGb;
     global.SURAHS = SURAHS;
+    global.isValidLibyanPhone = isValidLibyanPhone;
+    global.normalizeLibyanPhone = normalizeLibyanPhone;
+    global.toDisplayLibyanPhone = toDisplayLibyanPhone;
+    global.toWhatsAppLibyanPhone = toWhatsAppLibyanPhone;
 })(typeof window !== 'undefined' ? window : global);

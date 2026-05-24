@@ -18,27 +18,9 @@ public class AccountProvisioningService
         _context = context;
     }
 
-    public static string NormalizePhone(string phone)
-    {
-        if (string.IsNullOrWhiteSpace(phone))
-            return string.Empty;
+    public static string NormalizePhone(string phone) => LibyanPhone.Normalize(phone);
 
-        var digits = new string(phone.Where(char.IsDigit).ToArray());
-        if (digits.StartsWith("966"))
-            return digits;
-        if (digits.StartsWith("0"))
-            return "966" + digits[1..];
-        if (digits.Length == 9 && digits.StartsWith("5"))
-            return "966" + digits;
-        return digits;
-    }
-
-    public static string ToDisplayPhone(string normalized)
-    {
-        if (normalized.StartsWith("966") && normalized.Length >= 12)
-            return "0" + normalized[3..];
-        return normalized;
-    }
+    public static string ToDisplayPhone(string normalized) => LibyanPhone.ToDisplay(normalized);
 
     public async Task<(User User, string TempPassword, string? Error)> CreateUserAsync(
         string phone,
@@ -47,8 +29,8 @@ public class AccountProvisioningService
         string? emailOverride = null)
     {
         var normalized = NormalizePhone(phone);
-        if (normalized.Length < 11)
-            return (null!, string.Empty, "رقم الهاتف غير صالح");
+        if (!LibyanPhone.IsValid(phone))
+            return (null!, string.Empty, "رقم الهاتف غير صالح. يجب أن يبدأ بـ 09 ويتكون من 10 أرقام");
 
         if (await _userManager.FindByNameAsync(normalized) != null)
             return (null!, string.Empty, "رقم الهاتف مستخدم بالفعل");

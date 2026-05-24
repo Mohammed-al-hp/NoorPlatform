@@ -37,17 +37,35 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(new { message = "بيانات تسجيل الدخول غير صالحة" });
 
-        var phone = AccountProvisioningService.NormalizePhone(request.Phone);
+        var lookupKeys = LibyanPhone.GetLoginLookupKeys(request.Phone);
+        var candidates = new List<User>();
+        foreach (var key in lookupKeys)
+        {
+            var match = await _userManager.FindByNameAsync(key)
+                        ?? await _userManager.Users.FirstOrDefaultAsync(u =>
+                            u.PhoneNumber == key || u.NormalizedUserName == key.ToUpperInvariant());
+            if (match != null && candidates.All(c => c.Id != match.Id))
+                candidates.Add(match);
+        }
 
-        var user = await _userManager.FindByNameAsync(phone)
-                   ?? await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phone);
+        User? user = null;
+        foreach (var candidate in candidates)
+        {
+            if (!candidate.IsActive) continue;
+            var check = await _signInManager.CheckPasswordSignInAsync(candidate, request.Password, lockoutOnFailure: false);
+            if (check.Succeeded)
+            {
+                user = candidate;
+                break;
+            }
+        }
 
-        if (user == null || !user.IsActive)
+        if (user == null)
+        {
+            if (candidates.Count > 0)
+                await _signInManager.CheckPasswordSignInAsync(candidates[0], request.Password, lockoutOnFailure: true);
             return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
-
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
-        if (!result.Succeeded)
-            return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
+        }
 
         user.LastLoginAt = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
@@ -68,7 +86,7 @@ public class AuthController : ControllerBase
             {
                 user.Id,
                 user.FullName,
-                phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? phone),
+                phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? user.PhoneNumber ?? request.Phone),
                 user.Email,
                 role = user.Role.ToString()
             }
