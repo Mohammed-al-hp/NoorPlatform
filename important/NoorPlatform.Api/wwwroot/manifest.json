@@ -1,0 +1,54 @@
+{
+  "name": "منصة نور لتحفيظ القرآن الكريم",
+  "short_name": "نور",
+  "description": "نظام إدارة مراكز وحلقات تحفيظ القرآن الكريم — متابعة الحفظ والحضور والاختبارات",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "lang": "ar",
+  "dir": "rtl",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الحضور والغياب",
+      "short_name": "الحضور",
+      "url": "/#attendance",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "الحفظ والتسميع",
+      "short_name": "التسميع",
+      "url": "/#memorization",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "categories": ["education", "productivity"]
+}
