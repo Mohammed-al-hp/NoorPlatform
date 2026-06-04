@@ -5613,12 +5613,12 @@
                     panel.innerHTML = records.length ? records.map(r => `
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
                   <div>
-                    <p style="font-weight:700;font-size:13px">${r.studentName} — ${r.surahName} (${r.verses})</p>
+                    <p style="font-weight:700;font-size:13px">${escapeHtml(r.studentName)} — ${escapeHtml(r.surahName)} (${escapeHtml(r.verses)})</p>
                     <p style="font-size:11px;color:var(--text-muted)">${formatDateEnGb(r.date)} · ${r.type === 'Memorization' ? 'حفظ جديد' : 'مراجعة'}</p>
                   </div>
                   <div style="display:flex;align-items:center;gap:8px">
-                      <span class="status-badge ${r.evaluation === 'ممتاز' ? 'status-excellent' : 'status-good'}">${r.evaluation}</span>
-                      <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981" onclick="sendHifzPraise(${r.studentId}, '${r.surahName}', '${r.verses}', '${r.evaluation}')" title="إرسال رسالة مديح لولي الأمر عبر واتساب">💬 مديح</button>
+                      <span class="status-badge ${r.evaluation === 'ممتاز' ? 'status-excellent' : 'status-good'}">${escapeHtml(r.evaluation)}</span>
+                      <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981" onclick="sendHifzPraise(${r.studentId}, '${escapeHtml(r.surahName).replace(/'/g, "\\'")}', '${escapeHtml(r.verses).replace(/'/g, "\\'")}', '${escapeHtml(r.evaluation).replace(/'/g, "\\'")}')" title="إرسال رسالة مديح لولي الأمر عبر واتساب">💬 مديح</button>
                       <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#ef4444;border-color:#ef4444" onclick="deleteHifzRecord(${r.id})" title="حذف السجل">🗑</button>
                   </div>
                 </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px">لا توجد جلسات بعد</p>';
@@ -5669,10 +5669,10 @@
                 container.innerHTML = data.map(item => `
                     <div class="student-card">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                            <h3 style="font-size:16px; font-weight:700; margin-bottom:4px">${item.title}</h3>
-                            <span class="status-badge status-excellent" style="font-size:10px">${item.category}</span>
+                            <h3 style="font-size:16px; font-weight:700; margin-bottom:4px">${escapeHtml(item.title)}</h3>
+                            <span class="status-badge status-excellent" style="font-size:10px">${escapeHtml(item.category)}</span>
                         </div>
-                        <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px; height:36px; overflow:hidden">${item.description}</p>
+                        <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px; height:36px; overflow:hidden">${escapeHtml(item.description)}</p>
                         
                         <div class="stats-row" style="margin-bottom:16px">
                             <div class="stat-item">
@@ -5686,7 +5686,7 @@
                         </div>
 
                         <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px">
-                            رافع الملف: ${item.uploadedBy}
+                            رافع الملف: ${escapeHtml(item.uploadedBy)}
                         </div>
 
                         <div class="actions" style="margin-top:auto; display:flex; gap:8px">
@@ -5856,7 +5856,7 @@
               <div class="chart-card" style="margin-bottom:16px">
                 <div class="card-header">
                   <div>
-                    <h3>${e.title}</h3>
+                    <h3>${escapeHtml(e.title)}</h3>
                     <p>${formatDateEnGb(e.date)}</p>
                   </div>
                   <span class="status-badge status-excellent">${e.averageScore}% متوسط</span>
@@ -5865,13 +5865,13 @@
                   <div class="mini-stat"><label>المشاركون</label><p>${e.participantsCount}</p></div>
                   <div class="mini-stat"><label>المتوسط</label><p>${e.averageScore}%</p></div>
                 </div>
-                <p style="font-size:13px;color:var(--text-muted);margin-top:8px">${e.description || ''}</p>
+                <p style="font-size:13px;color:var(--text-muted);margin-top:8px">${escapeHtml(e.description || '')}</p>
                 <div style="margin-top:14px;display:flex;gap:8px">
                   <!-- ✅ إصلاح 4: زر إدخال النتائج -->
-                  <button class="btn btn-primary" style="font-size:12px;padding:8px 14px" onclick="openExamResults(${e.id}, '${e.title.replace(/'/g, "\\'")}')">
+                  <button class="btn btn-primary" style="font-size:12px;padding:8px 14px" onclick="openExamResults(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
                     📊 إدخال نتائج الطلاب
                   </button>
-                  <button class="btn btn-delete" style="font-size:12px;padding:8px 14px" onclick="deleteExam(${e.id}, '${e.title.replace(/'/g, "\\'")}')">
+                  <button class="btn btn-delete" style="font-size:12px;padding:8px 14px" onclick="deleteExam(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
                     🗑 حذف
                   </button>
                 </div>
@@ -5904,7 +5904,7 @@
                     if (data.badges) {
                         const parsedBadges = data.badges.split(',');
                         parsedBadges.forEach(b => {
-                            if (b.trim()) badgesHtml += `<span class="hero-badge">🏆 ${b.trim()}</span>`;
+                            if (b.trim()) badgesHtml += `<span class="hero-badge">🏆 ${escapeHtml(b.trim())}</span>`;
                         });
                     }
                     badgesHtml += `<span class="hero-badge">⭐ 4.8 / 5</span>`;
@@ -5963,18 +5963,18 @@
                 const t = await apiFetch('/teachers/' + teacherId);
                 body.innerHTML = `
                         <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
-                            <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px">${t.fullName.slice(0, 2)}</div>
+                            <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px">${escapeHtml(t.fullName).slice(0, 2)}</div>
                             <div>
-                                <h3 style="font-size:17px;font-weight:800">${t.fullName}</h3>
-                                <p style="font-size:13px;color:var(--text-muted)">${t.email}</p>
-                                <p style="font-size:12px;color:var(--text-muted);margin-top:2px">📚 ${t.qualification || 'لم يحدد المؤهل'}</p>
+                                <h3 style="font-size:17px;font-weight:800">${escapeHtml(t.fullName)}</h3>
+                                <p style="font-size:13px;color:var(--text-muted)">${escapeHtml(t.email)}</p>
+                                <p style="font-size:12px;color:var(--text-muted);margin-top:2px">📚 ${escapeHtml(t.qualification || 'لم يحدد المؤهل')}</p>
                             </div>
                         </div>
                         <div style="background:var(--bg);border-radius:12px;padding:16px;margin-bottom:16px">
                             <p style="font-size:13px;font-weight:700;margin-bottom:12px">🔵 الحلقات المسندة (${t.circles?.length || 0})</p>
                             ${t.circles?.length ? t.circles.map(c => `
                                 <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
-                                    <span>${c.name}</span>
+                                    <span>${escapeHtml(c.name)}</span>
                                     <span style="color:var(--text-muted)">${c.studentCount} طالب</span>
                                 </div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">لا توجد حلقات مسندة</p>'}
                         </div>`;
@@ -6051,7 +6051,7 @@
                         ${alerts.map(a => `
                             <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:12px; padding:14px 18px; margin-bottom:8px; display:flex; align-items:center; gap:10px; font-size:14px; color:#dc2626;">
                                 <span style="font-size:22px">🔔</span>
-                                <span style="flex:1">${a.message}</span>
+                                <span style="flex:1">${escapeHtml(a.message)}</span>
                                 <button class="btn" style="background:#dc2626;color:#fff;padding:6px 14px;border-radius:8px;font-size:12px" onclick="navigate('parentFees', null)">عرض الفاتورة</button>
                             </div>
                         `).join('')}
@@ -6065,9 +6065,9 @@
                 grid.innerHTML = alertsHtml + children.map(c => `
                         <div class="student-card">
                             <div class="student-card-top">
-                                <div class="student-avatar-lg" style="background:var(--gradient)">${c.fullName.slice(0, 2)}</div>
+                                <div class="student-avatar-lg" style="background:var(--gradient)">${escapeHtml(c.fullName).slice(0, 2)}</div>
                                 <div class="student-card-info">
-                                    <h4>${c.fullName}</h4>
+                                    <h4>${escapeHtml(c.fullName)}</h4>
                                     <span class="status-badge status-excellent" style="margin-top:4px;display:inline-flex">تقدم الحفظ: ${c.progress}%</span>
                                 </div>
                             </div>
@@ -6077,7 +6077,7 @@
                                 <div class="mini-stat"><label>النقاط</label><p style="color:var(--amber-dark)">🌟 ${c.points || 0}</p></div>
                             </div>
                             <div style="font-size:12px; margin-bottom: 10px; display: flex; gap: 4px; flex-wrap: wrap;">
-                                ${c.badges ? c.badges.split(',').map(b => b.trim() ? `<span style="background:var(--amber-light); color:var(--amber-dark); padding: 2px 6px; border-radius: 4px;">🏆 ${b.trim()}</span>` : '').join('') : ''}
+                                ${c.badges ? c.badges.split(',').map(b => b.trim() ? `<span style="background:var(--amber-light); color:var(--amber-dark); padding: 2px 6px; border-radius: 4px;">🏆 ${escapeHtml(b.trim())}</span>` : '').join('') : ''}
                             </div>
                             <div class="progress-wrap" style="margin-bottom:14px">
                                 <div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%"></div></div>
@@ -6085,7 +6085,7 @@
                             </div>
                             ${c.lastNote && c.lastNote !== 'لا توجد ملاحظات'
                         ? `<div style="background:var(--green-light);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--green-dark);margin-bottom:10px">
-                                    💬 <strong>آخر ملاحظة:</strong> ${c.lastNote}
+                                    💬 <strong>آخر ملاحظة:</strong> ${escapeHtml(c.lastNote)}
                                    </div>`
                         : ''}
                         </div>
@@ -6118,8 +6118,8 @@
                         ${students.map(s => `
                         <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(226,232,240,0.5)">
                             <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600">
-                                <div style="width:30px;height:30px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${s.fullName.slice(0, 2)}</div>
-                                ${s.fullName}
+                                <div style="width:30px;height:30px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${escapeHtml(s.fullName).slice(0, 2)}</div>
+                                ${escapeHtml(s.fullName)}
                             </div>
                             <input class="form-input er-score" data-sid="${s.id}" type="number" min="0" max="100" placeholder="0" style="padding:7px 10px;font-size:13px">
                             <input class="form-input er-max" data-sid="${s.id}" type="number" min="1" value="100" style="padding:7px 10px;font-size:13px">
