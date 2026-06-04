@@ -9,6 +9,7 @@ namespace NoorPlatform.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class PaymentsController : ControllerBase
 {
     private readonly NoorDbContext _context;

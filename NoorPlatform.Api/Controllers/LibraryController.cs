@@ -10,6 +10,7 @@ namespace NoorPlatform.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class LibraryController : ControllerBase
     {
         private readonly NoorDbContext _context;
