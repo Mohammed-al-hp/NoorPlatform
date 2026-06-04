@@ -57,7 +57,8 @@ public class SecurityHeadersMiddleware
         headers["X-Frame-Options"] = "SAMEORIGIN";
 
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-
+        headers["X-XSS-Protection"] = "0";
+        headers["Cross-Origin-Opener-Policy"] = "same-origin";
         headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
 
 
