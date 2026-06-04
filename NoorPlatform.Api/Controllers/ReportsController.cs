@@ -244,10 +244,16 @@ public class ReportsController : ControllerBase
         int presentDays, int absentDays, int totalVerses,
         int sessionsCount, List<object> hifzRecords)
     {
+        studentName = System.Net.WebUtility.HtmlEncode(studentName);
+        teacherName = System.Net.WebUtility.HtmlEncode(teacherName);
+        circleName = System.Net.WebUtility.HtmlEncode(circleName);
+        month = System.Net.WebUtility.HtmlEncode(month);
+        year = System.Net.WebUtility.HtmlEncode(year);
+
         var rows = string.Join("", hifzRecords.Select((r, i) =>
         {
             dynamic d = r;
-            return $"<tr><td>{i + 1}</td><td>{d.SurahName}</td><td>{d.Verses}</td><td>{d.Evaluation}</td><td>{d.Notes}</td></tr>";
+            return $"<tr><td>{i + 1}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.SurahName)}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.Verses)}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.Evaluation)}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.Notes)}</td></tr>";
         }));
 
         return $$"""

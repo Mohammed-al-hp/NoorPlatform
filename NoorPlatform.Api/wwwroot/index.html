@@ -6701,6 +6701,7 @@
                 const html = await res.text();
                 const container = document.createElement('div');
                 container.innerHTML = html;
+                Array.from(container.getElementsByTagName('script')).forEach(s => s.remove());
                 const reportEl = container.querySelector('.report') || container;
                 const opt = {
                     margin: 0.5,
@@ -6731,6 +6732,7 @@
                 const html = await res.text();
                 const container = document.createElement('div');
                 container.innerHTML = html;
+                Array.from(container.getElementsByTagName('script')).forEach(s => s.remove());
                 const certEl = container.querySelector('.cert') || container;
                 const opt = {
                     margin: 0,
