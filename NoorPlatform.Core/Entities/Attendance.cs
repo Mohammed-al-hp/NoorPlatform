@@ -3,8 +3,9 @@ namespace NoorPlatform.Core.Entities;
 public enum AttendanceStatus
 {
     Present,
-    Absent,
-    Late
+    Late,
+    ExcusedAbsence,
+    UnexcusedAbsence
 }
 
 public class Attendance

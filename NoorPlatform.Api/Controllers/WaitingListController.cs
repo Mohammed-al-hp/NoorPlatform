@@ -32,9 +32,11 @@ public class WaitingListController : ControllerBase
         else
             query = query.Where(e => e.Status == WaitingListStatus.Pending || e.Status == WaitingListStatus.Contacted);
 
+        var isAdmin = User.IsInRole("Admin");
+
         var items = await query
             .OrderBy(e => e.RegistrationDate)
-            .Select(e => MapDto(e))
+            .Select(e => MapDto(e, isAdmin))
             .ToListAsync();
 
         return Ok(items);
@@ -46,7 +48,9 @@ public class WaitingListController : ControllerBase
         var entry = await _context.WaitingListEntries.FindAsync(id);
         if (entry == null)
             return NotFound(new { message = "السجل غير موجود" });
-        return Ok(MapDto(entry));
+
+        var isAdmin = User.IsInRole("Admin");
+        return Ok(MapDto(entry, isAdmin));
     }
 
     [HttpPost]
@@ -80,7 +84,9 @@ public class WaitingListController : ControllerBase
 
         _context.WaitingListEntries.Add(entry);
         await _context.SaveChangesAsync();
-        return Ok(new { message = "تمت الإضافة لقائمة الانتظار", entry.Id, entry = MapDto(entry) });
+        
+        var isAdmin = User.IsInRole("Admin");
+        return Ok(new { message = "تمت الإضافة لقائمة الانتظار", entry.Id, entry = MapDto(entry, isAdmin) });
     }
 
     [HttpPut("{id}")]
@@ -112,7 +118,9 @@ public class WaitingListController : ControllerBase
 
         entry.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        return Ok(new { message = "تم التحديث", entry = MapDto(entry) });
+
+        var isAdmin = User.IsInRole("Admin");
+        return Ok(new { message = "تم التحديث", entry = MapDto(entry, isAdmin) });
     }
 
     [HttpDelete("{id}")]
@@ -140,6 +148,10 @@ public class WaitingListController : ControllerBase
 
         if (entry.Status is WaitingListStatus.Accepted or WaitingListStatus.Rejected)
             return BadRequest(new { message = "لا يمكن تحويل سجل مكتمل أو مرفوض" });
+
+        // ─── إصلاح عالي: التحقق لمنع إنشاء حساب لطالب موجود مسبقاً ───
+        if (await _context.Students.AnyAsync(s => s.User.UserName == entry.Phone))
+            return BadRequest(new { message = "هذا الطالب مسجل بالفعل مسبقاً كطالب" });
 
         var circle = await _context.Circles.FindAsync(request.CircleId);
         if (circle == null)
@@ -200,14 +212,15 @@ public class WaitingListController : ControllerBase
         });
     }
 
-    private static object MapDto(WaitingListEntry e) => new
+    // ─── إصلاح عالي: إخفاء الأرقام الخام عن المحفظين ───
+    private static object MapDto(WaitingListEntry e, bool isAdmin) => new
     {
         e.Id,
         e.FullName,
-        Phone = e.Phone,
+        Phone = isAdmin ? e.Phone : null,
         DisplayPhone = AccountProvisioningService.ToDisplayPhone(e.Phone),
         e.ParentName,
-        ParentPhone = e.ParentPhone,
+        ParentPhone = isAdmin ? e.ParentPhone : null,
         DisplayParentPhone = string.IsNullOrEmpty(e.ParentPhone)
             ? ""
             : AccountProvisioningService.ToDisplayPhone(e.ParentPhone),

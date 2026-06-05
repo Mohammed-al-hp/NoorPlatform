@@ -47,7 +47,9 @@ public class TeachersController : ControllerBase
     }
 
     // GET /api/teachers/{id}
+    // إصلاح: تقييد الوصول - Admin و Teacher فقط يمكنهم الاطلاع على بيانات المحفظين
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetById(int id)
     {
         var teacher = await _context.Teachers
@@ -128,6 +130,7 @@ public class TeachersController : ControllerBase
     }
 
     // DELETE /api/teachers/{id}
+    // إصلاح حرج: دمج حذف Teacher و User في Transaction واحدة لمنع البيانات المعلقة
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
@@ -144,13 +147,31 @@ public class TeachersController : ControllerBase
         if (teacher.Circles.Any())
             return BadRequest(new { message = $"لا يمكن حذف المحفظ لأنه مرتبط بـ {teacher.Circles.Count} حلقة. يرجى إعادة تعيين الحلقات أولاً." });
 
-        var user = teacher.User;
-        _context.Teachers.Remove(teacher);
-        await _context.SaveChangesAsync();
+        // إصلاح: استخدام Transaction لضمان ذرية العملية (حذف Teacher + User معاً أو لا شيء)
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var user = teacher.User;
+            _context.Teachers.Remove(teacher);
+            await _context.SaveChangesAsync();
 
-        await _userManager.DeleteAsync(user);
+            var identityResult = await _userManager.DeleteAsync(user);
+            if (!identityResult.Succeeded)
+            {
+                // التراجع: إذا فشل حذف User من Identity، نلغي كل شيء
+                await transaction.RollbackAsync();
+                var errors = string.Join("، ", identityResult.Errors.Select(e => e.Description));
+                return StatusCode(500, new { message = $"فشل حذف حساب المستخدم: {errors}" });
+            }
 
-        return Ok(new { message = "تم حذف المحفظ" });
+            await transaction.CommitAsync();
+            return Ok(new { message = "تم حذف المحفظ" });
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }
 

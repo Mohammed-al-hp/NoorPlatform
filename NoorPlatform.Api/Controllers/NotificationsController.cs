@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
@@ -17,26 +19,27 @@ namespace NoorPlatform.Api.Controllers;
 public class NotificationsController : ControllerBase
 {
     private readonly NoorDbContext _context;
-    private readonly IConfiguration _configuration;
     private readonly HttpClient _httpClient;
     private readonly ILogger<NotificationsController> _logger;
+    // إصلاح: قراءة إعدادات واتساب مرة واحدة عبر IOptions بدلاً من IConfiguration في كل استدعاء
+    private readonly WhatsAppSettings _whatsAppSettings;
 
     public NotificationsController(
         NoorDbContext context,
-        IConfiguration configuration,
+        IOptions<WhatsAppSettings> whatsAppOptions,
         IHttpClientFactory httpClientFactory,
         ILogger<NotificationsController> logger)
     {
-        _context    = context;
-        _configuration = configuration;
-        _httpClient = httpClientFactory.CreateClient("WhatsApp");
-        _logger     = logger;
+        _context          = context;
+        _whatsAppSettings = whatsAppOptions.Value;
+        _httpClient       = httpClientFactory.CreateClient("WhatsApp");
+        _logger           = logger;
     }
 
     // ─────────────────────────────────────────────────
     // POST /api/notifications/absence
     // إرسال إشعار غياب لولي أمر طالب معين
-    // يُستدعى تلقائياً عند تسجيل الغياب في AttendanceController
+    // إصلاح: إضافة فحص ملكية المحفظ للطالب
     // ─────────────────────────────────────────────────
     [HttpPost("absence")]
     [Authorize(Roles = "Admin,Teacher")]
@@ -45,11 +48,18 @@ public class NotificationsController : ControllerBase
         var student = await _context.Students
             .Include(s => s.User)
             .Include(s => s.Parent).ThenInclude(p => p!.User)
-            .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t.User)
+            .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t!.User)
             .FirstOrDefaultAsync(s => s.Id == request.StudentId);
 
         if (student == null)
             return NotFound(new { message = "الطالب غير موجود" });
+
+        // ─── إصلاح حرج: فحص ملكية المحفظ — لا يحق للمحفظ إرسال إشعار لطالب خارج حلقته ───
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var isTeacher = User.IsInRole("Teacher");
+
+        if (isTeacher && student.Circle?.Teacher?.UserId != currentUserId)
+            return Forbid();
 
         var parentPhone = student.ParentPhone ?? student.Parent?.Phone;
         if (string.IsNullOrEmpty(parentPhone))
@@ -86,11 +96,25 @@ public class NotificationsController : ControllerBase
     // ─────────────────────────────────────────────────
     // POST /api/notifications/bulk-absence
     // إرسال إشعارات غياب جماعي (بعد تسجيل الحضور اليومي)
+    // إصلاح: فحص ملكية الحلقة للمحفظ
     // ─────────────────────────────────────────────────
     [HttpPost("bulk-absence")]
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> SendBulkAbsenceNotifications([FromBody] BulkAbsenceRequest request)
     {
+        // ─── إصلاح حرج: التحقق من أن المحفظ يملك الحلقة المُستهدفة ───
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var isTeacher = User.IsInRole("Teacher");
+
+        if (isTeacher)
+        {
+            var ownsCircle = await _context.Circles
+                .AnyAsync(c => c.Id == request.CircleId && c.Teacher != null && c.Teacher.UserId == currentUserId);
+
+            if (!ownsCircle)
+                return Forbid();
+        }
+
         var today = DateTime.UtcNow.Date;
 
         // جلب جميع الغائبين اليوم في الحلقة المحددة
@@ -98,7 +122,7 @@ public class NotificationsController : ControllerBase
             .Include(s => s.User)
             .Include(s => s.Parent)
             .Where(s => s.CircleId == request.CircleId &&
-                        s.Attendances.Any(a => a.Date.Date == today && a.Status == AttendanceStatus.Absent))
+                        s.Attendances.Any(a => a.Date.Date == today && a.Status == AttendanceStatus.UnexcusedAbsence))
             .ToListAsync();
 
         int sent = 0, failed = 0;
@@ -135,10 +159,18 @@ public class NotificationsController : ControllerBase
         var student = await _context.Students
             .Include(s => s.User)
             .Include(s => s.Parent)
+            .Include(s => s.Circle).ThenInclude(c => c!.Teacher)
             .FirstOrDefaultAsync(s => s.Id == request.StudentId);
 
         if (student == null)
             return NotFound(new { message = "الطالب غير موجود" });
+
+        // فحص ملكية المحفظ للطالب (نفس النمط المُطبق في absence)
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var isTeacher = User.IsInRole("Teacher");
+
+        if (isTeacher && student.Circle?.Teacher?.UserId != currentUserId)
+            return Forbid();
 
         var phone = student.ParentPhone ?? student.Parent?.Phone;
         if (string.IsNullOrEmpty(phone))
@@ -163,17 +195,14 @@ public class NotificationsController : ControllerBase
 
     // ─────────────────────────────────────────────────
     // الإرسال الفعلي عبر WhatsApp Cloud API (Meta)
+    // إصلاح: استخدام WhatsAppSettings المحقونة عبر IOptions بدلاً من IConfiguration
     // ─────────────────────────────────────────────────
     private async Task<bool> SendWhatsAppMessage(string phone, string message)
     {
         try
         {
-            var phoneId = _configuration["WhatsApp:PhoneNumberId"];
-            var token   = _configuration["WhatsApp:AccessToken"];
-
             // إذا لم تُعيَّن الإعدادات — وضع المحاكاة (للتطوير)
-            if (string.IsNullOrEmpty(phoneId) || string.IsNullOrEmpty(token) ||
-                token.StartsWith("EAABXXXX", StringComparison.Ordinal))
+            if (!_whatsAppSettings.IsConfigured)
             {
                 _logger.LogWarning("⚠️ واتساب غير مُعيَّن — تم تخطي الإرسال لـ {Phone}", phone);
                 return false;
@@ -193,8 +222,8 @@ public class NotificationsController : ControllerBase
             };
 
             using var request = new HttpRequestMessage(HttpMethod.Post,
-                $"https://graph.facebook.com/v19.0/{phoneId}/messages");
-            request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {token}");
+                $"https://graph.facebook.com/v19.0/{_whatsAppSettings.PhoneNumberId}/messages");
+            request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {_whatsAppSettings.AccessToken}");
             request.Content = JsonContent.Create(payload);
 
             var response = await _httpClient.SendAsync(request);

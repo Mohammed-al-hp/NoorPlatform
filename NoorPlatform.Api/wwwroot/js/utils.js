@@ -55,6 +55,19 @@
             .replace(/'/g, '&#39;');
     }
 
+    // ─── إصلاح: تقنية Debounce لتقليل طلبات البحث ───
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
     function formatLocalDateYmd(d) {
         const dt = d instanceof Date ? d : new Date();
         const y = dt.getFullYear();
@@ -104,21 +117,20 @@
         return String(value || '').replace(/\D/g, '');
     }
 
+    // ─── إصلاح: تشديد الفحص لقبول الأرقام الليبية فقط (10 أرقام تبدأ بـ 09، أو 12 رقم تبدأ بـ 2189) ───
     function isValidLibyanPhone(phone) {
         const d = digitsOnly(phone);
         if (d.length === 10 && d.startsWith('09')) return true;
-        if (d.length === 12 && d.startsWith('218') && d[3] === '9') return true;
-        if (d.length === 9 && d.startsWith('9')) return true;
+        if (d.length === 12 && d.startsWith('2189')) return true;
         return false;
     }
 
+    // ─── إصلاح: توحيد مسارات التطبيع لتتوافق مع الـ Backend ───
     function normalizeLibyanPhone(phone) {
         const d = digitsOnly(phone);
         if (!d) return '';
         if (d.startsWith('218') && d.length >= 12) return d.slice(0, 12);
         if (d.startsWith('09') && d.length === 10) return '218' + d.slice(1);
-        if (d.startsWith('9') && d.length === 9) return '218' + d;
-        if (d.startsWith('0') && d.length === 10) return '218' + d.slice(1);
         return d;
     }
 
@@ -135,7 +147,7 @@
     }
 
     function libyanPhonePatternMsg() {
-        return 'الرقم يجب أن يبدأ بـ 09 ويتكون من 10 أرقام (مثال: 0912345678)';
+        return 'الرقم يجب أن يبدأ بـ 09 ويتكون من 10 أرقام، أو يبدأ بـ 2189 ويتكون من 12 رقماً (مثال: 0912345678)';
     }
 
     function parseVerseCount(verses) {
@@ -154,6 +166,7 @@
         SURAHS,
         LIBYAN_PHONE_PATTERN,
         escapeHtml,
+        debounce,
         formatLocalDateYmd,
         formatDateEnGb,
         formatDateTimeEnGb,
@@ -189,6 +202,7 @@
     };
 
     global.escapeHtml = escapeHtml;
+    global.debounce = debounce;
     global.formatLocalDateYmd = formatLocalDateYmd;
     global.formatDateEnGb = formatDateEnGb;
     global.formatDateTimeEnGb = formatDateTimeEnGb;

@@ -29,37 +29,37 @@ public class StudentsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetAll()
     {
-        var isTeacher = User.IsInRole("Teacher");
-        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
-
-        var query = _context.Students.AsQueryable();
-
-        if (isTeacher)
-        {
-            query = query.Where(s => s.Circle!.Teacher!.UserId == userId);
-        }
+        var query = StudentQueryHelper.ScopeForUser(_context, User);
 
         var result = await query.Select(s => new
         {
             s.Id,
-            FullName = s.User.FullName,
+            fullName = s.User.FullName,
             s.User.Email,
             s.ParentPhone,
             s.CircleId,
-            CircleName = s.Circle != null ? s.Circle.Name : "بدون حلقة",
+            circleName = s.Circle != null ? s.Circle.Name : "بدون حلقة",
             s.Level,
-            Attendance = s.Attendances.Any()
+            attendance = s.Attendances.Any()
                 ? (int)Math.Round(
                     (double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present)
                     / s.Attendances.Count * 100)
                 : 0,
-            Progress = (int)Math.Min(100, Math.Round(
+            progress = (int)Math.Min(100, Math.Round(
                 (double)s.HifzRecords
                     .Where(r => r.Type == RecordType.Memorization)
                     .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0) / 6236.0 * 100))
         }).ToListAsync();
 
         return Ok(result);
+    }
+
+    [HttpGet("count")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GetCount()
+    {
+        var count = await StudentQueryHelper.ScopeForUser(_context, User).CountAsync();
+        return Ok(new { count });
     }
 
     // GET /api/students/{id}
@@ -84,19 +84,27 @@ public class StudentsController : ControllerBase
         return Ok(new
         {
             student.Id,
-            student.User.FullName,
+            fullName = student.User.FullName,
             student.User.Email,
             student.Level,
-            CircleName = student.Circle?.Name ?? "بدون حلقة",
-            ParentName = student.Parent?.User?.FullName ?? "—",
-            Attendance = student.Attendances.Any()
+            circleName = student.Circle?.Name ?? "بدون حلقة",
+            circleId = student.CircleId,
+            parentName = !string.IsNullOrWhiteSpace(student.GuardianName)
+                ? student.GuardianName
+                : student.Parent?.User?.FullName ?? "—",
+            parentPhone = student.ParentPhone,
+            guardianRelationship = student.GuardianRelationship?.ToString(),
+            dateOfBirth = student.DateOfBirth?.ToString("yyyy-MM-dd"),
+            registrationDate = student.RegistrationDate.ToString("yyyy-MM-dd"),
+            studentPhone = student.StudentPhone,
+            residence = student.Residence,
+            attendance = student.Attendances.Any()
                 ? (int)Math.Round(
                     (double)student.Attendances.Count(a => a.Status == AttendanceStatus.Present)
                     / student.Attendances.Count * 100)
                 : 0,
-            // ✅ إصلاح 1: استخدام VerseCount الفعلي
-            Progress = CalculateHifzProgress(student.HifzRecords),
-            RecentHifz = student.HifzRecords
+            progress = CalculateHifzProgress(student.HifzRecords),
+            recentHifz = student.HifzRecords
                                 .OrderByDescending(r => r.Date)
                                 .Take(5)
                                 .Select(r => new { r.SurahName, r.Verses, r.VerseCount, r.Type, r.Evaluation, r.Date })
@@ -108,11 +116,17 @@ public class StudentsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone))
-            return BadRequest(new { message = "الاسم ورقم الهاتف مطلوبان" });
+        var validationError = ValidateStudentPayload(request.FullName, request.DateOfBirth, request.GuardianName,
+            request.ParentPhone, request.GuardianRelationship, request.RegistrationDate);
+        if (validationError != null)
+            return BadRequest(new { message = validationError });
+
+        var loginPhone = string.IsNullOrWhiteSpace(request.Phone)
+            ? request.ParentPhone
+            : request.Phone;
 
         var (user, tempPassword, err) = await _accounts.CreateUserAsync(
-            request.Phone, request.FullName, UserRole.Student);
+            loginPhone, request.FullName.Trim(), UserRole.Student);
 
         if (err != null)
             return BadRequest(new { message = err });
@@ -121,7 +135,7 @@ public class StudentsController : ControllerBase
         if (!string.IsNullOrWhiteSpace(request.ParentPhone))
         {
             var (p, _, pErr) = await _accounts.EnsureParentAsync(
-                request.ParentName ?? "ولي أمر",
+                request.GuardianName,
                 request.ParentPhone);
             if (pErr != null)
                 return BadRequest(new { message = pErr });
@@ -132,13 +146,22 @@ public class StudentsController : ControllerBase
             parent = await _context.Parents.FindAsync(request.ParentId.Value);
         }
 
+        if (!Enum.TryParse<GuardianRelationship>(request.GuardianRelationship, true, out var relationship))
+            return BadRequest(new { message = "صلة القرابة غير صالحة" });
+
         var student = new Student
         {
             UserId = user.Id,
             Level = request.Level ?? "مبتدئ",
             CircleId = request.CircleId,
             ParentId = parent?.Id ?? request.ParentId,
-            ParentPhone = AccountProvisioningService.NormalizePhone(request.ParentPhone ?? string.Empty)
+            ParentPhone = AccountProvisioningService.NormalizePhone(request.ParentPhone),
+            GuardianName = request.GuardianName.Trim(),
+            GuardianRelationship = relationship,
+            DateOfBirth = request.DateOfBirth,
+            RegistrationDate = request.RegistrationDate ?? DateTime.UtcNow.Date,
+            StudentPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : AccountProvisioningService.NormalizePhone(request.Phone),
+            Residence = string.IsNullOrWhiteSpace(request.Residence) ? null : request.Residence.Trim()
         };
 
         _context.Students.Add(student);
@@ -175,21 +198,69 @@ public class StudentsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentRequest request)
     {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, id))
+            return Forbid();
+
         var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
         if (student == null)
             return NotFound(new { message = "الطالب غير موجود" });
 
-        if (!string.IsNullOrEmpty(request.FullName))
-            student.User.FullName = request.FullName;
+        var validationError = ValidateStudentPayload(request.FullName, request.DateOfBirth, request.GuardianName,
+            request.ParentPhone, request.GuardianRelationship, request.RegistrationDate);
+        if (validationError != null)
+            return BadRequest(new { message = validationError });
 
-        if (!string.IsNullOrEmpty(request.Level))
-            student.Level = request.Level;
+        student.User.FullName = request.FullName!.Trim();
+        student.Level = request.Level ?? student.Level;
+        student.CircleId = request.CircleId;
+        student.ParentPhone = AccountProvisioningService.NormalizePhone(request.ParentPhone!);
+        student.GuardianName = request.GuardianName!.Trim();
+        student.DateOfBirth = request.DateOfBirth;
+        student.RegistrationDate = request.RegistrationDate ?? student.RegistrationDate;
+        student.Residence = string.IsNullOrWhiteSpace(request.Residence) ? null : request.Residence.Trim();
+        student.StudentPhone = string.IsNullOrWhiteSpace(request.StudentPhone)
+            ? null
+            : AccountProvisioningService.NormalizePhone(request.StudentPhone);
 
-        if (request.CircleId.HasValue)
-            student.CircleId = request.CircleId;
+        if (!Enum.TryParse<GuardianRelationship>(request.GuardianRelationship, true, out var relationship))
+            return BadRequest(new { message = "صلة القرابة غير صالحة" });
+        student.GuardianRelationship = relationship;
+
+        if (!string.IsNullOrWhiteSpace(request.ParentName))
+        {
+            var (p, _, pErr) = await _accounts.EnsureParentAsync(request.ParentName.Trim(), request.ParentPhone!);
+            if (pErr != null)
+                return BadRequest(new { message = pErr });
+            student.ParentId = p?.Id;
+        }
 
         await _context.SaveChangesAsync();
         return Ok(new { message = "تم تحديث بيانات الطالب" });
+    }
+
+    private static string? ValidateStudentPayload(
+        string? fullName,
+        DateTime? dateOfBirth,
+        string? guardianName,
+        string? parentPhone,
+        string? guardianRelationship,
+        DateTime? registrationDate)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return "الاسم الثلاثي مطلوب";
+        if (fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Length < 3)
+            return "يرجى إدخال الاسم الثلاثي كاملاً";
+        if (dateOfBirth == null)
+            return "تاريخ الميلاد مطلوب";
+        if (string.IsNullOrWhiteSpace(guardianName))
+            return "اسم ولي الأمر مطلوب";
+        if (string.IsNullOrWhiteSpace(parentPhone))
+            return "رقم هاتف ولي الأمر مطلوب";
+        if (string.IsNullOrWhiteSpace(guardianRelationship))
+            return "صلة القرابة مطلوبة";
+        if (registrationDate == null)
+            return "تاريخ التسجيل مطلوب";
+        return null;
     }
 
     // DELETE /api/students/{id}
@@ -287,9 +358,13 @@ public class StudentsController : ControllerBase
 public class CreateStudentRequest
 {
     public string FullName { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public string? ParentName { get; set; }
-    public string? ParentPhone { get; set; }
+    public string? Phone { get; set; }
+    public string GuardianName { get; set; } = string.Empty;
+    public string ParentPhone { get; set; } = string.Empty;
+    public string GuardianRelationship { get; set; } = string.Empty;
+    public DateTime? DateOfBirth { get; set; }
+    public DateTime? RegistrationDate { get; set; }
+    public string? Residence { get; set; }
     public string? Level { get; set; }
     public int? CircleId { get; set; }
     public int? ParentId { get; set; }
@@ -298,6 +373,14 @@ public class CreateStudentRequest
 public class UpdateStudentRequest
 {
     public string? FullName { get; set; }
+    public string GuardianName { get; set; } = string.Empty;
+    public string ParentPhone { get; set; } = string.Empty;
+    public string GuardianRelationship { get; set; } = string.Empty;
+    public DateTime? DateOfBirth { get; set; }
+    public DateTime? RegistrationDate { get; set; }
+    public string? StudentPhone { get; set; }
+    public string? Residence { get; set; }
+    public string? ParentName { get; set; }
     public string? Level { get; set; }
     public int? CircleId { get; set; }
 }

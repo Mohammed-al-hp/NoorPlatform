@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace NoorPlatform.Api.Security;
 
 public static class SafePathHelper
@@ -11,7 +13,10 @@ public static class SafePathHelper
         if (string.IsNullOrWhiteSpace(webRootPath) || string.IsNullOrWhiteSpace(relativePath))
             return false;
 
-        var normalized = relativePath.TrimStart('/', '\\')
+        // ─── إصلاح أمني: فك تشفير URL لمنع تجاوز الفحص باستخدام ترميزات مثل %2e%2e ───
+        var decodedPath = WebUtility.UrlDecode(relativePath);
+
+        var normalized = decodedPath.TrimStart('/', '\\')
             .Replace('\\', Path.DirectorySeparatorChar)
             .Replace('/', Path.DirectorySeparatorChar);
 

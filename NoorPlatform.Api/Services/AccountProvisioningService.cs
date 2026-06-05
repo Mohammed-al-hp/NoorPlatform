@@ -63,7 +63,10 @@ public class AccountProvisioningService
         if (await _userManager.FindByNameAsync(normalized) != null)
             return (null!, string.Empty, "رقم الهاتف مستخدم بالفعل");
 
-        var email = emailOverride ?? $"{normalized}@noor.local";
+        // إصلاح: إضافة GUID مختصر للإيميل لضمان التفرد حتى لو تشابهت الأرقام
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var email = emailOverride ?? $"{normalized}.{uniqueSuffix}@noor.local";
+
         var user = new User
         {
             UserName = normalized,
@@ -81,9 +84,22 @@ public class AccountProvisioningService
         if (!result.Succeeded)
             return (null!, string.Empty, string.Join("، ", result.Errors.Select(e => e.Description)));
 
+        // إصلاح حرج: إضافة المستخدم لدور Identity حتى تعمل صلاحيات [Authorize(Roles)] بشكل صحيح
+        var roleResult = await _userManager.AddToRoleAsync(user, role.ToString());
+        if (!roleResult.Succeeded)
+        {
+            // التراجع: حذف المستخدم إذا فشل تعيين الدور لتجنب حساب بدون صلاحيات
+            await _userManager.DeleteAsync(user);
+            return (null!, string.Empty, $"فشل تعيين الدور: {string.Join("، ", roleResult.Errors.Select(e => e.Description))}");
+        }
+
         return (user, tempPassword, null);
     }
 
+    /// <summary>
+    /// البحث عن ولي أمر بالرقم أو إنشاء حساب جديد.
+    /// تنبيه: لا يتم استدعاء SaveChangesAsync هنا - المُستدعي مسؤول عن الحفظ لتجنب Partial Commits.
+    /// </summary>
     public async Task<(Parent? Parent, string? TempPassword, string? Error)> EnsureParentAsync(string parentName, string parentPhone)
     {
         var normalized = NormalizePhone(parentPhone);
@@ -112,7 +128,9 @@ public class AccountProvisioningService
             User = parentUser
         };
         _context.Parents.Add(parent);
-        await _context.SaveChangesAsync();
+
+        // إصلاح: إزالة SaveChangesAsync من هنا - المُستدعي يحفظ في Transaction واحدة
+        // لتجنب مشكلة Double Save / Partial Commits
         return (parent, tempPassword, null);
     }
 }

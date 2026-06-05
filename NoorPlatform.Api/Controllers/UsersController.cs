@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -113,11 +114,36 @@ public class UsersController : ControllerBase
         if (!string.IsNullOrWhiteSpace(request.Email))
             user.Email = request.Email.Trim();
 
+        // ─── إصلاح حرج: حماية صارمة عند تغيير الدور ───
         if (!string.IsNullOrWhiteSpace(request.Role) && Enum.TryParse<UserRole>(request.Role, true, out var newRole))
+        {
+            // منع الترقية إلى Admin لحماية النظام من التلاعب
+            if (newRole == UserRole.Admin)
+                return BadRequest(new { message = "لا يمكن ترقية المستخدم إلى مشرف من هذه الواجهة. تواصل مع مدير النظام." });
+
+            // منع تخفيض دور Admin الأخير
+            if (user.Role == UserRole.Admin && newRole != UserRole.Admin)
+            {
+                var adminCount = await _context.Users.CountAsync(u => u.Role == UserRole.Admin && u.IsActive);
+                if (adminCount <= 1)
+                    return BadRequest(new { message = "لا يمكن تغيير دور آخر مشرف نشط" });
+            }
+
+            var oldRole = user.Role;
             user.Role = newRole;
 
+            // تحديث دور Identity أيضاً ليبقى متسقاً مع الـ Enum
+            await _userManager.RemoveFromRoleAsync(user, oldRole.ToString());
+            await _userManager.AddToRoleAsync(user, newRole.ToString());
+        }
+
         if (request.IsActive.HasValue)
+        {
             user.IsActive = request.IsActive.Value;
+            // إصلاح: إبطال التوكنات عند تعطيل الحساب
+            if (!request.IsActive.Value)
+                await _userManager.UpdateSecurityStampAsync(user);
+        }
 
         if (request.MustChangePassword.HasValue)
             user.MustChangePassword = request.MustChangePassword.Value;
@@ -137,6 +163,11 @@ public class UsersController : ControllerBase
             return NotFound(new { message = "المستخدم غير موجود" });
 
         user.IsActive = !user.IsActive;
+
+        // إصلاح: إبطال JWT tokens النشطة فوراً عند تعطيل الحساب
+        if (!user.IsActive)
+            await _userManager.UpdateSecurityStampAsync(user);
+
         await _userManager.UpdateAsync(user);
         return Ok(new { message = user.IsActive ? "تم تفعيل الحساب" : "تم تعطيل الحساب", user.IsActive });
     }
@@ -156,6 +187,10 @@ public class UsersController : ControllerBase
         }
 
         user.IsActive = false;
+
+        // إصلاح: إبطال JWT tokens النشطة فوراً عند حذف (تعطيل) الحساب
+        await _userManager.UpdateSecurityStampAsync(user);
+
         await _userManager.UpdateAsync(user);
         return Ok(new { message = "تم تعطيل الحساب" });
     }

@@ -72,11 +72,11 @@
         document.getElementById('parentsNextBtn').disabled = parentsPage >= totalPages;
     }
 
-    function searchParents(val) {
-        parentsSearch = val || '';
+    const searchParents = U().debounce(function(val) {
+        parentsSearch = val;
         parentsPage = 1;
         fetchParents();
-    }
+    }, 300);
 
     function changeParentsPage(dir) {
         parentsPage = Math.max(1, parentsPage + dir);

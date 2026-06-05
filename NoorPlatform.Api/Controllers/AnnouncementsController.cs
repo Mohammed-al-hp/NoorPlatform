@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Infrastructure.Data;
 using NoorPlatform.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
+using System.Text.RegularExpressions;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -22,8 +23,25 @@ public class AnnouncementsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var ann = await _context.Announcements
-            .Where(a => a.IsActive)
+        var query = _context.Announcements.Where(a => a.IsActive);
+
+        // ─── إصلاح عالي: فلترة الإعلانات لضمان عدم رؤية المستخدم لإعلانات غير موجهة له ───
+        var isAdmin = User.IsInRole("Admin");
+        if (!isAdmin)
+        {
+            var isTeacher = User.IsInRole("Teacher");
+            var isStudent = User.IsInRole("Student");
+            var isParent = User.IsInRole("Parent");
+
+            query = query.Where(a => 
+                a.Target == AnnouncementTarget.All ||
+                (isTeacher && a.Target == AnnouncementTarget.Teachers) ||
+                (isStudent && a.Target == AnnouncementTarget.Students) ||
+                (isParent && a.Target == AnnouncementTarget.Parents)
+            );
+        }
+
+        var ann = await query
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new
             {
@@ -36,6 +54,7 @@ public class AnnouncementsController : ControllerBase
                 a.Color
             })
             .ToListAsync();
+            
         return Ok(ann);
     }
 
@@ -47,9 +66,16 @@ public class AnnouncementsController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Content))
             return BadRequest(new { message = "العنوان والمحتوى مطلوبان" });
 
-        // تحويل النص إلى Enum
-        if (!Enum.TryParse<AnnouncementTarget>(request.Target, true, out var target))
-            target = AnnouncementTarget.All;
+        // ─── إصلاح متوسط: التحقق من كود اللون لمنع ثغرات CSS Injection ───
+        if (!string.IsNullOrEmpty(request.Color) && !Regex.IsMatch(request.Color, "^#[0-9A-Fa-f]{6}$"))
+            return BadRequest(new { message = "تنسيق اللون غير صالح. يجب أن يكون بصيغة Hex، مثال: #10b981" });
+
+        var target = AnnouncementTargetMapper.ResolveAnnouncementTarget(request.Target);
+
+        // المحفّظ: الطلاب، أولياء الأمور، الجميع فقط (بدون المحفظين)
+        var isAdmin = User.IsInRole("Admin");
+        if (!isAdmin && target == AnnouncementTarget.Teachers)
+            return Forbid();
 
         var announcement = new Announcement
         {
@@ -97,6 +123,27 @@ public class CreateAnnouncementRequest
 {
     public string Title   { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
-    public string Target  { get; set; } = "All"; // All | Teachers | Students | Parents
+    public string Target  { get; set; } = "All"; // All | Students | Parents
     public string? Color  { get; set; }
+}
+
+static class AnnouncementTargetMapper
+{
+    public static AnnouncementTarget ResolveAnnouncementTarget(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return AnnouncementTarget.All;
+
+        var t = raw.Trim();
+        if (Enum.TryParse<AnnouncementTarget>(t, true, out var parsed))
+            return parsed;
+
+        return t switch
+        {
+            "الجميع" => AnnouncementTarget.All,
+            "الطلاب" or "الطلاب فقط" => AnnouncementTarget.Students,
+            "أولياء الأمور" => AnnouncementTarget.Parents,
+            _ => AnnouncementTarget.All
+        };
+    }
 }

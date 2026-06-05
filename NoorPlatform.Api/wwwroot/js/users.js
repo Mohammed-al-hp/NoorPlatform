@@ -74,11 +74,11 @@
         document.getElementById('usersNextBtn').disabled = usersPage >= totalPages;
     }
 
-    function searchUsers(val) {
+    const searchUsers = U().debounce(function(val) {
         usersSearch = val || '';
         usersPage = 1;
         fetchUsers();
-    }
+    }, 300);
 
     function filterUsersRole(role) {
         usersRoleFilter = role || '';

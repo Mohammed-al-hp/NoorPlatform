@@ -255,10 +255,53 @@ namespace NoorPlatform.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Date")
+                        .HasDatabaseName("IX_Attendance_Date");
+
                     b.HasIndex("StudentId", "Date")
                         .HasDatabaseName("IX_Attendance_StudentId_Date");
 
                     b.ToTable("Attendances");
+                });
+
+            modelBuilder.Entity("NoorPlatform.Core.Entities.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("NoorPlatform.Core.Entities.Circle", b =>
@@ -346,7 +389,8 @@ namespace NoorPlatform.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExamId");
+                    b.HasIndex("ExamId")
+                        .HasDatabaseName("IX_ExamResult_ExamId");
 
                     b.HasIndex("StudentId");
 
@@ -547,6 +591,16 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GuardianName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("GuardianRelationship")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -564,6 +618,15 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("RegistrationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Residence")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StudentPhone")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -572,7 +635,11 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.HasIndex("CircleId")
                         .HasDatabaseName("IX_Student_CircleId");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("IX_Student_IsDeleted");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("IX_Student_ParentId");
 
                     b.HasIndex("UserId");
 

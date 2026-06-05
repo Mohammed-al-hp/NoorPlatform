@@ -38,9 +38,9 @@ public class AttendanceController : ControllerBase
 
         var result = students.Select(s => new
         {
-            StudentId = s.Id,
-            s.User.FullName,
-            Status = s.Attendances.FirstOrDefault()?.Status.ToString() ?? "NotRecorded"
+            studentId = s.Id,
+            fullName = s.User.FullName,
+            status = s.Attendances.FirstOrDefault()?.Status.ToString() ?? "NotRecorded"
         });
 
         return Ok(result);
@@ -142,7 +142,7 @@ public class AttendanceController : ControllerBase
             {
                 Date = g.Key,
                 Present = g.Count(a => a.Status == AttendanceStatus.Present),
-                Absent = g.Count(a => a.Status == AttendanceStatus.Absent),
+                Absent = g.Count(a => a.Status == AttendanceStatus.ExcusedAbsence || a.Status == AttendanceStatus.UnexcusedAbsence),
                 Late = g.Count(a => a.Status == AttendanceStatus.Late),
                 Total = g.Count()
             })
@@ -173,6 +173,61 @@ public class AttendanceController : ControllerBase
         var fallback = DateOnly.FromDateTime(DateTime.Now).ToDateTime(TimeOnly.MinValue);
         return (fallback, fallback.AddDays(1));
     }
+
+    [HttpPost("bulk")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> BulkMarkAttendance([FromBody] BulkMarkAttendanceRequest request)
+    {
+        var (dayStart, dayEnd) = ParseAttendanceDayRange(request.Date);
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userName = User.Identity?.Name ?? "User";
+
+        foreach (var item in request.Records)
+        {
+            if (!Enum.TryParse<AttendanceStatus>(item.Status, true, out var parsedStatus))
+                continue;
+
+            if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, item.StudentId))
+                continue;
+
+            var record = await _context.Attendances
+                .FirstOrDefaultAsync(a => a.StudentId == item.StudentId && a.Date >= dayStart && a.Date < dayEnd);
+
+            if (record != null)
+            {
+                record.Status = parsedStatus;
+            }
+            else
+            {
+                record = new Attendance
+                {
+                    StudentId = item.StudentId,
+                    Date = dayStart,
+                    Status = parsedStatus
+                };
+                _context.Attendances.Add(record);
+
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == item.StudentId);
+                if (student != null && parsedStatus == AttendanceStatus.Present)
+                {
+                    student.Points += 10;
+                }
+            }
+        }
+
+        _context.ActivityFeeds.Add(new ActivityFeed
+        {
+            UserId = userId,
+            UserName = userName,
+            ActivityType = "Attendance",
+            Description = $"تم تسجيل الحضور لمجموعة من الطلاب بتاريخ {dayStart:yyyy-MM-dd}",
+            Icon = "✅",
+            Color = "green"
+        });
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "تم حفظ سجل الحضور بنجاح" });
+    }
 }
 
 public class MarkAttendanceRequest
@@ -180,4 +235,10 @@ public class MarkAttendanceRequest
     public int StudentId { get; set; }
     public string Status { get; set; } = "Present";
     public string? Date { get; set; }
+}
+
+public class BulkMarkAttendanceRequest
+{
+    public string? Date { get; set; }
+    public List<MarkAttendanceRequest> Records { get; set; } = new();
 }

@@ -18,14 +18,21 @@
             if (el('dashCircles')) el('dashCircles').textContent = data.circles;
             if (el('dashAttendance')) el('dashAttendance').textContent = data.attendanceToday || '0%';
 
-            if (data.weeklyAttendance) {
+            const weekly = Array.isArray(data.weeklyAttendance)
+                ? data.weeklyAttendance
+                : (data.weeklyAttendance ? Object.values(data.weeklyAttendance) : []);
+            if (weekly.length) {
                 const barChart = document.getElementById('weeklyBarChart');
                 if (barChart) {
-                    barChart.innerHTML = data.weeklyAttendance.map(d => `
-                        <div class="bar-col">
-                            <div class="bar" style="height:${Math.max(d.percentage, 5)}%;background:${d.percentage > 70 ? 'var(--gradient)' : 'linear-gradient(135deg,#94a3b8,#cbd5e1)'}" title="${d.percentage}%"></div>
+                    barChart.innerHTML = weekly.map(d => {
+                        const pct = Number(d.percentage) || 0;
+                        const barPx = Math.max(Math.round(pct * 1.2), pct > 0 ? 10 : 4);
+                        const color = pct > 70 ? 'var(--gradient)' : 'linear-gradient(135deg,#94a3b8,#cbd5e1)';
+                        return `<div class="bar-col">
+                            <div class="bar" style="height:${barPx}px;background:${color}" title="${pct}%"></div>
                             <div class="bar-label">${esc(d.dayName)}</div>
-                        </div>`).join('');
+                        </div>`;
+                    }).join('');
                 }
             }
 

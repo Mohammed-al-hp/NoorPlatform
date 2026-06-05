@@ -32,6 +32,7 @@ public static class AuthorizationHelpers
                 s.Id == studentId && s.Parent != null && s.Parent.UserId == userId);
         }
 
+        // ─── تأكيد الحماية: المحفظ يرى فقط طلاب حلقته ───
         if (user.IsInRole("Teacher"))
         {
             return await context.Students.AnyAsync(s =>

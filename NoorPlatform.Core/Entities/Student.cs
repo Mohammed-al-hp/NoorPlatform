@@ -13,6 +13,12 @@ public class Student
     public int? CircleId { get; set; }
     public Circle? Circle { get; set; }
     public string ParentPhone { get; set; } = string.Empty;
+    public string GuardianName { get; set; } = string.Empty;
+    public GuardianRelationship? GuardianRelationship { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
+    public string? StudentPhone { get; set; }
+    public string? Residence { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsDeleted { get; set; } = false;
 

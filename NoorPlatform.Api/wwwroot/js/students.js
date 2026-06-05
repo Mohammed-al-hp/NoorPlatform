@@ -25,7 +25,11 @@
             const filtered = (level && !st().archive) ? data.filter(s => s.level === level) : data;
             renderStudentCards(filtered);
             const cnt = document.getElementById('studentsCount');
-            if (cnt) cnt.textContent = data.length + (st().archive ? ' طالب في الأرشيف' : ' طالب مسجل في المركز');
+            if (cnt) {
+                const role = app().state.user?.role || localStorage.getItem('noor_role') || '';
+                const suffix = st().archive ? ' طالب في الأرشيف' : (role === 'Teacher' ? ' طالب في حلقتك' : ' طالب مسجل في المركز');
+                cnt.textContent = data.length + suffix;
+            }
         } catch (e) {
             app().api.handleApiError(e);
         }
@@ -63,7 +67,7 @@
               <div class="student-card-actions">
                 ${st().archive ? `<button class="btn btn-primary" onclick="NoorStudents.restoreStudent(${s.id},'${safeName}')" style="flex:1">🔄 استعادة</button>` : `
                   <button class="btn btn-view" onclick="viewStudentDetails(${s.id})">👁 عرض</button>
-                  <button class="btn btn-edit" onclick="editStudent(${s.id},'${safeName}','${esc(s.level)}','${s.circleId || ''}')">✏️</button>
+                  <button class="btn btn-edit" onclick="editStudent(${s.id})">✏️</button>
                   <button class="btn-pdf" onclick="exportStudentPDF(${s.id})">📄 PDF</button>
                   <button class="btn btn-delete" onclick="NoorStudents.deleteStudent(${s.id},'${safeName}')">📦 أرشفة</button>`}
               </div>
@@ -71,11 +75,11 @@
         }).join('');
     }
 
-    function filterStudentsLive(q) {
+    const filterStudentsLive = debounce(function (q) {
         if (st().waitingMode) return;
         const filtered = st().all.filter(s => s.fullName.includes(q) || (s.circleName || '').includes(q));
         renderStudentCards(filtered);
-    }
+    }, 300);
 
     function setStudentFilter(filter, el) {
         st().filter = filter;
@@ -128,11 +132,11 @@
         grid.innerHTML = data.map(w => `
             <div class="student-card waiting-card" data-waiting-id="${w.id}">
               <h4>${esc(w.fullName)}</h4>
-              <span>📱 ${esc(w.displayPhone || w.phone)}</span>
+              <span>📱 ${esc(w.displayPhone || w.phone || 'غير متاح')}</span>
               <div style="font-size:12px;color:var(--text-muted);margin:8px 0">ولي الأمر: ${esc(w.parentName || '—')}</div>
               <div class="student-card-actions">
                 <button type="button" class="btn btn-primary btn-convert-waiting" data-id="${w.id}">🎓 تحويل</button>
-                <button type="button" class="btn btn-outline btn-wa-waiting" data-phone="${esc(w.displayParentPhone || w.displayPhone || '')}" data-name="${esc(w.fullName)}">💬</button>
+                <button type="button" class="btn btn-outline btn-wa-waiting" data-phone="${esc(w.displayParentPhone || w.parentPhone || w.displayPhone || w.phone || '')}" data-name="${esc(w.fullName)}">💬</button>
                 <button type="button" class="btn btn-edit btn-edit-waiting" data-id="${w.id}">✏️</button>
                 <button type="button" class="btn btn-delete btn-del-waiting" data-id="${w.id}">🗑</button>
               </div>

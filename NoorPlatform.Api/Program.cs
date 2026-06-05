@@ -7,14 +7,19 @@ using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.DependencyInjection; // <--- أضفه هنا
 using NoorPlatform.Api.Middleware;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
+using NoorPlatform.Infrastructure.Data.Interceptors;
 
 const long MaxUploadBytes = 52_428_800; // 50 MB
 
 var builder = WebApplication.CreateBuilder(args);
+
+// QuestPDF License
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 builder.WebHost.ConfigureKestrel(options =>
 {
@@ -34,15 +39,30 @@ builder.Services.Configure<IISServerOptions>(options =>
 });
 
 builder.Services.AddScoped<AccountProvisioningService>();
+
+// إعدادات واتساب — تُقرأ مرة واحدة عبر IOptions لتجنب تسرب التوكن في Memory traces
+builder.Services.Configure<NoorPlatform.Api.Services.WhatsAppSettings>(
+    builder.Configuration.GetSection(NoorPlatform.Api.Services.WhatsAppSettings.SectionName));
+
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<AuditInterceptor>();
+
 // قاعدة البيانات
-builder.Services.AddDbContext<NoorDbContext>(options =>
+builder.Services.AddDbContext<NoorDbContext>((sp, options) =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    
+    var interceptor = sp.GetRequiredService<AuditInterceptor>();
+    options.AddInterceptors(interceptor);
 });
+
+// Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<NoorDbContext>();
 
 // Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -206,6 +226,7 @@ app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.MapHealthChecks("/api/health");
 app.MapControllers();
 
 app.Run();

@@ -25,7 +25,7 @@ public class CirclesController : ControllerBase
     public async Task<IActionResult> GetCircles()
     {
         var isTeacher = User.IsInRole("Teacher");
-        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var query = _context.Circles
             .Include(c => c.Teacher!).ThenInclude(t => t!.User)
@@ -66,6 +66,13 @@ public class CirclesController : ControllerBase
 
         if (circle == null)
             return NotFound(new { message = "الحلقة غير موجودة" });
+
+        // ─── إصلاح حرج: التحقق من أن المحفظ يملك الحلقة (منع ثغرة IDOR) ───
+        var isTeacher = User.IsInRole("Teacher");
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        
+        if (isTeacher && circle.Teacher?.UserId != currentUserId)
+            return Forbid();
 
         return Ok(new
         {
@@ -131,7 +138,12 @@ public class CirclesController : ControllerBase
         if (request.Location != null) circle.Location = request.Location.Trim();
         if (request.Icon     != null) circle.Icon     = request.Icon;
 
-        if (request.TeacherId.HasValue)
+        // ─── إصلاح: إتاحة إزالة المحفظ بشكل صريح ───
+        if (request.RemoveTeacher)
+        {
+            circle.TeacherId = null;
+        }
+        else if (request.TeacherId.HasValue)
         {
             var teacherExists = await _context.Teachers.AnyAsync(t => t.Id == request.TeacherId);
             if (!teacherExists)
@@ -183,4 +195,7 @@ public class UpdateCircleRequest
     public string? Location  { get; set; }
     public string? Icon      { get; set; }
     public int?    TeacherId { get; set; }
+    
+    // حقل جديد لتمكين إزالة المحفظ بشكل صريح
+    public bool RemoveTeacher { get; set; }
 }

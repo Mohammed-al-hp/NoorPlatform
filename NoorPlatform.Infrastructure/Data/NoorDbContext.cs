@@ -22,6 +22,7 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<LibraryItem> LibraryItems { get; set; } = null!;
     public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +34,19 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasDatabaseName("IX_Student_IsDeleted");
 
         modelBuilder.Entity<Student>().HasQueryFilter(s => !s.IsDeleted);
+
+        // ⚡ Performance Indexes
+        modelBuilder.Entity<Student>()
+            .HasIndex(s => s.ParentId)
+            .HasDatabaseName("IX_Student_ParentId");
+
+        modelBuilder.Entity<ExamResult>()
+            .HasIndex(e => e.ExamId)
+            .HasDatabaseName("IX_ExamResult_ExamId");
+
+        modelBuilder.Entity<Attendance>()
+            .HasIndex(a => a.Date)
+            .HasDatabaseName("IX_Attendance_Date");
 
         modelBuilder.Entity<Payment>()
             .Property(p => p.Amount)

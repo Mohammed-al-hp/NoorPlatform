@@ -1,0 +1,37 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDEs and Editors
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Build outputs
+**/bin/
+**/obj/
+**/TestResults/
+
+# Node/Frontend
+**/node_modules/
+**/npm-debug.log
+
+# Environment variables and secrets
+.env
+.env.*
+appsettings.Development.json
+secrets.json
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Any uploaded media or user data
+NoorPlatform.Api/wwwroot/library/*

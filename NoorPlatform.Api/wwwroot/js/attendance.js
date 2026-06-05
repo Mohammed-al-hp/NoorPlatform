@@ -1,5 +1,5 @@
 /**
- * منصة نور — الحضور والغياب
+ * منصة نور — الحضور والغياب (تسجيل مسودة + حفظ مجمّع)
  */
 (function (global) {
     'use strict';
@@ -10,27 +10,77 @@
     const fmt = (d, o) => utils().formatDateEnGb(d, o);
     const ymd = (d) => utils().formatLocalDateYmd(d);
 
+    const STATUS = {
+        Present: { label: '✅ حاضر', bg: '#dcfce7', color: '#16a34a' },
+        Late: { label: '⏰ متأخر', bg: '#fef9c3', color: '#ca8a04' },
+        ExcusedAbsence: { label: '📋 غائب بإذن', bg: '#dbeafe', color: '#1d4ed8' },
+        UnexcusedAbsence: { label: '❌ غائب بدون إذن', bg: '#fee2e2', color: '#dc2626' },
+        NotRecorded: { label: '— لم يُسجّل', bg: '#f1f5f9', color: '#64748b' }
+    };
+
+    const STATUS_BUTTONS = [
+        { key: 'Present', short: '✅ حاضر' },
+        { key: 'Late', short: '⏰ متأخر' },
+        { key: 'ExcusedAbsence', short: '📋 بإذن' },
+        { key: 'UnexcusedAbsence', short: '❌ بدون إذن' }
+    ];
+
     function getState() {
         return app().state.attendance;
+    }
+
+    function getPending() {
+        const st = getState();
+        if (!st.pending) st.pending = {};
+        return st.pending;
+    }
+
+    function currentStatus(studentId, savedStatus) {
+        const pending = getPending()[studentId];
+        if (pending) return pending;
+        return savedStatus || 'NotRecorded';
+    }
+
+    function setPendingDirty(dirty) {
+        const btn = document.getElementById('btnSaveAttendance');
+        if (btn) {
+            btn.style.display = dirty ? 'inline-flex' : 'none';
+            btn.disabled = !dirty;
+        }
     }
 
     function initAttendanceDateDisplay() {
         const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const el = document.getElementById('currentDate');
         if (el) el.textContent = fmt(getState().date, opts);
+        const picker = document.getElementById('attendanceDatePicker');
+        if (picker) picker.value = ymd(getState().date);
+    }
+
+    function onAttendanceDatePicked(value) {
+        if (!value) return;
+        const st = getState();
+        const parts = value.split('-').map(Number);
+        st.date = new Date(parts[0], parts[1] - 1, parts[2]);
+        getPending().clear?.();
+        Object.keys(getPending()).forEach(k => delete getPending()[k]);
+        setPendingDirty(false);
+        initAttendanceDateDisplay();
+        fetchAttendanceForDate();
     }
 
     function changeDate(dir) {
         const st = getState();
         st.date.setDate(st.date.getDate() + dir);
-        initAttendanceDateDisplay();
-        fetchAttendanceForDate();
+        onAttendanceDatePicked(ymd(st.date));
     }
 
     function selectCircle(el) {
         document.querySelectorAll('.circle-chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
         getState().circleId = parseInt(el.dataset.id, 10) || null;
+        Object.keys(getPending()).forEach(k => delete getPending()[k]);
+        setPendingDirty(false);
         fetchAttendanceForDate();
     }
 
@@ -57,113 +107,137 @@
     async function fetchAttendanceForDate() {
         const circleId = getState().circleId;
         if (!circleId) {
-            fetchStudentsAttendance();
+            const wrap = document.getElementById('attendanceList');
+            if (wrap) wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">اختر حلقة أولاً</p>';
+            updateAttendanceCounts();
             return;
         }
         try {
             const dateStr = ymd(getState().date);
             const data = await apiFetch(`/attendance/circle/${circleId}?date=${dateStr}`);
+            getState().records = data;
             renderAttendanceTable(data);
-        } catch {
-            fetchStudentsAttendance();
-        }
-    }
-
-    async function fetchStudentsAttendance() {
-        try {
-            const data = await apiFetch('/students');
-            renderAttendanceFromStudents(data);
         } catch (e) {
             app().api.handleApiError(e);
         }
     }
 
-    function renderAttendanceFromStudents(students) {
-        const wrap = document.getElementById('attendanceList');
-        if (!wrap) return;
-        if (!students.length) {
-            wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد طلاب</p>';
-            updateAttendanceCounts();
-            return;
-        }
-        wrap.innerHTML = `
-            <table style="width:100%;border-collapse:collapse">
-              <thead><tr style="background:var(--bg);text-align:right">
-                <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الطالب</th>
-                <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحلقة</th>
-                <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحالة</th>
-                <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">تسجيل</th>
-              </tr></thead>
-              <tbody>${students.map(s => `
-                  <tr style="border-bottom:1px solid var(--border)" id="att-row-${s.id}">
-                    <td style="padding:12px 16px"><span style="font-weight:600">${utils().escapeHtml(s.fullName)}</span></td>
-                    <td style="padding:12px 16px;color:var(--text-muted);font-size:13px">${utils().escapeHtml(s.circleName)}</td>
-                    <td style="padding:12px 16px" id="att-status-${s.id}"><span class="status-badge" style="background:#f1f5f9;color:#64748b">— لم يُسجّل</span></td>
-                    <td style="padding:12px 16px">
-                      <div style="display:flex;gap:6px">
-                        <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px" data-att-id="${s.id}" data-att-status="Present">✅ حاضر</button>
-                        <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#ef4444;color:#ef4444" data-att-id="${s.id}" data-att-status="Absent">❌ غائب</button>
-                        <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#f59e0b;color:#f59e0b" data-att-id="${s.id}" data-att-status="Late">⏰ متأخر</button>
-                      </div>
-                    </td>
-                  </tr>`).join('')}
-              </tbody>
-            </table>`;
-        updateAttendanceCounts();
+    function statusBadgeHtml(status) {
+        const cfg = STATUS[status] || STATUS.NotRecorded;
+        return `<span class="status-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.label}</span>`;
+    }
+
+    function actionButtonsHtml(studentId, activeStatus) {
+        return `<div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${STATUS_BUTTONS.map(b => {
+            const active = activeStatus === b.key;
+            return `<button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px${active ? ';font-weight:700;border-width:2px' : ''}"
+                data-att-id="${studentId}" data-att-status="${b.key}">${b.short}</button>`;
+        }).join('')}
+        </div>`;
     }
 
     function renderAttendanceTable(records) {
         const wrap = document.getElementById('attendanceList');
-        if (!wrap || !records?.length) {
-            renderAttendanceFromStudents([]);
+        if (!wrap) return;
+        if (!records?.length) {
+            wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد طلاب في هذه الحلقة</p>';
+            updateAttendanceCounts();
             return;
         }
+
         wrap.innerHTML = `
             <table style="width:100%;border-collapse:collapse">
               <thead><tr style="background:var(--bg);text-align:right">
-                <th style="padding:12px 16px">الطالب</th><th style="padding:12px 16px">الحالة</th><th style="padding:12px 16px">تسجيل</th>
+                <th style="padding:12px 16px">الطالب</th>
+                <th style="padding:12px 16px">الحالة</th>
+                <th style="padding:12px 16px">تسجيل</th>
               </tr></thead>
               <tbody>${records.map(r => {
-            const labels = { Present: ['✅ حاضر', '#dcfce7', '#16a34a'], Absent: ['❌ غائب', '#fee2e2', '#dc2626'], Late: ['⏰ متأخر', '#fef9c3', '#ca8a04'] };
-            const st = r.status || 'Present';
-            const [label, bg, color] = labels[st] || labels.Present;
+            const sid = r.studentId;
+            const saved = r.status || 'NotRecorded';
+            const st = currentStatus(sid, saved);
             return `<tr style="border-bottom:1px solid var(--border)">
                 <td style="padding:12px 16px;font-weight:600">${utils().escapeHtml(r.fullName || r.studentName)}</td>
-                <td id="att-status-${r.studentId}"><span class="status-badge" style="background:${bg};color:${color}">${label}</span></td>
-                <td><div style="display:flex;gap:6px">
-                  <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px" data-att-id="${r.studentId}" data-att-status="Present">✅</button>
-                  <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px;color:#ef4444" data-att-id="${r.studentId}" data-att-status="Absent">❌</button>
-                  <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px;color:#f59e0b" data-att-id="${r.studentId}" data-att-status="Late">⏰</button>
-                </div></td></tr>`;
+                <td id="att-status-${sid}">${statusBadgeHtml(st)}</td>
+                <td>${actionButtonsHtml(sid, st === 'NotRecorded' ? '' : st)}</td>
+            </tr>`;
         }).join('')}
               </tbody></table>`;
         updateAttendanceCounts();
     }
 
-    async function recordAtt(studentId, status) {
+    function stageAttendance(studentId, status) {
+        const saved = (getState().records || []).find(r => r.studentId === studentId);
+        const savedStatus = saved?.status || 'NotRecorded';
+        if (status === savedStatus) {
+            delete getPending()[studentId];
+        } else {
+            getPending()[studentId] = status;
+        }
+
+        const display = currentStatus(studentId, savedStatus);
+        const statusCell = document.getElementById('att-status-' + studentId);
+        if (statusCell) statusCell.innerHTML = statusBadgeHtml(display);
+
+        const row = statusCell?.closest('tr');
+        if (row) {
+            const td = row.querySelector('td:last-child');
+            if (td) td.innerHTML = actionButtonsHtml(studentId, display === 'NotRecorded' ? '' : display);
+        }
+
+        const hasPending = Object.keys(getPending()).length > 0;
+        setPendingDirty(hasPending);
+        updateAttendanceCounts();
+    }
+
+    async function savePendingAttendance() {
+        const pending = getPending();
+        const entries = Object.entries(pending);
+        if (!entries.length) {
+            app().ui.showToast('لا توجد تغييرات للحفظ');
+            return;
+        }
+        const dateStr = ymd(getState().date);
         try {
-            const dateStr = ymd(getState().date);
-            await apiFetch(`/attendance?studentId=${studentId}&status=${status}&date=${dateStr}`, 'POST');
-            const statusCell = document.getElementById('att-status-' + studentId);
-            const labels = { Present: ['✅ حاضر', '#dcfce7', '#16a34a'], Absent: ['❌ غائب', '#fee2e2', '#dc2626'], Late: ['⏰ متأخر', '#fef9c3', '#ca8a04'] };
-            const [label, bg, color] = labels[status];
-            if (statusCell) statusCell.innerHTML = `<span class="status-badge" style="background:${bg};color:${color}">${label}</span>`;
-            updateAttendanceCounts();
-            app().ui.showToast('✅ تم تسجيل ' + label + ' للطالب');
+            await apiFetch('/attendance/bulk', 'POST', {
+                date: dateStr,
+                records: entries.map(([studentId, status]) => ({
+                    studentId: parseInt(studentId, 10),
+                    status
+                }))
+            });
+            Object.keys(pending).forEach(k => delete pending[k]);
+            setPendingDirty(false);
+            app().ui.showToast('✅ تم حفظ سجل الحضور بنجاح');
+            await fetchAttendanceForDate();
+            global.NoorDashboard?.fetchStats?.();
         } catch (e) {
             app().api.handleApiError(e);
         }
     }
 
+    function markAllPresentLocal() {
+        const records = getState().records || [];
+        records.forEach(r => stageAttendance(r.studentId, 'Present'));
+        app().ui.showToast('تم تحديد الجميع حاضر — اضغط «حفظ الحضور» للتأكيد');
+    }
+
     function updateAttendanceCounts() {
-        const present = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#dcfce7"]').length;
-        const absent = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#fee2e2"]').length;
-        const late = document.querySelectorAll('[id^="att-status-"] .status-badge[style*="#fef9c3"]').length;
+        const cells = document.querySelectorAll('[id^="att-status-"] .status-badge');
+        let present = 0, late = 0, excused = 0, unexcused = 0;
+        cells.forEach(el => {
+            const t = el.textContent || '';
+            if (t.includes('حاضر') && !t.includes('غائب')) present++;
+            else if (t.includes('متأخر')) late++;
+            else if (t.includes('بإذن')) excused++;
+            else if (t.includes('بدون إذن')) unexcused++;
+        });
         const pEl = document.getElementById('presentCount');
         const aEl = document.getElementById('absentCount');
         const lEl = document.getElementById('lateCount');
         if (pEl) pEl.textContent = present;
-        if (aEl) aEl.textContent = absent;
+        if (aEl) aEl.textContent = excused + unexcused;
         if (lEl) lEl.textContent = late;
     }
 
@@ -172,7 +246,10 @@
         document.getElementById('attendanceList')?.addEventListener('click', e => {
             const btn = e.target.closest('[data-att-id]');
             if (!btn) return;
-            recordAtt(parseInt(btn.dataset.attId, 10), btn.dataset.attStatus);
+            stageAttendance(parseInt(btn.dataset.attId, 10), btn.dataset.attStatus);
+        });
+        document.getElementById('attendanceDatePicker')?.addEventListener('change', e => {
+            onAttendanceDatePicked(e.target.value);
         });
     }
 
@@ -192,19 +269,19 @@
         selectCircle,
         renderAttendanceCircleChips,
         fetchAttendanceForDate,
-        fetchStudentsAttendance,
-        renderAttendanceFromStudents,
         renderAttendanceTable,
-        recordAtt,
-        updateAttendanceCounts
+        savePendingAttendance,
+        markAllPresentLocal,
+        updateAttendanceCounts,
+        onAttendanceDatePicked
     };
 
     global.NoorAttendance = mod;
     global.changeDate = changeDate;
     global.selectCircle = selectCircle;
     global.renderAttendanceCircleChips = renderAttendanceCircleChips;
-    global.fetchStudentsAttendance = fetchStudentsAttendance;
     global.fetchAttendanceForDate = fetchAttendanceForDate;
-    global.recordAtt = recordAtt;
+    global.saveAttendance = savePendingAttendance;
+    global.markAllPresent = () => mod.markAllPresentLocal();
     global.renderAttendanceTable = renderAttendanceTable;
 })(window);

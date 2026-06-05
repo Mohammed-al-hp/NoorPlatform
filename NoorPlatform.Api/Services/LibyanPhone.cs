@@ -8,10 +8,13 @@ public static class LibyanPhone
     public static bool IsValid(string? phone)
     {
         if (string.IsNullOrWhiteSpace(phone)) return false;
+        
         var digits = DigitsOnly(phone);
+        
+        // ─── إصلاح: تشديد الفحص لقبول الأرقام الليبية الصالحة فقط ───
         if (digits.Length == 10 && digits.StartsWith("09")) return true;
-        if (digits.Length == 12 && digits.StartsWith("218") && digits[3] == '9') return true;
-        if (digits.Length == 9 && digits.StartsWith("9")) return true;
+        if (digits.Length == 12 && digits.StartsWith("2189")) return true;
+        
         return false;
     }
 
@@ -26,12 +29,6 @@ public static class LibyanPhone
         if (digits.StartsWith("09") && digits.Length == 10)
             return "218" + digits[1..];
 
-        if (digits.StartsWith("9") && digits.Length == 9)
-            return "218" + digits;
-
-        if (digits.StartsWith("0") && digits.Length == 10)
-            return "218" + digits[1..];
-
         return digits;
     }
 
@@ -40,8 +37,10 @@ public static class LibyanPhone
         var n = Normalize(normalizedOrAny);
         if (n.StartsWith("218") && n.Length >= 12)
             return "0" + n[3..];
+            
         var digits = DigitsOnly(normalizedOrAny ?? "");
         if (digits.StartsWith("09") && digits.Length == 10) return digits;
+        
         return normalizedOrAny ?? string.Empty;
     }
 
@@ -52,7 +51,7 @@ public static class LibyanPhone
         return string.IsNullOrEmpty(n) ? string.Empty : n;
     }
 
-    /// <summary>كل أشكال اسم المستخدم المحتملة للبحث عند تسجيل الدخول (ليبي + سعودي قديم).</summary>
+    /// <summary>كل أشكال اسم المستخدم المحتملة للبحث عند تسجيل الدخول.</summary>
     public static IReadOnlyList<string> GetLoginLookupKeys(string? phone)
     {
         var keys = new HashSet<string>(StringComparer.Ordinal);
@@ -67,24 +66,36 @@ public static class LibyanPhone
         if (!string.IsNullOrEmpty(normalized))
             keys.Add(normalized);
 
-        if (digits.Length == 10 && digits.StartsWith("09"))
-            keys.Add("966" + digits[1..]);
-
-        if (digits.Length == 10 && digits.StartsWith("05"))
-            keys.Add("966" + digits[1..]);
-
-        if (digits.StartsWith("966") && digits.Length >= 12)
-            keys.Add(digits[..12]);
-
+        // ─── إصلاح: تمت إزالة المنطق الخاص بالأرقام السعودية (966) لتخصيص النظام لليبيا ───
         if (normalized.StartsWith("218") && normalized.Length >= 12)
         {
             keys.Add("0" + normalized[3..]);
-            keys.Add("966" + normalized[3..]);
         }
 
         return keys.ToList();
     }
 
-    private static string DigitsOnly(string value) =>
-        new string(value.Where(char.IsDigit).ToArray());
+    // ─── تحسين أداء (Low): تقليل إرهاق الـ GC عبر string.Create بدلاً من تخصيص مصفوفات جديدة ───
+    private static string DigitsOnly(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        
+        int digitCount = 0;
+        foreach (char c in value)
+        {
+            if (char.IsDigit(c)) digitCount++;
+        }
+            
+        if (digitCount == 0) return string.Empty;
+        if (digitCount == value.Length) return value;
+        
+        return string.Create(digitCount, value, (span, state) =>
+        {
+            int index = 0;
+            foreach (char c in state)
+            {
+                if (char.IsDigit(c)) span[index++] = c;
+            }
+        });
+    }
 }

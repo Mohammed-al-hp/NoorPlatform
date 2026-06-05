@@ -63,8 +63,9 @@ namespace NoorPlatform.Api.Controllers
             if (request.File == null || request.File.Length == 0)
                 return BadRequest(new { message = "الرجاء اختيار ملف" });
 
-            if (Path.GetExtension(request.File.FileName).ToLowerInvariant() != ".pdf")
-                return BadRequest(new { message = "يسمح فقط برفع ملفات PDF" });
+            // ─── إصلاح متوسط: التحقق من نوع المحتوى (ContentType) لمنع رفع ملفات خبيثة بامتداد مزيف ───
+            if (request.File.ContentType != "application/pdf" || Path.GetExtension(request.File.FileName).ToLowerInvariant() != ".pdf")
+                return BadRequest(new { message = "يسمح فقط برفع ملفات PDF (تم التحقق من نوع المحتوى)" });
 
             if (request.File.Length > 50 * 1024 * 1024)
                 return BadRequest(new { message = "حجم الملف يتجاوز الحد المسموح (50MB)" });
@@ -119,6 +120,13 @@ namespace NoorPlatform.Api.Controllers
             var item = await _context.LibraryItems.FindAsync(id);
             if (item == null) return NotFound(new { message = "الملف غير موجود" });
 
+            // ─── إصلاح عالي: فحص ملكية الملف (Ownership) للمحفظين لمنع حذف ملفات الغير ───
+            var isTeacher = User.IsInRole("Teacher");
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            if (isTeacher && item.UploadedByUserId != userId)
+                return Forbid();
+
             if (SafePathHelper.TryResolveUnderWebRoot(_env.WebRootPath, item.PdfFilePath.TrimStart('/'), out var physicalPath)
                 && System.IO.File.Exists(physicalPath))
             {
@@ -136,7 +144,7 @@ namespace NoorPlatform.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> GetFile(int id)
         {
-            var item = await _context.LibraryItems.FindAsync(id);
+            var item = await _context.LibraryItems.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
             if (item == null)
                 return NotFound(new { message = "الملف غير موجود" });
 
@@ -144,8 +152,10 @@ namespace NoorPlatform.Api.Controllers
                 || !System.IO.File.Exists(physicalPath))
                 return NotFound(new { message = "الملف غير موجود على الخادم" });
 
-            item.DownloadCount++;
-            await _context.SaveChangesAsync();
+            // ─── إصلاح عالي: استخدام ExecuteUpdateAsync لزيادة العداد بأمان وتجنب مشاكل التزامن ───
+            await _context.LibraryItems
+                .Where(l => l.Id == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(l => l.DownloadCount, l => l.DownloadCount + 1));
 
             return PhysicalFile(physicalPath, "application/pdf", $"{item.Title}.pdf");
         }
@@ -155,13 +165,13 @@ namespace NoorPlatform.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> RecordDownload(int id)
         {
-            var item = await _context.LibraryItems.FindAsync(id);
+            var item = await _context.LibraryItems.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
             if (item == null) return NotFound();
 
-            item.DownloadCount++;
-            await _context.SaveChangesAsync();
+            // تم إزالة زيادة العداد من هنا لتجنب التكرار (Double Counting) عند طلب واجهة التحميل القديمة مع ملف الـ PDF.
+            // العداد يتم زيادته حصرياً في دالة GetFile بشكل آمن.
 
-            return Ok(new { message = "Download recorded", downloadCount = item.DownloadCount });
+            return Ok(new { message = "Download tracking is managed by /file endpoint", downloadCount = item.DownloadCount + 1 });
         }
     }
 

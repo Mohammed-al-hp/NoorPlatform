@@ -20,12 +20,22 @@ public class PaymentsController : ControllerBase
     }
 
     // للمشرف: جلب جميع المدفوعات
+    // ─── إصلاح حرج: إضافة ترقيم الصفحات (Pagination) لمنع مشاكل الأداء ───
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetAllPayments()
+    public async Task<IActionResult> GetAllPayments([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var payments = await _context.Payments
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 5, 100);
+
+        var query = _context.Payments.AsQueryable();
+
+        var total = await query.CountAsync();
+        var items = await query
             .Include(p => p.Student).ThenInclude(s => s.User)
+            .OrderByDescending(p => p.DueDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(p => new
             {
                 p.Id,
@@ -36,10 +46,9 @@ public class PaymentsController : ControllerBase
                 p.PaidDate,
                 p.Status
             })
-            .OrderByDescending(p => p.DueDate)
             .ToListAsync();
 
-        return Ok(payments);
+        return Ok(new { total, page, pageSize, items });
     }
 
     // لولي الأمر: جلب فواتير الأبناء
@@ -83,6 +92,10 @@ public class PaymentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto dto)
     {
+        // ─── إصلاح عالي: التحقق من القيمة لضمان عدم تمرير مبالغ سالبة أو صفرية ───
+        if (dto.Amount <= 0)
+            return BadRequest(new { message = "المبلغ يجب أن يكون أكبر من صفر" });
+
         var student = await _context.Students.FindAsync(dto.StudentId);
         if (student == null) return NotFound("Student not found");
 
@@ -100,7 +113,13 @@ public class PaymentsController : ControllerBase
 
         _context.Payments.Add(payment);
         await _context.SaveChangesAsync();
-        return Ok(payment);
+        return Ok(new { 
+            payment.Id,
+            payment.Amount,
+            payment.Description,
+            payment.DueDate,
+            payment.Status
+        });
     }
 
     // لولي الأمر: دفع الفاتورة (محاكاة)
@@ -127,7 +146,7 @@ public class PaymentsController : ControllerBase
             UserId = userId,
             UserName = User.FindFirstValue(ClaimTypes.Name) ?? "ولي الأمر",
             ActivityType = "Payment",
-            Description = $"تم سداد فاتورة بقيمة {payment.Amount} ريال للطالب.",
+            Description = $"تم سداد فاتورة بقيمة {payment.Amount} د.ل للطالب.",
             CreatedAt = DateTime.UtcNow,
             Icon = "💳",
             Color = "text-blue-500"
@@ -135,7 +154,19 @@ public class PaymentsController : ControllerBase
         _context.ActivityFeeds.Add(activity);
 
         await _context.SaveChangesAsync();
-        return Ok(new { message = "تم الدفع بنجاح", payment });
+
+        // ─── إصلاح عالي: إرجاع DTO محدود يحمي البيانات الحساسة بدلاً من كائن Entity الكامل ───
+        var paymentResponse = new
+        {
+            payment.Id,
+            payment.Amount,
+            payment.Description,
+            payment.DueDate,
+            payment.PaidDate,
+            payment.Status
+        };
+
+        return Ok(new { message = "تم الدفع بنجاح", payment = paymentResponse });
     }
 
     [HttpPatch("mark-overdue")]

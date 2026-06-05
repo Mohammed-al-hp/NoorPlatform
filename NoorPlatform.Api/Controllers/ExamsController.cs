@@ -23,6 +23,7 @@ public class ExamsController : ControllerBase
     // ─────────────────────────────────────────────────
     // GET /api/exams
     // جميع الاختبارات مع عدد المشاركين ومتوسط الدرجات
+    // إصلاح: حماية من القسمة على صفر في حساب النسبة المئوية
     // ─────────────────────────────────────────────────
     [HttpGet]
     [Authorize(Roles = "Admin,Teacher")]
@@ -38,8 +39,9 @@ public class ExamsController : ControllerBase
                 e.Date,
                 e.Description,
                 ParticipantsCount = e.Results.Count,
-                AverageScore = e.Results.Any()
-                    ? Math.Round(e.Results.Average(r => r.Score / r.MaxScore * 100), 1)
+                // إصلاح: حماية من القسمة على صفر - تجاهل النتائج ذات MaxScore = 0
+                AverageScore = e.Results.Any(r => r.MaxScore > 0)
+                    ? Math.Round(e.Results.Where(r => r.MaxScore > 0).Average(r => r.Score / r.MaxScore * 100), 1)
                     : 0
             })
             .ToListAsync();
@@ -74,7 +76,8 @@ public class ExamsController : ControllerBase
                 StudentName = r.Student.User.FullName,
                 r.Score,
                 r.MaxScore,
-                Percentage = Math.Round(r.Score / r.MaxScore * 100, 1),
+                // إصلاح: حماية من القسمة على صفر في تفاصيل الاختبار
+                Percentage = r.MaxScore > 0 ? Math.Round(r.Score / r.MaxScore * 100, 1) : 0,
                 r.Feedback
             })
         });
@@ -104,6 +107,7 @@ public class ExamsController : ControllerBase
     // ─────────────────────────────────────────────────
     // POST /api/exams/{id}/results
     // تسجيل نتائج الطلاب في اختبار
+    // إصلاحات: التحقق من وجود الطالب، منع التكرار، فحص ملكية المحفظ
     // ─────────────────────────────────────────────────
     [HttpPost("{id}/results")]
     [Authorize(Roles = "Admin,Teacher")]
@@ -113,10 +117,58 @@ public class ExamsController : ControllerBase
         if (exam == null)
             return NotFound(new { message = "الاختبار غير موجود" });
 
+        // التحقق الأساسي: الدرجة الكاملة يجب أن تكون أكبر من صفر
         foreach (var r in results)
         {
             if (r.MaxScore <= 0)
                 return BadRequest(new { message = "الدرجة الكاملة يجب أن تكون أكبر من صفر" });
+        }
+
+        var requestedStudentIds = results.Select(r => r.StudentId).Distinct().ToList();
+
+        // ─── إصلاح حرج 1: التحقق من أن جميع الطلاب موجودون فعلاً في قاعدة البيانات ───
+        var existingStudents = await _context.Students
+            .Include(s => s.User)
+            .Where(s => requestedStudentIds.Contains(s.Id))
+            .ToListAsync();
+
+        var existingStudentIds = existingStudents.Select(s => s.Id).ToHashSet();
+        var missingIds = requestedStudentIds.Where(sid => !existingStudentIds.Contains(sid)).ToList();
+        if (missingIds.Any())
+            return BadRequest(new { message = $"الطلاب التالية أرقامهم غير موجودة: {string.Join(", ", missingIds)}" });
+
+        // ─── إصلاح عالي: فحص ملكية المحفظ (Ownership) - المحفظ لا يرصد درجات لطلاب خارج حلقاته ───
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentRole = User.FindFirstValue(ClaimTypes.Role);
+
+        if (currentRole == "Teacher")
+        {
+            // جلب أرقام طلاب حلقات هذا المحفظ
+            var teacherStudentIds = await _context.Teachers
+                .Where(t => t.UserId == int.Parse(currentUserId!))
+                .SelectMany(t => t.Circles)
+                .SelectMany(c => c.Students)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            var teacherStudentIdsSet = teacherStudentIds.ToHashSet();
+            var unauthorizedIds = requestedStudentIds.Where(sid => !teacherStudentIdsSet.Contains(sid)).ToList();
+            if (unauthorizedIds.Any())
+                return StatusCode(403, new { message = $"لا يمكنك رصد درجات لطلاب خارج حلقاتك. الطلاب: {string.Join(", ", unauthorizedIds)}" });
+        }
+
+        // ─── إصلاح حرج 2: منع تكرار النتيجة لنفس الطالب في نفس الاختبار ───
+        var alreadyRecorded = await _context.ExamResults
+            .Where(er => er.ExamId == id && requestedStudentIds.Contains(er.StudentId))
+            .Select(er => er.StudentId)
+            .ToListAsync();
+
+        if (alreadyRecorded.Any())
+        {
+            var duplicateNames = existingStudents
+                .Where(s => alreadyRecorded.Contains(s.Id))
+                .Select(s => s.User.FullName);
+            return Conflict(new { message = $"توجد نتائج مسجلة مسبقاً لهؤلاء الطلاب: {string.Join("، ", duplicateNames)}" });
         }
 
         var examResults = results.Select(r => new ExamResult
@@ -131,18 +183,16 @@ public class ExamsController : ControllerBase
         _context.ExamResults.AddRange(examResults);
         
         // Gamification & ActivityFeed
-        var studentIds = examResults.Select(r => r.StudentId).Distinct().ToList();
-        var students = await _context.Students.Include(s => s.User).Where(s => studentIds.Contains(s.Id)).ToListAsync();
-        
-        var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+        var userId = int.Parse(currentUserId!);
         var userName = User.Identity?.Name ?? "User";
 
         foreach (var r in examResults)
         {
-            var student = students.FirstOrDefault(s => s.Id == r.StudentId);
+            var student = existingStudents.FirstOrDefault(s => s.Id == r.StudentId);
             if (student != null)
             {
-                var percentage = (r.Score / r.MaxScore) * 100;
+                // إصلاح: حماية من القسمة على صفر في حساب النسبة
+                var percentage = r.MaxScore > 0 ? (r.Score / r.MaxScore) * 100 : 0;
                 if (percentage >= 90) student.Points += 100;
                 else if (percentage >= 80) student.Points += 50;
 

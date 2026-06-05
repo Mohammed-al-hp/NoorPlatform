@@ -14,9 +14,14 @@
 
         if (status === 401) {
             message = 'انتهت الجلسة، يرجى تسجيل الدخول مجدداً';
-            if (!opts.skipLogout && typeof global.logout === 'function') global.logout();
+            if (!opts.skipLogout) {
+                // ─── إصلاح: توجيه المستخدم فوراً لصفحة تسجيل الدخول عند انتهاء الجلسة ───
+                if (typeof global.logout === 'function') global.logout();
+                else global.location.href = '/index.html';
+            }
         } else if (status === 403) {
-            message = 'ليس لديك صلاحية لهذا الإجراء';
+            // ─── إصلاح: رسالة واضحة عند رفض الوصول (403 Forbidden) ───
+            message = error.message || 'عذراً، لا تملك صلاحية الوصول لهذا المحتوى';
         } else if (status === 404) {
             message = error.message || 'العنصر المطلوب غير موجود';
         } else if (status === 500 || status === 502 || status === 503) {
@@ -60,8 +65,16 @@
         }
 
         if (res.status === 401 || res.headers.get('Token-Expired') === 'true') {
-            const err = new Error('انتهت الجلسة');
+            const err = new Error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً');
             err.status = 401;
+            throw err;
+        }
+
+        // ─── إصلاح: التقاط كود 403 وعرض تنبيه واضح قبل رمي الخطأ ───
+        if (res.status === 403) {
+            const payload = await res.json().catch(() => ({}));
+            const err = new Error(payload.message || 'عذراً، لا تملك صلاحية الوصول');
+            err.status = 403;
             throw err;
         }
 

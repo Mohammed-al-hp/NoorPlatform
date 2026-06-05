@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: noor_db
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD}
+      # Performance limits for MSSQL
+      MSSQL_MEMORY_LIMIT_MB: 2048
+    ports:
+      - "1433:1433"
+    volumes:
+      - noor_db_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${DB_PASSWORD}", "-C", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: noor_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database connection using the db service name
+      ConnectionStrings__DefaultConnection: "Server=db;Database=NoorPlatformDb;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true;"
+      
+      # JWT Secrets
+      Jwt__Key: ${JWT_SECRET_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-NoorPlatform}
+      Jwt__Audience: ${JWT_AUDIENCE:-NoorPlatformClients}
+      
+      # Environment
+      ASPNETCORE_ENVIRONMENT: Production
+      
+      # Optional: WhatsApp Settings
+      WhatsAppSettings__AccessToken: ${WHATSAPP_TOKEN:-}
+      WhatsAppSettings__PhoneNumberId: ${WHATSAPP_PHONE_ID:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persist library uploads outside the container
+      - noor_library_data:/app/wwwroot/library
+
+volumes:
+  noor_db_data:
+  noor_library_data:

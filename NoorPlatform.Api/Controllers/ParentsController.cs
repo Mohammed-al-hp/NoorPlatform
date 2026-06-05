@@ -124,6 +124,11 @@ public class ParentsController : ControllerBase
             var students = await _context.Students
                 .Where(s => request.ChildStudentIds.Contains(s.Id) && !s.IsDeleted)
                 .ToListAsync();
+
+            // ─── إصلاح: التحقق من عدم ارتباط الطلاب بولي أمر آخر ───
+            if (students.Any(s => s.ParentId != null && s.ParentId != parent.Id))
+                return BadRequest(new { message = "بعض الطلاب محددين مرتبطين بالفعل بولي أمر آخر" });
+
             foreach (var s in students)
             {
                 s.ParentId = parent.Id;
@@ -133,20 +138,8 @@ public class ParentsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        object? credentials = null;
-        if (!string.IsNullOrEmpty(tempPassword))
-        {
-            credentials = new AccountCredentialsDto(
-                parent.User.FullName,
-                parent.User.UserName!,
-                AccountProvisioningService.ToDisplayPhone(parent.User.UserName!),
-                tempPassword,
-                "Parent",
-                true
-            );
-        }
-
-        return Ok(new { message = "تم إضافة ولي الأمر", parent.Id, credentials });
+        // ─── إصلاح: عدم إرجاع كلمة المرور في الاستجابة (أمان) ───
+        return Ok(new { message = "تم إضافة ولي الأمر بنجاح، سيتم إرسال بيانات الدخول له", parent.Id });
     }
 
     [HttpPut("{id}")]
@@ -176,6 +169,11 @@ public class ParentsController : ControllerBase
             var linked = await _context.Students
                 .Where(s => request.ChildStudentIds.Contains(s.Id))
                 .ToListAsync();
+
+            // ─── إصلاح: التحقق من عدم ارتباط الطلاب بولي أمر آخر قبل التحديث ───
+            if (linked.Any(s => s.ParentId != null && s.ParentId != parent.Id))
+                return BadRequest(new { message = "بعض الطلاب محددين مرتبطين بالفعل بولي أمر آخر" });
+
             foreach (var s in parent.Children)
             {
                 if (!request.ChildStudentIds.Contains(s.Id))
@@ -211,11 +209,13 @@ public class ParentsController : ControllerBase
             child.ParentPhone = string.Empty;
         }
 
+        // ─── إصلاح: الاكتفاء بالحذف المنطقي (Soft Delete) لمنع فقدان البيانات المالية ───
         parent.User.IsActive = false;
-        _context.Parents.Remove(parent);
+        // تمت إزالة: _context.Parents.Remove(parent); للحفاظ على الفواتير والسجلات
+
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "تم حذف ولي الأمر وفك ربط الأبناء" });
+        return Ok(new { message = "تم تعطيل حساب ولي الأمر وفك ربط الأبناء (البيانات المالية محفوظة)" });
     }
 }
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Infrastructure.Data;
 using NoorPlatform.Core.Entities;
 using System.Security.Claims;
@@ -20,97 +21,179 @@ public class DashboardController : ControllerBase
     }
 
     // GET /api/dashboard/stats
+    // ─── إصلاح عالي: استخدام Task.WhenAll لتنفيذ الاستعلامات بشكل متوازٍ ───
+    // ملاحظة: EF Core DbContext غير آمن للعمليات المتزامنة (Not Thread-Safe). 
+    // لتنفيذ استعلامات متوازية، يجب إنشاء Scopes منفصلة لتجنب InvalidOperationException
     [HttpGet("stats")]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> GetStats()
+    public async Task<IActionResult> GetStats([FromServices] IServiceScopeFactory scopeFactory)
     {
         var isTeacher = User.IsInRole("Teacher");
+        var isAdmin = User.IsInRole("Admin");
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var studentsQuery = _context.Students.AsQueryable();
-        var teachersQuery = _context.Teachers.AsQueryable();
-        var circlesQuery = _context.Circles.AsQueryable();
-        var attendancesQuery = _context.Attendances.AsQueryable();
-        var hifzQuery = _context.HifzRecords.AsQueryable();
-
-        if (isTeacher)
-        {
-            studentsQuery = studentsQuery.Where(s => s.Circle!.Teacher!.UserId == userId);
-            circlesQuery = circlesQuery.Where(c => c.Teacher!.UserId == userId);
-            attendancesQuery = attendancesQuery.Where(a => a.Student!.Circle!.Teacher!.UserId == userId);
-            hifzQuery = hifzQuery.Where(h => h.Student!.Circle!.Teacher!.UserId == userId);
-        }
-
-        var totalStudents = await studentsQuery.CountAsync();
-        var totalTeachers = isTeacher ? 1 : await teachersQuery.CountAsync();
-        var totalCircles = await circlesQuery.CountAsync();
-
         var today = DateTime.UtcNow.Date;
-        var presentToday = await attendancesQuery
-            .CountAsync(a => a.Date.Date == today && a.Status == AttendanceStatus.Present);
-        var totalToday = await attendancesQuery
-            .CountAsync(a => a.Date.Date == today);
-
-        var attendancePercent = totalToday > 0
-            ? (int)Math.Round((double)presentToday / totalToday * 100)
-            : 0;
-
-        // ── بيانات الرسم البياني الأسبوعي ──
         var weekStart = today.AddDays(-6);
-        var weeklyRaw = await attendancesQuery
-            .Where(a => a.Date.Date >= weekStart)
-            .GroupBy(a => a.Date.Date)
-            .Select(g => new
+        var startOfMonth = new DateTime(today.Year, today.Month, 1);
+
+        // إنشاء مهام متوازية باستخدام Contexts منفصلة لكل مهمة
+        var studentsTask = Task.Run(async () =>
+        {
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
+            IQueryable<Student> q = db.Students.AsNoTracking();
+            if (isTeacher && !isAdmin)
             {
-                Date = g.Key,
-                Present = g.Count(a => a.Status == AttendanceStatus.Present),
-                Total = g.Count()
-            })
-            .OrderBy(g => g.Date)
-            .ToListAsync();
+                var circleIds = db.Circles
+                    .Where(c => c.Teacher != null && c.Teacher.UserId == userId)
+                    .Select(c => c.Id);
+                q = q.Where(s => s.CircleId != null && circleIds.Contains(s.CircleId.Value));
+            }
+            return await q.CountAsync();
+        });
+
+        var teachersTask = Task.Run(async () =>
+        {
+            if (isTeacher && !isAdmin) return 1;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
+            return await db.Teachers.CountAsync();
+        });
+
+        var circlesTask = Task.Run(async () =>
+        {
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
+            var q = db.Circles.AsNoTracking();
+            if (isTeacher && !isAdmin) q = q.Where(c => c.Teacher!.UserId == userId);
+            return await q.CountAsync();
+        });
+
+        var attendancesTask = Task.Run(async () =>
+        {
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
+            var q = db.Attendances.AsNoTracking();
+            if (isTeacher && !User.IsInRole("Admin")) q = q.Where(a => a.Student!.Circle!.Teacher!.UserId == userId);
+            
+            var presentToday = await q.CountAsync(a => a.Date.Date == today && a.Status == AttendanceStatus.Present);
+            var totalToday = await q.CountAsync(a => a.Date.Date == today);
+            
+            var rawAttendances = await q.Where(a => a.Date >= weekStart).Select(a => new { a.Date, a.Status }).ToListAsync();
+            
+            var weeklyRaw = rawAttendances
+                .GroupBy(a => a.Date.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    Present = g.Count(a => a.Status == AttendanceStatus.Present),
+                    Late = g.Count(a => a.Status == AttendanceStatus.Late),
+                    Total = g.Count()
+                })
+                .ToList();
+            
+            return (presentToday, totalToday, weeklyRaw);
+        });
+
+        var hifzTask = Task.Run(async () =>
+        {
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
+            var q = db.HifzRecords.AsNoTracking();
+            if (isTeacher && !isAdmin) q = q.Where(h => h.Student!.Circle!.Teacher!.UserId == userId);
+
+            // ─── تحسين: الاعتماد على VerseCount الفعلي من قاعدة البيانات وتبسيط الحساب في الاستعلام ───
+            var recent = await q.OrderByDescending(r => r.Date).Take(5)
+                .Select(r => new {
+                    studentName = r.Student.User.FullName,
+                    circleName = r.Student.Circle != null ? r.Student.Circle.Name : "—",
+                    surahName = r.SurahName,
+                    verses = r.Verses,
+                    evaluation = r.Evaluation,
+                    progress = 0
+                }).ToListAsync();
+            
+            var weeklyVerses = await q.Where(r => r.Type == RecordType.Memorization && r.Date >= weekStart)
+                .SumAsync(r => r.VerseCount); // Use pre-calculated VerseCount efficiently
+
+            return (recent, weeklyVerses);
+        });
+
+        var financialsTask = Task.Run(async () =>
+        {
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
+            var q = db.Payments.AsNoTracking();
+            if (isTeacher && !isAdmin) q = q.Where(p => p.Student!.Circle!.Teacher!.UserId == userId);
+
+            var rev = await q.Where(p => p.Status == PaymentStatus.Paid && p.PaidDate >= startOfMonth).SumAsync(p => p.Amount);
+            var due = await q.Where(p => p.Status != PaymentStatus.Paid && p.DueDate < today).SumAsync(p => p.Amount);
+            
+            return (rev, due);
+        });
+
+        // انتظار جميع المهام بشكل متوازٍ
+        await Task.WhenAll(studentsTask, teachersTask, circlesTask, attendancesTask, hifzTask, financialsTask);
+
+        var totalStudents = studentsTask.Result;
+        var totalTeachers = teachersTask.Result;
+        var totalCircles = circlesTask.Result;
+        var (presentToday, totalToday, weeklyRaw) = attendancesTask.Result;
+        var (recentHifz, weeklyVerses) = hifzTask.Result;
+        var (monthlyRevenue, totalOverdue) = financialsTask.Result;
+
+        var attendancePercent = totalToday > 0 ? (int)Math.Round((double)presentToday / totalToday * 100) : 0;
 
         string[] dayNames = { "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت" };
         var weeklyAttendance = Enumerable.Range(0, 7).Select(i =>
         {
-            var d = weekStart.AddDays(i);
-            var rec = weeklyRaw.FirstOrDefault(r => r.Date == d);
+            var d = weekStart.AddDays(i).Date;
+            var rec = weeklyRaw.FirstOrDefault(r => r.Date.Date == d);
+            var attended = rec == null ? 0 : rec.Present + rec.Late;
             return new
             {
                 dayName = dayNames[(int)d.DayOfWeek],
                 date = d.ToString("yyyy-MM-dd"),
                 percentage = rec != null && rec.Total > 0
-                    ? (int)Math.Round((double)rec.Present / rec.Total * 100)
-                    : 0
+                    ? (int)Math.Round((double)attended / rec.Total * 100)
+                    : 0,
+                present = rec?.Present ?? 0,
+                late = rec?.Late ?? 0,
+                total = rec?.Total ?? 0
             };
-        });
+        }).ToList();
 
-        // ── توزيع المستويات (Donut Chart) ──
-        var levels = await studentsQuery
-            .GroupBy(s => s.Level)
-            .Select(g => new { level = g.Key, count = g.Count() })
-            .ToListAsync();
-
-        var levelDistribution = new
-        {
+        // ── توزيع المستويات (بشكل تسلسلي خفيف لأنها قد لا تكون ثقيلة) ──
+        var levelsQ = _context.Students.AsNoTracking().AsQueryable();
+        if (isTeacher && !isAdmin) levelsQ = levelsQ.Where(s => s.Circle!.Teacher!.UserId == userId);
+        
+        var levels = await levelsQ.GroupBy(s => s.Level).Select(g => new { level = g.Key, count = g.Count() }).ToListAsync();
+        var levelDistribution = new {
             advanced = levels.FirstOrDefault(l => l.level == "متقدم")?.count ?? 0,
             intermediate = levels.FirstOrDefault(l => l.level == "متوسط")?.count ?? 0,
             beginner = levels.FirstOrDefault(l => l.level == "مبتدئ")?.count ?? 0
         };
 
-        // ── آخر 5 جلسات تسميع (جدول النشاط) ──
-        var recentHifz = await hifzQuery
-            .OrderByDescending(r => r.Date)
-            .Take(5)
-            .Select(r => new
+        var totalStudentsCount = totalStudents > 0 ? totalStudents : 1;
+        var hifzVelocity = Math.Round((double)weeklyVerses / totalStudentsCount, 1);
+
+        var bestCircleRaw = await _context.Circles.AsNoTracking()
+            .Select(c => new
             {
-                studentName = r.Student.User.FullName,
-                circleName = r.Student.Circle != null ? r.Student.Circle.Name : "—",
-                surahName = r.SurahName,
-                verses = r.Verses,
-                evaluation = r.Evaluation,
-                progress = 0 // يُحسب أدناه
+                c.Name,
+                TeacherName = c.Teacher != null ? c.Teacher.User.FullName : "—",
+                AttendanceRate = c.Students.SelectMany(s => s.Attendances).Any()
+                    ? (double)c.Students.SelectMany(s => s.Attendances).Count(a => a.Status == AttendanceStatus.Present) / c.Students.SelectMany(s => s.Attendances).Count() * 100
+                    : 0
             })
-            .ToListAsync();
+            .OrderByDescending(c => c.AttendanceRate)
+            .FirstOrDefaultAsync();
+
+        var bestCircle = bestCircleRaw != null ? new {
+            name = bestCircleRaw.Name,
+            teacher = bestCircleRaw.TeacherName,
+            attendanceRate = Math.Round(bestCircleRaw.AttendanceRate, 1)
+        } : null;
 
         return Ok(new
         {
@@ -120,7 +203,10 @@ public class DashboardController : ControllerBase
             attendanceToday = $"{attendancePercent}%",
             weeklyAttendance,
             levelDistribution,
-            recentHifz
+            recentHifz,
+            financials = new { monthlyRevenue, totalOverdue },
+            hifzVelocity,
+            bestCircle
         });
     }
 
@@ -131,10 +217,11 @@ public class DashboardController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var student = await _context.Students
-            .Include(s => s.HifzRecords)
-            .Include(s => s.Attendances)
-            .Include(s => s.ExamResults)
+        // ─── إصلاح متوسط: تحديد عدد السجلات المجلوبة في الذاكرة لمنع اختناق الذاكرة مع مرور الوقت ───
+        var student = await _context.Students.AsNoTracking()
+            .Include(s => s.HifzRecords.OrderByDescending(h => h.Date).Take(10))
+            .Include(s => s.Attendances.OrderByDescending(a => a.Date).Take(10))
+            .Include(s => s.ExamResults.OrderByDescending(e => e.Id).Take(10))
             .FirstOrDefaultAsync(s => s.UserId == userId);
 
         if (student == null)
@@ -145,7 +232,6 @@ public class DashboardController : ControllerBase
               / student.Attendances.Count * 100
             : 0;
 
-        // ✅ إصلاح 1: حساب التقدم من VerseCount الفعلي
         var hifzProgress = CalculateHifzProgress(student.HifzRecords);
 
         var lastRecord = student.HifzRecords
@@ -175,10 +261,10 @@ public class DashboardController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var parent = await _context.Parents
+        var parent = await _context.Parents.AsNoTracking()
             .Include(p => p.Children).ThenInclude(c => c.User)
-            .Include(p => p.Children).ThenInclude(c => c.HifzRecords)
-            .Include(p => p.Children).ThenInclude(c => c.Attendances)
+            .Include(p => p.Children).ThenInclude(c => c.HifzRecords.OrderByDescending(h => h.Date).Take(10))
+            .Include(p => p.Children).ThenInclude(c => c.Attendances.OrderByDescending(a => a.Date).Take(10))
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (parent == null)
@@ -188,7 +274,6 @@ public class DashboardController : ControllerBase
         {
             c.Id,
             fullName = c.User.FullName,
-            // ✅ إصلاح 1: حساب التقدم من VerseCount الفعلي
             progress = CalculateHifzProgress(c.HifzRecords),
             attendance = c.Attendances.Any()
                             ? Math.Round((double)c.Attendances.Count(a => a.Status == AttendanceStatus.Present)
@@ -202,7 +287,7 @@ public class DashboardController : ControllerBase
         });
 
         // جلب الفواتير المتأخرة وغير المدفوعة
-        var overduePayments = await _context.Payments
+        var overduePayments = await _context.Payments.AsNoTracking()
             .Include(p => p.Student).ThenInclude(s => s.User)
             .Where(p => p.ParentId == parent.Id && p.Status != PaymentStatus.Paid)
             .Select(p => new
@@ -217,9 +302,6 @@ public class DashboardController : ControllerBase
             })
             .OrderByDescending(p => p.DueDate)
             .ToListAsync();
-
-        // تم حذف منطق تحديث حالة الفواتير المتأخرة التلقائي من هنا (GetParentSummary)
-        // وتم نقله إلى PATCH /api/payments/mark-overdue
 
         return Ok(new
         {
@@ -238,16 +320,15 @@ public class DashboardController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetActivityFeed()
     {
-        var role = User.FindFirstValue(ClaimTypes.Role);
+        // ─── إصلاح عالي: استبدال User.FindFirstValue بالاعتماد على User.IsInRole لدعم المستخدمين ذوي الأدوار المتعددة بأمان ───
+        var isTeacher = User.IsInRole("Teacher");
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var query = _context.ActivityFeeds.AsQueryable();
+        var query = _context.ActivityFeeds.AsNoTracking().AsQueryable();
 
-        // Admin sees all, Teacher sees their own activities or activities related to their students
-        if (role == "Teacher")
+        if (isTeacher && !User.IsInRole("Admin"))
         {
             query = query.Where(a => a.UserId == userId);
-            // We could also join with students in their circles, but for simplicity we show their own logged activities.
         }
 
         var activities = await query
@@ -273,7 +354,7 @@ public class DashboardController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetLeaderboard()
     {
-        var leaderboardRaw = await _context.Students
+        var leaderboardRaw = await _context.Students.AsNoTracking()
             .OrderByDescending(s => s.Points)
             .Take(10)
             .Select(s => new
@@ -288,7 +369,7 @@ public class DashboardController : ControllerBase
                     : 0.0,
                 memorizedVerses = s.HifzRecords
                     .Where(r => r.Type == RecordType.Memorization)
-                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0)
+                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0) // يعتمد على الحقل المُحدَّث
             })
             .ToListAsync();
 
@@ -313,14 +394,11 @@ public class DashboardController : ControllerBase
     // ─────────────────────────────────────────────────
     private static int CalculateHifzProgress(IEnumerable<HifzRecord> records)
     {
-        // ✅ إصلاح 1: نجمع الآيات الفعلية من VerseCount بدلاً من ضرب * 10
+        // تم تبسيط الاستعلام والاعتماد على VerseCount الذي تم حسابه وحفظه سابقاً في قاعدة البيانات
         var totalVerses = records
             .Where(r => r.Type == RecordType.Memorization)
-            .Sum(r => r.VerseCount > 0
-                        ? r.VerseCount
-                        : HifzRecord.ParseVerseCount(r.Verses)); // fallback للسجلات القديمة
+            .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0);
 
-        var percent = Math.Min((int)Math.Round((double)totalVerses / 6236 * 100), 100);
-        return percent;
+        return Math.Min((int)Math.Round((double)totalVerses / 6236 * 100), 100);
     }
 }

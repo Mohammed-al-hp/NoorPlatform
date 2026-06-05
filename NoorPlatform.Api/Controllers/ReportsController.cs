@@ -3,17 +3,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Api.Security;
+using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using System.Text;
 
 namespace NoorPlatform.Api.Controllers;
 
-/// <summary>
-/// توليد شهادات وتقارير PDF
-/// يستخدم مكتبة QuestPDF (مجانية للمشاريع التعليمية)
-/// تثبيت: Install-Package QuestPDF -ProjectName NoorPlatform.Api
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
@@ -26,20 +25,16 @@ public class ReportsController : ControllerBase
         _context = context;
     }
 
-    // ─────────────────────────────────────────────────
-    // GET /api/reports/certificate/{studentId}
-    // شهادة إتمام حفظ جزء أو سورة — تُنزَّل كـ PDF
-    // ─────────────────────────────────────────────────
     [HttpGet("certificate/{studentId}")]
     [Authorize(Roles = "Admin,Teacher,Parent,Student")]
-    public async Task<IActionResult> GetCertificate(int studentId, [FromQuery] string? surah, [FromQuery] bool grantBadge = false)
+    public async Task<IActionResult> GetCertificate(int studentId, [FromQuery] string? surah)
     {
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
             return Forbid();
 
         var student = await _context.Students
             .Include(s => s.User)
-            .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t.User)
+            .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t!.User)
             .Include(s => s.HifzRecords)
             .FirstOrDefaultAsync(s => s.Id == studentId);
 
@@ -55,48 +50,56 @@ public class ReportsController : ControllerBase
         var circleName = student.Circle?.Name ?? "—";
         var achievement = surah ?? GetAchievementText(progress);
 
-        var html = GenerateCertificateHtml(
-            studentName: System.Net.WebUtility.HtmlEncode(student.User.FullName),
-            teacherName: System.Net.WebUtility.HtmlEncode(teacherName),
-            circleName: System.Net.WebUtility.HtmlEncode(circleName),
-            achievement: System.Net.WebUtility.HtmlEncode(achievement),
-            progress: progress,
-            date: DateTime.Now.ToString("yyyy/MM/dd")
+        var pdfBytes = GenerateCertificatePdf(
+            student.User.FullName,
+            teacherName,
+            circleName,
+            achievement,
+            progress,
+            DateTime.UtcNow.ToString("yyyy/MM/dd")
         );
 
-        if (grantBadge && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
-        {
-            var badgeToGrant = "شهادة " + achievement;
-            if (string.IsNullOrEmpty(student.Badges))
-                student.Badges = badgeToGrant;
-            else if (!student.Badges.Contains(badgeToGrant))
-                student.Badges += $",{badgeToGrant}";
-
-            var userId = AuthorizationHelpers.GetUserId(User);
-            if (userId != null)
-            {
-                _context.ActivityFeeds.Add(new ActivityFeed
-                {
-                    UserId = userId.Value,
-                    UserName = User.Identity?.Name ?? "User",
-                    ActivityType = "Certificate",
-                    Description = $"تم إصدار شهادة تقدير للطالب {student.User.FullName} ({achievement})",
-                    Icon = "📜",
-                    Color = "text-teal-500"
-                });
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        // إرجاع HTML للطباعة (بديل عن PDF حتى تُثبَّت QuestPDF)
-        return Content(html, "text/html", Encoding.UTF8);
+        return File(pdfBytes, "application/pdf", $"شهادة_{student.User.FullName}.pdf");
     }
 
-    // ─────────────────────────────────────────────────
-    // GET /api/reports/monthly/{studentId}
-    // التقرير الشهري لطالب — يُرسَل لولي الأمر
-    // ─────────────────────────────────────────────────
+    [HttpPost("certificate/{studentId}/grant-badge")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GrantBadge(int studentId, [FromBody] GrantBadgeRequest request)
+    {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
+            return Forbid();
+
+        var student = await _context.Students
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
+
+        if (student == null)
+            return NotFound(new { message = "الطالب غير موجود" });
+
+        var badgeToGrant = "شهادة " + (request.Achievement ?? "تقدير");
+        if (string.IsNullOrEmpty(student.Badges))
+            student.Badges = badgeToGrant;
+        else if (!student.Badges.Contains(badgeToGrant))
+            student.Badges += $",{badgeToGrant}";
+
+        var userId = AuthorizationHelpers.GetUserId(User);
+        if (userId != null)
+        {
+            _context.ActivityFeeds.Add(new ActivityFeed
+            {
+                UserId = userId.Value,
+                UserName = User.Identity?.Name ?? "User",
+                ActivityType = "Certificate",
+                Description = $"تم إصدار شهادة تقدير للطالب {student.User.FullName} ({request.Achievement})",
+                Icon = "📜",
+                Color = "text-teal-500"
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "تم منح الوسام بنجاح" });
+    }
+
     [HttpGet("monthly/{studentId}")]
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetMonthlyReport(int studentId, [FromQuery] int? month, [FromQuery] int? year)
@@ -104,62 +107,54 @@ public class ReportsController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
             return Forbid();
 
-        var targetMonth = month ?? DateTime.Now.Month;
-        var targetYear = year ?? DateTime.Now.Year;
+        var targetMonth = month ?? DateTime.UtcNow.Month;
+        var targetYear = year ?? DateTime.UtcNow.Year;
 
-        var student = await _context.Students
+        var student = await _context.Students.AsNoTracking()
             .Include(s => s.User)
-            .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t.User)
-            .Include(s => s.Attendances)
-            .Include(s => s.HifzRecords)
+            .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t!.User)
+            .Include(s => s.Attendances.Where(a => a.Date.Month == targetMonth && a.Date.Year == targetYear))
+            .Include(s => s.HifzRecords.Where(r => r.Date.Month == targetMonth && r.Date.Year == targetYear))
             .Include(s => s.ExamResults).ThenInclude(e => e.Exam)
             .FirstOrDefaultAsync(s => s.Id == studentId);
 
         if (student == null)
             return NotFound(new { message = "الطالب غير موجود" });
 
-        // بيانات الشهر المطلوب
-        var monthAttendances = student.Attendances
-            .Where(a => a.Date.Month == targetMonth && a.Date.Year == targetYear).ToList();
-        var monthHifz = student.HifzRecords
-            .Where(r => r.Date.Month == targetMonth && r.Date.Year == targetYear).ToList();
+        var monthAttendances = student.Attendances.ToList();
+        var monthHifz = student.HifzRecords.ToList();
 
         var attendanceRate = monthAttendances.Any()
-            ? (int)Math.Round((double)monthAttendances.Count(a => a.Status == AttendanceStatus.Present)
-              / monthAttendances.Count * 100)
+            ? (int)Math.Round((double)monthAttendances.Count(a => a.Status == AttendanceStatus.Present) / monthAttendances.Count * 100)
             : 0;
 
         var totalVerses = monthHifz
             .Where(r => r.Type == RecordType.Memorization)
             .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses));
 
-        var html = GenerateMonthlyReportHtml(
-            studentName: student.User.FullName,
-            teacherName: student.Circle?.Teacher?.User?.FullName ?? "—",
-            circleName: student.Circle?.Name ?? "—",
-            month: GetArabicMonth(targetMonth),
-            year: targetYear.ToString(),
-            attendanceRate: attendanceRate,
-            presentDays: monthAttendances.Count(a => a.Status == AttendanceStatus.Present),
-            absentDays: monthAttendances.Count(a => a.Status == AttendanceStatus.Absent),
-            totalVerses: totalVerses,
-            sessionsCount: monthHifz.Count,
-            hifzRecords: monthHifz.Select(r => new { r.SurahName, r.Verses, r.Evaluation, r.Notes, r.Date }).ToList<object>()
+        var pdfBytes = GenerateMonthlyReportPdf(
+            student.User.FullName,
+            student.Circle?.Teacher?.User?.FullName ?? "—",
+            student.Circle?.Name ?? "—",
+            GetArabicMonth(targetMonth),
+            targetYear.ToString(),
+            attendanceRate,
+            monthAttendances.Count(a => a.Status == AttendanceStatus.Present),
+            monthAttendances.Count(a => a.Status == AttendanceStatus.ExcusedAbsence || a.Status == AttendanceStatus.UnexcusedAbsence),
+            totalVerses,
+            monthHifz.Count,
+            monthHifz
         );
 
-        return Content(html, "text/html", Encoding.UTF8);
+        return File(pdfBytes, "application/pdf", $"تقرير_{student.User.FullName}_{targetMonth}_{targetYear}.pdf");
     }
 
-    // ─────────────────────────────────────────────────
-    // GET /api/reports/center-summary
-    // ملخص المركز الشهري (للإدارة)
-    // ─────────────────────────────────────────────────
     [HttpGet("center-summary")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetCenterSummary()
     {
-        var today = DateTime.Now;
-        var startOfMonth = new DateTime(today.Year, today.Month, 1);
+        var today = DateTime.UtcNow;
+        var startOfMonth = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var stats = new
         {
@@ -176,149 +171,147 @@ public class ReportsController : ControllerBase
     }
 
     // ─────────────────────────────────────────────────
-    // HTML Templates
+    // PDF Generation via QuestPDF
     // ─────────────────────────────────────────────────
-    private static string GenerateCertificateHtml(
-        string studentName, string teacherName, string circleName,
-        string achievement, int progress, string date) => $$"""
-        <!DOCTYPE html>
-        <html dir="rtl" lang="ar">
-        <head>
-          <meta charset="UTF-8">
-          <title>شهادة تقدير — {{studentName}}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
-            * { margin:0; padding:0; box-sizing:border-box; }
-            body { font-family:'Amiri',serif; background:#f8f4e8; display:flex; justify-content:center; align-items:center; min-height:100vh; }
-            .cert { width:794px; min-height:560px; background:white; border:12px double #b8860b; padding:48px; text-align:center; position:relative; box-shadow:0 8px 32px rgba(0,0,0,.15); }
-            .cert::before { content:''; position:absolute; inset:20px; border:2px solid #b8860b; pointer-events:none; }
-            .logo { font-size:48px; margin-bottom:8px; }
-            .center-name { font-size:22px; color:#1a5c3a; font-weight:700; margin-bottom:4px; }
-            .cert-title { font-size:36px; color:#b8860b; font-weight:700; margin:24px 0 16px; }
-            .divider { width:200px; height:2px; background:linear-gradient(to right,transparent,#b8860b,transparent); margin:16px auto; }
-            .student-name { font-size:32px; color:#1a3a2a; font-weight:700; margin:16px 0; }
-            .achievement { font-size:18px; color:#333; line-height:1.8; margin:16px 0; }
-            .progress-text { font-size:22px; color:#1a5c3a; font-weight:700; margin:16px 0; }
-            .footer { display:flex; justify-content:space-between; margin-top:40px; font-size:14px; color:#666; }
-            .signature { text-align:center; }
-            .signature-line { width:140px; height:1px; background:#333; margin:32px auto 4px; }
-            @media print { body { background:white; } .cert { box-shadow:none; } }
-          </style>
-        </head>
-        <body>
-          <div class="cert">
-            <div class="logo">📚</div>
-            <div class="center-name">مركز نور لتحفيظ القرآن الكريم</div>
-            <div class="cert-title">شهـادة تقـدير</div>
-            <div class="divider"></div>
-            <p style="font-size:18px;color:#444">يُشهد المركز بأن الطالب/ة</p>
-            <div class="student-name">{{studentName}}</div>
-            <div class="achievement">
-              قد أتم/أتمت بعون الله تعالى<br>
-              <strong>{{achievement}}</strong>
-            </div>
-            <div class="progress-text">نسبة الحفظ الإجمالية: {{progress}}%</div>
-            <p style="font-size:16px;color:#555">في حلقة {{circleName}}</p>
-            <div class="footer">
-              <div class="signature">
-                <div class="signature-line"></div>
-                <p>المحفظ: {{teacherName}}</p>
-              </div>
-              <div style="font-size:16px;color:#888;align-self:flex-end">
-                التاريخ: {{date}}
-              </div>
-              <div class="signature">
-                <div class="signature-line"></div>
-                <p>مدير المركز</p>
-              </div>
-            </div>
-          </div>
-          <script>setTimeout(() => window.print(), 500);</script>
-        </body>
-        </html>
-        """;
 
-    private static string GenerateMonthlyReportHtml(
+    private static byte[] GenerateCertificatePdf(
+        string studentName, string teacherName, string circleName,
+        string achievement, int progress, string date)
+    {
+        ArabicPdfFonts.EnsureRegistered();
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape());
+                page.Margin(2, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(ArabicPdfFonts.DefaultStyle(14));
+
+                page.Content().Border(5).BorderColor("#b8860b").Padding(30).Column(col =>
+                {
+                    col.Spacing(20);
+                    col.Item().AlignCenter().Text("📚").FontSize(40);
+                    col.Item().AlignCenter().Text("مركز نور لتحفيظ القرآن الكريم").FontSize(22).FontColor("#1a5c3a").Bold();
+                    col.Item().AlignCenter().Text("شهـادة تقـدير").FontSize(36).FontColor("#b8860b").Bold();
+                    
+                    col.Item().PaddingTop(20).AlignCenter().Text("يُشهد المركز بأن الطالب/ة").FontSize(18).FontColor("#444");
+                    col.Item().AlignCenter().Text(studentName).FontSize(32).FontColor("#1a3a2a").Bold();
+                    
+                    col.Item().PaddingTop(10).AlignCenter().Text("قد أتم/أتمت بعون الله تعالى").FontSize(18);
+                    col.Item().AlignCenter().Text(achievement).FontSize(24).Bold();
+                    
+                    col.Item().PaddingTop(10).AlignCenter().Text($"نسبة الحفظ الإجمالية: {progress}%").FontSize(22).FontColor("#1a5c3a").Bold();
+                    col.Item().AlignCenter().Text($"في حلقة {circleName}").FontSize(16).FontColor("#555");
+
+                    col.Item().PaddingTop(40).Row(row =>
+                    {
+                        row.RelativeItem().AlignCenter().Column(c =>
+                        {
+                            c.Item().LineHorizontal(1).LineColor(Colors.Black);
+                            c.Item().PaddingTop(5).Text($"المحفظ: {teacherName}");
+                        });
+                        row.RelativeItem().AlignCenter().PaddingTop(10).Text($"التاريخ: {date}").FontColor("#888").FontSize(12);
+                        row.RelativeItem().AlignCenter().Column(c =>
+                        {
+                            c.Item().LineHorizontal(1).LineColor(Colors.Black);
+                            c.Item().PaddingTop(5).Text("مدير المركز");
+                        });
+                    });
+                });
+            });
+        }).GeneratePdf();
+    }
+
+    private static byte[] GenerateMonthlyReportPdf(
         string studentName, string teacherName, string circleName,
         string month, string year, int attendanceRate,
         int presentDays, int absentDays, int totalVerses,
-        int sessionsCount, List<object> hifzRecords)
+        int sessionsCount, List<HifzRecord> hifzRecords)
     {
-        studentName = System.Net.WebUtility.HtmlEncode(studentName);
-        teacherName = System.Net.WebUtility.HtmlEncode(teacherName);
-        circleName = System.Net.WebUtility.HtmlEncode(circleName);
-        month = System.Net.WebUtility.HtmlEncode(month);
-        year = System.Net.WebUtility.HtmlEncode(year);
-
-        var rows = string.Join("", hifzRecords.Select((r, i) =>
+        ArabicPdfFonts.EnsureRegistered();
+        return Document.Create(container =>
         {
-            dynamic d = r;
-            return $"<tr><td>{i + 1}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.SurahName)}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.Verses)}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.Evaluation)}</td><td>{System.Net.WebUtility.HtmlEncode((string)d.Notes)}</td></tr>";
-        }));
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.5f, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(ArabicPdfFonts.DefaultStyle(12));
 
-        return $$"""
-        <!DOCTYPE html>
-        <html dir="rtl" lang="ar">
-        <head>
-          <meta charset="UTF-8">
-          <title>التقرير الشهري — {{studentName}}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
-            * { margin:0;padding:0;box-sizing:border-box; }
-            body { font-family:'Tajawal',sans-serif;background:#f1f5f9;padding:24px; }
-            .report { max-width:800px;margin:auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1); }
-            .header { background:linear-gradient(135deg,#1a5c3a,#10b981);color:white;padding:32px;text-align:center; }
-            .header h1 { font-size:24px;margin-bottom:4px; }
-            .header p { opacity:.85;font-size:14px; }
-            .body { padding:32px; }
-            .info-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px; }
-            .info-card { background:#f8fafc;border-radius:12px;padding:16px;border:1px solid #e2e8f0; }
-            .info-card label { font-size:12px;color:#64748b;display:block;margin-bottom:4px; }
-            .info-card p { font-size:16px;font-weight:700;color:#1e293b; }
-            .stats-row { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px; }
-            .stat-box { background:#f0fdf4;border-radius:12px;padding:16px;text-align:center;border:1px solid #bbf7d0; }
-            .stat-box .num { font-size:28px;font-weight:700;color:#16a34a; }
-            .stat-box .lbl { font-size:12px;color:#166534; }
-            table { width:100%;border-collapse:collapse;margin-top:16px; }
-            th { background:#f1f5f9;padding:10px 12px;font-size:13px;text-align:right;color:#475569; }
-            td { padding:10px 12px;font-size:13px;border-bottom:1px solid #f1f5f9;color:#334155; }
-            .footer { background:#f8fafc;padding:16px 32px;text-align:center;font-size:12px;color:#94a3b8; }
-            @media print { body { background:white; } }
-          </style>
-        </head>
-        <body>
-          <div class="report">
-            <div class="header">
-              <h1>📋 التقرير الشهري</h1>
-              <p>مركز نور لتحفيظ القرآن الكريم — {{month}} {{year}}</p>
-            </div>
-            <div class="body">
-              <div class="info-grid">
-                <div class="info-card"><label>اسم الطالب</label><p>{{studentName}}</p></div>
-                <div class="info-card"><label>الحلقة</label><p>{{circleName}}</p></div>
-                <div class="info-card"><label>المحفظ</label><p>{{teacherName}}</p></div>
-                <div class="info-card"><label>الشهر</label><p>{{month}} {{year}}</p></div>
-              </div>
-              <div class="stats-row">
-                <div class="stat-box"><div class="num">{{attendanceRate}}%</div><div class="lbl">نسبة الحضور</div></div>
-                <div class="stat-box"><div class="num">{{sessionsCount}}</div><div class="lbl">جلسات التسميع</div></div>
-                <div class="stat-box"><div class="num">{{totalVerses}}</div><div class="lbl">آيات محفوظة</div></div>
-              </div>
-              <p style="font-size:13px;color:#64748b;margin-bottom:8px">
-                الحضور: {{presentDays}} يوم ✅ | الغياب: {{absentDays}} يوم ❌
-              </p>
-              <h3 style="font-size:16px;margin:16px 0 8px;color:#1e293b">سجل التسميع الشهري</h3>
-              <table>
-                <thead><tr><th>#</th><th>السورة</th><th>الآيات</th><th>التقييم</th><th>ملاحظات</th></tr></thead>
-                <tbody>{{rows}}</tbody>
-              </table>
-            </div>
-            <div class="footer">تم إنشاء هذا التقرير تلقائياً بواسطة منصة نور — {{DateTime.Now:yyyy/MM/dd}}</div>
-          </div>
-          <script>setTimeout(() => window.print(), 600);</script>
-        </body>
-        </html>
-        """;
+                page.Header().Background("#1a5c3a").Padding(15).Column(col =>
+                {
+                    col.Item().AlignCenter().Text("📋 التقرير الشهري").FontSize(24).FontColor(Colors.White).Bold();
+                    col.Item().AlignCenter().Text($"مركز نور لتحفيظ القرآن الكريم — {month} {year}").FontSize(14).FontColor("#e8f5e9");
+                });
+
+                page.Content().PaddingVertical(20).Column(col =>
+                {
+                    col.Spacing(15);
+                    
+                    // Info
+                    col.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).Row(row =>
+                    {
+                        row.RelativeItem().Column(c => { c.Item().Text("اسم الطالب").FontSize(10).FontColor(Colors.Grey.Medium); c.Item().Text(studentName).Bold(); });
+                        row.RelativeItem().Column(c => { c.Item().Text("الحلقة").FontSize(10).FontColor(Colors.Grey.Medium); c.Item().Text(circleName).Bold(); });
+                        row.RelativeItem().Column(c => { c.Item().Text("المحفظ").FontSize(10).FontColor(Colors.Grey.Medium); c.Item().Text(teacherName).Bold(); });
+                        row.RelativeItem().Column(c => { c.Item().Text("الشهر").FontSize(10).FontColor(Colors.Grey.Medium); c.Item().Text($"{month} {year}").Bold(); });
+                    });
+
+                    // Stats
+                    col.Item().Row(row =>
+                    {
+                        row.Spacing(10);
+                        row.RelativeItem().Background("#f0fdf4").Border(1).BorderColor("#bbf7d0").Padding(10).AlignCenter().Column(c => { c.Item().Text($"{attendanceRate}%").FontSize(20).FontColor("#16a34a").Bold(); c.Item().Text("نسبة الحضور").FontSize(10).FontColor("#166534"); });
+                        row.RelativeItem().Background("#f0fdf4").Border(1).BorderColor("#bbf7d0").Padding(10).AlignCenter().Column(c => { c.Item().Text($"{sessionsCount}").FontSize(20).FontColor("#16a34a").Bold(); c.Item().Text("جلسات التسميع").FontSize(10).FontColor("#166534"); });
+                        row.RelativeItem().Background("#f0fdf4").Border(1).BorderColor("#bbf7d0").Padding(10).AlignCenter().Column(c => { c.Item().Text($"{totalVerses}").FontSize(20).FontColor("#16a34a").Bold(); c.Item().Text("آيات محفوظة").FontSize(10).FontColor("#166534"); });
+                    });
+
+                    col.Item().Text($"الحضور: {presentDays} يوم | الغياب: {absentDays} يوم").FontSize(11).FontColor(Colors.Grey.Darken2);
+
+                    // Table
+                    col.Item().PaddingTop(10).Text("سجل التسميع الشهري").FontSize(16).Bold();
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(30);
+                            columns.RelativeColumn(3);
+                            columns.RelativeColumn(2);
+                            columns.RelativeColumn(2);
+                            columns.RelativeColumn(3);
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("#").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("السورة").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("الآيات").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("التقييم").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("ملاحظات").Bold();
+                        });
+
+                        int i = 1;
+                        foreach (var r in hifzRecords)
+                        {
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(i.ToString());
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.SurahName);
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.Verses);
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.Evaluation);
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.Notes ?? "—");
+                            i++;
+                        }
+                    });
+                });
+
+                page.Footer().AlignCenter().Text($"تم إنشاء هذا التقرير تلقائياً بواسطة منصة نور — {DateTime.UtcNow:yyyy/MM/dd}").FontSize(10).FontColor(Colors.Grey.Medium);
+            });
+        }).GeneratePdf();
+    }
+
+    public class GrantBadgeRequest
+    {
+        public string? Achievement { get; set; }
     }
 
     private static string GetAchievementText(int progress) => progress switch
