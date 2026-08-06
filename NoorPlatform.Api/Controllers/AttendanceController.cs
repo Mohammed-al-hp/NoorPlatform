@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -135,8 +139,20 @@ public class AttendanceController : ControllerBase
     {
         days = Math.Clamp(days, 1, 90);
         var since = DateTime.UtcNow.AddDays(-days).Date;
-        var records = await _context.Attendances
-            .Where(a => a.Date >= since)
+
+        // ─── إصلاح: تصفية الحضور حسب حلقات المعلم ───
+        var query = _context.Attendances.Where(a => a.Date >= since);
+        
+        var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        if (isTeacher)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            query = query.Where(a => a.Student.Circle != null 
+                                  && a.Student.Circle.Teacher != null 
+                                  && a.Student.Circle.Teacher.UserId == userId);
+        }
+
+        var records = await query
             .GroupBy(a => a.Date.Date)
             .Select(g => new
             {
@@ -152,14 +168,12 @@ public class AttendanceController : ControllerBase
         return Ok(records);
     }
 
-    /// <summary>
-    /// يحوّل تاريخ الاستعلام (yyyy-MM-dd) إلى نطاق يوم كامل بدون انزياح UTC.
-    /// </summary>
     private static (DateTime Start, DateTime End) ParseAttendanceDayRange(string? date)
     {
         if (string.IsNullOrWhiteSpace(date))
         {
-            var today = DateOnly.FromDateTime(DateTime.Now);
+            // ─── إصلاح: استخدام UtcNow بدل Now لتوافق بيئة Docker (UTC) ───
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var start = today.ToDateTime(TimeOnly.MinValue);
             return (start, start.AddDays(1));
         }
@@ -170,65 +184,99 @@ public class AttendanceController : ControllerBase
             return (start, start.AddDays(1));
         }
 
-        var fallback = DateOnly.FromDateTime(DateTime.Now).ToDateTime(TimeOnly.MinValue);
+        var fallback = DateOnly.FromDateTime(DateTime.UtcNow).ToDateTime(TimeOnly.MinValue);
         return (fallback, fallback.AddDays(1));
     }
 
+    // ════════════════════════════════════════════════════════
+    // دالة الحفظ الجماعي الجديدة التي تعتمد على زر الحفظ اليدوي
+    // ════════════════════════════════════════════════════════
     [HttpPost("bulk")]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> BulkMarkAttendance([FromBody] BulkMarkAttendanceRequest request)
+    public async Task<IActionResult> SaveBulk([FromBody] BulkAttendanceRequest request)
     {
-        var (dayStart, dayEnd) = ParseAttendanceDayRange(request.Date);
+        if (request.Records == null || !request.Records.Any())
+            return BadRequest(new { message = "لا توجد سجلات للحفظ" });
+
+        if (!DateOnly.TryParse(request.Date, out var date))
+            return BadRequest(new { message = "تاريخ غير صالح" });
+
+        var studentIds = request.Records.Select(r => r.StudentId).Distinct().ToList();
+
+        var isTeacher = User.IsInRole("Teacher");
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var userName = User.Identity?.Name ?? "User";
 
-        foreach (var item in request.Records)
+        if (isTeacher)
         {
-            if (!Enum.TryParse<AttendanceStatus>(item.Status, true, out var parsedStatus))
+            var allowed = await _context.Students
+                .Where(s => studentIds.Contains(s.Id) &&
+                            s.Circle != null &&
+                            s.Circle.Teacher != null &&
+                            s.Circle.Teacher.UserId == userId)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            var forbidden = studentIds.Except(allowed).ToList();
+            if (forbidden.Any())
+                return StatusCode(403, new { message = "لا يمكنك تسجيل حضور طلاب خارج حلقتك" });
+        }
+
+        var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+
+        var existing = await _context.Attendances
+            .Where(a => a.Date.Date == targetDate.Date && studentIds.Contains(a.StudentId))
+            .ToListAsync();
+
+        foreach (var record in request.Records)
+        {
+            // تم تحسين التحويل ليدعم الحالات الأربعة: حاضر، متأخر، غائب بإذن، غائب بدون إذن
+            if (!Enum.TryParse<AttendanceStatus>(record.Status, true, out var status))
                 continue;
 
-            if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, item.StudentId))
-                continue;
-
-            var record = await _context.Attendances
-                .FirstOrDefaultAsync(a => a.StudentId == item.StudentId && a.Date >= dayStart && a.Date < dayEnd);
-
-            if (record != null)
+            var att = existing.FirstOrDefault(a => a.StudentId == record.StudentId);
+            if (att != null)
             {
-                record.Status = parsedStatus;
+                att.Status = status;
+                att.Date = targetDate;
             }
             else
             {
-                record = new Attendance
+                _context.Attendances.Add(new Attendance
                 {
-                    StudentId = item.StudentId,
-                    Date = dayStart,
-                    Status = parsedStatus
-                };
-                _context.Attendances.Add(record);
+                    StudentId = record.StudentId,
+                    Status = status,
+                    Date = targetDate
+                });
 
-                var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == item.StudentId);
-                if (student != null && parsedStatus == AttendanceStatus.Present)
+                // إضافة نقاط للحاضرين الجدد
+                if (status == AttendanceStatus.Present)
                 {
-                    student.Points += 10;
+                    var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == record.StudentId);
+                    if (student != null) student.Points += 10;
                 }
             }
         }
 
+        // إضافة سجل في الـ ActivityFeed
         _context.ActivityFeeds.Add(new ActivityFeed
         {
             UserId = userId,
-            UserName = userName,
+            UserName = User.Identity?.Name ?? "User",
             ActivityType = "Attendance",
-            Description = $"تم تسجيل الحضور لمجموعة من الطلاب بتاريخ {dayStart:yyyy-MM-dd}",
-            Icon = "✅",
-            Color = "green"
+            Description = $"تم حفظ حضور جماعي لـ {request.Records.Count} طالب بتاريخ {date:yyyy-MM-dd}",
+            Icon = "📝",
+            Color = "blue"
         });
 
         await _context.SaveChangesAsync();
-        return Ok(new { message = "تم حفظ سجل الحضور بنجاح" });
+
+        return Ok(new { message = $"تم حفظ {request.Records.Count} سجل حضور بنجاح" });
     }
 }
+
+// ════════════════════════════════════════════════════════
+// Request Models 
+// ════════════════════════════════════════════════════════
 
 public class MarkAttendanceRequest
 {
@@ -237,8 +285,14 @@ public class MarkAttendanceRequest
     public string? Date { get; set; }
 }
 
-public class BulkMarkAttendanceRequest
+public class BulkAttendanceRequest
 {
-    public string? Date { get; set; }
-    public List<MarkAttendanceRequest> Records { get; set; } = new();
+    public string Date { get; set; } = string.Empty;
+    public List<AttendanceRecord> Records { get; set; } = new();
+}
+
+public class AttendanceRecord
+{
+    public int StudentId { get; set; }
+    public string Status { get; set; } = string.Empty;
 }

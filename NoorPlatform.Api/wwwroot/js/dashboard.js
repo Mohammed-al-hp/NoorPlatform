@@ -127,6 +127,19 @@
         if (!list) return;
         try {
             const data = await apiFetch('/announcements');
+
+            const badge = document.getElementById('announcementsBadge');
+            if (badge) {
+                if (data.length > 0) {
+                    badge.textContent = data.length;
+                    badge.style.display = 'inline-flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+            const subtitle = document.getElementById('announcementsSubtitle');
+            if (subtitle) subtitle.textContent = data.length + ' إعلان' + (data.length !== 1 ? 'ات' : '');
+
             list.innerHTML = data.map(a => `
             <div class="ann-card" data-title="${esc(a.title)}">
               <div class="ann-indicator" style="background:${esc(a.color)}"></div>
@@ -166,8 +179,78 @@
         }
     }
 
-    global.NoorDashboard = { fetchStats, fetchActivities, fetchAnnouncements, fetchLeaderboard };
-    global.fetchStats = fetchStats;
+    // ─── Smart Polling Logic ───
+    let pollInterval = null;
+
+    function startPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(() => {
+            const dash = document.getElementById('page-dashboard');
+            const isDashVisible = dash && dash.style.display !== 'none';
+            const currentRole = app().state?.user?.role;
+            if (!document.hidden && isDashVisible && currentRole === 'Admin') {
+                fetchStats();
+            }
+        }, 30000);
+    }
+
+    function stopPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopPolling();
+        } else {
+            const dash = document.getElementById('page-dashboard');
+            const currentRole = app().state?.user?.role;
+            if (dash && dash.style.display !== 'none' && currentRole === 'Admin') {
+                fetchStats();
+            }
+            startPolling();
+        }
+    });
+
+    startPolling();
+    async function fetchSettings() {
+        try {
+            const data = await apiFetch('/settings');
+            const nameEl = document.getElementById('settingsCenterName');
+            const phoneEl = document.getElementById('settingsContactPhone');
+            if (nameEl && data.centerName) nameEl.value = data.centerName;
+            if (phoneEl && data.contactPhone) phoneEl.value = data.contactPhone;
+        } catch (e) {
+            // صامت — القيم الافتراضية بالـHTML تبقى كما هي
+        }
+    }
+
+    async function saveSettings() {
+        const nameEl = document.getElementById('settingsCenterName');
+        const phoneEl = document.getElementById('settingsContactPhone');
+        const centerName = nameEl?.value?.trim();
+        const contactPhone = phoneEl?.value?.trim();
+
+        if (!centerName) {
+            app().ui.showToast('❌ اسم المركز مطلوب');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveSettings');
+        try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
+            await apiFetch('/settings', 'PUT', { centerName, contactPhone });
+            app().ui.showToast('✅ تم حفظ الإعدادات بنجاح');
+        } catch (e) {
+            app().api.handleApiError(e);
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ');
+        }
+    }
+    global.NoorDashboard = { fetchStats, fetchActivities, fetchAnnouncements, fetchLeaderboard, startPolling, stopPolling, fetchSettings };
+    global.saveSettings = saveSettings;    global.fetchStats = fetchStats;
     global.fetchActivities = fetchActivities;
     global.fetchAnnouncements = fetchAnnouncements;
     global.fetchLeaderboard = fetchLeaderboard;

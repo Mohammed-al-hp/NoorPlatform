@@ -97,7 +97,7 @@
             global.setModalBody('userDetailBody', `
                 <p><strong>الاسم:</strong> ${U().escapeHtml(u.fullName)}</p>
                 <p><strong>الدور:</strong> ${U().escapeHtml(u.role)}</p>
-                <p><strong>الجوال:</strong> <span dir="ltr">${U().escapeHtml(u.phone)}</span></p>
+                <p><strong>الهاتف:</strong> <span dir="ltr">${U().escapeHtml(u.phone)}</span></p>
                 <p><strong>البريد:</strong> ${U().escapeHtml(u.email || '—')}</p>
                 <p><strong>آخر دخول:</strong> ${u.lastLoginAt ? U().formatDateTimeEnGb(u.lastLoginAt) : '—'}</p>
                 <p><strong>الحالة:</strong> ${u.isActive ? 'نشط' : 'معطّل'}</p>
@@ -126,7 +126,9 @@
 
     async function saveUserEdit() {
         const id = document.getElementById('userEditId').value;
+        const btn = document.querySelector('#userEditModal .btn-primary');
         try {
+            global.setBtnLoading(btn, true);
             await global.apiFetch(`/users/${id}`, 'PUT', {
                 fullName: document.getElementById('userEditFullName').value.trim(),
                 phone: document.getElementById('userEditPhone').value.trim(),
@@ -138,6 +140,7 @@
             global.showToast('✅ تم التحديث');
             fetchUsers();
         } catch (e) {
+            global.setBtnLoading(btn, false);
             global.handleApiError(e);
         }
     }
@@ -152,15 +155,16 @@
         }
     }
 
-    async function deleteUser(id) {
-        if (!confirm('تعطيل هذا الحساب؟')) return;
-        try {
-            await global.apiFetch(`/users/${id}`, 'DELETE');
-            global.showToast('✅ تم تعطيل الحساب');
-            fetchUsers();
-        } catch (e) {
-            global.handleApiError(e);
-        }
+    function deleteUser(id) {
+        global.confirmDelete('هل أنت متأكد من تعطيل/حذف هذا الحساب؟', async () => {
+            try {
+                await global.apiFetch(`/users/${id}`, 'DELETE');
+                global.showToast('✅ تم تعطيل الحساب');
+                fetchUsers();
+            } catch (e) {
+                global.handleApiError(e);
+            }
+        });
     }
 
     global.NoorUsers = {

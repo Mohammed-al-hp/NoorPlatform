@@ -5,6 +5,7 @@ using NoorPlatform.Api.Security;
 using NoorPlatform.Infrastructure.Data;
 using NoorPlatform.Core.Entities;
 using System.Security.Claims;
+using NoorPlatform.Api.Services;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -219,6 +220,7 @@ public class DashboardController : ControllerBase
 
         // ─── إصلاح متوسط: تحديد عدد السجلات المجلوبة في الذاكرة لمنع اختناق الذاكرة مع مرور الوقت ───
         var student = await _context.Students.AsNoTracking()
+            .Include(s => s.Circle!).ThenInclude(c => c.Teacher!).ThenInclude(t => t.User)
             .Include(s => s.HifzRecords.OrderByDescending(h => h.Date).Take(10))
             .Include(s => s.Attendances.OrderByDescending(a => a.Date).Take(10))
             .Include(s => s.ExamResults.OrderByDescending(e => e.Id).Take(10))
@@ -232,7 +234,7 @@ public class DashboardController : ControllerBase
               / student.Attendances.Count * 100
             : 0;
 
-        var hifzProgress = CalculateHifzProgress(student.HifzRecords);
+        var hifzProgress = HifzProgressCalculator.Calculate(student.HifzRecords);
 
         var lastRecord = student.HifzRecords
             .OrderByDescending(r => r.Date)
@@ -240,17 +242,30 @@ public class DashboardController : ControllerBase
 
         return Ok(new
         {
+            id = student.Id,
             fullName = User.Identity?.Name,
             hifzProgress,
             attendancePercentage = Math.Round(attendancePercent, 1),
             lastEvaluation = lastRecord?.Evaluation ?? "لا يوجد",
             lastSurah = lastRecord != null ? $"{lastRecord.SurahName} ({lastRecord.Verses})" : "—",
             points = student.Points,
+            teacherName = student.Circle?.Teacher?.User?.FullName ?? "—",
+            teacherRating = student.Circle?.Teacher?.AverageRating ?? 0.0,
+            circleName = student.Circle?.Name ?? "بدون حلقة",
             badges = student.Badges,
             recentGrades = student.ExamResults
                                     .OrderByDescending(r => r.Id)
                                     .Select(r => new { r.Score, r.MaxScore, r.Feedback })
-                                    .Take(5)
+                                    .Take(5),
+            recentHifz = student.HifzRecords
+                                    .OrderByDescending(r => r.Date)
+                                    .Select(r => new { Date = r.Date.ToString("yyyy-MM-dd"), r.SurahName, r.Verses, r.Evaluation })
+                                    .Take(5),
+            teacherNotes = student.HifzRecords
+                                    .OrderByDescending(r => r.Date)
+                                    .Where(r => !string.IsNullOrEmpty(r.Notes))
+                                    .Select(r => new { Date = r.Date.ToString("yyyy-MM-dd"), r.Notes, TeacherName = student.Circle?.Teacher?.User?.FullName ?? "إدارة الحلقة" })
+                                    .Take(3)
         });
     }
 
@@ -274,7 +289,7 @@ public class DashboardController : ControllerBase
         {
             c.Id,
             fullName = c.User.FullName,
-            progress = CalculateHifzProgress(c.HifzRecords),
+            progress = HifzProgressCalculator.Calculate(c.HifzRecords),
             attendance = c.Attendances.Any()
                             ? Math.Round((double)c.Attendances.Count(a => a.Status == AttendanceStatus.Present)
                               / c.Attendances.Count * 100, 1)
@@ -354,10 +369,22 @@ public class DashboardController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetLeaderboard()
     {
-        var leaderboardRaw = await _context.Students.AsNoTracking()
+        var leaderboardQuery = _context.Students.AsNoTracking().AsQueryable();
+
+        // ─── إصلاح: تقييد المحفّظ برؤية طلاب حلقته فقط ───
+        var isTeacherLeaderboard = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        if (isTeacherLeaderboard)
+        {
+            var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+            leaderboardQuery = leaderboardQuery.Where(s => s.Circle != null
+                                                         && s.Circle.Teacher != null
+                                                         && s.Circle.Teacher.UserId == userId);
+        }
+
+        var leaderboardRaw = await leaderboardQuery
             .OrderByDescending(s => s.Points)
             .Take(10)
-            .Select(s => new
+                    .Select(s => new
             {
                 studentId = s.Id,
                 fullName = s.User.FullName,
@@ -367,9 +394,7 @@ public class DashboardController : ControllerBase
                 attendanceRate = s.Attendances.Any()
                     ? Math.Round((double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present) / s.Attendances.Count * 100, 1)
                     : 0.0,
-                memorizedVerses = s.HifzRecords
-                    .Where(r => r.Type == RecordType.Memorization)
-                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0) // يعتمد على الحقل المُحدَّث
+                HifzRecordsList = s.HifzRecords.Select(r => new { r.Type, r.VerseCount, r.Verses })
             })
             .ToListAsync();
 
@@ -382,7 +407,11 @@ public class DashboardController : ControllerBase
             s.points,
             s.badges,
             s.attendanceRate,
-            hifzProgress = Math.Min((int)Math.Round((double)s.memorizedVerses / 6236 * 100), 100)
+            hifzProgress = Math.Min((int)Math.Round(
+                (double)s.HifzRecordsList
+                    .Where(r => r.Type == RecordType.Memorization)
+                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses))
+                / 6236.0 * 100), 100)
         });
 
         return Ok(leaderboard);
@@ -392,13 +421,4 @@ public class DashboardController : ControllerBase
     // Helper: حساب تقدم الحفظ الحقيقي من VerseCount
     // القرآن الكريم = 6236 آية
     // ─────────────────────────────────────────────────
-    private static int CalculateHifzProgress(IEnumerable<HifzRecord> records)
-    {
-        // تم تبسيط الاستعلام والاعتماد على VerseCount الذي تم حسابه وحفظه سابقاً في قاعدة البيانات
-        var totalVerses = records
-            .Where(r => r.Type == RecordType.Memorization)
-            .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0);
-
-        return Math.Min((int)Math.Round((double)totalVerses / 6236 * 100), 100);
-    }
 }

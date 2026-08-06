@@ -66,17 +66,24 @@
     async function fetchStudentView() {
         try {
             const data = await apiFetch('/dashboard/student-summary');
+            if (data.id) window._studentDbId = data.id;
             const stats = document.querySelectorAll('#page-studentView .stat-value');
             if (stats.length >= 4) {
                 stats[0].textContent = data.hifzProgress + '%';
                 stats[1].textContent = data.attendancePercentage + '%';
                 stats[2].textContent = data.recentGrades?.[0]?.score ?? '—';
-                stats[3].textContent = '4.8';
+                stats[3].textContent = data.teacherRating > 0 ? data.teacherRating.toFixed(1) : '—';
             }
-            const heroName = document.querySelector('#page-studentView h2');
-            if (heroName && data.fullName) heroName.textContent = data.fullName;
+            const heroName = document.getElementById('studentHeroName');
+            if (heroName) heroName.textContent = data.fullName || '—';
 
-            const heroBadges = document.querySelector('#page-studentView .hero-badges');
+            const heroAvatar = document.getElementById('studentHeroAvatar');
+            if (heroAvatar && data.fullName) heroAvatar.textContent = data.fullName.slice(0, 2);
+
+            const heroCircle = document.getElementById('studentHeroCircle');
+            if (heroCircle) heroCircle.textContent = `${data.circleName || 'بدون حلقة'} • المحفظ: ${data.teacherName || '—'}`;
+
+            const heroBadges = document.getElementById('studentHeroBadges');
             if (heroBadges) {
                 let badgesHtml = `<span class="hero-badge" style="background:var(--amber-light);color:var(--amber-dark);">🌟 ${data.points || 0} نقطة</span>`;
                 if (data.badges) {
@@ -85,82 +92,64 @@
                         if (b.trim()) badgesHtml += `<span class="hero-badge">🏆 ${escapeHtml(b.trim())}</span>`;
                     });
                 }
-                badgesHtml += `<span class="hero-badge">⭐ 4.8 / 5</span>`;
+                if (data.teacherRating > 0) {
+                    badgesHtml += `<span class="hero-badge">⭐ ${data.teacherRating.toFixed(1)} / 5</span>`;
+                }
                 heroBadges.innerHTML = badgesHtml;
             }
-        } catch { }
+
+            const hifzTbody = document.querySelector('#studentHifzTable tbody');
+            if (hifzTbody) {
+                if (data.recentHifz && data.recentHifz.length) {
+                    hifzTbody.innerHTML = data.recentHifz.map(r => {
+                        const isExcellent = r.evaluation === 'ممتاز';
+                        const isGood = r.evaluation === 'جيد';
+                        const cls = isExcellent ? 'status-excellent' : (isGood ? 'status-good' : 'status-late');
+                        return `
+                            <tr>
+                                <td>${r.date}</td>
+                                <td>${escapeHtml(r.surahName || '')}</td>
+                                <td>${escapeHtml(r.verses || '')}</td>
+                                <td><span class="status-badge ${cls}">${escapeHtml(r.evaluation || 'جيد')}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    hifzTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد سجلات تسميع</td></tr>';
+                }
+            }
+
+            const notesList = document.getElementById('studentNotesList');
+            if (notesList) {
+                if (data.teacherNotes && data.teacherNotes.length) {
+                    notesList.innerHTML = data.teacherNotes.map((n, i) => {
+                        const bg = i === 0 ? 'var(--green-light)' : 'var(--bg)';
+                        const border = i === 0 ? 'none' : '1px solid var(--border)';
+                        const color = i === 0 ? 'var(--green-dark)' : 'var(--text-muted)';
+                        return `
+                        <div style="background:${bg};border:${border};border-radius:12px;padding:12px 14px">
+                            <p style="font-size:12px;font-weight:700;color:${color};margin-bottom:4px">
+                                ${escapeHtml(n.teacherName)} • ${n.date}
+                            </p>
+                            <p style="font-size:13px;color:var(--text)">
+                                ${escapeHtml(n.notes)}
+                            </p>
+                        </div>
+                        `;
+                    }).join('');
+                } else {
+                    notesList.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:13px;">لا توجد رسائل من المحفظ</p>';
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching student view:', err);
+            if (typeof showToast === 'function') showToast('❌ تعذر تحميل بيانات الطالب');
+        }
     }
 
     // إدارة الحضور
-    function renderAttendanceTable(records) {
-        const wrap = document.getElementById('attendanceList');
-        if (!wrap) return;
-        if (!records || !records.length) {
-            wrap.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد سجلات حضور لهذا اليوم</p>';
-            return;
-        }
-        wrap.innerHTML = `
-        <table style="width:100%;border-collapse:collapse">
-            <thead>
-            <tr style="background:var(--bg);text-align:right">
-                <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الطالب</th>
-                <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">الحالة</th>
-                <th style="padding:12px 16px;font-size:13px;color:var(--text-muted)">تسجيل</th>
-            </tr>
-            </thead>
-            <tbody>
-            ${records.map(r => {
-            const labels = { Present: ['✅ حاضر', '#dcfce7', '#16a34a'], Absent: ['❌ غائب', '#fee2e2', '#dc2626'], Late: ['⏰ متأخر', '#fef9c3', '#ca8a04'] };
-            const [label, bg, color] = labels[r.status] || ['—', '#f1f5f9', '#64748b'];
-            return `
-                <tr style="border-bottom:1px solid var(--border)" id="att-row-${r.studentId}">
-                <td style="padding:12px 16px">
-                    <div style="display:flex;align-items:center;gap:10px">
-                    <div style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">
-                        ${escapeHtml((r.fullName || '').slice(0, 2))}
-                    </div>
-                    <span style="font-weight:600">${escapeHtml(r.fullName || 'طالب')}</span>
-                    </div>
-                </td>
-                <td style="padding:12px 16px" id="att-status-${r.studentId}">
-                    <span class="status-badge" style="background:${bg};color:${color}">${label}</span>
-                </td>
-                <td style="padding:12px 16px">
-                    <div style="display:flex;gap:6px">
-                    <button class="btn btn-outline" style="padding:5px 10px;font-size:12px" onclick="recordAtt(${r.studentId},'Present')">✅</button>
-                    <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#ef4444;color:#ef4444" onclick="recordAtt(${r.studentId},'Absent')">❌</button>
-                    <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;border-color:#f59e0b;color:#f59e0b" onclick="recordAtt(${r.studentId},'Late')">⏰</button>
-                    </div>
-                </td>
-                </tr>`;
-        }).join('')}
-            </tbody>
-        </table>`;
-        if (typeof updateAttendanceCounts === 'function') updateAttendanceCounts();
-    }
-
-    async function renderAttendanceCircleChips() {
-        const wrap = document.getElementById('attendanceCircleChips');
-        if (!wrap) return;
-        try {
-            const circles = await apiFetch('/circles');
-            if (!circles.length) {
-                wrap.innerHTML = '<span style="font-size:13px;color:var(--text-muted)">لا توجد حلقات</span>';
-                return;
-            }
-            wrap.innerHTML = circles.map((c, i) =>
-                `<div class="circle-chip${i === 0 ? ' active' : ''}" data-id="${c.id}" onclick="selectCircle(this)">${escapeHtml(c.name)}</div>`
-            ).join('');
-            const first = wrap.querySelector('.circle-chip');
-            if (first) {
-                if (typeof selectedCircleId !== 'undefined') {
-                    window.selectedCircleId = parseInt(first.dataset.id, 10);
-                }
-            }
-        } catch (e) {
-            wrap.innerHTML = '<span style="color:var(--text-muted)">تعذر تحميل الحلقات</span>';
-        }
-    }
+    
+    
 
     async function sendAbsenceWhatsApp(studentId) {
         try {
@@ -173,39 +162,7 @@
     }
 
     // الحلقات
-    async function saveCircle() {
-        const name = document.getElementById('circleName')?.value?.trim();
-        const teacherId = document.getElementById('circleTeacher')?.value || null;
-        const location = document.getElementById('circleLocation')?.value?.trim() || '';
-        const time = document.getElementById('circleTime')?.value?.trim() || '';
-        const capacity = parseInt(document.getElementById('circleCapacity')?.value) || 20;
-
-        if (!name) {
-            showToast('❌ يرجى إدخال اسم الحلقة');
-            return;
-        }
-        try {
-            const res = await fetch(`${API_URL}/circles`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, teacherId: teacherId ? parseInt(teacherId) : null, location, time, capacity })
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                showToast('❌ ' + (err.message || 'فشل الإنشاء'));
-                return;
-            }
-            document.getElementById('circleName').value = '';
-            document.getElementById('circleLocation').value = '';
-            document.getElementById('circleTime').value = '';
-            document.getElementById('circleCapacity').value = '';
-            closeModal('addCircleModal');
-            showToast('✅ تم إنشاء الحلقة بنجاح');
-            if (typeof fetchCircles === 'function') fetchCircles();
-        } catch {
-            showToast('❌ تعذر الاتصال بالخادم');
-        }
-    }
+    
 
     async function populateCircleTeacherSelect() {
         try {
@@ -299,12 +256,7 @@
     }
 
     // UI Helpers
-    function navBottom(page, el) {
-        document.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
-        if (el) el.classList.add('active');
-        const navEl = document.querySelector('[onclick*="navigate(\'' + page + '\'"]');
-        if (typeof navigate === 'function') navigate(page, navEl);
-    }
+    
 
     if (typeof navigate === 'function') {
         const _origNavigate = navigate;
@@ -363,7 +315,7 @@
     // PWA & Dark Mode
     let deferredPrompt;
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js?v=6').then(reg => {
+        navigator.serviceWorker.register('/sw.js?v=10').then(reg => {
             reg.addEventListener('updatefound', () => {
                 const nw = reg.installing;
                 if (!nw) return;
@@ -424,45 +376,131 @@
         showToast('افتح صفحة الحضور أولاً');
     }
 
+    // Search & Center Summary Hooks
     function searchAttendanceReports() {
-        showToast('تم جلب التقرير بنجاح 📊');
+        // Toggle inline search bar above the attendance table
+        let bar = document.getElementById('attendanceSearchBar');
+        if (!bar) {
+            // Create the search bar on first click
+            const wrap = document.getElementById('attendanceList');
+            if (!wrap) { showToast('افتح صفحة الحضور أولاً'); return; }
+            bar = document.createElement('div');
+            bar.id = 'attendanceSearchBar';
+            bar.style.cssText = 'display:flex;gap:10px;align-items:center;margin-bottom:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);';
+            bar.innerHTML = `
+                <span style="font-size:18px">🔍</span>
+                <input id="attendanceSearchInput" type="text" class="form-input"
+                       placeholder="ابحث باسم الطالب..." dir="rtl"
+                       style="flex:1;padding:8px 12px;font-size:14px;border-radius:8px">
+                <button class="btn btn-outline" style="padding:6px 12px;font-size:12px"
+                        onclick="clearAttendanceSearch()">✕ مسح</button>`;
+            wrap.parentNode.insertBefore(bar, wrap);
+
+            // Debounced real-time filter
+            const input = document.getElementById('attendanceSearchInput');
+            let timer;
+            input.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(() => filterAttendanceRows(this.value), 200);
+            });
+            input.focus();
+        } else {
+            // Toggle visibility
+            const isVisible = bar.style.display !== 'none';
+            bar.style.display = isVisible ? 'none' : 'flex';
+            if (!isVisible) {
+                const input = document.getElementById('attendanceSearchInput');
+                if (input) { input.value = ''; input.focus(); }
+                filterAttendanceRows(''); // reset filter
+            }
+        }
     }
 
-    async function printAttendance() {
-        const el = document.getElementById('attendanceList');
-        if (!el || !el.innerHTML.trim()) {
-            showToast('لا توجد بيانات لطباعتها');
-            return;
-        }
-        const hasPdf = typeof ensureHtml2Pdf === 'function' ? await ensureHtml2Pdf() : typeof html2pdf !== 'undefined';
-        if (hasPdf) {
-            const opt = {
-                margin: 10,
-                filename: 'تقرير_الحضور.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            await html2pdf().set(opt).from(el).save();
-            showToast('جاري طباعة التقرير... 🖨️');
-        } else {
-            window.print();
+    function filterAttendanceRows(query) {
+        const rows = document.querySelectorAll('#attendanceList table tbody tr');
+        const q = (query || '').trim().toLowerCase();
+        if (!rows.length) return;
+
+        rows.forEach(row => {
+            if (!q) {
+                row.style.display = '';
+                return;
+            }
+            const nameCell = row.querySelector('td:first-child');
+            const name = (nameCell?.textContent || '').toLowerCase();
+            row.style.display = name.includes(q) ? '' : 'none';
+        });
+    }
+
+    function clearAttendanceSearch() {
+        const input = document.getElementById('attendanceSearchInput');
+        if (input) input.value = '';
+        filterAttendanceRows('');
+        const bar = document.getElementById('attendanceSearchBar');
+        if (bar) bar.style.display = 'none';
+    }
+
+    async function showCenterSummary() {
+        openModal('centerSummaryModal');
+        const body = document.getElementById('centerSummaryBody');
+        if (!body) return;
+        body.innerHTML = '<div style="text-align:center;padding:20px;">⏳ جاري جلب إحصائيات المركز...</div>';
+        
+        try {
+            const res = await apiFetch('/reports/center-summary');
+            body.innerHTML = `
+                <div class="cards-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:var(--blue-light);color:var(--blue-dark)">👥</div>
+                        <div class="stat-info"><p>الطلاب</p><h3>${res.totalStudents}</h3></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:var(--green-light);color:var(--green-dark)">👨‍🏫</div>
+                        <div class="stat-info"><p>المحفظين</p><h3>${res.totalTeachers}</h3></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:var(--amber-light);color:var(--amber-dark)">⭕</div>
+                        <div class="stat-info"><p>الحلقات</p><h3>${res.totalCircles}</h3></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:var(--indigo-light);color:var(--indigo-dark)">📖</div>
+                        <div class="stat-info"><p>تسميع الشهر</p><h3>${res.monthSessions}</h3></div>
+                    </div>
+                </div>
+                <div style="margin-top:15px;text-align:center;font-size:12px;color:var(--text-muted)">
+                    تم التحديث: ${res.generatedAt}
+                </div>
+            `;
+        } catch(e) {
+            body.innerHTML = '<div style="text-align:center;color:red;padding:20px;">❌ تعذر جلب الإحصائيات</div>';
         }
     }
+
+    // Loading state helper
+    function setBtnLoading(btnId, isLoading, originalText = '') {
+        const btn = typeof btnId === 'string' ? document.getElementById(btnId) : btnId;
+        if (!btn) return;
+        if (isLoading) {
+            btn.dataset.origText = btn.innerHTML;
+            btn.innerHTML = '⏳ جاري...';
+            btn.disabled = true;
+        } else {
+            btn.innerHTML = originalText || btn.dataset.origText || 'حفظ';
+            btn.disabled = false;
+        }
+    }
+
+    
 
     global.fetchParentView = fetchParentView;
     global.fetchStudentView = fetchStudentView;
-    global.renderAttendanceTable = renderAttendanceTable;
-    global.renderAttendanceCircleChips = renderAttendanceCircleChips;
     global.sendAbsenceWhatsApp = sendAbsenceWhatsApp;
-    global.saveCircle = saveCircle;
     global.renderQuranMap = renderQuranMap;
     global.HifzRecord_ParseVerseCount = HifzRecord_ParseVerseCount;
     global.openMemModalForStudent = openMemModalForStudent;
     global.confirmDelete = confirmDelete;
     global.executeDelete = executeDelete;
     global.handleGlobalSearch = handleGlobalSearch;
-    global.navBottom = navBottom;
     global.toggleFab = toggleFab;
     global.updateTopbarAvatar = updateTopbarAvatar;
     global.installPWA = installPWA;
@@ -470,5 +508,8 @@
     global.markAllPresent = markAllPresent;
     global.saveAttendance = saveAttendance;
     global.searchAttendanceReports = searchAttendanceReports;
-    global.printAttendance = printAttendance;
+    global.filterAttendanceRows = filterAttendanceRows;
+    global.clearAttendanceSearch = clearAttendanceSearch;
+    global.showCenterSummary = showCenterSummary;
+    global.setBtnLoading = setBtnLoading;
 })(window);

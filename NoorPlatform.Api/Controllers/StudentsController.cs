@@ -31,7 +31,7 @@ public class StudentsController : ControllerBase
     {
         var query = StudentQueryHelper.ScopeForUser(_context, User);
 
-        var result = await query.Select(s => new
+        var rawResult = await query.Select(s => new
         {
             s.Id,
             fullName = s.User.FullName,
@@ -45,11 +45,24 @@ public class StudentsController : ControllerBase
                     (double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present)
                     / s.Attendances.Count * 100)
                 : 0,
-            progress = (int)Math.Min(100, Math.Round(
-                (double)s.HifzRecords
-                    .Where(r => r.Type == RecordType.Memorization)
-                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : 0) / 6236.0 * 100))
+            HifzRecordsList = s.HifzRecords.Select(r => new { r.Type, r.VerseCount, r.Verses })
         }).ToListAsync();
+
+        var result = rawResult.Select(s => new
+        {
+            s.Id,
+            s.fullName,
+            s.Email,
+            s.ParentPhone,
+            s.CircleId,
+            s.circleName,
+            s.Level,
+            s.attendance,
+            progress = Math.Min(100, (int)Math.Round(
+                (double)s.HifzRecordsList
+                    .Where(r => r.Type == RecordType.Memorization)
+                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses)) / 6236.0 * 100))
+        });
 
         return Ok(result);
     }
@@ -103,7 +116,7 @@ public class StudentsController : ControllerBase
                     (double)student.Attendances.Count(a => a.Status == AttendanceStatus.Present)
                     / student.Attendances.Count * 100)
                 : 0,
-            progress = CalculateHifzProgress(student.HifzRecords),
+            progress = HifzProgressCalculator.Calculate(student.HifzRecords),
             recentHifz = student.HifzRecords
                                 .OrderByDescending(r => r.Date)
                                 .Take(5)
@@ -120,6 +133,19 @@ public class StudentsController : ControllerBase
             request.ParentPhone, request.GuardianRelationship, request.RegistrationDate);
         if (validationError != null)
             return BadRequest(new { message = validationError });
+
+        // ─── إصلاح: منع المحفّظ من إضافة طالب لحلقة خارج نطاقه ───
+        var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        if (isTeacher && request.CircleId.HasValue)
+        {
+            var ownsCircle = await _context.Circles.AnyAsync(c =>
+                c.Id == request.CircleId.Value &&
+                c.Teacher != null &&
+                c.Teacher.UserId == int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!));
+
+            if (!ownsCircle)
+                return Forbid();
+        }
 
         var loginPhone = string.IsNullOrWhiteSpace(request.Phone)
             ? request.ParentPhone
@@ -154,7 +180,6 @@ public class StudentsController : ControllerBase
             UserId = user.Id,
             Level = request.Level ?? "مبتدئ",
             CircleId = request.CircleId,
-            ParentId = parent?.Id ?? request.ParentId,
             ParentPhone = AccountProvisioningService.NormalizePhone(request.ParentPhone),
             GuardianName = request.GuardianName.Trim(),
             GuardianRelationship = relationship,
@@ -163,6 +188,17 @@ public class StudentsController : ControllerBase
             StudentPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : AccountProvisioningService.NormalizePhone(request.Phone),
             Residence = string.IsNullOrWhiteSpace(request.Residence) ? null : request.Residence.Trim()
         };
+
+        // ─── إصلاح حرج: استخدام خاصية العلاقة (Navigation) بدل الـ Id الخام
+        // لأن parent الجديد لم يُحفظ بعد (Id = 0)، وربط الـ FK مباشرة يسبب فشل الحفظ ───
+        if (parent != null)
+        {
+            student.Parent = parent;
+        }
+        else if (request.ParentId.HasValue)
+        {
+            student.ParentId = request.ParentId;
+        }
 
         _context.Students.Add(student);
 
@@ -341,17 +377,6 @@ public class StudentsController : ControllerBase
     // ─────────────────────────────────────────────────
     // Helper: حساب نسبة تقدم الحفظ الحقيقية
     // ─────────────────────────────────────────────────
-    private static int CalculateHifzProgress(IEnumerable<HifzRecord> records)
-    {
-        // ✅ إصلاح 1: نجمع الآيات الفعلية
-        var totalVerses = records
-            .Where(r => r.Type == RecordType.Memorization)
-            .Sum(r => r.VerseCount > 0
-                        ? r.VerseCount
-                        : HifzRecord.ParseVerseCount(r.Verses));
-
-        return Math.Min((int)Math.Round((double)totalVerses / 6236 * 100), 100);
-    }
 }
 
 // Request Models

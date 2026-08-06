@@ -58,7 +58,7 @@ public class PaymentsController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var parent = await _context.Parents.FirstOrDefaultAsync(p => p.UserId == userId);
-        if (parent == null) return NotFound("Parent not found");
+        if (parent == null) return NotFound(new { message = "لم يُعثر على بيانات ولي الأمر" });
 
         var payments = await _context.Payments
             .Include(p => p.Student).ThenInclude(s => s.User)
@@ -97,9 +97,9 @@ public class PaymentsController : ControllerBase
             return BadRequest(new { message = "المبلغ يجب أن يكون أكبر من صفر" });
 
         var student = await _context.Students.FindAsync(dto.StudentId);
-        if (student == null) return NotFound("Student not found");
+        if (student == null) return NotFound(new { message = "الطالب غير موجود" });
 
-        if (student.ParentId == null) return BadRequest("Student has no parent assigned");
+        if (student.ParentId == null) return BadRequest(new { message = "الطالب غير مرتبط بولي أمر" });
 
         var payment = new Payment
         {
@@ -132,7 +132,7 @@ public class PaymentsController : ControllerBase
         if (parent == null) return Unauthorized();
 
         var payment = await _context.Payments.FirstOrDefaultAsync(p => p.Id == id && p.ParentId == parent.Id);
-        if (payment == null) return NotFound("Payment not found");
+        if (payment == null) return NotFound(new { message = "الفاتورة غير موجودة" });
 
         if (payment.Status == PaymentStatus.Paid)
             return BadRequest("الفاتورة مدفوعة مسبقاً");

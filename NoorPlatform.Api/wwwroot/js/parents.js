@@ -92,7 +92,7 @@
 
             global.setModalBody('parentDetailBody', `
                 <p><strong>الاسم:</strong> ${U().escapeHtml(p.fullName)}</p>
-                <p><strong>الجوال:</strong> <span dir="ltr">${U().escapeHtml(p.phone)}</span></p>
+                <p><strong>الهاتف:</strong> <span dir="ltr">${U().escapeHtml(p.phone)}</span></p>
                 <p><strong>الحساب:</strong> <span dir="ltr">${U().escapeHtml(p.accountPhone)}</span></p>
                 <p><strong>الحالة:</strong> ${p.isActive ? 'نشط' : 'معطّل'}</p>
                 <p><strong>يجب تغيير كلمة المرور:</strong> ${p.mustChangePassword ? 'نعم' : 'لا'}</p>
@@ -152,11 +152,13 @@
         const childIds = [...document.querySelectorAll('#parentChildrenCheckboxes input:checked')].map(cb => parseInt(cb.value, 10));
 
         if (!fullName || !phone) {
-            global.showToast('❌ الاسم والجوال مطلوبان');
+            global.showToast('❌ الاسم والهاتف مطلوبان');
             return;
         }
 
+        const btn = document.querySelector('#parentFormModal .btn-primary');
         try {
+            global.setBtnLoading(btn, true);
             if (id) {
                 await global.apiFetch(`/parents/${id}`, 'PUT', { fullName, phone, childStudentIds: childIds });
                 global.showToast('✅ تم تحديث ولي الأمر');
@@ -171,18 +173,21 @@
             fetchParents();
         } catch (e) {
             global.showToast('❌ ' + (e.message || 'فشل الحفظ'));
+        } finally {
+            global.setBtnLoading(btn, false);
         }
     }
 
-    async function deleteParent(id) {
-        if (!confirm('حذف ولي الأمر وفك ربط الأبناء؟')) return;
-        try {
-            await global.apiFetch(`/parents/${id}`, 'DELETE');
-            global.showToast('✅ تم الحذف');
-            fetchParents();
-        } catch (e) {
-            global.showToast('❌ تعذر الحذف');
-        }
+    function deleteParent(id) {
+        global.confirmDelete('أرشفة ولي الأمر وفك ربط الأبناء؟ (يمكن استعادته لاحقًا)', async () => {
+            try {
+                await global.apiFetch(`/parents/${id}`, 'DELETE');
+                global.showToast('✅ تم الحذف');
+                fetchParents();
+            } catch (e) {
+                global.showToast('❌ تعذر الحذف');
+            }
+        });
     }
 
     global.NoorParents = {

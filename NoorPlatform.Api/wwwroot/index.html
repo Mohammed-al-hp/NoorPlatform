@@ -12,9 +12,8 @@
     <link rel="apple-touch-icon" href="/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap"
+          rel="stylesheet" media="print" onload="this.media='all'">
     <noscript>
         <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     </noscript>
@@ -28,6 +27,7 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#10b981">
     <link rel="stylesheet" href="/css/responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -82,30 +82,30 @@
             text-align: center;
         }
 
-        .login-card h2 {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            color: var(--text);
-        }
+            .login-card h2 {
+                font-size: 24px;
+                font-weight: 800;
+                margin-bottom: 8px;
+                color: var(--text);
+            }
 
-        .login-card p {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 32px;
-        }
+            .login-card p {
+                font-size: 14px;
+                color: var(--text-muted);
+                margin-bottom: 32px;
+            }
 
         .form-group {
             text-align: right;
             margin-bottom: 20px;
         }
 
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
+            .form-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
 
         .form-control {
             width: 100%;
@@ -117,10 +117,10 @@
             outline: none;
         }
 
-        .form-control:focus {
-            border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
+            .form-control:focus {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            }
 
         .login-footer {
             margin-top: 24px;
@@ -128,11 +128,11 @@
             color: var(--text-muted);
         }
 
-        .login-footer a {
-            color: var(--green);
-            font-weight: 700;
-            text-decoration: none;
-        }
+            .login-footer a {
+                color: var(--green);
+                font-weight: 700;
+                text-decoration: none;
+            }
 
         * {
             margin: 0;
@@ -251,10 +251,10 @@
             transition: .2s;
         }
 
-        .role-switch:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
+            .role-switch:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+            }
 
         /* Nav */
         .nav {
@@ -264,9 +264,9 @@
             scrollbar-width: none;
         }
 
-        .nav::-webkit-scrollbar {
-            display: none;
-        }
+            .nav::-webkit-scrollbar {
+                display: none;
+            }
 
         .nav-section {
             margin-bottom: 8px;
@@ -296,27 +296,27 @@
             margin-bottom: 2px;
         }
 
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.85);
-        }
+            .nav-item:hover {
+                background: rgba(255, 255, 255, 0.06);
+                color: rgba(255, 255, 255, 0.85);
+            }
 
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--green);
-        }
+            .nav-item.active {
+                background: rgba(16, 185, 129, 0.15);
+                color: var(--green);
+            }
 
-        .nav-item.active::before {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 22px;
-            background: var(--green);
-            border-radius: 3px 0 0 3px;
-        }
+                .nav-item.active::before {
+                    content: '';
+                    position: absolute;
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 3px;
+                    height: 22px;
+                    background: var(--green);
+                    border-radius: 3px 0 0 3px;
+                }
 
         .nav-icon {
             width: 36px;
@@ -369,10 +369,10 @@
             transition: .25s;
         }
 
-        .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
+            .logout-btn:hover {
+                background: rgba(239, 68, 68, 0.15);
+                color: #ef4444;
+            }
 
         /* ===== MAIN ===== */
         .main {
@@ -412,24 +412,24 @@
             transition: .2s;
         }
 
-        .menu-toggle:hover {
-            background: var(--green-light);
-        }
+            .menu-toggle:hover {
+                background: var(--green-light);
+            }
 
         .topbar-title {
             flex: 1;
         }
 
-        .topbar-title h2 {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--text);
-        }
+            .topbar-title h2 {
+                font-size: 20px;
+                font-weight: 800;
+                color: var(--text);
+            }
 
-        .topbar-title p {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
+            .topbar-title p {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
 
         .topbar-actions {
             display: flex;
@@ -448,24 +448,24 @@
             transition: .25s;
         }
 
-        .search-box:focus-within {
-            border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
+            .search-box:focus-within {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            }
 
-        .search-box input {
-            border: none;
-            background: none;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 13px;
-            color: var(--text);
-            outline: none;
-            width: 180px;
-        }
+            .search-box input {
+                border: none;
+                background: none;
+                font-family: 'Tajawal', sans-serif;
+                font-size: 13px;
+                color: var(--text);
+                outline: none;
+                width: 180px;
+            }
 
-        .search-box input::placeholder {
-            color: var(--text-muted);
-        }
+                .search-box input::placeholder {
+                    color: var(--text-muted);
+                }
 
         .icon-btn {
             width: 42px;
@@ -482,10 +482,10 @@
             position: relative;
         }
 
-        .icon-btn:hover {
-            background: var(--bg);
-            border-color: var(--green);
-        }
+            .icon-btn:hover {
+                background: var(--bg);
+                border-color: var(--green);
+            }
 
         .notif-dot {
             position: absolute;
@@ -505,9 +505,9 @@
             display: none;
         }
 
-        .content.active {
-            display: block;
-        }
+            .content.active {
+                display: block;
+            }
 
         /* ===== DASHBOARD ===== */
         .stat-grid {
@@ -529,37 +529,37 @@
             cursor: default;
         }
 
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-lg);
-        }
+            .stat-card:hover {
+                transform: translateY(-3px);
+                box-shadow: var(--shadow-lg);
+            }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 80px;
-            height: 80px;
-            border-radius: 0 var(--radius) 0 80px;
-            opacity: 0.08;
-        }
+            .stat-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 80px;
+                height: 80px;
+                border-radius: 0 var(--radius) 0 80px;
+                opacity: 0.08;
+            }
 
-        .stat-card.green::before {
-            background: var(--green);
-        }
+            .stat-card.green::before {
+                background: var(--green);
+            }
 
-        .stat-card.blue::before {
-            background: var(--blue);
-        }
+            .stat-card.blue::before {
+                background: var(--blue);
+            }
 
-        .stat-card.teal::before {
-            background: var(--teal);
-        }
+            .stat-card.teal::before {
+                background: var(--teal);
+            }
 
-        .stat-card.purple::before {
-            background: #8b5cf6;
-        }
+            .stat-card.purple::before {
+                background: #8b5cf6;
+            }
 
         .stat-icon {
             width: 52px;
@@ -657,17 +657,17 @@
             margin-bottom: 20px;
         }
 
-        .card-header h3 {
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--text);
-        }
+            .card-header h3 {
+                font-size: 15px;
+                font-weight: 800;
+                color: var(--text);
+            }
 
-        .card-header p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
+            .card-header p {
+                font-size: 12px;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
 
         .card-action {
             background: var(--bg);
@@ -681,10 +681,10 @@
             transition: .2s;
         }
 
-        .card-action:hover {
-            color: var(--green);
-            border-color: var(--green);
-        }
+            .card-action:hover {
+                color: var(--green);
+                border-color: var(--green);
+            }
 
         /* Simple bar chart */
         .bar-chart {
@@ -709,9 +709,9 @@
             cursor: pointer;
         }
 
-        .bar:hover {
-            opacity: 0.8;
-        }
+            .bar:hover {
+                opacity: 0.8;
+            }
 
         .bar-label {
             font-size: 10px;
@@ -768,11 +768,11 @@
             margin-bottom: 24px;
         }
 
-        .table-card .card-header {
-            padding: 18px 22px;
-            margin: 0;
-            border-bottom: 1px solid var(--border);
-        }
+            .table-card .card-header {
+                padding: 18px 22px;
+                margin: 0;
+                border-bottom: 1px solid var(--border);
+            }
 
         table {
             width: 100%;
@@ -794,9 +794,9 @@
             transition: background .15s;
         }
 
-        tbody tr:hover {
-            background: var(--bg);
-        }
+            tbody tr:hover {
+                background: var(--bg);
+            }
 
         tbody td {
             padding: 14px 18px;
@@ -839,20 +839,20 @@
             font-weight: 700;
         }
 
-        .status-badge.sb-paid {
-            background: rgba(16, 185, 129, 0.1);
-            color: #059669;
-        }
+            .status-badge.sb-paid {
+                background: rgba(16, 185, 129, 0.1);
+                color: #059669;
+            }
 
-        .status-badge.sb-unpaid {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-        }
+            .status-badge.sb-unpaid {
+                background: rgba(239, 68, 68, 0.1);
+                color: #dc2626;
+            }
 
-        .status-badge.sb-pending {
-            background: rgba(245, 158, 11, 0.1);
-            color: #d97706;
-        }
+            .status-badge.sb-pending {
+                background: rgba(245, 158, 11, 0.1);
+                color: #d97706;
+            }
 
         .status-present {
             background: var(--green-light);
@@ -917,16 +917,16 @@
             margin-bottom: 24px;
         }
 
-        .page-header h2 {
-            font-size: 22px;
-            font-weight: 800;
-        }
+            .page-header h2 {
+                font-size: 22px;
+                font-weight: 800;
+            }
 
-        .page-header p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
+            .page-header p {
+                font-size: 13px;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
 
         .btn {
             display: inline-flex;
@@ -948,10 +948,10 @@
             box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
-        }
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+            }
 
         .btn-outline {
             background: #fff;
@@ -959,10 +959,10 @@
             border: 1px solid var(--border);
         }
 
-        .btn-outline:hover {
-            border-color: var(--green);
-            color: var(--green);
-        }
+            .btn-outline:hover {
+                border-color: var(--green);
+                color: var(--green);
+            }
 
         .btn-danger {
             background: #fee2e2;
@@ -970,10 +970,10 @@
             border: none;
         }
 
-        .btn-danger:hover {
-            background: #dc2626;
-            color: #fff;
-        }
+            .btn-danger:hover {
+                background: #dc2626;
+                color: #fff;
+            }
 
         /* Filter bar */
         .filter-bar {
@@ -997,10 +997,10 @@
             transition: .2s;
         }
 
-        .filter-select:focus {
-            border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
+            .filter-select:focus {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            }
 
         /* Cards grid */
         .cards-grid {
@@ -1019,10 +1019,10 @@
             cursor: pointer;
         }
 
-        .student-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
+            .student-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-lg);
+            }
 
         .student-card-top {
             display: flex;
@@ -1068,30 +1068,30 @@
             padding: 10px 12px;
         }
 
-        .mini-stat label {
-            font-size: 10px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
+            .mini-stat label {
+                font-size: 10px;
+                color: var(--text-muted);
+                font-weight: 600;
+            }
 
-        .mini-stat p {
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--text);
-            margin-top: 2px;
-        }
+            .mini-stat p {
+                font-size: 15px;
+                font-weight: 800;
+                color: var(--text);
+                margin-top: 2px;
+            }
 
         .student-card-actions {
             display: flex;
             gap: 8px;
         }
 
-        .student-card-actions .btn {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 12px;
-            justify-content: center;
-        }
+            .student-card-actions .btn {
+                flex: 1;
+                padding: 8px 12px;
+                font-size: 12px;
+                justify-content: center;
+            }
 
         /* ===== ATTENDANCE PAGE ===== */
         .attendance-header {
@@ -1103,10 +1103,10 @@
             margin-bottom: 24px;
         }
 
-        .attendance-header > div:first-child {
-            flex: 1 1 280px;
-            min-width: 0;
-        }
+            .attendance-header > div:first-child {
+                flex: 1 1 280px;
+                min-width: 0;
+            }
 
         .date-nav {
             display: flex;
@@ -1151,10 +1151,10 @@
             transition: .2s;
         }
 
-        .date-nav button:hover {
-            border-color: var(--green);
-            color: var(--green);
-        }
+            .date-nav button:hover {
+                border-color: var(--green);
+                color: var(--green);
+            }
 
         .date-nav span {
             font-size: 15px;
@@ -1183,17 +1183,17 @@
             font-family: 'Tajawal', sans-serif;
         }
 
-        .circle-chip.active {
-            background: var(--gradient);
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
+            .circle-chip.active {
+                background: var(--gradient);
+                color: #fff;
+                border-color: transparent;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            }
 
-        .circle-chip:hover:not(.active) {
-            border-color: var(--green);
-            color: var(--green);
-        }
+            .circle-chip:hover:not(.active) {
+                border-color: var(--green);
+                color: var(--green);
+            }
 
         .attendance-table-wrap {
             background: var(--card);
@@ -1212,13 +1212,13 @@
             gap: 16px;
         }
 
-        .att-row:last-child {
-            border-bottom: none;
-        }
+            .att-row:last-child {
+                border-bottom: none;
+            }
 
-        .att-row:hover {
-            background: var(--bg);
-        }
+            .att-row:hover {
+                background: var(--bg);
+            }
 
         .att-num {
             width: 28px;
@@ -1264,24 +1264,24 @@
             justify-content: center;
         }
 
-        .att-btn:hover {
-            transform: scale(1.1);
-        }
+            .att-btn:hover {
+                transform: scale(1.1);
+            }
 
-        .att-btn.present {
-            border-color: var(--green);
-            background: var(--green-light);
-        }
+            .att-btn.present {
+                border-color: var(--green);
+                background: var(--green-light);
+            }
 
-        .att-btn.absent {
-            border-color: #ef4444;
-            background: #fee2e2;
-        }
+            .att-btn.absent {
+                border-color: #ef4444;
+                background: #fee2e2;
+            }
 
-        .att-btn.late {
-            border-color: #f59e0b;
-            background: #fef3c7;
-        }
+            .att-btn.late {
+                border-color: #f59e0b;
+                background: #fef3c7;
+            }
 
         /* ===== MEMORIZATION PAGE ===== */
         .memorize-layout {
@@ -1307,13 +1307,13 @@
             transition: background .15s;
         }
 
-        .surah-item:last-child {
-            border-bottom: none;
-        }
+            .surah-item:last-child {
+                border-bottom: none;
+            }
 
-        .surah-item:hover {
-            background: var(--bg);
-        }
+            .surah-item:hover {
+                background: var(--bg);
+            }
 
         .surah-num {
             width: 36px;
@@ -1333,11 +1333,11 @@
             flex: 1;
         }
 
-        .surah-info h4 {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
+            .surah-info h4 {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 6px;
+            }
 
         .surah-status {
             font-size: 11px;
@@ -1406,10 +1406,10 @@
             transition: transform .25s;
         }
 
-        .exam-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
+            .exam-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-lg);
+            }
 
         .exam-icon {
             width: 54px;
@@ -1428,16 +1428,16 @@
             flex: 1;
         }
 
-        .exam-info h4 {
-            font-size: 15px;
-            font-weight: 800;
-            margin-bottom: 4px;
-        }
+            .exam-info h4 {
+                font-size: 15px;
+                font-weight: 800;
+                margin-bottom: 4px;
+            }
 
-        .exam-info p {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
+            .exam-info p {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
 
         .exam-meta {
             display: flex;
@@ -1471,16 +1471,16 @@
             text-align: center;
         }
 
-        .exam-score .score-val {
-            font-size: 26px;
-            font-weight: 900;
-            color: var(--green-dark);
-        }
+            .exam-score .score-val {
+                font-size: 26px;
+                font-weight: 900;
+                color: var(--green-dark);
+            }
 
-        .exam-score .score-max {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
+            .exam-score .score-max {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
 
         /* ===== ANNOUNCEMENTS ===== */
         .ann-list {
@@ -1500,10 +1500,10 @@
             cursor: pointer;
         }
 
-        .ann-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
+            .ann-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-lg);
+            }
 
         .ann-indicator {
             width: 4px;
@@ -1523,16 +1523,16 @@
             margin-bottom: 6px;
         }
 
-        .ann-card-top h4 {
-            font-size: 14px;
-            font-weight: 800;
-            flex: 1;
-        }
+            .ann-card-top h4 {
+                font-size: 14px;
+                font-weight: 800;
+                flex: 1;
+            }
 
-        .ann-card-top time {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
+            .ann-card-top time {
+                font-size: 11px;
+                color: var(--text-muted);
+            }
 
         .ann-card-content p {
             font-size: 13px;
@@ -1559,9 +1559,9 @@
             padding: 20px;
         }
 
-        .modal-overlay.open {
-            display: flex;
-        }
+            .modal-overlay.open {
+                display: flex;
+            }
 
         .modal {
             background: var(--card);
@@ -1594,10 +1594,10 @@
             justify-content: space-between;
         }
 
-        .modal-header h3 {
-            font-size: 18px;
-            font-weight: 800;
-        }
+            .modal-header h3 {
+                font-size: 18px;
+                font-weight: 800;
+            }
 
         .modal-close {
             width: 36px;
@@ -1613,11 +1613,11 @@
             justify-content: center;
         }
 
-        .modal-close:hover {
-            background: #fee2e2;
-            color: #dc2626;
-            border-color: #dc2626;
-        }
+            .modal-close:hover {
+                background: #fee2e2;
+                color: #dc2626;
+                border-color: #dc2626;
+            }
 
         .modal-body {
             padding: 22px 24px;
@@ -1656,10 +1656,10 @@
             transition: .2s;
         }
 
-        .form-input:focus {
-            border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
+            .form-input:focus {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            }
 
         .form-row {
             display: grid;
@@ -1696,16 +1696,16 @@
             gap: 8px;
         }
 
-        .role-tab.active {
-            background: var(--gradient);
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
+            .role-tab.active {
+                background: var(--gradient);
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            }
 
-        .role-tab:not(.active):hover {
-            background: var(--bg);
-            color: var(--text);
-        }
+            .role-tab:not(.active):hover {
+                background: var(--bg);
+                color: var(--text);
+            }
 
         /* ===== STUDENT VIEW (for student/parent) ===== */
         .student-profile-hero {
@@ -1722,15 +1722,15 @@
             box-shadow: var(--shadow-lg);
         }
 
-        .student-profile-hero::before {
-            content: '📖';
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 100px;
-            opacity: 0.08;
-        }
+            .student-profile-hero::before {
+                content: '📖';
+                position: absolute;
+                left: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 100px;
+                opacity: 0.08;
+            }
 
         .hero-avatar {
             width: 80px;
@@ -1847,9 +1847,9 @@
                 transform: translateX(100%);
             }
 
-            .sidebar.open {
-                transform: translateX(0);
-            }
+                .sidebar.open {
+                    transform: translateX(0);
+                }
 
             .main {
                 margin-right: 0;
@@ -1904,9 +1904,9 @@
             border-radius: 3px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--text-muted);
+            }
 
         /* Overlay for mobile */
         .sidebar-overlay {
@@ -1917,9 +1917,9 @@
             display: none;
         }
 
-        .sidebar-overlay.open {
-            display: block;
-        }
+            .sidebar-overlay.open {
+                display: block;
+            }
 
         /* ══════════════════════════════════════════════════
            🎨 UI OVERRIDES — تحسينات الهوية البصرية
@@ -1934,31 +1934,31 @@
             padding: 20px;
         }
 
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            left: 0;
-            height: 3px;
-            border-radius: 0 0 var(--radius) var(--radius);
-        }
+            .stat-card::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                height: 3px;
+                border-radius: 0 0 var(--radius) var(--radius);
+            }
 
-        .stat-card.green::after {
-            background: #10b981;
-        }
+            .stat-card.green::after {
+                background: #10b981;
+            }
 
-        .stat-card.blue::after {
-            background: #3b82f6;
-        }
+            .stat-card.blue::after {
+                background: #3b82f6;
+            }
 
-        .stat-card.teal::after {
-            background: #8b5cf6;
-        }
+            .stat-card.teal::after {
+                background: #8b5cf6;
+            }
 
-        .stat-card.purple::after {
-            background: #f59e0b;
-        }
+            .stat-card.purple::after {
+                background: #f59e0b;
+            }
 
         .stat-card-body {
             flex: 1;
@@ -1979,10 +1979,10 @@
             border: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        .student-card:hover {
-            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
-            border-color: rgba(16, 185, 129, 0.2);
-        }
+            .student-card:hover {
+                box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+                border-color: rgba(16, 185, 129, 0.2);
+            }
 
         /* ── شريط البحث في صفحة الطلاب ── */
         .students-search-bar {
@@ -2005,9 +2005,9 @@
             direction: rtl;
         }
 
-        .students-search-input::placeholder {
-            color: var(--text-muted);
-        }
+            .students-search-input::placeholder {
+                color: var(--text-muted);
+            }
 
         .search-row {
             display: flex;
@@ -2018,10 +2018,10 @@
             margin-bottom: 12px;
         }
 
-        .search-row svg {
-            flex-shrink: 0;
-            opacity: 0.4;
-        }
+            .search-row svg {
+                flex-shrink: 0;
+                opacity: 0.4;
+            }
 
         /* ── Filter Chips (مثل الصورة: "مستجد", "ذكر", "أسامة") ── */
         .filter-chips {
@@ -2033,9 +2033,9 @@
             padding-bottom: 2px;
         }
 
-        .filter-chips::-webkit-scrollbar {
-            display: none;
-        }
+            .filter-chips::-webkit-scrollbar {
+                display: none;
+            }
 
         .filter-chip {
             display: flex;
@@ -2054,29 +2054,29 @@
             color: var(--text);
         }
 
-        .filter-chip:hover {
-            border-color: var(--green);
-            color: var(--green);
-        }
+            .filter-chip:hover {
+                border-color: var(--green);
+                color: var(--green);
+            }
 
-        .filter-chip.active {
-            background: var(--green);
-            color: #fff;
-            border-color: var(--green);
-        }
+            .filter-chip.active {
+                background: var(--green);
+                color: #fff;
+                border-color: var(--green);
+            }
 
-        .filter-chip select {
-            border: none;
-            background: none;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            outline: none;
-            color: inherit;
-            appearance: none;
-            -webkit-appearance: none;
-        }
+            .filter-chip select {
+                border: none;
+                background: none;
+                font-family: 'Tajawal', sans-serif;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                outline: none;
+                color: inherit;
+                appearance: none;
+                -webkit-appearance: none;
+            }
 
         /* ── بطاقات الطالب: أزرار عرض/تعديل/حذف بالألوان ── */
         .btn-view {
@@ -2147,11 +2147,11 @@
             transform: translateY(12px) scale(0.96);
         }
 
-        .fab-menu.open {
-            pointer-events: all;
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
+            .fab-menu.open {
+                pointer-events: all;
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
 
         .fab-menu-item {
             display: flex;
@@ -2172,30 +2172,30 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .fab-menu-item:hover {
-            background: var(--green);
-            color: #fff;
-            border-color: var(--green);
-        }
+            .fab-menu-item:hover {
+                background: var(--green);
+                color: #fff;
+                border-color: var(--green);
+            }
 
-        .fab-menu-item .fmi-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--green-light);
-            color: var(--green-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
-            transition: .2s;
-        }
+            .fab-menu-item .fmi-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: var(--green-light);
+                color: var(--green-dark);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                flex-shrink: 0;
+                transition: .2s;
+            }
 
-        .fab-menu-item:hover .fmi-icon {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
+            .fab-menu-item:hover .fmi-icon {
+                background: rgba(255, 255, 255, 0.2);
+                color: #fff;
+            }
 
         .fab-btn {
             width: 54px;
@@ -2214,16 +2214,16 @@
             color: #fff;
         }
 
-        .fab-btn:hover {
-            transform: scale(1.08);
-            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.55);
-        }
+            .fab-btn:hover {
+                transform: scale(1.08);
+                box-shadow: 0 8px 32px rgba(16, 185, 129, 0.55);
+            }
 
-        .fab-btn.open {
-            transform: rotate(45deg);
-            background: linear-gradient(135deg, #ef4444, #f97316);
-            box-shadow: 0 6px 24px rgba(239, 68, 68, 0.4);
-        }
+            .fab-btn.open {
+                transform: rotate(45deg);
+                background: linear-gradient(135deg, #ef4444, #f97316);
+                box-shadow: 0 6px 24px rgba(239, 68, 68, 0.4);
+            }
 
         /* إخفاء FAB على الديسكتوب */
         @media (min-width: 769px) {
@@ -2251,16 +2251,16 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .daily-notif-header h3 {
-            font-size: 15px;
-            font-weight: 800;
-        }
+            .daily-notif-header h3 {
+                font-size: 15px;
+                font-weight: 800;
+            }
 
-        .daily-notif-header p {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
+            .daily-notif-header p {
+                font-size: 11px;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
 
         .notif-bell-btn {
             width: 40px;
@@ -2276,9 +2276,9 @@
             transition: .2s;
         }
 
-        .notif-bell-btn:hover {
-            background: var(--green);
-        }
+            .notif-bell-btn:hover {
+                background: var(--green);
+            }
 
         .notif-timeline {
             padding: 0 22px;
@@ -2293,9 +2293,9 @@
             align-items: flex-start;
         }
 
-        .notif-item:last-child {
-            border-bottom: none;
-        }
+            .notif-item:last-child {
+                border-bottom: none;
+            }
 
         .notif-dot-wrap {
             display: flex;
@@ -2318,17 +2318,17 @@
             flex-shrink: 0;
         }
 
-        .notif-dot.nd-blue {
-            background: #dbeafe;
-        }
+            .notif-dot.nd-blue {
+                background: #dbeafe;
+            }
 
-        .notif-dot.nd-amber {
-            background: #fef3c7;
-        }
+            .notif-dot.nd-amber {
+                background: #fef3c7;
+            }
 
-        .notif-dot.nd-red {
-            background: #fee2e2;
-        }
+            .notif-dot.nd-red {
+                background: #fee2e2;
+            }
 
         .notif-line {
             width: 2px;
@@ -2451,17 +2451,17 @@
             background: rgba(16, 185, 129, 0.2);
         }
 
-        body.dark-mode .notif-dot.nd-blue {
-            background: rgba(59, 130, 246, 0.2);
-        }
+            body.dark-mode .notif-dot.nd-blue {
+                background: rgba(59, 130, 246, 0.2);
+            }
 
-        body.dark-mode .notif-dot.nd-amber {
-            background: rgba(245, 158, 11, 0.2);
-        }
+            body.dark-mode .notif-dot.nd-amber {
+                background: rgba(245, 158, 11, 0.2);
+            }
 
-        body.dark-mode .notif-dot.nd-red {
-            background: rgba(239, 68, 68, 0.2);
-        }
+            body.dark-mode .notif-dot.nd-red {
+                background: rgba(239, 68, 68, 0.2);
+            }
 
         /* ─── الوضع الليلي ─── */
         body.dark-mode {
@@ -2482,9 +2482,9 @@
             user-select: none;
         }
 
-        .dark-toggle:hover {
-            transform: scale(1.2);
-        }
+            .dark-toggle:hover {
+                transform: scale(1.2);
+            }
 
         /* ─── خريطة الحفظ ─── */
         .quran-map {
@@ -2522,36 +2522,36 @@
             gap: 2px;
         }
 
-        .surah-cell:hover {
-            transform: scale(1.05);
-        }
+            .surah-cell:hover {
+                transform: scale(1.05);
+            }
 
-        .surah-cell.memorized {
-            background: #dcfce7;
-            color: #15803d;
-            border-color: #86efac;
-        }
+            .surah-cell.memorized {
+                background: #dcfce7;
+                color: #15803d;
+                border-color: #86efac;
+            }
 
-        .surah-cell.partial {
-            background: #fef9c3;
-            color: #854d0e;
-            border-color: #fde047;
-        }
+            .surah-cell.partial {
+                background: #fef9c3;
+                color: #854d0e;
+                border-color: #fde047;
+            }
 
-        .surah-cell.empty {
-            background: var(--bg-secondary);
-            color: var(--text-muted);
-            border-color: var(--border);
-        }
+            .surah-cell.empty {
+                background: var(--bg-secondary);
+                color: var(--text-muted);
+                border-color: var(--border);
+            }
 
-        .surah-cell .surah-num {
-            font-size: 9px;
-            opacity: .7;
-        }
+            .surah-cell .surah-num {
+                font-size: 9px;
+                opacity: .7;
+            }
 
-        .surah-cell .surah-icon {
-            font-size: 14px;
-        }
+            .surah-cell .surah-icon {
+                font-size: 14px;
+            }
 
         .map-legend {
             display: flex;
@@ -2592,17 +2592,17 @@
             max-width: 340px;
         }
 
-        #pwa-banner.show {
-            display: flex;
-        }
+            #pwa-banner.show {
+                display: flex;
+            }
 
-        #pwa-banner button {
-            padding: 6px 14px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 12px;
-        }
+            #pwa-banner button {
+                padding: 6px 14px;
+                border-radius: 8px;
+                border: none;
+                cursor: pointer;
+                font-size: 12px;
+            }
 
         /* ─── Dark Mode Enhanced ─── */
         body.dark-mode .sidebar {
@@ -2627,10 +2627,10 @@
             border-color: #334155;
         }
 
-        body.dark-mode .login-card h2,
-        body.dark-mode .login-card p {
-            color: #f1f5f9;
-        }
+            body.dark-mode .login-card h2,
+            body.dark-mode .login-card p {
+                color: #f1f5f9;
+            }
 
         body.dark-mode .icon-btn {
             background: #1e293b;
@@ -2643,9 +2643,9 @@
             border-color: #334155;
         }
 
-        body.dark-mode .search-box input {
-            color: #f1f5f9;
-        }
+            body.dark-mode .search-box input {
+                color: #f1f5f9;
+            }
 
         body.dark-mode .modal {
             background: #1e293b;
@@ -2678,11 +2678,11 @@
             transition: opacity 0.6s, visibility 0.6s;
         }
 
-        .splash-screen.hide {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
+            .splash-screen.hide {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+            }
 
         .splash-logo {
             width: 100px;
@@ -2726,8 +2726,7 @@
 
         @keyframes splashPulse {
 
-            0%,
-            100% {
+            0%, 100% {
                 transform: scale(1)
             }
 
@@ -2780,30 +2779,30 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .bottom-nav-item .bnav-icon {
-            font-size: 22px;
-            transition: transform 0.25s;
-        }
+            .bottom-nav-item .bnav-icon {
+                font-size: 22px;
+                transition: transform 0.25s;
+            }
 
-        .bottom-nav-item.active {
-            color: var(--green);
-        }
+            .bottom-nav-item.active {
+                color: var(--green);
+            }
 
-        .bottom-nav-item.active .bnav-icon {
-            transform: scale(1.15);
-        }
+                .bottom-nav-item.active .bnav-icon {
+                    transform: scale(1.15);
+                }
 
-        .bottom-nav-item.active::after {
-            content: '';
-            position: absolute;
-            top: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 20px;
-            height: 3px;
-            background: var(--gradient);
-            border-radius: 0 0 3px 3px;
-        }
+                .bottom-nav-item.active::after {
+                    content: '';
+                    position: absolute;
+                    top: -6px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 20px;
+                    height: 3px;
+                    background: var(--gradient);
+                    border-radius: 0 0 3px 3px;
+                }
 
         body.dark-mode .bottom-nav {
             background: #1e293b;
@@ -2910,21 +2909,21 @@
             animation: fadeUp 0.4s ease-out backwards;
         }
 
-        .stat-card:nth-child(1) {
-            animation-delay: 0.05s;
-        }
+            .stat-card:nth-child(1) {
+                animation-delay: 0.05s;
+            }
 
-        .stat-card:nth-child(2) {
-            animation-delay: 0.1s;
-        }
+            .stat-card:nth-child(2) {
+                animation-delay: 0.1s;
+            }
 
-        .stat-card:nth-child(3) {
-            animation-delay: 0.15s;
-        }
+            .stat-card:nth-child(3) {
+                animation-delay: 0.15s;
+            }
 
-        .stat-card:nth-child(4) {
-            animation-delay: 0.2s;
-        }
+            .stat-card:nth-child(4) {
+                animation-delay: 0.2s;
+            }
 
         .student-card {
             animation: fadeUp 0.35s ease-out backwards;
@@ -2944,9 +2943,9 @@
             gap: 16px;
         }
 
-        .global-loading.show {
-            display: flex;
-        }
+            .global-loading.show {
+                display: flex;
+            }
 
         .loading-spinner-lg {
             width: 52px;
@@ -2987,14 +2986,13 @@
             gap: 4px;
         }
 
-        .error-msg::before {
-            content: '⚠';
-        }
+            .error-msg::before {
+                content: '⚠';
+            }
 
         @keyframes shake {
 
-            0%,
-            100% {
+            0%, 100% {
                 transform: translateX(0)
             }
 
@@ -3018,18 +3016,18 @@
             position: relative;
         }
 
-        .btn.btn-loading::after {
-            content: '';
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
+            .btn.btn-loading::after {
+                content: '';
+                width: 14px;
+                height: 14px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-top-color: #fff;
+                border-radius: 50%;
+                animation: spin 0.6s linear infinite;
+                display: inline-block;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
 
         /* ─── Enhanced Toast ─── */
         .toast {
@@ -3062,9 +3060,9 @@
             margin-right: 8px;
         }
 
-        .toast-close:hover {
-            opacity: 1;
-        }
+            .toast-close:hover {
+                opacity: 1;
+            }
 
         .toast-progress {
             position: absolute;
@@ -3114,9 +3112,9 @@
                 overflow-x: auto;
             }
 
-            .table-card table {
-                min-width: 560px;
-            }
+                .table-card table {
+                    min-width: 560px;
+                }
 
             .modal {
                 max-width: 100% !important;
@@ -3157,8 +3155,7 @@
 
         @keyframes loginBg {
 
-            0%,
-            100% {
+            0%, 100% {
                 background-position: 0% 50%
             }
 
@@ -3193,10 +3190,10 @@
             font-weight: 700;
         }
 
-        .btn-pdf:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        }
+            .btn-pdf:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            }
     </style>
 </head>
 
@@ -3217,17 +3214,19 @@
             <p>مرحباً بك في منصة نور لتحفيظ القرآن</p>
             <div id="loginForm">
                 <div class="form-group">
-                    <label>رقم الجوال</label>
+                    <label>رقم الهاتف</label>
                     <input type="tel" id="loginPhone" class="form-control" placeholder="09xxxxxxxx"
-                        autocomplete="username">
+                           autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label>كلمة المرور</label>
                     <input type="password" id="loginPassword" class="form-control" placeholder="••••••••"
-                        autocomplete="current-password">
+                           autocomplete="current-password">
                 </div>
                 <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;"
-                    onclick="handleLogin()">دخول</button>
+                        onclick="handleLogin()">
+                    دخول
+                </button>
                 <div class="login-footer" style="font-size:12px">
                     الحسابات تُنشأ من قبل إدارة المركز فقط. للتسجيل تواصل معنا.
                 </div>
@@ -3253,7 +3252,9 @@
                     </select>
                 </div>
                 <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;"
-                    onclick="handleRegister()">إنشاء حساب</button>
+                        onclick="handleRegister()">
+                    إنشاء حساب
+                </button>
                 <div class="login-footer">
                     لديك حساب بالفعل؟ <a href="#" onclick="toggleAuthMode('login')">تسجيل الدخول</a>
                 </div>
@@ -3292,7 +3293,7 @@
                 <div class="nav-item" onclick="navigate('announcements', this)">
                     <div class="nav-icon">📢</div>
                     <span>الإعلانات</span>
-                    <span class="nav-badge">3</span>
+                    <span class="nav-badge" id="announcementsBadge" style="display:none">0</span>
                 </div>
             </div>
 
@@ -3324,6 +3325,14 @@
                 <div class="nav-item" onclick="navigate('payments', this)">
                     <div class="nav-icon">💳</div>
                     <span>المدفوعات</span>
+                </div>
+                <div class="nav-item" onclick="navigate('reports', this)">
+                    <div class="nav-icon">📊</div>
+                    <span>التقارير</span>
+                </div>
+                <div class="nav-item" onclick="navigate('settings', this)">
+                    <div class="nav-icon">⚙️</div>
+                    <span>الإعدادات</span>
                 </div>
             </div>
 
@@ -3374,7 +3383,7 @@
             <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="globalSearchInput" placeholder="بحث سريع عن طالب، حلقة، محفظ..."
-                    onkeyup="handleGlobalSearch()">
+                       onkeyup="handleGlobalSearch()">
             </div>
         </nav>
 
@@ -3394,13 +3403,13 @@
         <div class="topbar">
             <div class="topbar-avatar" id="topbarAvatar" title="الحساب">👤</div>
             <span class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="الوضع الليلي"
-                style="font-size:20px;cursor:pointer;user-select:none">🌙</span>
+                  style="font-size:20px;cursor:pointer;user-select:none">🌙</span>
             <div class="topbar-title" style="text-align:center;flex:1">
                 <h2 id="pageTitle" style="font-size:19px">لوحة التحكم</h2>
                 <p id="pageSubtitle" style="font-size:12px;color:var(--text-muted);margin-top:2px"></p>
             </div>
             <span class="topbar-date" id="topbarDate"></span>
-            <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right:0">☰</button>
+            <button class="menu-toggle" type="button" onclick="window.toggleSidebar&&window.toggleSidebar()" style="margin-right:0" aria-label="القائمة">☰</button>
         </div>
 
         <!-- ===== DASHBOARD ===== -->
@@ -3454,7 +3463,8 @@
                     <div class="bar-chart" id="weeklyBarChart">
                         <!-- يُملأ ديناميكياً من fetchStats -->
                         <div style="text-align:center;width:100%;color:var(--text-muted);font-size:13px;padding:40px 0">
-                            ⏳ جاري التحميل...</div>
+                            ⏳ جاري التحميل...
+                        </div>
                     </div>
                 </div>
 
@@ -3468,7 +3478,7 @@
                         <svg class="donut-svg" id="donutSvg" viewBox="0 0 36 36">
                             <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" stroke-width="3" />
                             <text x="18" y="20" text-anchor="middle" font-size="5" fill="var(--text)" font-weight="bold"
-                                font-family="Tajawal,sans-serif" id="donutCenter">—</text>
+                                  font-family="Tajawal,sans-serif" id="donutCenter">—</text>
                         </svg>
                         <div class="donut-legend" style="width:100%" id="donutLegend">
                             <p style="color:var(--text-muted);font-size:13px;text-align:center">⏳ جاري التحميل...</p>
@@ -3488,7 +3498,8 @@
                 </div>
                 <div style="overflow-x: auto; padding: 10px 20px;">
                     <div id="leaderboardWrap" style="display: flex; flex-direction: column; gap: 12px;">
-                        <div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري تحميل المتصدرين...
+                        <div style="text-align:center;padding:40px;color:var(--text-muted)">
+                            ⏳ جاري تحميل المتصدرين...
                         </div>
                     </div>
                 </div>
@@ -3515,8 +3526,10 @@
                     </thead>
                     <tbody id="recentHifzBody">
                         <tr>
-                            <td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري
-                                التحميل...</td>
+                            <td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">
+                                ⏳ جاري
+                                التحميل...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -3581,13 +3594,21 @@
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="studentsHeaderActions">
                     <button type="button" class="btn btn-outline" id="waitingBackBtn" style="display:none"
-                        onclick="exitWaitingList()">← رجوع</button>
+                            onclick="exitWaitingList()">
+                        ← رجوع
+                    </button>
                     <button class="btn btn-outline" onclick="exportStudentsCSV()" id="btnExportStudents"
-                        style="padding:9px 16px;font-size:13px">📥 تصدير</button>
+                            style="padding:9px 16px;font-size:13px">
+                        📥 تصدير
+                    </button>
                     <button class="btn btn-primary" onclick="openModal('addStudentModal')" id="btnAddStudent"
-                        style="padding:9px 16px;font-size:13px">➕ إضافة طالب</button>
+                            style="padding:9px 16px;font-size:13px">
+                        ➕ إضافة طالب
+                    </button>
                     <button class="btn btn-primary" onclick="openWaitingListModal()" id="btnAddWaiting"
-                        style="display:none;padding:9px 16px;font-size:13px">➕ إضافة لقائمة الانتظار</button>
+                            style="display:none;padding:9px 16px;font-size:13px">
+                        ➕ إضافة لقائمة الانتظار
+                    </button>
                 </div>
             </div>
 
@@ -3599,19 +3620,20 @@
                         <path d="m21 21-4.35-4.35" />
                     </svg>
                     <input type="text" id="studentSearchInput" class="students-search-input"
-                        placeholder="بحث باسم الطالب أو الحلقة..." oninput="filterStudentsLive(this.value)">
+                           placeholder="بحث باسم الطالب أو الحلقة..." oninput="filterStudentsLive(this.value)">
                 </div>
                 <div class="filter-chips">
                     <div class="filter-chip active" onclick="setStudentFilter('all', this)">الكل</div>
                     <div class="filter-chip" onclick="setStudentFilter('beginner', this)">مبتدئ ◂</div>
                     <div class="filter-chip" onclick="setStudentFilter('intermediate', this)">متوسط</div>
                     <div class="filter-chip" onclick="setStudentFilter('advanced', this)">متقدم</div>
-                    <div class="filter-chip" id="circleFilterChip" onclick="cycleCircleFilter(this)">جميع الحلقات ◂
+                    <div class="filter-chip" id="circleFilterChip" onclick="cycleCircleFilter(this)">
+                        جميع الحلقات ◂
                     </div>
                     <div class="filter-chip" onclick="setStudentFilter('archived', this)"
-                        style="background:#fee2e2;color:#dc2626;border-color:#fca5a5">الأرشيف 📦</div>
+                         style="background:#fee2e2;color:#dc2626;border-color:#fca5a5">الأرشيف 📦</div>
                     <div class="filter-chip" onclick="setStudentFilter('waiting', this)"
-                        style="background:#fef3c7;color:#b45309;border-color:#fcd34d">قائمة الانتظار ⏳</div>
+                         style="background:#fef3c7;color:#b45309;border-color:#fcd34d">قائمة الانتظار ⏳</div>
                 </div>
             </div>
 
@@ -3631,8 +3653,8 @@
             </div>
             <div class="students-search-bar" style="margin-bottom:16px">
                 <div class="search-row">
-                    <input type="text" class="students-search-input" placeholder="بحث بالاسم أو رقم الجوال..."
-                        oninput="NoorParents.searchParents(this.value)">
+                    <input type="text" class="students-search-input" placeholder="بحث بالاسم أو رقم الهاتف..."
+                           oninput="NoorParents.searchParents(this.value)">
                 </div>
             </div>
             <div class="data-table-wrap" id="parentsTableWrap">
@@ -3640,7 +3662,7 @@
                     <thead>
                         <tr>
                             <th>الاسم</th>
-                            <th>الجوال</th>
+                            <th>الهاتف</th>
                             <th>عدد الأبناء</th>
                             <th>الحساب</th>
                             <th>الحالة</th>
@@ -3672,7 +3694,7 @@
             <div class="students-search-bar" style="margin-bottom:16px">
                 <div class="search-row">
                     <input type="text" class="students-search-input" placeholder="بحث..."
-                        oninput="NoorUsers.searchUsers(this.value)">
+                           oninput="NoorUsers.searchUsers(this.value)">
                 </div>
                 <div class="filter-chips" style="margin-top:10px">
                     <div class="filter-chip active" onclick="NoorUsers.filterUsersRole('')">الكل</div>
@@ -3688,7 +3710,7 @@
                         <tr>
                             <th>الاسم</th>
                             <th>الدور</th>
-                            <th>الجوال</th>
+                            <th>الهاتف</th>
                             <th>آخر دخول</th>
                             <th>الحالة</th>
                             <th>تغيير كلمة المرور</th>
@@ -3718,8 +3740,20 @@
                 </div>
                 <button class="btn btn-primary" onclick="openModal('addTeacherModal')">➕ إضافة محفظ</button>
             </div>
+            <!-- ✅ شريط البحث الجديد -->
+            <div class="students-search-bar" style="margin-bottom:16px">
+                <div class="search-row">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input type="text" class="students-search-input" placeholder="بحث بالاسم أو المؤهل..."
+                           oninput="fetchTeachers(this.value)">
+                </div>
+            </div>
             <div class="cards-grid" id="teachersGrid"></div>
         </div>
+
 
         <!-- ===== CIRCLES ===== -->
         <div class="content" id="page-circles">
@@ -3743,7 +3777,7 @@
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-primary" id="jlwm2x" onclick="markAllPresent()">✅ تحديد الجميع حضور</button>
                     <button class="btn btn-primary" id="btnSaveAttendance" onclick="saveAttendance()" style="display:none">💾 حفظ الحضور</button>
-                    <button class="btn btn-outline" id="jlwm5q" onclick="showToast('تم البحث عن التقارير')" style="display:none">🔍 بحث</button>
+                    <button class="btn btn-outline" id="jlwm5q" onclick="searchAttendanceReports()">🔍 بحث</button>
                     <button class="btn btn-outline" id="jlwm6k" onclick="printAttendance()">🖨️ طباعة</button>
                 </div>
             </div>
@@ -3761,16 +3795,14 @@
                     </div>
                 </div>
                 <div class="date-nav">
-                    <button type="button" class="btn btn-outline btn-bulk-absence"
-                        onclick="sendBulkAbsenceNotifs(selectedCircleId)"
-                        title="إرسال إشعارات غياب جماعية لأولياء الأمور للطلاب الغائبين في اليوم المحدد">
-                        🔔 إشعار غياب جماعي
-                    </button>
+                    <!-- ✅ حُذف زر "غياب جماعي" -->
                     <div class="date-nav-dates">
+
+
                         <button type="button" onclick="changeDate(-1)" aria-label="اليوم السابق">‹</button>
                         <span id="currentDate">—</span>
                         <input type="date" id="attendanceDatePicker" class="form-control" style="max-width:150px;padding:6px 10px"
-                            aria-label="اختيار تاريخ الحضور" />
+                               aria-label="اختيار تاريخ الحضور" />
                         <button type="button" onclick="changeDate(1)" aria-label="اليوم التالي">›</button>
                     </div>
                 </div>
@@ -3787,7 +3819,7 @@
                     <p>متابعة تقدم الطلاب في حفظ القرآن الكريم</p>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-outline" id="jlwmab" onclick="showToast('تم فتح واجهة الإنجاز الجماعي')" style="display:none">👥 الإنجاز الجماعي</button>
+                    <button class="btn btn-outline" id="jlwmab" onclick="showCenterSummary()">👥 الإنجاز الجماعي</button>
                     <button class="btn btn-primary" onclick="openModal('addMemModal')">➕ تسجيل تسميع</button>
                 </div>
             </div>
@@ -3801,7 +3833,7 @@
                     </div>
                     <div class="surah-progress-grid">
                         <div class="chart-card"
-                            style="border-radius:0;border:none;box-shadow:none;border-bottom:1px solid var(--border)">
+                             style="border-radius:0;border:none;box-shadow:none;border-bottom:1px solid var(--border)">
                             <div class="card-header" style="margin-bottom:0">
                                 <div>
                                     <h3 id="memProgressTitle">تقدم الحفظ</h3>
@@ -3815,7 +3847,7 @@
                                         <div class="progress-fill" id="memProgressFill" style="width:0%"></div>
                                     </div>
                                     <span class="progress-pct" id="memProgressPct"
-                                        style="font-size:14px;font-weight:900;color:var(--green)">0%</span>
+                                          style="font-size:14px;font-weight:900;color:var(--green)">0%</span>
                                 </div>
                             </div>
                         </div>
@@ -3860,21 +3892,25 @@
             <div class="page-header">
                 <div>
                     <h2>📚 مكتبة الطلاب</h2>
-                    <p style="color:var(--text-muted);font-size:13px;margin-top:4px">الكتب، المتون، مناهج المركز، وملفات
-                        الحفظ والمراجعة</p>
+                    <p style="color:var(--text-muted);font-size:13px;margin-top:4px">
+                        الكتب، المتون، مناهج المركز، وملفات
+                        الحفظ والمراجعة
+                    </p>
                 </div>
                 <div class="actions admin-only teacher-only" id="libraryAdminActions" style="display:none;">
                     <button type="button" id="btnAddLibraryFile" class="btn btn-primary"
-                        onclick="openUploadLibraryModal()">➕ إضافة ملف جديد</button>
+                            onclick="openUploadLibraryModal()">
+                        ➕ إضافة ملف جديد
+                    </button>
                 </div>
             </div>
 
             <!-- شريط البحث والفلترة -->
             <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
                 <input type="text" id="librarySearchInput" class="form-control" placeholder="ابحث عن كتاب أو ملف..."
-                    style="flex:1; min-width:200px" onkeyup="filterLibraryItems()">
+                       style="flex:1; min-width:200px" onkeyup="filterLibraryItems()">
                 <select id="libraryCategoryFilter" class="form-control" style="width:150px"
-                    onchange="filterLibraryItems()">
+                        onchange="filterLibraryItems()">
                     <option value="">كل التصنيفات</option>
                     <option value="مصحف">مصحف</option>
                     <option value="متن">متن</option>
@@ -3886,16 +3922,18 @@
             </div>
 
             <div class="grid-container" id="libraryCards"
-                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                 style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
                 <!-- البطاقات تُضاف هنا عبر JS -->
             </div>
             <div id="libraryEmptyState"
-                style="display:none; text-align:center; padding:50px; background:var(--surface); border-radius:16px; border:1px solid var(--border)">
+                 style="display:none; text-align:center; padding:50px; background:var(--surface); border-radius:16px; border:1px solid var(--border)">
                 <div style="font-size:48px; margin-bottom:16px">📂</div>
                 <h3>المكتبة فارغة</h3>
                 <p style="color:var(--text-muted); font-size:14px; margin-top:8px">لم يتم إضافة أي ملفات حتى الآن.</p>
                 <button type="button" class="btn btn-primary" style="margin-top:16px" id="btnAddLibraryFileEmpty"
-                    onclick="openUploadLibraryModal()">➕ إضافة ملف جديد</button>
+                        onclick="openUploadLibraryModal()">
+                    ➕ إضافة ملف جديد
+                </button>
             </div>
         </div>
 
@@ -3903,7 +3941,7 @@
             <div class="page-header">
                 <div>
                     <h2>الإعلانات والتنبيهات</h2>
-                    <p>3 إعلانات جديدة</p>
+                    <p id="announcementsSubtitle">جاري التحميل...</p>
                 </div>
                 <button class="btn btn-primary" onclick="openModal('addAnnModal')">➕ إعلان جديد</button>
             </div>
@@ -3913,15 +3951,11 @@
         <!-- ===== STUDENT VIEW ===== -->
         <div class="content" id="page-studentView">
             <div class="student-profile-hero">
-                <div class="hero-avatar">أح</div>
+                <div class="hero-avatar" id="studentHeroAvatar">—</div>
                 <div class="hero-info">
-                    <h2>أحمد محمد الزهراني</h2>
-                    <p>حلقة الفجر • المحفظ: عبدالله السلمي</p>
-                    <div class="hero-badges">
-                        <span class="hero-badge">🏆 مستوى متقدم</span>
-                        <span class="hero-badge">📅 منذ: سبتمبر 2024</span>
-                        <span class="hero-badge">⭐ 4.8 / 5</span>
-                    </div>
+                    <h2 id="studentHeroName">جاري التحميل...</h2>
+                    <p id="studentHeroCircle"></p>
+                    <div class="hero-badges" id="studentHeroBadges"></div>
                 </div>
             </div>
 
@@ -3929,28 +3963,28 @@
                 <div class="stat-card green">
                     <div class="stat-icon">📖</div>
                     <div class="stat-card-body">
-                        <div class="stat-value">78%</div>
+                        <div class="stat-value">—</div>
                         <div class="stat-label">نسبة الحفظ</div>
                     </div>
                 </div>
                 <div class="stat-card blue">
                     <div class="stat-icon">✅</div>
                     <div class="stat-card-body">
-                        <div class="stat-value">94%</div>
+                        <div class="stat-value">—</div>
                         <div class="stat-label">نسبة الحضور</div>
                     </div>
                 </div>
                 <div class="stat-card teal">
                     <div class="stat-icon">📝</div>
                     <div class="stat-card-body">
-                        <div class="stat-value">87</div>
+                        <div class="stat-value">—</div>
                         <div class="stat-label">آخر اختبار</div>
                     </div>
                 </div>
                 <div class="stat-card purple">
                     <div class="stat-icon">⭐</div>
                     <div class="stat-card-body">
-                        <div class="stat-value">4.8</div>
+                        <div class="stat-value">—</div>
                         <div class="stat-label">تقييم المحفظ</div>
                     </div>
                 </div>
@@ -3963,7 +3997,7 @@
                             <h3>سجل التسميع الأخير</h3>
                         </div>
                     </div>
-                    <table>
+                    <table id="studentHifzTable">
                         <thead>
                             <tr>
                                 <th>التاريخ</th>
@@ -3973,24 +4007,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>13/05/2026</td>
-                                <td>البقرة</td>
-                                <td>1 — 20</td>
-                                <td><span class="status-badge status-excellent">ممتاز</span></td>
-                            </tr>
-                            <tr>
-                                <td>11/05/2026</td>
-                                <td>البقرة</td>
-                                <td>21 — 40 (مراجعة)</td>
-                                <td><span class="status-badge status-good">جيد</span></td>
-                            </tr>
-                            <tr>
-                                <td>08/05/2026</td>
-                                <td>الفاتحة</td>
-                                <td>كاملة</td>
-                                <td><span class="status-badge status-excellent">ممتاز</span></td>
-                            </tr>
+                            <!-- Dynamic Hifz Records Here -->
                         </tbody>
                     </table>
                 </div>
@@ -4000,20 +4017,8 @@
                             <h3>رسائل المحفظ</h3>
                         </div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:10px">
-                        <div style="background:var(--green-light);border-radius:12px;padding:12px 14px">
-                            <p style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:4px">عبدالله
-                                السلمي • اليوم</p>
-                            <p style="font-size:13px;color:var(--text)">ماشاء الله أحمد، أداء رائع اليوم في تسميع سورة
-                                البقرة. أرجو مراجعة الآيات 15-20 مرة أخرى.</p>
-                        </div>
-                        <div
-                            style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
-                            <p style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">عبدالله
-                                السلمي • أمس</p>
-                            <p style="font-size:13px;color:var(--text)">تذكر مراجعة الجزء الأول هذه الأسبوع بشكل كامل.
-                            </p>
-                        </div>
+                    <div style="display:flex;flex-direction:column;gap:10px" id="studentNotesList">
+                        <!-- Dynamic Teacher Notes Here -->
                     </div>
                 </div>
             </div>
@@ -4023,74 +4028,157 @@
                 <div class="card-header" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--border)">
                     <div>
                         <h3>🗺️ خريطة حفظ القرآن الكريم</h3>
-                    </div>
-                    <div style="display:flex;gap:8px">
-                        <button class="btn btn-outline" style="font-size:12px;color:var(--amber-dark);border-color:var(--amber-dark)"
-                            onclick="grantBadge(window._studentDbId || 1)">🏆 منح وسام التميز</button>
-                        <button class="btn btn-outline" style="font-size:12px"
-                            onclick="window.open('/api/reports/certificate/' + (window._studentDbId || 1))">📄 شهادة</button>
-                    </div>
-                </div>
-                <div class="quran-map" id="quranMap">
-                    <div class="map-legend">
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:#86efac"></div> محفوظ
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:#fde047"></div> جزئي
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:#cbd5e1"></div> لم يُحفظ
+                        <div style="display:flex;gap:8px" id="quranMapAdminActions" style="display:none">
+                            <button class="btn btn-outline" style="font-size:12px;color:var(--amber-dark);border-color:var(--amber-dark)"
+                                    onclick="if(window._studentDbId) grantBadge(window._studentDbId); else showToast('❌ تعذر تحديد الطالب')">
+                                🏆 منح وسام التميز
+                            </button>
+                            <button class="btn btn-outline" style="font-size:12px"
+                                    onclick="if(window._studentDbId) window.open('/api/reports/certificate/' + window._studentDbId); else showToast('❌ تعذر تحديد الطالب')">
+                                📄 شهادة
+                            </button>
                         </div>
                     </div>
-                    <div class="surah-grid" id="surahGrid">
-                        <div style="text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1">⏳ جاري
-                            التحميل...</div>
+                    <div class="quran-map" id="quranMap">
+                        <div class="map-legend">
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:#86efac"></div> محفوظ
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:#fde047"></div> جزئي
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:#cbd5e1"></div> لم يُحفظ
+                            </div>
+                        </div>
+                        <div class="surah-grid" id="surahGrid">
+                            <div style="text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1">
+                                ⏳ جاري
+                                التحميل...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ===== ✅ إصلاح 3: بوابة ولي الأمر ===== -->
-        <div class="content" id="page-parentView">
-            <div class="page-header">
-                <div>
-                    <h2>بوابة ولي الأمر</h2>
-                    <p>متابعة تقدم أبنائك في حفظ القرآن الكريم</p>
+            <!-- ===== ✅ إصلاح 3: بوابة ولي الأمر ===== -->
+            <div class="content" id="page-parentView">
+                <div class="page-header">
+                    <div>
+                        <h2>بوابة ولي الأمر</h2>
+                        <p>متابعة تقدم أبنائك في حفظ القرآن الكريم</p>
+                    </div>
+                </div>
+                <!-- بطاقات الأبناء -->
+                <div id="parentChildrenGrid" class="cards-grid">
+                    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
+                        ⏳ جاري تحميل بيانات الأبناء...
+                    </div>
                 </div>
             </div>
-            <!-- بطاقات الأبناء -->
-            <div id="parentChildrenGrid" class="cards-grid">
-                <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
-                    ⏳ جاري تحميل بيانات الأبناء...
-                </div>
-            </div>
-        </div>
 
-        <div class="content" id="page-payments">
-            <div class="page-header">
-                <div>
-                    <h2>إدارة المدفوعات والفواتير</h2>
-                    <p class="text-muted">متابعة الرسوم الدراسية وإصدار الفواتير للطلاب</p>
+            <div class="content" id="page-payments">
+                <div class="page-header">
+                    <div>
+                        <h2>إدارة المدفوعات والفواتير</h2>
+                        <p class="text-muted">متابعة الرسوم الدراسية وإصدار الفواتير للطلاب</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showNewInvoiceModal()">+ إصدار فاتورة</button>
                 </div>
-                <button class="btn btn-primary" onclick="showNewInvoiceModal()">+ إصدار فاتورة</button>
+                <div class="grid" id="paymentsGrid">
+                    <!-- Data populated via JS -->
+                </div>
             </div>
-            <div class="grid" id="paymentsGrid">
-                <!-- Data populated via JS -->
-            </div>
-        </div>
 
-        <div class="content" id="page-parentFees">
-            <div class="page-header">
-                <div>
-                    <h2>الرسوم الدراسية</h2>
-                    <p class="text-muted">متابعة الفواتير ودفع الرسوم المستحقة للأبناء</p>
+            <div class="content" id="page-parentFees">
+                <div class="page-header">
+                    <div>
+                        <h2>الرسوم الدراسية</h2>
+                        <p class="text-muted">متابعة الفواتير ودفع الرسوم المستحقة للأبناء</p>
+                    </div>
+                </div>
+                <div class="grid" id="parentFeesGrid">
+                    <!-- Data populated via JS -->
                 </div>
             </div>
-            <div class="grid" id="parentFeesGrid">
-                <!-- Data populated via JS -->
+            <!-- ===== REPORTS ===== -->
+            <div class="content" id="page-reports">
+                <div class="page-header">
+                    <div>
+                        <h2>📊 التقارير</h2>
+                        <p>تقارير الحضور والحفظ والأداء</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="generateReport()">📥 تصدير PDF</button>
+                </div>
+
+                <!-- فلاتر التقارير -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
+                    <div style="font-weight:700;margin-bottom:14px;font-size:14px">🔍 فلاتر التقرير</div>
+                    <div class="form-row" style="display:flex;gap:14px;flex-wrap:wrap">
+                        <div class="form-group" style="flex:1;min-width:140px">
+                            <label class="form-label">نوع التقرير</label>
+                            <select id="reportType" class="form-input" onchange="loadReportData()">
+                                <option value="attendance">تقرير الحضور</option>
+                                <option value="hifz">تقرير الحفظ</option>
+                                <option value="payments">تقرير المدفوعات</option>
+                                <option value="students">تقرير الطلاب</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:140px">
+                            <label class="form-label">من تاريخ</label>
+                            <input type="date" id="reportFrom" class="form-input" onchange="loadReportData()">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:140px">
+                            <label class="form-label">إلى تاريخ</label>
+                            <input type="date" id="reportTo" class="form-input" onchange="loadReportData()">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:140px">
+                            <label class="form-label">الحلقة</label>
+                            <select id="reportCircleFilter" class="form-input" onchange="loadReportData()">
+                                <option value="">كل الحلقات</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reportResults" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-muted)">
+                    <div style="font-size:48px;margin-bottom:16px">📋</div>
+                    <p>اختر نوع التقرير والفترة الزمنية لعرض النتائج</p>
+                </div>
             </div>
-        </div>
+
+            <!-- ===== SETTINGS ===== -->
+            <div class="content" id="page-settings">
+                <div class="page-header">
+                    <div>
+                        <h2>⚙️ الإعدادات</h2>
+                        <p>إعدادات المنصة والنظام</p>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+                        <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🏫 معلومات المركز</h3>
+                        <div class="form-group">
+                            <label class="form-label">اسم المركز</label>
+                            <input type="text" id="settingsCenterName" class="form-input" value="مركز نور لتحفيظ القرآن الكريم">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">رقم التواصل</label>
+                            <input type="tel" id="settingsContactPhone" class="form-input" placeholder="09xxxxxxxx">
+                        </div>
+                        <button class="btn btn-primary" id="btnSaveSettings" style="width:100%;margin-top:8px" onclick="saveSettings()">💾 حفظ</button>
+                    </div>
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+                        <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🌙 المظهر</h3>
+                        <div class="form-group">
+                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                                <span>الوضع الليلي</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </main>
 
     <!-- ── FAB (Floating Action Button) — مثل الصورة 3 ── -->
@@ -4156,12 +4244,13 @@
             </div>
             <div class="modal-body">
                 <div id="examResultFormTitle"
-                    style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:10px">
+                     style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:10px">
                 </div>
                 <div id="examResultRows" style="display:flex;flex-direction:column;gap:10px">
                     <!-- rows injected dynamically -->
                 </div>
-                <p style="font-size:12px;color:var(--text-muted);margin-top:12px">* يمكن ترك خانات الطلاب الغائبين فارغة
+                <p style="font-size:12px;color:var(--text-muted);margin-top:12px">
+                    * يمكن ترك خانات الطلاب الغائبين فارغة
                 </p>
             </div>
             <div class="modal-footer">
@@ -4293,9 +4382,13 @@
                     <label class="form-label">نوع الجلسة</label>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <button type="button" class="btn btn-primary" style="flex:1;min-width:120px;padding:10px"
-                            data-session-type="Memorization">📗 حفظ جديد</button>
+                                data-session-type="Memorization">
+                            📗 حفظ جديد
+                        </button>
                         <button type="button" class="btn btn-outline" style="flex:1;min-width:120px;padding:10px"
-                            data-session-type="Revision">🔄 مراجعة</button>
+                                data-session-type="Revision">
+                            🔄 مراجعة
+                        </button>
                     </div>
                 </div>
                 <div id="hifzMemorizationPanel">
@@ -4389,7 +4482,7 @@
                     <input class="form-input" id="parentFormFullName" type="text">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">رقم الجوال *</label>
+                    <label class="form-label">رقم الهاتف *</label>
                     <input class="form-input" id="parentFormPhone" type="tel" placeholder="09xxxxxxxx">
                 </div>
                 <div class="form-group">
@@ -4442,7 +4535,7 @@
                     <input class="form-input" id="userEditFullName" type="text">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">الجوال</label>
+                    <label class="form-label">الهاتف</label>
                     <input class="form-input" id="userEditPhone" type="tel">
                 </div>
                 <div class="form-group">
@@ -4514,20 +4607,30 @@
             <div class="modal-body">
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">الاسم *</label>
-                        <input id="teacherFullName" class="form-input" type="text" placeholder="عبدالله السلمي" autocomplete="name">
+                        <!-- ✅ تغيير التسمية -->
+                        <label class="form-label">الاسم الثلاثي *</label>
+                        <input id="teacherFullName" class="form-input" type="text" placeholder="عبدالله أحمد السلمي" autocomplete="name">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">رقم الجوال *</label>
+                        <!-- ✅ تغيير التسمية -->
+                        <label class="form-label">رقم الهاتف *</label>
                         <input id="teacherPhone" class="form-input" type="tel" placeholder="09xxxxxxxx" inputmode="numeric" maxlength="10" autocomplete="tel">
                     </div>
                 </div>
+                <!-- ✅ حقل تاريخ الميلاد الجديد -->
+                <div class="form-group">
+                    <label class="form-label">تاريخ الميلاد *</label>
+                    <input id="teacherBirthDate" class="form-input" type="date" required>
+                </div>
                 <div class="form-group">
                     <label class="form-label">التخصص / المؤهل</label>
-                    <input id="teacherQualification" class="form-input" type="text" placeholder="حافظ للقرآن الكريم كاملاً">
+                    <input type="text" id="editTeacherQual" class="form-input" placeholder="حافظ للقرآن الكريم كاملاً">
                 </div>
-                <p style="font-size:12px;color:var(--text-muted);margin-top:8px">يُنشأ حساب تلقائياً بكلمة مرور مؤقتة:
-                    Noor@123</p>
+                <div class="form-group">
+                    <label class="form-label">التقييم (من 5)</label>
+                    <input type="number" id="editTeacherRating" class="form-input" min="0" max="5" step="0.1" placeholder="4.5">
+                </div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px">⚠️ يُنشأ حساب تلقائياً بكلمة مرور مؤقتة — ستُعرض بعد الحفظ</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('addTeacherModal')">إلغاء</button>
@@ -4535,6 +4638,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Add Exam Modal -->
     <div class="modal-overlay" id="addExamModal">
@@ -4556,7 +4660,7 @@
                     <div class="form-group">
                         <label class="form-label">الوصف</label>
                         <textarea class="form-input" id="examDesc" rows="2" placeholder="وصف مختصر للاختبار (اختياري)"
-                            style="resize:vertical"></textarea>
+                                  style="resize:vertical"></textarea>
                     </div>
                 </div>
             </div>
@@ -4607,20 +4711,69 @@
                         <input id="circleLocation" class="form-input" type="text" placeholder="القاعة 1">
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">الوقت</label>
-                        <input id="circleTime" class="form-input" type="text" placeholder="بعد صلاة الفجر">
+                <!-- ✅ جدول مرن: صلاة أو وقت مخصص -->
+                <div class="form-group">
+                    <label class="form-label">نوع الجدول</label>
+                    <div style="display:flex;gap:8px;margin-bottom:10px">
+                        <button type="button" class="btn btn-primary" style="flex:1" id="circleSchedulePrayer"
+                                onclick="setCircleScheduleType('prayer','addCircleModal')">
+                            🕌 أوقات الصلوات
+                        </button>
+                        <button type="button" class="btn btn-outline" style="flex:1" id="circleScheduleCustom"
+                                onclick="setCircleScheduleType('custom','addCircleModal')">
+                            🕐 وقت مخصص
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">السعة القصوى</label>
-                        <input id="circleCapacity" class="form-input" type="number" placeholder="20">
+                    <!-- وقت الصلاة -->
+                    <div id="addCirclePrayerPanel">
+                        <select id="circleTimeSelect" class="form-input">
+                            <option value="بعد صلاة الفجر">بعد صلاة الفجر</option>
+                            <option value="بعد صلاة الظهر">بعد صلاة الظهر</option>
+                            <option value="بعد صلاة العصر">بعد صلاة العصر</option>
+                            <option value="بعد صلاة المغرب">بعد صلاة المغرب</option>
+                            <option value="بعد صلاة العشاء">بعد صلاة العشاء</option>
+                        </select>
                     </div>
+                    <!-- وقت مخصص -->
+                    <div id="addCircleCustomPanel" style="display:none">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">من</label>
+                                <input type="time" id="circleTimeFrom" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى</label>
+                                <input type="time" id="circleTimeTo" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- إخفاء الحقل القديم — يُملأ برمجياً -->
+                    <input type="hidden" id="circleTime">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">السعة القصوى</label>
+                    <input id="circleCapacity" class="form-input" type="number" placeholder="20">
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('addCircleModal')">إلغاء</button>
                 <button class="btn btn-primary" onclick="saveCircle()">💾 إنشاء الحلقة</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Center Summary Modal -->
+    <div class="modal-overlay" id="centerSummaryModal">
+        <div class="modal" style="max-width:600px">
+            <div class="modal-header">
+                <h3>👥 إحصائيات المركز (الإنجاز الجماعي)</h3>
+                <button class="modal-close" onclick="closeModal('centerSummaryModal')">✕</button>
+            </div>
+            <div class="modal-body" id="centerSummaryBody">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('centerSummaryModal')">إغلاق</button>
             </div>
         </div>
     </div>
@@ -4653,7 +4806,9 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="submitInvoice()"
-                    style="width:100%; justify-content:center; margin-top:15px;">إصدار الفاتورة</button>
+                        style="width:100%; justify-content:center; margin-top:15px;">
+                    إصدار الفاتورة
+                </button>
             </div>
         </div>
     </div>
@@ -4745,13 +4900,24 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editTeacherId">
-                <div class="form-group">
-                    <label>الاسم الكامل</label>
-                    <input type="text" id="editTeacherName" class="form-control">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">الاسم الثلاثي</label>
+                        <input type="text" id="editTeacherName" class="form-input" placeholder="عبدالله أحمد السلمي">
+                    </div>
+                    <div class="form-group">
+                        <!-- ✅ حقل تاريخ الميلاد في Edit -->
+                        <label class="form-label">تاريخ الميلاد</label>
+                        <input type="date" id="editTeacherBirthDate" class="form-input">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>المؤهل</label>
-                    <input type="text" id="editTeacherQual" class="form-control">
+                    <label class="form-label">التخصص / المؤهل</label>
+                    <input type="text" id="editTeacherQual" class="form-input" placeholder="حافظ للقرآن الكريم كاملاً">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">التقييم (من 5)</label>
+                    <input type="number" id="editTeacherRating" class="form-input" min="0" max="5" step="0.1" placeholder="4.5">
                 </div>
             </div>
             <div class="modal-footer">
@@ -4771,28 +4937,68 @@
             <div class="modal-body">
                 <input type="hidden" id="editCircleId">
                 <div class="form-group">
-                    <label>اسم الحلقة</label>
-                    <input type="text" id="editCircleName" class="form-control">
+                    <label class="form-label">اسم الحلقة</label>
+                    <input type="text" id="editCircleName" class="form-input">
                 </div>
-                <div class="form-group">
-                    <label>الوقت</label>
-                    <input type="text" id="editCircleTime" class="form-control">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">المحفظ</label>
+                        <select id="editCircleTeacher" class="form-input">
+                            <option value="">— بدون محفظ —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">القاعة / المكان</label>
+                        <input type="text" id="editCircleLocation" class="form-input">
+                    </div>
                 </div>
+                <!-- ✅ جدول مرن مطابق لـ Add -->
                 <div class="form-group">
-                    <label>المكان</label>
-                    <input type="text" id="editCircleLocation" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>المحفظ</label>
-                    <select id="editCircleTeacher" class="form-control"></select>
+                    <label class="form-label">نوع الجدول</label>
+                    <div style="display:flex;gap:8px;margin-bottom:10px">
+                        <button type="button" class="btn btn-primary" style="flex:1" id="editCircleSchedulePrayer"
+                                onclick="setCircleScheduleType('prayer','editCircleModal')">
+                            🕌 أوقات الصلوات
+                        </button>
+                        <button type="button" class="btn btn-outline" style="flex:1" id="editCircleScheduleCustom"
+                                onclick="setCircleScheduleType('custom','editCircleModal')">
+                            🕐 وقت مخصص
+                        </button>
+                    </div>
+                    <div id="editCirclePrayerPanel">
+                        <select id="editCircleTimeSelect" class="form-input">
+                            <option value="بعد صلاة الفجر">بعد صلاة الفجر</option>
+                            <option value="بعد صلاة الظهر">بعد صلاة الظهر</option>
+                            <option value="بعد صلاة العصر">بعد صلاة العصر</option>
+                            <option value="بعد صلاة المغرب">بعد صلاة المغرب</option>
+                            <option value="بعد صلاة العشاء">بعد صلاة العشاء</option>
+                        </select>
+                    </div>
+                    <div id="editCircleCustomPanel" style="display:none">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">من</label>
+                                <input type="time" id="editCircleTimeFrom" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى</label>
+                                <input type="time" id="editCircleTimeTo" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editCircleTime">
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('editCircleModal')">إلغاء</button>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#ef4444">
+                    <input type="checkbox" id="editCircleRemoveTeacher"> إزالة المحفظ
+                </label>
                 <button class="btn btn-primary" onclick="submitEditCircle()">💾 حفظ</button>
             </div>
         </div>
     </div>
+
 
     <div class="modal-overlay" id="confirmDeleteModal">
         <div class="modal" style="max-width:380px">
@@ -4802,7 +5008,8 @@
             </div>
             <div class="modal-body" style="text-align:center">
                 <div style="font-size:48px;margin-bottom:16px">🗑️</div>
-                <p id="confirmDeleteMsg" style="font-size:15px;font-weight:600;margin-bottom:8px">هل أنت متأكد من الحذف؟
+                <p id="confirmDeleteMsg" style="font-size:15px;font-weight:600;margin-bottom:8px">
+                    هل أنت متأكد من الحذف؟
                 </p>
                 <p style="font-size:13px;color:var(--text-muted)">هذا الإجراء لا يمكن التراجع عنه</p>
             </div>
@@ -4812,7 +5019,6 @@
             </div>
         </div>
     </div> <!-- End App Wrapper -->
-
     <!-- ─── مودال إضافة ملف للمكتبة ─── -->
     <div class="modal-overlay" id="uploadLibraryModal" onclick="if(event.target===this) closeUploadLibraryModal()">
         <div class="modal" onclick="event.stopPropagation()">
@@ -4839,7 +5045,7 @@
                 <div class="form-group">
                     <label>الوصف (اختياري)</label>
                     <textarea class="form-control" name="description" rows="2"
-                        placeholder="وصف مختصر للملف..."></textarea>
+                              placeholder="وصف مختصر للملف..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>ملف PDF</label>
@@ -4866,10 +5072,14 @@
             <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
                 <button type="button" class="btn btn-outline" onclick="copyAccountCredentials()">📋 نسخ</button>
                 <button type="button" class="btn btn-outline" onclick="printAccountCredentials()">🖨 طباعة</button>
-                <button type="button" class="btn btn-primary" onclick="sendAccountCredentialsWhatsApp()">💬
-                    واتساب</button>
+                <button type="button" class="btn btn-primary" onclick="sendAccountCredentialsWhatsApp()">
+                    💬
+                    واتساب
+                </button>
                 <button type="button" class="btn btn-primary"
-                    onclick="closeModal('accountCredentialsModal')">تم</button>
+                        onclick="closeModal('accountCredentialsModal')">
+                    تم
+                </button>
             </div>
         </div>
     </div>
@@ -4892,8 +5102,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="submitChangePassword()" style="width:100%">حفظ
-                    ومتابعة</button>
+                <button type="button" class="btn btn-primary" onclick="submitChangePassword()" style="width:100%">
+                    حفظ
+                    ومتابعة
+                </button>
             </div>
         </div>
     </div>
@@ -4908,42 +5120,59 @@
             <form id="waitingListForm" onsubmit="saveWaitingListEntry(event)">
                 <div class="modal-body">
                     <input type="hidden" id="waitingEntryId" value="">
-                    <div class="form-group"><label>اسم الطالب *</label><input class="form-control" id="wlFullName"
-                            required></div>
-                    <div class="form-row" style="display:flex;gap:12px">
-                        <div class="form-group" style="flex:1"><label>هاتف الطالب *</label><input class="form-control"
-                                id="wlPhone" type="tel" required placeholder="09xxxxxxxx"></div>
-                        <div class="form-group" style="flex:1"><label>العمر</label><input class="form-control"
-                                id="wlAge" type="number" min="4" max="80"></div>
+                    <div class="form-group">
+                        <label>اسم الطالب *</label><input class="form-control" id="wlFullName"
+                                                          required>
                     </div>
-                    <div class="form-group"><label>اسم ولي الأمر</label><input class="form-control" id="wlParentName">
-                    </div>
-                    <div class="form-group"><label>هاتف ولي الأمر</label><input class="form-control" id="wlParentPhone"
-                            type="tel" placeholder="09xxxxxxxx"></div>
                     <div class="form-row" style="display:flex;gap:12px">
-                        <div class="form-group" style="flex:1"><label>المستوى المطلوب</label>
+                        <div class="form-group" style="flex:1">
+                            <label>هاتف الطالب *</label><input class="form-control"
+                                                               id="wlPhone" type="tel" required placeholder="09xxxxxxxx">
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>العمر</label><input class="form-control"
+                                                       id="wlAge" type="number" min="4" max="80">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم ولي الأمر</label><input class="form-control" id="wlParentName">
+                    </div>
+                    <div class="form-group">
+                        <label>هاتف ولي الأمر</label><input class="form-control" id="wlParentPhone"
+                                                            type="tel" placeholder="09xxxxxxxx">
+                    </div>
+                    <div class="form-row" style="display:flex;gap:12px">
+                        <div class="form-group" style="flex:1">
+                            <label>المستوى المطلوب</label>
                             <select class="form-control" id="wlLevel">
                                 <option>مبتدئ</option>
                                 <option>متوسط</option>
                                 <option>متقدم</option>
                             </select>
                         </div>
-                        <div class="form-group" style="flex:1"><label>الوقت المفضل</label><input class="form-control"
-                                id="wlPreferredTime" placeholder="بعد العصر"></div>
+                        <div class="form-group" style="flex:1">
+                            <label>الوقت المفضل</label><input class="form-control"
+                                                              id="wlPreferredTime" placeholder="بعد العصر">
+                        </div>
                     </div>
-                    <div class="form-group" id="wlStatusGroup" style="display:none"><label>الحالة</label>
+                    <div class="form-group" id="wlStatusGroup" style="display:none">
+                        <label>الحالة</label>
                         <select class="form-control" id="wlStatus">
                             <option value="Pending">قيد الانتظار</option>
                             <option value="Contacted">تم التواصل</option>
                             <option value="Rejected">مرفوض</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>ملاحظات</label><textarea class="form-control" id="wlNotes"
-                            rows="2"></textarea></div>
+                    <div class="form-group">
+                        <label>ملاحظات</label><textarea class="form-control" id="wlNotes"
+                                                        rows="2"></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline"
-                        onclick="closeModal('waitingListFormModal')">إلغاء</button>
+                            onclick="closeModal('waitingListFormModal')">
+                        إلغاء
+                    </button>
                     <button type="submit" class="btn btn-primary">💾 حفظ</button>
                 </div>
             </form>
@@ -4966,21 +5195,23 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="closeModal('convertWaitingModal')">إلغاء</button>
-                <button type="button" class="btn btn-primary" onclick="confirmConvertWaiting()">✅ تحويل وإنشاء
-                    حساب</button>
+                <button type="button" class="btn btn-primary" onclick="confirmConvertWaiting()">
+                    ✅ تحويل وإنشاء
+                    حساب
+                </button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="pdfViewerModal" onclick="if(event.target===this) closePdfViewerModal()"
-        style="z-index: 10000; padding: 20px;">
+         style="z-index: 10000; padding: 20px;">
         <div class="modal" onclick="event.stopPropagation()"
-            style="max-width: 900px; width: 100%; height: 90vh; display: flex; flex-direction: column;">
+             style="max-width: 900px; width: 100%; height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h3 id="pdfViewerTitle">عرض الملف</h3>
                 <div style="display: flex; gap: 10px;">
                     <a href="#" id="pdfViewerDownloadBtn" class="btn btn-primary"
-                        style="padding: 4px 12px; text-decoration: none; font-size: 13px;" download>تنزيل ⬇</a>
+                       style="padding: 4px 12px; text-decoration: none; font-size: 13px;" download>تنزيل ⬇</a>
                     <button class="close-modal" onclick="closePdfViewerModal()">×</button>
                 </div>
             </div>
@@ -4997,11 +5228,21 @@
         <p class="loading-label" id="loadingText">جاري التحميل...</p>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="/js/datepicker-init.js"></script>
     <script src="/js/app.js"></script>
     <script src="/js/utils.js"></script>
     <script>if (typeof syncNoorUtils === 'function') syncNoorUtils();</script>
     <script src="/js/api.js"></script>
-    <script src="/js/ui.js"></script>
+    <script src="/js/ui.js?v=10"></script>
+    <script>
+        // شبكة أمان: إن وُجدت الدالة على NoorApp فقط انقلها لـ window (لحماية onclick)
+        if (typeof window.toggleSidebar !== 'function' && window.NoorApp?.ui?.toggleSidebar) {
+            window.toggleSidebar = window.NoorApp.ui.toggleSidebar;
+            window.openSidebar = window.NoorApp.ui.openSidebar;
+            window.closeSidebar = window.NoorApp.ui.closeSidebar;
+        }
+    </script>
     <script src="/js/modals.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/js/dashboard.js"></script>
@@ -5018,6 +5259,149 @@
     <script src="/js/app-ui-extensions.js"></script>
     <script src="/js/payments.js"></script>
     <script src="/js/page-controller.js"></script>
+    <script>
+        // ✅ مساعد الجدول المرن للحلقات
+        function setCircleScheduleType(type, modalId) {
+            const prefix = modalId === 'addCircleModal' ? '' : 'edit';
+            const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+            const prayerBtn = document.getElementById(`${prefix}${prefix ? cap('c') : 'c'}ircleSchedulePrayer`);
+            const customBtn = document.getElementById(`${prefix}${prefix ? cap('c') : 'c'}ircleScheduleCustom`);
+            const prayerPanel = document.getElementById(`${prefix ? 'edit' : 'add'}CirclePrayerPanel`);
+            const customPanel = document.getElementById(`${prefix ? 'edit' : 'add'}CircleCustomPanel`);
+
+            if (type === 'prayer') {
+                prayerPanel.style.display = '';
+                customPanel.style.display = 'none';
+                if (prayerBtn) { prayerBtn.classList.replace('btn-outline', 'btn-primary'); }
+                if (customBtn) { customBtn.classList.replace('btn-primary', 'btn-outline'); }
+            } else {
+                prayerPanel.style.display = 'none';
+                customPanel.style.display = '';
+                if (customBtn) { customBtn.classList.replace('btn-outline', 'btn-primary'); }
+                if (prayerBtn) { prayerBtn.classList.replace('btn-primary', 'btn-outline'); }
+            }
+        }
+
+        // ✅ استخراج قيمة الوقت من الجدول المرن
+        function getCircleTimeValue(prefix) {
+            const prayerPanel = document.getElementById(`${prefix}CirclePrayerPanel`);
+            if (!prayerPanel || prayerPanel.style.display !== 'none') {
+                // وضع الصلاة
+                const sel = document.getElementById(`${prefix}CircleTimeSelect`);
+                return sel ? sel.value : '';
+            }
+            // وضع مخصص
+            const from = document.getElementById(`${prefix}CircleTimeFrom`)?.value;
+            const to = document.getElementById(`${prefix}CircleTimeTo`)?.value;
+            return from && to ? `${from} - ${to}` : (from || '');
+        }
+
+        // ✅ printAttendance نظيفة بدون dropdowns
+        function printAttendance() {
+            const rows = [...document.querySelectorAll('#attendanceList tbody tr')];
+            if (!rows.length) { showToast('لا توجد بيانات للطباعة'); return; }
+
+            const date = document.getElementById('currentDate')?.textContent || '';
+            const rowsHtml = rows.map(r => {
+                const cells = r.querySelectorAll('td');
+                const name = cells[0]?.textContent?.trim() || '';
+                const status = cells[1]?.querySelector('.status-badge')?.textContent?.trim() || '—';
+                return `<tr><td>${name}</td><td>${status}</td><td></td></tr>`;
+            }).join('');
+
+            const win = window.open('', '_blank');
+            win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar">
+                <head><meta charset="UTF-8"><title>سجل الحضور</title>
+                <style>
+                    body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
+                    h2 { text-align: center; margin-bottom: 4px; }
+                    p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
+                    th { background: #f1f5f9; font-weight: 700; }
+                    @media print { body { padding: 0; } }
+                <\/style><\/head>
+                <body>
+                    <h2>سجل الحضور والغياب</h2>
+                    <p>${date}</p>
+                    <table>
+                        <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                <\/body><\/html>`);
+            win.document.close();
+            win.focus();
+            setTimeout(() => { win.print(); win.close(); }, 400);
+        }
+
+        // ✅ دالة بسيطة للتقارير
+        function loadReportData() {
+            const type = document.getElementById('reportType')?.value;
+            const from = document.getElementById('reportFrom')?.value;
+            const to = document.getElementById('reportTo')?.value;
+            const circleId = document.getElementById('reportCircleFilter')?.value || '';
+            const res = document.getElementById('reportResults');
+            if (!res) return;
+            if (!from || !to) {
+                res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:16px">📋</div><p>اختر نوع التقرير والفترة الزمنية</p></div>';
+                return;
+            }
+            res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري تحميل التقرير...</div>';
+            let url = `/reports/summary?type=${encodeURIComponent(type || 'attendance')}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            if (circleId) url += `&circleId=${encodeURIComponent(circleId)}`;
+            (typeof apiFetch === 'function' ? apiFetch(url) : Promise.reject(new Error('apiFetch غير متاح')))
+                .then(data => {
+                    const d = data?.data || data || {};
+                    const labels = {
+                        studentsInScope: 'الطلاب في النطاق',
+                        totalRecords: 'سجلات الحضور',
+                        present: 'حاضر',
+                        late: 'متأخر',
+                        excusedAbsence: 'غياب بعذر',
+                        unexcusedAbsence: 'غياب بدون عذر',
+                        attendanceRate: 'نسبة الحضور %',
+                        sessions: 'جلسات التسميع',
+                        memorizationSessions: 'تسميع جديد',
+                        reviewSessions: 'مراجعة',
+                        versesMemorized: 'آيات محفوظة',
+                        totalInvoices: 'الفواتير',
+                        paid: 'مدفوع',
+                        unpaid: 'غير مدفوع',
+                        amountPaid: 'المبلغ المحصّل',
+                        amountDue: 'المبلغ المستحق',
+                        totalActive: 'طلاب نشطون',
+                        withCircle: 'منضمون لحلقة',
+                        withoutCircle: 'بدون حلقة',
+                        message: 'ملاحظة'
+                    };
+                    const cards = Object.keys(d)
+                        .filter(k => k !== 'byLevel' && d[k] !== undefined && d[k] !== null && typeof d[k] !== 'object')
+                        .map(k => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:140px;flex:1">
+                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
+                                <div style="font-size:22px;font-weight:800">${d[k]}</div>
+                            </div>`)
+                        .join('');
+                    res.innerHTML = `<div style="text-align:right">
+                            <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
+                        </div>`;
+                })
+                .catch((err) => {
+                    const msg = err?.message || 'تعذر تحميل التقرير';
+                    res.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444">${msg}</div>`;
+                });
+        }
+
+        function generateReport() {
+            const type = document.getElementById('reportType')?.value || 'attendance';
+            const from = document.getElementById('reportFrom')?.value;
+            const to = document.getElementById('reportTo')?.value;
+            if (!from || !to) { showToast('⚠️ حدد الفترة الزمنية أولاً'); return; }
+            window.open(`/api/reports/monthly?month=${new Date(from).getMonth() + 1}&year=${new Date(from).getFullYear()}`, '_blank');
+        }
+    </script>
+
 </body>
 
 </html>

@@ -25,10 +25,19 @@ public class SecurityHeadersMiddleware
     {
         var headers = context.Response.Headers;
 
+        // ─── إصلاح أمني حرج: منع تخزين استجابات الـ API الحساسة بكاش المتصفح ───
+        // كل طلبات /api/ تحتوي بيانات خاصة بالمستخدم المصادق عليه، ويجب ألا تُخزَّن
+        // أو تُعاد من كاش المتصفح لمستخدم آخر يستخدم نفس الجهاز/المتصفح لاحقًا.
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+            headers["Pragma"] = "no-cache";
+        }
+
         headers["X-Content-Type-Options"] = "nosniff";
-        
+
         // ─── إصلاح أمني: تم إزالة X-Frame-Options والاعتماد كلياً على frame-ancestors الأحدث في CSP ───
-        
+
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
         headers["X-XSS-Protection"] = "0";
         headers["Cross-Origin-Opener-Policy"] = "same-origin";

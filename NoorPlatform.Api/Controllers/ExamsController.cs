@@ -29,22 +29,34 @@ public class ExamsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetAll()
     {
-        var exams = await _context.Exams
-            .Include(e => e.Results)
+        var query = _context.Exams.Include(e => e.Results).AsQueryable();
+
+        // ─── إصلاح: تقييد المحفّظ برؤية نتائج طلاب حلقته فقط ضمن كل اختبار ───
+        var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        int? teacherUserId = null;
+        if (isTeacher)
+            teacherUserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+
+        var exams = await query
             .OrderByDescending(e => e.Date)
-            .Select(e => new
-            {
-                e.Id,
-                e.Title,
-                e.Date,
-                e.Description,
-                ParticipantsCount = e.Results.Count,
-                // إصلاح: حماية من القسمة على صفر - تجاهل النتائج ذات MaxScore = 0
-                AverageScore = e.Results.Any(r => r.MaxScore > 0)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.Title,
+                    e.Date,
+                    e.Description,
+                    ParticipantsCount = isTeacher
+                ? e.Results.Count(r => r.Student.Circle != null && r.Student.Circle.Teacher != null && r.Student.Circle.Teacher.UserId == teacherUserId)
+                : e.Results.Count,
+                    AverageScore = isTeacher
+                ? (e.Results.Any(r => r.MaxScore > 0 && r.Student.Circle != null && r.Student.Circle.Teacher != null && r.Student.Circle.Teacher.UserId == teacherUserId)
+                    ? Math.Round(e.Results.Where(r => r.MaxScore > 0 && r.Student.Circle != null && r.Student.Circle.Teacher != null && r.Student.Circle.Teacher.UserId == teacherUserId).Average(r => r.Score / r.MaxScore * 100), 1)
+                    : 0)
+                : (e.Results.Any(r => r.MaxScore > 0)
                     ? Math.Round(e.Results.Where(r => r.MaxScore > 0).Average(r => r.Score / r.MaxScore * 100), 1)
-                    : 0
-            })
-            .ToListAsync();
+                    : 0)
+                })
+        .ToListAsync();
 
         return Ok(exams);
     }
@@ -59,10 +71,21 @@ public class ExamsController : ControllerBase
     {
         var exam = await _context.Exams
             .Include(e => e.Results).ThenInclude(r => r.Student).ThenInclude(s => s.User)
+            .Include(e => e.Results).ThenInclude(r => r.Student.Circle).ThenInclude(c => c!.Teacher)
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (exam == null)
             return NotFound(new { message = "الاختبار غير موجود" });
+
+        // ─── إصلاح: تقييد المحفّظ برؤية نتائج طلاب حلقته فقط ───
+        var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        var filteredResults = exam.Results.AsEnumerable();
+        if (isTeacher)
+        {
+            var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+            filteredResults = filteredResults.Where(r =>
+                r.Student.Circle != null && r.Student.Circle.Teacher != null && r.Student.Circle.Teacher.UserId == userId);
+        }
 
         return Ok(new
         {
@@ -70,7 +93,7 @@ public class ExamsController : ControllerBase
             exam.Title,
             exam.Date,
             exam.Description,
-            Results = exam.Results.Select(r => new
+            Results = filteredResults.Select(r => new
             {
                 r.Id,
                 StudentName = r.Student.User.FullName,

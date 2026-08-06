@@ -1,2 +1,30 @@
 /* منصة نور — أنماط رئيسية (التفصيل في index.html حتى اكتمال التقسيم) */
 @import url('/css/responsive.css');
+
+/* ─── تخصيص تقويم flatpickr ليتماشى مع هوية المنصة ─── */
+.flatpickr-calendar {
+    font-family: 'Tajawal', sans-serif !important;
+    direction: rtl;
+    box-shadow: 0 12px 48px rgba(16, 185, 129, 0.15) !important;
+    border-radius: 14px !important;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+.flatpickr-day.today {
+    border-color: #10b981 !important;
+}
+
+.flatpickr-months .flatpickr-month {
+    background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%) !important;
+    border-radius: 14px 14px 0 0;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    color: #fff !important;
+}

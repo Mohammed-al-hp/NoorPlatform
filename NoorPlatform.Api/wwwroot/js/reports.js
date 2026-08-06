@@ -20,8 +20,15 @@
             const res = await fetch(`${API_URL}/reports/monthly/${studentId}`, {
                 headers: { 'Authorization': `Bearer ${TOKEN}` }
             });
-            if (!res.ok) throw new Error('تعذر تحميل التقرير');
-            
+            if (res.status === 401) {
+                if (typeof logout === 'function') logout();
+                throw new Error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً');
+            }
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'تعذر تحميل التقرير');
+            }
+
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -31,7 +38,7 @@
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-            
+
             showToast('✅ تم تصدير التقرير بنجاح');
         } catch (err) {
             showToast('❌ ' + (err.message || 'فشل تصدير PDF'));
@@ -46,8 +53,15 @@
             const res = await fetch(`${API_URL}/reports/certificate/${studentId}`, {
                 headers: { 'Authorization': `Bearer ${TOKEN}` }
             });
-            if (!res.ok) throw new Error('تعذر تحميل الشهادة');
-            
+            if (res.status === 401) {
+                if (typeof logout === 'function') logout();
+                throw new Error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً');
+            }
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'تعذر تحميل الشهادة');
+            }
+
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -73,7 +87,14 @@
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${TOKEN}` }
             });
-            if (!res.ok) throw new Error('تعذر منح الوسام');
+            if (res.status === 401) {
+                if (typeof logout === 'function') logout();
+                throw new Error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً');
+            }
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'تعذر منح الوسام');
+            }
             showToast('✅ تم منح وسام التميز بنجاح');
         } catch (err) {
             showToast('❌ ' + (err.message || 'فشل منح الوسام'));

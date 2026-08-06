@@ -51,14 +51,17 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<AuditInterceptor>();
 
 // قاعدة البيانات
-builder.Services.AddDbContext<NoorDbContext>((sp, options) =>
+if (!builder.Environment.IsEnvironment("Testing"))
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
-    
-    var interceptor = sp.GetRequiredService<AuditInterceptor>();
-    options.AddInterceptors(interceptor);
-});
+    builder.Services.AddDbContext<NoorDbContext>((sp, options) =>
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+        options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        
+        var interceptor = sp.GetRequiredService<AuditInterceptor>();
+        options.AddInterceptors(interceptor);
+    });
+}
 
 // Health Checks
 builder.Services.AddHealthChecks()
@@ -67,13 +70,13 @@ builder.Services.AddHealthChecks()
 // Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 {
-    options.Password.RequireDigit           = true;
-    options.Password.RequiredLength         = 8;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequireUppercase       = true;
-    options.Password.RequireLowercase       = true;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
     options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.DefaultLockoutTimeSpan  = TimeSpan.FromMinutes(15);
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
 .AddEntityFrameworkStores<NoorDbContext>()
 .AddDefaultTokenProviders();
@@ -179,7 +182,10 @@ using (var scope = app.Services.CreateScope())
     var context     = services.GetRequiredService<NoorDbContext>();
     var userManager = services.GetRequiredService<UserManager<User>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
-    await context.Database.MigrateAsync();
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        await context.Database.MigrateAsync();
+    }
     await DbInitializer.SeedAsync(context, userManager, roleManager, app.Environment.IsProduction());
 }
 
@@ -230,3 +236,6 @@ app.MapHealthChecks("/api/health");
 app.MapControllers();
 
 app.Run();
+
+// ─── مطلوب لاختبارات التكامل (WebApplicationFactory) ───
+public partial class Program { }

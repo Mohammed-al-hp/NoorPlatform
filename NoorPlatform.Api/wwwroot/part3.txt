@@ -1,0 +1,1100 @@
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: var(--gradient);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: all .3s cubic-bezier(.4, 0, .2, 1);
+            -webkit-tap-highlight-color: transparent;
+            color: #fff;
+        }
+
+        .fab-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.55);
+        }
+
+        .fab-btn.open {
+            transform: rotate(45deg);
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            box-shadow: 0 6px 24px rgba(239, 68, 68, 0.4);
+        }
+
+        /* إخفاء FAB على الديسكتوب */
+        @media (min-width: 769px) {
+            .fab-container {
+                display: none;
+            }
+        }
+
+        /* ── صندوق الإشعارات اليومية — Timeline Style ── */
+        .daily-notif-box {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .daily-notif-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .daily-notif-header h3 {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .daily-notif-header p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .notif-bell-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--green-light);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: .2s;
+        }
+
+        .notif-bell-btn:hover {
+            background: var(--green);
+        }
+
+        .notif-timeline {
+            padding: 0 22px;
+        }
+
+        .notif-item {
+            display: flex;
+            gap: 14px;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+            position: relative;
+            align-items: flex-start;
+        }
+
+        .notif-item:last-child {
+            border-bottom: none;
+        }
+
+        .notif-dot-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 0;
+            width: 40px;
+        }
+
+        .notif-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--green-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .notif-dot.nd-blue {
+            background: #dbeafe;
+        }
+
+        .notif-dot.nd-amber {
+            background: #fef3c7;
+        }
+
+        .notif-dot.nd-red {
+            background: #fee2e2;
+        }
+
+        .notif-line {
+            width: 2px;
+            flex: 1;
+            background: var(--border);
+            min-height: 12px;
+            margin-top: 4px;
+            border-radius: 2px;
+        }
+
+        .notif-content {
+            flex: 1;
+        }
+
+        .notif-content-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .notif-content p {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .notif-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-top: 2px;
+        }
+
+        .notif-green-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+
+        /* ── Topbar Avatar دائري ── */
+        .topbar-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+            cursor: pointer;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        /* ── Mobile Topbar تحسين ── */
+        @media (max-width: 768px) {
+            .topbar {
+                padding: 0 16px;
+                height: 60px;
+                gap: 12px;
+            }
+
+            .topbar-title h2 {
+                font-size: 17px;
+            }
+
+            .topbar-title p {
+                display: none;
+            }
+
+            .stat-grid {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 16px;
+                gap: 12px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .fab-container {
+                bottom: 80px;
+            }
+        }
+
+        /* ── Dark Mode للعناصر الجديدة ── */
+        body.dark-mode .students-search-bar {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .filter-chip {
+            background: #1e293b;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .fab-menu-item {
+            background: #1e293b;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .daily-notif-box {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .notif-dot {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        body.dark-mode .notif-dot.nd-blue {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        body.dark-mode .notif-dot.nd-amber {
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        body.dark-mode .notif-dot.nd-red {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* ─── الوضع الليلي ─── */
+        body.dark-mode {
+            --bg: #0f172a;
+            --bg-secondary: #1e293b;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --green-light: #052e16;
+            --green-dark: #86efac;
+        }
+
+        .dark-toggle {
+            cursor: pointer;
+            font-size: 20px;
+            transition: .2s;
+            user-select: none;
+        }
+
+        .dark-toggle:hover {
+            transform: scale(1.2);
+        }
+
+        /* ─── خريطة الحفظ ─── */
+        .quran-map {
+            padding: 20px;
+        }
+
+        .quran-map-title {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .surah-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 6px;
+        }
+
+        .surah-cell {
+            border-radius: 10px;
+            padding: 8px 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            transition: .2s;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .surah-cell:hover {
+            transform: scale(1.05);
+        }
+
+        .surah-cell.memorized {
+            background: #dcfce7;
+            color: #15803d;
+            border-color: #86efac;
+        }
+
+        .surah-cell.partial {
+            background: #fef9c3;
+            color: #854d0e;
+            border-color: #fde047;
+        }
+
+        .surah-cell.empty {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            border-color: var(--border);
+        }
+
+        .surah-cell .surah-num {
+            font-size: 9px;
+            opacity: .7;
+        }
+
+        .surah-cell .surah-icon {
+            font-size: 14px;
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* ─── PWA install banner ─── */
+        #pwa-banner {
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .15);
+            z-index: 999;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            max-width: 340px;
+        }
+
+        #pwa-banner.show {
+            display: flex;
+        }
+
+        #pwa-banner button {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* ─── Dark Mode Enhanced ─── */
+        body.dark-mode .sidebar {
+            background: #0a0f1a;
+        }
+
+        body.dark-mode .topbar {
+            background: #1e293b;
+            border-color: #334155;
+            box-shadow: 0 1px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .form-control,
+        body.dark-mode .form-input {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .login-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .login-card h2,
+        body.dark-mode .login-card p {
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .icon-btn {
+            background: #1e293b;
+            border-color: #334155;
+            color: #94a3b8;
+        }
+
+        body.dark-mode .search-box {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        body.dark-mode .search-box input {
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .modal {
+            background: #1e293b;
+        }
+
+        body.dark-mode .modal-header {
+            border-color: #334155;
+        }
+
+        body.dark-mode .modal-footer {
+            border-color: #334155;
+        }
+
+        body.dark-mode .filter-select {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        /* ─── Splash Screen ─── */
+        .splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s, visibility 0.6s;
+        }
+
+        .splash-screen.hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .splash-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
+            animation: splashPulse 1.5s ease-in-out infinite;
+        }
+
+        .splash-text {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 900;
+            margin-top: 20px;
+            background: var(--gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .splash-sub {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .splash-loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #10b981;
+            border-radius: 50%;
+            margin-top: 32px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes splashPulse {
+
+            0%,
+            100% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.05)
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ─── Bottom Navigation (Mobile) ─── */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 95;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            padding: 6px 0 env(safe-area-inset-bottom, 6px);
+        }
+
+        .bottom-nav-inner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bottom-nav-item .bnav-icon {
+            font-size: 22px;
+            transition: transform 0.25s;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--green);
+        }
+
+        .bottom-nav-item.active .bnav-icon {
+            transform: scale(1.15);
+        }
+
+        .bottom-nav-item.active::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: var(--gradient);
+            border-radius: 0 0 3px 3px;
+        }
+
+        body.dark-mode .bottom-nav {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        @media (max-width: 768px) {
+            .bottom-nav {
+                display: block;
+            }
+
+            .main {
+                padding-bottom: 72px;
+            }
+
+            .content {
+                padding-bottom: 80px;
+            }
+
+            #pwa-banner {
+                bottom: 88px;
+            }
+        }
+
+        /* ─── Page Transitions ─── */
+        .content {
+            animation: fadeUp 0.35s ease-out;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── Toast Improvements ─── */
+        .toast.toast-success {
+            border-right-color: #10b981;
+        }
+
+        .toast.toast-error {
+            border-right-color: #ef4444;
+        }
+
+        .toast.toast-warning {
+            border-right-color: #f59e0b;
+        }
+
+        .toast.toast-info {
+            border-right-color: #3b82f6;
+        }
+
+        /* ─── Skeleton Loading ─── */
+        .skeleton {
+            background: linear-gradient(90deg, var(--border) 25%, rgba(255, 255, 255, 0.3) 50%, var(--border) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0
+            }
+
+            100% {
+                background-position: -200% 0
+            }
+        }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .empty-state-desc {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* ─── Micro animations ─── */
+        .stat-card {
+            animation: fadeUp 0.4s ease-out backwards;
+        }
+
+        .stat-card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .stat-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .stat-card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .stat-card:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        .student-card {
+            animation: fadeUp 0.35s ease-out backwards;
+        }
+
+        /* ─── Global Loading Overlay ─── */
+        .global-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 2500;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .global-loading.show {
+            display: flex;
+        }
+
+        .loading-spinner-lg {
+            width: 52px;
+            height: 52px;
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .loading-label {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        /* ─── Form Validation ─── */
+        .form-input.input-error,
+        .form-control.input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+            animation: shake 0.35s ease;
+        }
+
+        .form-input.input-success,
+        .form-control.input-success {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .error-msg::before {
+            content: '⚠';
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            25% {
+                transform: translateX(-6px)
+            }
+
+            50% {
+                transform: translateX(6px)
+            }
+
+            75% {
+                transform: translateX(-3px)
+            }
+        }
+
+        /* ─── Button Loading State ─── */
+        .btn.btn-loading {
+            pointer-events: none;
+            opacity: 0.7;
+            position: relative;
+        }
+
+        .btn.btn-loading::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* ─── Enhanced Toast ─── */
+        .toast {
+            position: relative;
+            overflow: hidden;
+            min-width: 280px;
+        }
+
+        .toast-body {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0.5;
+            transition: 0.2s;
+            padding: 0 2px;
+            margin-right: 8px;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .toast-progress-fill {
+            height: 100%;
+            border-radius: 0 0 12px 12px;
+            animation: toastCountdown linear forwards;
+        }
+
+        .toast-success .toast-progress-fill {
+            background: #10b981;
+        }
+
+        .toast-error .toast-progress-fill {
+            background: #ef4444;
+        }
+
+        .toast-warning .toast-progress-fill {
+            background: #f59e0b;
+        }
+
+        .toast-info .toast-progress-fill {
+            background: #3b82f6;
+        }
+
+        @keyframes toastCountdown {
+            from {
+                width: 100%
+            }
+
+            to {
+                width: 0%
+            }
+        }
+
+        /* ─── Responsive Improvements ─── */
+        @media (max-width:768px) {
+            .table-card {
+                overflow-x: auto;
+            }
+
+            .table-card table {
+                min-width: 560px;
+            }
+
+            .modal {
+                max-width: 100% !important;
+                border-radius: 20px 20px 0 0 !important;
+                align-self: flex-end;
+                max-height: 90vh;
+            }
+
+            .modal-overlay.open {
+                align-items: flex-end;
+                padding: 0;
+            }
+
+            .login-card {
+                padding: 28px 20px;
+                max-width: 100%;
+            }
+
+            .charts-row {
+                gap: 14px;
+            }
+
+            .donut-wrap {
+                flex-direction: column;
+            }
+
+            .bar-chart {
+                min-height: 120px;
+            }
+        }
+
+        /* ─── Login Enhancement ─── */
+        .login-overlay {
+            background: linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #0f172a 100%);
+            background-size: 200% 200%;
+            animation: loginBg 8s ease-in-out infinite;
+        }
+
+        @keyframes loginBg {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .login-card {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        body.dark-mode .login-card {
+            background: rgba(30, 41, 59, 0.95);
+        }
+
+        /* ─── PDF Export Button ─── */
+        .btn-pdf {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+        }
+
+        .btn-pdf:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-logo">🕌</div>
+        <div class="splash-text">منصة نور</div>
+        <div class="splash-sub">مركز تحفيظ القرآن الكريم</div>
+        <div class="splash-loader"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-overlay">
+        <div class="login-card">
+            <div class="logo-icon" style="margin: 0 auto 20px;">📖</div>
+            <h2>تسجيل الدخول</h2>
+            <p>مرحباً بك في منصة نور لتحفيظ القرآن</p>
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input type="tel" id="loginPhone" class="form-control" placeholder="09xxxxxxxx"
+                           autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••"
+                           autocomplete="current-password">
+                </div>
+                <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;"
+                        onclick="handleLogin()">
+                    دخول
+                </button>
+                <div class="login-footer" style="font-size:12px">
+                    الحسابات تُنشأ من قبل إدارة المركز فقط. للتسجيل تواصل معنا.
+                </div>
+            </div>
+            <div id="registerForm" style="display:none">
+                <div class="form-group">
+                    <label>الاسم الكامل</label>
+                    <input type="text" id="regName" class="form-control" placeholder="الاسم الرباعي">
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="regEmail" class="form-control" placeholder="example@noor.sa">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>نوع الحساب</label>
+                    <select id="regRole" class="form-control">
+                        <option value="Student">طالب</option>
+                        <option value="Parent">ولي أمر</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="width:100%; justify-content: center; height: 48px;"
+                        onclick="handleRegister()">
+                    إنشاء حساب
+                </button>
+                <div class="login-footer">
+                    لديك حساب بالفعل؟ <a href="#" onclick="toggleAuthMode('login')">تسجيل الدخول</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-wrap">
+                <div class="logo-icon">🕌</div>
+                <div class="logo-text">
+                    <h1>منصة نور</h1>
+                    <span>مركز تحفيظ القرآن الكريم</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="role-badge">
+            <div class="role-avatar" id="roleAvatar">👤</div>
+            <div class="role-info">
+                <h4 id="roleName">المشرف العام</h4>
+                <span id="roleEmail">admin@noor.sa</span>
+            </div>
+        </div>
+
+        <nav class="nav">
+            <div class="nav-section">
+                <div class="nav-section-label">الرئيسية</div>
+                <div class="nav-item active" onclick="navigate('dashboard', this)">
+                    <div class="nav-icon">📊</div>
+                    <span>لوحة التحكم</span>
+                </div>
+                <div class="nav-item" onclick="navigate('announcements', this)">
+                    <div class="nav-icon">📢</div>
+                    <span>الإعلانات</span>
+                    <span class="nav-badge">3</span>
+                </div>

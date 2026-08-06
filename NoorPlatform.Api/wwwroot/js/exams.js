@@ -34,7 +34,8 @@
                 </button>
             </div>
             </div>`).join('');
-        } catch {
+        } catch (err) {
+            handleApiError(err, { silent: true });
             showToast('❌ تعذر تحميل الاختبارات');
         }
     }
@@ -50,31 +51,19 @@
         }
 
         const btn = document.querySelector('#addExamModal .btn-primary');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = 'جارٍ المعالجة...';
-        }
-
         try {
-            const res = await fetch(`${API_URL}/exams`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, date: new Date(date).toISOString(), description: desc })
-            });
-            if (!res.ok) throw new Error();
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
+            await apiFetch('/exams', 'POST', { title, date: new Date(date).toISOString(), description: desc });
             document.getElementById('examTitle').value = '';
             document.getElementById('examDate').value = '';
             document.getElementById('examDesc').value = '';
             closeModal('addExamModal');
             showToast('✅ تم إنشاء الاختبار بنجاح');
             fetchExams();
-        } catch {
-            showToast('❌ حدث خطأ أثناء الإنشاء');
+        } catch (err) {
+            handleApiError(err);
         } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = '💾 حفظ';
-            }
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ');
         }
     }
 
@@ -135,28 +124,16 @@
         }
 
         const btn = document.querySelector('#addExamResultModal .btn-primary');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = 'جارٍ المعالجة...';
-        }
-
         try {
-            const res = await fetch(`${API_URL}/exams/${_currentExamId}/results`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(results)
-            });
-            if (!res.ok) throw new Error();
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
+            await apiFetch(`/exams/${_currentExamId}/results`, 'POST', results);
             closeModal('addExamResultModal');
             showToast(`✅ تم حفظ ${results.length} نتيجة بنجاح`);
             fetchExams();
-        } catch {
-            showToast('❌ حدث خطأ أثناء حفظ النتائج');
+        } catch (err) {
+            handleApiError(err);
         } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = '💾 حفظ النتائج';
-            }
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ النتائج');
         }
     }
 

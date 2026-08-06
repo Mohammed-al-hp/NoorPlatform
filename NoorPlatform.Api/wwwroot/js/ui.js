@@ -26,9 +26,21 @@
         if (el) el.classList.remove('open');
     }
 
+    function openSidebar() {
+        document.getElementById('sidebar')?.classList.add('open');
+        document.getElementById('sidebarOverlay')?.classList.add('open');
+    }
+
     function closeSidebar() {
         document.getElementById('sidebar')?.classList.remove('open');
         document.getElementById('sidebarOverlay')?.classList.remove('open');
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+        if (sidebar.classList.contains('open')) closeSidebar();
+        else openSidebar();
     }
 
     function setModalBody(modalBodyId, html, modalTitle) {
@@ -77,7 +89,7 @@
                 : /^09\d{8}$/.test(String(v || '').replace(/\D/g, '')));
         const msgLibyan = typeof U.libyanPhonePatternMsg === 'function'
             ? U.libyanPhonePatternMsg()
-            : 'رقم جوال غير صالح';
+            : 'رقم هاتف غير صالح';
         let valid = true;
 
         rules.forEach(rule => {
@@ -126,7 +138,9 @@
         showToast,
         openModal,
         closeModal,
+        openSidebar,
         closeSidebar,
+        toggleSidebar,
         setModalBody,
         btnLoading,
         clearValidation,
@@ -134,13 +148,22 @@
         setGlobalLoading
     };
 
-    app().ui = ui;
+    // سجّل على window أولاً حتى لا يفشل onclick إذا تعثّر ربط NoorApp.ui
     global.showToast = showToast;
     global.openModal = openModal;
     global.closeModal = closeModal;
+    global.openSidebar = openSidebar;
     global.closeSidebar = closeSidebar;
+    global.toggleSidebar = toggleSidebar;
     global.setModalBody = setModalBody;
     global.btnLoading = btnLoading;
     global.clearValidation = clearValidation;
     global.validateForm = validateForm;
+
+    try {
+        const root = app();
+        if (root) root.ui = ui;
+    } catch (e) {
+        console.warn('NoorApp.ui bind failed', e);
+    }
 })(window);

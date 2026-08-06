@@ -199,7 +199,9 @@
             return;
         }
         const dateStr = ymd(getState().date);
+        const btn = document.getElementById('btnSaveAttendance');
         try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await apiFetch('/attendance/bulk', 'POST', {
                 date: dateStr,
                 records: entries.map(([studentId, status]) => ({
@@ -214,6 +216,8 @@
             global.NoorDashboard?.fetchStats?.();
         } catch (e) {
             app().api.handleApiError(e);
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }
     }
 

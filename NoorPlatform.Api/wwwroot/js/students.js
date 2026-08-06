@@ -26,7 +26,7 @@
             renderStudentCards(filtered);
             const cnt = document.getElementById('studentsCount');
             if (cnt) {
-                const role = app().state.user?.role || localStorage.getItem('noor_role') || '';
+                const role = app().state.user?.role || '';
                 const suffix = st().archive ? ' طالب في الأرشيف' : (role === 'Teacher' ? ' طالب في حلقتك' : ' طالب مسجل في المركز');
                 cnt.textContent = data.length + suffix;
             }
@@ -104,7 +104,6 @@
     }
 
     function exitWaitingList() {
-        if (window.history.length > 1) { history.back(); return; }
         setStudentFilter('all', document.querySelector('.filter-chips .filter-chip'));
     }
 
@@ -144,27 +143,29 @@
     }
 
     async function deleteStudent(id, name) {
-        if (!confirm(`أرشفة الطالب "${name}"؟`)) return;
-        try {
-            await apiFetch('/students/' + id, 'DELETE');
-            app().ui.showToast('✅ تم الأرشفة');
-            fetchStudents();
-            global.NoorDashboard?.fetchStats?.();
-        } catch (e) {
-            app().api.handleApiError(e);
-        }
+        global.confirmDelete(`أرشفة الطالب "${name}"؟`, async () => {
+            try {
+                await apiFetch('/students/' + id, 'DELETE');
+                app().ui.showToast('✅ تم الأرشفة');
+                fetchStudents();
+                global.NoorDashboard?.fetchStats?.();
+            } catch (e) {
+                app().api.handleApiError(e);
+            }
+        });
     }
 
     async function restoreStudent(id, name) {
-        if (!confirm(`استعادة "${name}"؟`)) return;
-        try {
-            await apiFetch('/students/' + id + '/restore', 'POST');
-            app().ui.showToast('✅ تمت الاستعادة');
-            fetchStudents();
-            global.NoorDashboard?.fetchStats?.();
-        } catch (e) {
-            app().api.handleApiError(e);
-        }
+        global.confirmDelete(`استعادة "${name}"؟`, async () => {
+            try {
+                await apiFetch('/students/' + id + '/restore', 'POST');
+                app().ui.showToast('✅ تمت الاستعادة');
+                fetchStudents();
+                global.NoorDashboard?.fetchStats?.();
+            } catch (e) {
+                app().api.handleApiError(e);
+            }
+        });
     }
 
     let _circleFilterIdx = -1;
@@ -270,14 +271,15 @@
     }
 
     async function deleteWaitingEntry(id) {
-        if (!confirm('حذف هذا السجل من قائمة الانتظار؟')) return;
-        try {
-            await apiFetch(`/waiting-list/${id}`, 'DELETE');
-            app().ui.showToast('✅ تم الحذف');
-            fetchWaitingList();
-        } catch (e) {
-            app().api.handleApiError(e, { skipLogout: true });
-        }
+        global.confirmDelete('حذف هذا السجل من قائمة الانتظار؟', async () => {
+            try {
+                await apiFetch(`/waiting-list/${id}`, 'DELETE');
+                app().ui.showToast('✅ تم الحذف');
+                fetchWaitingList();
+            } catch (e) {
+                app().api.handleApiError(e, { skipLogout: true });
+            }
+        });
     }
 
     function openConvertWaitingModal(id) {

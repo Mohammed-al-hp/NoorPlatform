@@ -1,10 +1,11 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -15,11 +16,13 @@ public class ParentsController : ControllerBase
 {
     private readonly NoorDbContext _context;
     private readonly AccountProvisioningService _accounts;
+    private readonly UserManager<User> _userManager;
 
-    public ParentsController(NoorDbContext context, AccountProvisioningService accounts)
+    public ParentsController(NoorDbContext context, AccountProvisioningService accounts, UserManager<User> userManager)
     {
         _context = context;
         _accounts = accounts;
+        _userManager = userManager;
     }
 
     [HttpGet]
@@ -209,13 +212,14 @@ public class ParentsController : ControllerBase
             child.ParentPhone = string.Empty;
         }
 
-        // ─── إصلاح: الاكتفاء بالحذف المنطقي (Soft Delete) لمنع فقدان البيانات المالية ───
+        // ─── إصلاح: توحيد آلية الأرشفة (IsDeleted) + تعطيل الحساب وإبطال الجلسات ───
+        parent.IsDeleted = true;
         parent.User.IsActive = false;
-        // تمت إزالة: _context.Parents.Remove(parent); للحفاظ على الفواتير والسجلات
+        await _userManager.UpdateSecurityStampAsync(parent.User);
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "تم تعطيل حساب ولي الأمر وفك ربط الأبناء (البيانات المالية محفوظة)" });
+        return Ok(new { message = "تم أرشفة ولي الأمر وفك ربط الأبناء (البيانات المالية محفوظة)" });
     }
 }
 

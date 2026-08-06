@@ -170,6 +170,155 @@ public class ReportsController : ControllerBase
         return Ok(stats);
     }
 
+    /// <summary>
+    /// ملخص تقارير الصفحة الرئيسية للتقارير (حضور / حفظ / مدفوعات / طلاب).
+    /// </summary>
+    [HttpGet("summary")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GetSummary(
+        [FromQuery] string type = "attendance",
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] int? circleId = null)
+    {
+        if (from == null || to == null)
+            return BadRequest(new { message = "يجب تحديد تاريخ البداية والنهاية" });
+
+        var fromDate = DateOnly.FromDateTime(DateTime.SpecifyKind(from.Value.Date, DateTimeKind.Utc));
+        var toDate = DateOnly.FromDateTime(DateTime.SpecifyKind(to.Value.Date, DateTimeKind.Utc));
+        if (toDate < fromDate)
+            return BadRequest(new { message = "تاريخ النهاية قبل تاريخ البداية" });
+
+        var fromDt = fromDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var toExclusive = toDate.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+
+        var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        int? teacherUserId = null;
+        if (isTeacher)
+            teacherUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var reportType = (type ?? "attendance").Trim().ToLowerInvariant();
+        object payload = reportType switch
+        {
+            "hifz" => await BuildHifzSummaryAsync(fromDt, toExclusive, circleId, teacherUserId),
+            "payments" => await BuildPaymentsSummaryAsync(fromDt, toExclusive, circleId, teacherUserId),
+            "students" => await BuildStudentsSummaryAsync(circleId, teacherUserId),
+            _ => await BuildAttendanceSummaryAsync(fromDt, toExclusive, circleId, teacherUserId)
+        };
+
+        return Ok(new
+        {
+            type = reportType,
+            from = fromDate.ToString("yyyy-MM-dd"),
+            to = toDate.ToString("yyyy-MM-dd"),
+            circleId,
+            data = payload
+        });
+    }
+
+    private IQueryable<Student> ScopedStudents(int? circleId, int? teacherUserId)
+    {
+        var q = _context.Students.AsNoTracking().Where(s => !s.IsDeleted);
+        if (circleId.HasValue)
+            q = q.Where(s => s.CircleId == circleId.Value);
+        if (teacherUserId.HasValue)
+            q = q.Where(s => s.Circle != null && s.Circle.Teacher != null && s.Circle.Teacher.UserId == teacherUserId.Value);
+        return q;
+    }
+
+    private async Task<object> BuildAttendanceSummaryAsync(DateTime fromDt, DateTime toExclusive, int? circleId, int? teacherUserId)
+    {
+        var studentIds = await ScopedStudents(circleId, teacherUserId).Select(s => s.Id).ToListAsync();
+        var rows = await _context.Attendances.AsNoTracking()
+            .Where(a => a.Date >= fromDt && a.Date < toExclusive && studentIds.Contains(a.StudentId))
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Present = g.Count(a => a.Status == AttendanceStatus.Present),
+                Late = g.Count(a => a.Status == AttendanceStatus.Late),
+                Excused = g.Count(a => a.Status == AttendanceStatus.ExcusedAbsence),
+                Unexcused = g.Count(a => a.Status == AttendanceStatus.UnexcusedAbsence)
+            })
+            .FirstOrDefaultAsync();
+
+        var total = rows?.Total ?? 0;
+        var present = rows?.Present ?? 0;
+        var late = rows?.Late ?? 0;
+        return new
+        {
+            studentsInScope = studentIds.Count,
+            totalRecords = total,
+            present,
+            late,
+            excusedAbsence = rows?.Excused ?? 0,
+            unexcusedAbsence = rows?.Unexcused ?? 0,
+            attendanceRate = total == 0 ? 0 : (int)Math.Round((double)(present + late) / total * 100)
+        };
+    }
+
+    private async Task<object> BuildHifzSummaryAsync(DateTime fromDt, DateTime toExclusive, int? circleId, int? teacherUserId)
+    {
+        var studentIds = await ScopedStudents(circleId, teacherUserId).Select(s => s.Id).ToListAsync();
+        var records = await _context.HifzRecords.AsNoTracking()
+            .Where(r => r.Date >= fromDt && r.Date < toExclusive && studentIds.Contains(r.StudentId))
+            .Select(r => new { r.Type, r.VerseCount, r.Verses, r.Evaluation })
+            .ToListAsync();
+
+        var mem = records.Where(r => r.Type == RecordType.Memorization).ToList();
+        var verses = mem.Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses));
+        return new
+        {
+            studentsInScope = studentIds.Count,
+            sessions = records.Count,
+            memorizationSessions = mem.Count,
+            reviewSessions = records.Count - mem.Count,
+            versesMemorized = verses
+        };
+    }
+
+    private async Task<object> BuildPaymentsSummaryAsync(DateTime fromDt, DateTime toExclusive, int? circleId, int? teacherUserId)
+    {
+        if (teacherUserId.HasValue && !User.IsInRole("Admin"))
+            return new { message = "تقارير المدفوعات متاحة للمشرف فقط", totalInvoices = 0, paid = 0, unpaid = 0, amountPaid = 0m, amountDue = 0m };
+
+        var studentIds = await ScopedStudents(circleId, null).Select(s => s.Id).ToListAsync();
+        var payments = await _context.Payments.AsNoTracking()
+            .Where(p => studentIds.Contains(p.StudentId) &&
+                        ((p.PaidDate != null && p.PaidDate >= fromDt && p.PaidDate < toExclusive) ||
+                         (p.PaidDate == null && p.DueDate >= fromDt && p.DueDate < toExclusive)))
+            .Select(p => new { p.Status, p.Amount })
+            .ToListAsync();
+
+        return new
+        {
+            studentsInScope = studentIds.Count,
+            totalInvoices = payments.Count,
+            paid = payments.Count(p => p.Status == PaymentStatus.Paid),
+            unpaid = payments.Count(p => p.Status != PaymentStatus.Paid),
+            amountPaid = payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.Amount),
+            amountDue = payments.Where(p => p.Status != PaymentStatus.Paid).Sum(p => p.Amount)
+        };
+    }
+
+    private async Task<object> BuildStudentsSummaryAsync(int? circleId, int? teacherUserId)
+    {
+        var students = await ScopedStudents(circleId, teacherUserId)
+            .Select(s => new { s.Id, s.CircleId, s.Level })
+            .ToListAsync();
+
+        return new
+        {
+            totalActive = students.Count,
+            withCircle = students.Count(s => s.CircleId != null),
+            withoutCircle = students.Count(s => s.CircleId == null),
+            byLevel = students.GroupBy(s => s.Level ?? "غير محدد")
+                .Select(g => new { level = g.Key, count = g.Count() })
+                .OrderByDescending(x => x.count)
+                .ToList()
+        };
+    }
+
     // ─────────────────────────────────────────────────
     // PDF Generation via QuestPDF
     // ─────────────────────────────────────────────────

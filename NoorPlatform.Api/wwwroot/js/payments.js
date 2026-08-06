@@ -205,20 +205,15 @@
     }
 
     async function payInvoice(id, btn) {
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = 'جارٍ الدفع...';
-        }
         try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await apiFetch(`/payments/${id}/pay`, 'POST');
             showToast('✅ تم الدفع بنجاح!');
             fetchParentFees();
         } catch (err) {
             showToast('❌ ' + err.message);
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = '💳 سداد الآن';
-            }
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💳 سداد الآن');
         }
     }
 

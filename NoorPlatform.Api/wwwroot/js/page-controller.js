@@ -53,9 +53,14 @@
 
     // ─── إدارة التوجيه بين الصفحات ────────────────────────
     global._onNavigatePage = function (page) {
+        if (page === 'students') {
+            if (typeof setStudentFilter === 'function') {
+                setStudentFilter('all', document.querySelector('.filter-chips .filter-chip'));
+            }
+        }
         if (page === 'attendance') {
-            if(typeof renderAttendanceCircleChips === 'function') renderAttendanceCircleChips();
-            if(typeof fetchStudentsAttendance === 'function') fetchStudentsAttendance();
+            if (typeof renderAttendanceCircleChips === 'function') renderAttendanceCircleChips();
+            if (typeof fetchStudentsAttendance === 'function') fetchStudentsAttendance();
         }
         if (page === 'memorization' && typeof fetchMemorizationData === 'function') fetchMemorizationData();
         if (page === 'library' && typeof fetchLibraryItems === 'function') fetchLibraryItems();
@@ -66,6 +71,7 @@
         if (page === 'parentFees' && typeof fetchParentFees === 'function') fetchParentFees();
         if (page === 'parents' && global.USER?.role === 'Admin' && global.NoorParents) global.NoorParents.fetchParents();
         if (page === 'users' && global.USER?.role === 'Admin' && global.NoorUsers) global.NoorUsers.fetchUsers();
+        if (page === 'settings' && global.NoorDashboard) global.NoorDashboard.fetchSettings();
     };
 
     window.addEventListener('popstate', function (e) {
@@ -194,195 +200,29 @@
         }
     }
 
-    // ─── المحفظين (CRUD إضافي) ────────────────────────
-    function editTeacher(id, name, qualification) {
-        document.getElementById('editTeacherId').value = id;
-        document.getElementById('editTeacherName').value = name || '';
-        document.getElementById('editTeacherQual').value = qualification || '';
-        openModal('editTeacherModal');
-    }
-
-    async function submitEditTeacher() {
-        const id = document.getElementById('editTeacherId').value;
-        const fullName = document.getElementById('editTeacherName').value.trim();
-        const qualification = document.getElementById('editTeacherQual').value.trim();
-        if (!fullName) { showToast('⚠️ الاسم مطلوب'); return; }
-        try {
-            await apiFetch(`/teachers/${id}`, 'PUT', { fullName, qualification });
-            closeModal('editTeacherModal');
-            showToast('✅ تم تحديث بيانات المحفظ');
-            if(typeof fetchTeachers === 'function') fetchTeachers();
-        } catch (err) { showToast('❌ ' + err.message); }
-    }
-
-    async function deleteTeacher(id, name) {
-        const teacherId = parseInt(id, 10);
-        if (!teacherId || isNaN(teacherId)) {
-            showToast('❌ معرّف المحفظ غير صالح');
-            return;
-        }
-        const label = name || 'هذا المحفظ';
-        if (!confirm(`هل أنت متأكد من حذف المحفظ «${label}»؟`)) return;
-        try {
-            await apiFetch(`/teachers/${teacherId}`, 'DELETE');
-            showToast('✅ تم حذف المحفظ');
-            if(typeof fetchTeachers === 'function') fetchTeachers();
-        } catch (err) {
-            showToast('❌ ' + (err.message || 'فشل الحذف'));
-        }
-    }
-    
-    async function fetchTeachers() {
-        const teachersGrid = document.getElementById('teachersGrid');
-        if (teachersGrid) teachersGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
-        const data = await apiFetch('/teachers'); 
-        const countEl = document.getElementById('teachersPageCount');
-        if (countEl) countEl.textContent = `${data.length} محفظ مسجل`;
-        if (teachersGrid) {
-            teachersGrid.innerHTML = data.map(t => `
-            <div class="student-card">
-            <div class="student-card-top">
-                <div class="student-avatar-lg" style="background:var(--gradient)">${escapeHtml((t.fullName || '').slice(0, 2))}</div>
-                <div class="student-card-info">
-                <h4>${escapeHtml(t.fullName)}</h4>
-                <span>${escapeHtml(t.circleName || 'بدون حلقة')}</span><br>
-                <span style="font-size:11px;color:var(--text-muted)">${escapeHtml(t.qualification || '')}</span>
-                </div>
-            </div>
-            <div class="student-card-stats">
-                <div class="mini-stat"><label>الطلاب</label><p>${t.studentCount}</p></div>
-                <div class="mini-stat"><label>التقييم</label><p>⭐ 4.8</p></div>
-            </div>
-            <div class="student-card-actions">
-                <button type="button" class="btn btn-outline" onclick="viewTeacherProfile(${t.id})">الملف</button>
-                <button type="button" class="btn btn-edit" data-id="${t.id}" data-name="${escapeHtml(t.fullName)}" data-qual="${escapeHtml(t.qualification || '')}" onclick="editTeacher(this.dataset.id, this.dataset.name, this.dataset.qual)">✏️ تعديل</button>
-                <button type="button" class="btn btn-delete btn-delete-teacher" data-id="${t.id}" data-name="${escapeHtml(t.fullName)}">🗑 حذف</button>
-            </div>
-            </div>
-        `).join('');
-
-            if (!window._teachersGridBound) {
-                window._teachersGridBound = true;
-                teachersGrid.addEventListener('click', e => {
-                    const btn = e.target.closest('.btn-delete-teacher');
-                    if (!btn) return;
-                    deleteTeacher(btn.dataset.id, btn.dataset.name);
-                });
-            }
-        }
-    }
-
-
-    // ─── الحلقات (CRUD إضافي) ────────────────────────
-    async function editCircle(id, name, time, location, teacherId) {
-        document.getElementById('editCircleId').value = id;
-        document.getElementById('editCircleName').value = name || '';
-        document.getElementById('editCircleTime').value = time || '';
-        document.getElementById('editCircleLocation').value = location || '';
-        const teacherSel = document.getElementById('editCircleTeacher');
-        try {
-            const teachers = await apiFetch('/teachers');
-            teacherSel.innerHTML = '<option value="">— بدون محفظ —</option>' + teachers.map(t =>
-                `<option value="${t.id}">${escapeHtml(t.fullName)}</option>`
-            ).join('');
-            if (teacherId) teacherSel.value = String(teacherId);
-        } catch { teacherSel.innerHTML = '<option value="">—</option>'; }
-        openModal('editCircleModal');
-    }
-
-    async function submitEditCircle() {
-        const id = document.getElementById('editCircleId').value;
-        const name = document.getElementById('editCircleName').value.trim();
-        if (!name) { showToast('⚠️ اسم الحلقة مطلوب'); return; }
-        const teacherVal = document.getElementById('editCircleTeacher').value;
-        try {
-            await apiFetch(`/circles/${id}`, 'PUT', {
-                name,
-                time: document.getElementById('editCircleTime').value.trim(),
-                location: document.getElementById('editCircleLocation').value.trim(),
-                teacherId: teacherVal ? parseInt(teacherVal, 10) : null
-            });
-            closeModal('editCircleModal');
-            showToast('✅ تم تحديث الحلقة');
-            if(typeof fetchCircles === 'function') fetchCircles();
-        } catch (err) { showToast('❌ ' + err.message); }
-    }
-
-    async function deleteCircle(id, name) {
-        if (!confirm(`هل أنت متأكد من حذف حلقة "${name}"؟`)) return;
-        try {
-            await apiFetch(`/circles/${id}`, 'DELETE');
-            showToast('✅ تم حذف الحلقة');
-            if(typeof fetchCircles === 'function') fetchCircles();
-        } catch (err) { showToast('❌ ' + err.message); }
-    }
-    
-    async function fetchCircles() {
-        const data = await apiFetch('/circles');
-        window._circles = data;
-
-        const circlesGrid = document.getElementById('circlesGrid');
-        const circlesCountEl = document.getElementById('circlesPageCount');
-        if (circlesCountEl) circlesCountEl.textContent = `${data.length} حلقة مسجلة`;
-        if (circlesGrid) {
-            circlesGrid.innerHTML = data.map(c => `
-        <div class="student-card">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-            <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:24px;">${escapeHtml(c.icon || '⭕')}</div>
-            <div>
-              <h4 style="font-size:15px;font-weight:800">${escapeHtml(c.name)}</h4>
-              <span style="font-size:12px;color:var(--text-muted)">${escapeHtml(c.teacherName)}</span>
-            </div>
-          </div>
-          <div class="student-card-stats">
-            <div class="mini-stat"><label>الطلاب</label><p>${c.studentCount}</p></div>
-            <div class="mini-stat"><label>القاعة</label><p>${escapeHtml(c.location || '—')}</p></div>
-          </div>
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">⏰ ${escapeHtml(c.time || '—')}</p>
-          <div class="student-card-actions">
-            <button class="btn btn-outline" data-id="${c.id}" data-name="${escapeHtml(c.name)}" data-time="${escapeHtml(c.time || '')}" data-loc="${escapeHtml(c.location || '')}" data-teacher="${c.teacherId || ''}" onclick="editCircle(this.dataset.id, this.dataset.name, this.dataset.time, this.dataset.loc, this.dataset.teacher || null)">✏️ تعديل</button>
-            <button class="btn btn-primary" onclick="navigate('attendance',null)">الحضور</button>
-            <button class="btn btn-delete" onclick="deleteCircle(${c.id},${JSON.stringify(c.name)})">🗑 حذف</button>
-          </div>
-        </div>
-      `).join('');
-        }
-
-        const halaqaSelect = document.getElementById('halaqa');
-        if (halaqaSelect) {
-            halaqaSelect.innerHTML = '<option value="">— بدون حلقة —</option>' + data.map(c =>
-                `<option value="${c.id}">${escapeHtml(c.name)}</option>`
-            ).join('');
-            const reg = document.getElementById('registrationDate');
-            if (reg && !reg.value) reg.value = new Date().toISOString().slice(0, 10);
-        }
-
-        const circleSelector = document.querySelector('.circle-selector');
-        if (circleSelector && data.length > 0) {
-            circleSelector.innerHTML = data.map((c, i) =>
-                `<div class="circle-chip ${i === 0 ? 'active' : ''}" onclick="selectCircle(this)" data-id="${c.id}">${escapeHtml(c.name)}</div>`
-            ).join('');
-            global.selectedCircleId = data[0].id;
-        }
-    }
+    // ─── ملاحظة: دوال المحفظين والحلقات (fetchTeachers, editTeacher, submitEditTeacher,
+    //      deleteTeacher, fetchCircles, editCircle, submitEditCircle, deleteCircle)
+    //      موجودة في teachers.js — تم إزالة النسخ المكررة هنا ───
 
     // ─── الحفظ والاختبارات ────────────────────────
-    async function deleteHifzRecord(id) {
-        if (!confirm('حذف سجل التسميع؟')) return;
-        try {
-            await apiFetch(`/hifz/${id}`, 'DELETE');
-            showToast('✅ تم حذف السجل');
-            if(typeof fetchMemorizationData === 'function') fetchMemorizationData();
-        } catch (err) { showToast('❌ ' + err.message); }
+    function deleteHifzRecord(id) {
+        global.confirmDelete('حذف سجل التسميع؟', async () => {
+            try {
+                await apiFetch(`/hifz/${id}`, 'DELETE');
+                showToast('✅ تم حذف السجل');
+                if(typeof fetchMemorizationData === 'function') fetchMemorizationData();
+            } catch (err) { showToast('❌ ' + err.message); }
+        });
     }
 
-    async function deleteExam(id, title) {
-        if (!confirm(`حذف اختبار "${title}"؟`)) return;
-        try {
-            await apiFetch(`/exams/${id}`, 'DELETE');
-            showToast('✅ تم حذف الاختبار');
-            if(typeof fetchExams === 'function') fetchExams();
-        } catch (err) { showToast('❌ ' + err.message); }
+    function deleteExam(id, title) {
+        global.confirmDelete(`حذف اختبار "${title}"؟`, async () => {
+            try {
+                await apiFetch(`/exams/${id}`, 'DELETE');
+                showToast('✅ تم حذف الاختبار');
+                if(typeof fetchExams === 'function') fetchExams();
+            } catch (err) { showToast('❌ ' + err.message); }
+        });
     }
 
     async function sendBulkAbsenceNotifs(circleId) {
@@ -391,11 +231,20 @@
             showToast('⚠️ اختر حلقة أولاً من القائمة أعلاه');
             return;
         }
-        if (!confirm('إرسال إشعارات غياب لجميع أولياء الأمور؟')) return;
-        try {
-            const res = await apiFetch('/notifications/bulk-absence', 'POST', { circleId: cid });
-            showToast(`✅ ${res.message}`);
-        } catch (err) { showToast('❌ ' + err.message); }
+        
+        global.confirmDelete('إرسال إشعارات غياب لجميع أولياء الأمور عبر واتساب؟', async () => {
+            const btns = document.querySelectorAll('button');
+            let targetBtn = null;
+            for (const b of btns) { if (b.textContent.includes('إرسال إشعارات للغائبين')) { targetBtn = b; break; } }
+            try {
+                if (global.setBtnLoading && targetBtn) global.setBtnLoading(targetBtn, true);
+                const res = await apiFetch('/notifications/bulk-absence', 'POST', { circleId: cid });
+                showToast(`✅ ${res.message}`);
+            } catch (err) { showToast('❌ ' + err.message); }
+            finally {
+                if (global.setBtnLoading && targetBtn) global.setBtnLoading(targetBtn, false, targetBtn.dataset.origText || 'إرسال إشعارات للغائبين');
+            }
+        });
     }
 
     async function sendHifzPraise(studentId, surahName, verses, evaluation) {
@@ -409,17 +258,21 @@
         const title = document.getElementById('annTitle')?.value.trim();
         const content = document.getElementById('annContent')?.value.trim();
         const target = document.getElementById('annTarget')?.value || 'الجميع';
+        const btn = document.querySelector('#addAnnModal .btn-primary');
         if (!title || !content) {
             showToast('⚠️ العنوان ونص الإعلان مطلوبان');
             return;
         }
         try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await apiFetch('/announcements', 'POST', { title, content, target });
             closeModal('addAnnModal');
             showToast('📢 تم نشر الإعلان بنجاح');
             global.NoorDashboard?.fetchAnnouncements?.();
         } catch (err) {
             showToast('❌ ' + (err.message || 'حدث خطأ أثناء النشر'));
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }
     }
 
@@ -562,13 +415,14 @@
         finally { btn.disabled = false; btn.innerHTML = 'رفع الملف 📤'; }
     }
 
-    async function deleteLibraryItem(id) {
-        if (!confirm('هل أنت متأكد من حذف هذا الملف نهائياً؟')) return;
-        try {
-            await apiFetch(`/library/${id}`, 'DELETE');
-            showToast('✅ تم حذف الملف بنجاح');
-            fetchLibraryItems();
-        } catch (err) { showToast('❌ ' + err.message); }
+    function deleteLibraryItem(id) {
+        global.confirmDelete('هل أنت متأكد من حذف هذا الملف نهائياً؟', async () => {
+            try {
+                await apiFetch(`/library/${id}`, 'DELETE');
+                showToast('✅ تم حذف الملف بنجاح');
+                fetchLibraryItems();
+            } catch (err) { showToast('❌ ' + err.message); }
+        });
     }
 
     async function viewLibraryPdf(id, title) {
@@ -620,15 +474,7 @@
     global.submitEditStudent = submitEditStudent;
     global.saveStudent = saveStudent;
 
-    global.editTeacher = editTeacher;
-    global.submitEditTeacher = submitEditTeacher;
-    global.deleteTeacher = deleteTeacher;
-    global.fetchTeachers = fetchTeachers;
-
-    global.editCircle = editCircle;
-    global.submitEditCircle = submitEditCircle;
-    global.deleteCircle = deleteCircle;
-    global.fetchCircles = fetchCircles;
+    // ─── تصدير المحفظين/الحلقات تم نقله إلى teachers.js ───
 
     global.deleteHifzRecord = deleteHifzRecord;
     global.deleteExam = deleteExam;

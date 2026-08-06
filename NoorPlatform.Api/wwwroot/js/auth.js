@@ -56,7 +56,6 @@
         const isTeacher = role === 'Teacher';
         const isStudent = role === 'Student';
         const isParent = role === 'Parent';
-
         const staffSection = document.getElementById('staffSection');
         const adminOnlySection = document.getElementById('adminOnlySection');
         const studentSection = document.getElementById('studentSection');
@@ -65,9 +64,12 @@
         const libraryAdminActions = document.getElementById('libraryAdminActions');
         const isStaff = isAdmin || isTeacher;
 
+        // ─── إصلاح: إخفاء أزرار الوسام/الشهادة الإدارية عن الطالب نفسه ───
+        const quranMapActions = document.getElementById('quranMapAdminActions');
+        if (quranMapActions) quranMapActions.style.display = isStaff ? 'flex' : 'none';
+
         if (staffSection) staffSection.style.display = isStaff ? 'block' : 'none';
         if (adminOnlySection) adminOnlySection.style.display = isAdmin ? 'block' : 'none';
-
         if (isAdmin || isTeacher) {
             if (studentSection) studentSection.style.display = 'none';
             if (parentSection) parentSection.style.display = 'none';
@@ -84,7 +86,6 @@
             if (libraryNavSection) libraryNavSection.style.display = 'block';
             if (libraryAdminActions) libraryAdminActions.style.display = 'none';
         }
-
         if (isStudent) {
             global.navigate('studentView', document.querySelector('#studentSection .nav-item'));
             if (typeof fetchStudentView === 'function') fetchStudentView();
@@ -128,7 +129,7 @@
         const passInput = document.getElementById('loginPassword');
         ui().clearValidation(document.getElementById('loginForm'));
         const isValid = ui().validateForm([
-            { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الجوال', patternLibyan: true },
+            { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الهاتف', patternLibyan: true },
             { id: 'loginPassword', required: true, requiredMsg: 'يرجى إدخال كلمة المرور', minLength: 6, minLengthMsg: 'كلمة المرور 6 أحرف على الأقل' }
         ]);
         if (!isValid) return;
@@ -163,14 +164,15 @@
                 phone: data.user?.phone
             });
 
+            // إخفاء شاشة الدخول فوراً في كلتا الحالتين
+            const ls = document.getElementById('loginScreen');
+            if (ls) ls.style.display = 'none';
+
             if (data.mustChangePassword) {
                 ui().openModal('changePasswordModal');
                 ui().showToast('⚠️ يرجى تغيير كلمة المرور المؤقتة');
             } else {
                 ui().showToast('✅ تم تسجيل الدخول بنجاح');
-                // إخفاء شاشة الدخول فوراً
-                const ls = document.getElementById('loginScreen');
-                if (ls) ls.style.display = 'none';
                 checkAuth();
             }
         } catch (err) {

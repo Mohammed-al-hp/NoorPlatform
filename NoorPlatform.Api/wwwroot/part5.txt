@@ -1,0 +1,1005 @@
+                </div>
+                <div id="hifzMemorizationPanel">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">من سورة *</label>
+                            <select class="form-input" id="hifzFromSurah"></select>
+                        </div>
+                        <div class="form-group" id="hifzToSurahWrap" style="display:none">
+                            <label class="form-label">إلى سورة</label>
+                            <select class="form-input" id="hifzToSurah"></select>
+                        </div>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px">
+                        <input type="checkbox" id="hifzShowToSurah"> تسميع يشمل أكثر من سورة
+                    </label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">من آية</label>
+                            <input class="form-input" id="hifzFromVerse" type="number" min="1" placeholder="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">إلى آية</label>
+                            <input class="form-input" id="hifzToVerse" type="number" min="1" placeholder="10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نص بداية الآية</label>
+                        <input class="form-input" id="hifzStartText" type="text" placeholder="اقرأ من قوله تعالى...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نص نهاية الآية</label>
+                        <input class="form-input" id="hifzEndText" type="text" placeholder="...إلى قوله">
+                    </div>
+                </div>
+                <div id="hifzRevisionPanel" style="display:none">
+                    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                        <button type="button" class="btn btn-primary" data-revision-mode="Sequential">📋 مراجعة بالترتيب</button>
+                        <button type="button" class="btn btn-outline" data-revision-mode="Questions">❓ نظام الأسئلة</button>
+                    </div>
+                    <div id="hifzSequentialPanel" class="hifz-revision-panel">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">من سورة</label>
+                                <select class="form-input" id="hifzSeqFromSurah"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى سورة</label>
+                                <select class="form-input" id="hifzSeqToSurah"></select>
+                            </div>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">السور التي سيتم تسميعها:</p>
+                        <div class="hifz-seq-preview" id="hifzSeqPreview"></div>
+                    </div>
+                    <div id="hifzQuestionsPanel" class="hifz-revision-panel" style="display:none">
+                        <div id="hifzQuestionsList"></div>
+                        <button type="button" class="btn btn-outline" id="btnAddRevisionQuestion" style="width:100%;margin-top:8px">➕ إضافة سؤال</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">التقييم *</label>
+                    <select class="form-input" id="hifzEvaluation">
+                        <option value="excellent">ممتاز</option>
+                        <option value="good">جيد</option>
+                        <option value="review">يحتاج مراجعة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ملاحظة</label>
+                    <textarea class="form-input" id="hifzNotes" rows="2" placeholder="ملاحظات للطالب أو ولي الأمر..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addMemModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveSession()">💾 حفظ الجلسة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parent modals -->
+    <div class="modal-overlay" id="parentFormModal">
+        <div class="modal" style="max-width:480px">
+            <div class="modal-header">
+                <h3 id="parentFormTitle">ولي أمر</h3>
+                <button class="modal-close" onclick="closeModal('parentFormModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="parentEditId">
+                <div class="form-group">
+                    <label class="form-label">الاسم *</label>
+                    <input class="form-input" id="parentFormFullName" type="text">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رقم الهاتف *</label>
+                    <input class="form-input" id="parentFormPhone" type="tel" placeholder="09xxxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ربط بالأبناء</label>
+                    <div id="parentChildrenCheckboxes" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('parentFormModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="NoorParents.saveParentForm()">حفظ</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="parentDetailModal">
+        <div class="modal" style="max-width:440px">
+            <div class="modal-header">
+                <h3>تفاصيل ولي الأمر</h3>
+                <button class="modal-close" onclick="closeModal('parentDetailModal')">✕</button>
+            </div>
+            <div class="modal-body" id="parentDetailBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('parentDetailModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User modals -->
+    <div class="modal-overlay" id="userDetailModal">
+        <div class="modal" style="max-width:440px">
+            <div class="modal-header">
+                <h3>تفاصيل المستخدم</h3>
+                <button class="modal-close" onclick="closeModal('userDetailModal')">✕</button>
+            </div>
+            <div class="modal-body" id="userDetailBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('userDetailModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="userEditModal">
+        <div class="modal" style="max-width:440px">
+            <div class="modal-header">
+                <h3>تعديل المستخدم</h3>
+                <button class="modal-close" onclick="closeModal('userEditModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="userEditId">
+                <div class="form-group">
+                    <label class="form-label">الاسم</label>
+                    <input class="form-input" id="userEditFullName" type="text">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الهاتف</label>
+                    <input class="form-input" id="userEditPhone" type="tel">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الدور</label>
+                    <select class="form-input" id="userEditRole">
+                        <option value="Admin">مشرف</option>
+                        <option value="Teacher">محفظ</option>
+                        <option value="Student">طالب</option>
+                        <option value="Parent">ولي أمر</option>
+                    </select>
+                </div>
+                <label style="display:flex;gap:8px;font-size:13px;margin:8px 0">
+                    <input type="checkbox" id="userEditActive"> حساب نشط
+                </label>
+                <label style="display:flex;gap:8px;font-size:13px">
+                    <input type="checkbox" id="userEditMustChange"> يجب تغيير كلمة المرور
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('userEditModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="NoorUsers.saveUserEdit()">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div class="modal-overlay" id="addAnnModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📢 إعلان جديد</h3>
+                <button class="modal-close" onclick="closeModal('addAnnModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">عنوان الإعلان *</label>
+                    <input id="annTitle" class="form-input" type="text" placeholder="مثال: موعد الاختبار الشهري">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الجهة المستهدفة</label>
+                    <select id="annTarget" class="form-input">
+                        <option value="الجميع">الجميع</option>
+                        <option value="الطلاب">الطلاب</option>
+                        <option value="أولياء الأمور">أولياء الأمور</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">نص الإعلان *</label>
+                    <textarea id="annContent" class="form-input" rows="4" placeholder="اكتب نص الإعلان هنا..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">تاريخ الانتهاء (اختياري)</label>
+                    <input class="form-input" type="date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addAnnModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveAnn()">📤 نشر الإعلان</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Teacher Modal -->
+    <div class="modal-overlay" id="addTeacherModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>👨‍🏫 إضافة محفظ</h3>
+                <button class="modal-close" onclick="closeModal('addTeacherModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <!-- ✅ تغيير التسمية -->
+                        <label class="form-label">الاسم الثلاثي *</label>
+                        <input id="teacherFullName" class="form-input" type="text" placeholder="عبدالله أحمد السلمي" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <!-- ✅ تغيير التسمية -->
+                        <label class="form-label">رقم الهاتف *</label>
+                        <input id="teacherPhone" class="form-input" type="tel" placeholder="09xxxxxxxx" inputmode="numeric" maxlength="10" autocomplete="tel">
+                    </div>
+                </div>
+                <!-- ✅ حقل تاريخ الميلاد الجديد -->
+                <div class="form-group">
+                    <label class="form-label">تاريخ الميلاد *</label>
+                    <input id="teacherBirthDate" class="form-input" type="date" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">التخصص / المؤهل</label>
+                    <input id="teacherQualification" class="form-input" type="text" placeholder="حافظ للقرآن الكريم كاملاً">
+                </div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px">⚠️ يُنشأ حساب تلقائياً بكلمة مرور مؤقتة — ستُعرض بعد الحفظ</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addTeacherModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveTeacher()">💾 حفظ</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Add Exam Modal -->
+    <div class="modal-overlay" id="addExamModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📝 إنشاء اختبار جديد</h3>
+                <button class="modal-close" onclick="closeModal('addExamModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">عنوان الاختبار *</label>
+                    <input class="form-input" id="examTitle" type="text" placeholder="اختبار الجزء الأول">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">التاريخ *</label>
+                        <input class="form-input" id="examDate" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الوصف</label>
+                        <textarea class="form-input" id="examDesc" rows="2" placeholder="وصف مختصر للاختبار (اختياري)"
+                                  style="resize:vertical"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addExamModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveExam()">📤 إنشاء الاختبار</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Switch Modal -->
+    <div class="modal-overlay" id="teacherProfileModal">
+        <div class="modal" style="max-width:480px">
+            <div class="modal-header">
+                <h3 id="profileModalTitle">📋 ملف المحفظ</h3>
+                <button class="modal-close" onclick="closeModal('teacherProfileModal')">✕</button>
+            </div>
+            <div class="modal-body" id="teacherProfileBody">
+                <div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('teacherProfileModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Circle Modal -->
+    <div class="modal-overlay" id="addCircleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>⭕ إنشاء حلقة جديدة</h3>
+                <button class="modal-close" onclick="closeModal('addCircleModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">اسم الحلقة *</label>
+                    <input id="circleName" class="form-input" type="text" placeholder="مثال: حلقة الفجر">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">المحفظ</label>
+                        <select id="circleTeacher" class="form-input">
+                            <option value="">— اختر محفظاً —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">القاعة / المكان</label>
+                        <input id="circleLocation" class="form-input" type="text" placeholder="القاعة 1">
+                    </div>
+                </div>
+                <!-- ✅ جدول مرن: صلاة أو وقت مخصص -->
+                <div class="form-group">
+                    <label class="form-label">نوع الجدول</label>
+                    <div style="display:flex;gap:8px;margin-bottom:10px">
+                        <button type="button" class="btn btn-primary" style="flex:1" id="circleSchedulePrayer"
+                                onclick="setCircleScheduleType('prayer','addCircleModal')">
+                            🕌 أوقات الصلوات
+                        </button>
+                        <button type="button" class="btn btn-outline" style="flex:1" id="circleScheduleCustom"
+                                onclick="setCircleScheduleType('custom','addCircleModal')">
+                            🕐 وقت مخصص
+                        </button>
+                    </div>
+                    <!-- وقت الصلاة -->
+                    <div id="addCirclePrayerPanel">
+                        <select id="circleTimeSelect" class="form-input">
+                            <option value="بعد صلاة الفجر">بعد صلاة الفجر</option>
+                            <option value="بعد صلاة الظهر">بعد صلاة الظهر</option>
+                            <option value="بعد صلاة العصر">بعد صلاة العصر</option>
+                            <option value="بعد صلاة المغرب">بعد صلاة المغرب</option>
+                            <option value="بعد صلاة العشاء">بعد صلاة العشاء</option>
+                        </select>
+                    </div>
+                    <!-- وقت مخصص -->
+                    <div id="addCircleCustomPanel" style="display:none">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">من</label>
+                                <input type="time" id="circleTimeFrom" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى</label>
+                                <input type="time" id="circleTimeTo" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- إخفاء الحقل القديم — يُملأ برمجياً -->
+                    <input type="hidden" id="circleTime">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">السعة القصوى</label>
+                    <input id="circleCapacity" class="form-input" type="number" placeholder="20">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addCircleModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveCircle()">💾 إنشاء الحلقة</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Center Summary Modal -->
+    <div class="modal-overlay" id="centerSummaryModal">
+        <div class="modal" style="max-width:600px">
+            <div class="modal-header">
+                <h3>👥 إحصائيات المركز (الإنجاز الجماعي)</h3>
+                <button class="modal-close" onclick="closeModal('centerSummaryModal')">✕</button>
+            </div>
+            <div class="modal-body" id="centerSummaryBody">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('centerSummaryModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <!-- Modal: إضافة فاتورة جديدة -->
+    <div class="modal-overlay" id="addInvoiceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>إصدار فاتورة جديدة</h3>
+                <span class="close-modal" onclick="closeModal('addInvoiceModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>الطالب</label>
+                    <select id="invoiceStudentId" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>المبلغ (ريال)</label>
+                    <input type="number" id="invoiceAmount" class="form-control" placeholder="مثال: 500">
+                </div>
+                <div class="form-group">
+                    <label>البيان / الوصف</label>
+                    <input type="text" id="invoiceDesc" class="form-control" placeholder="رسوم شهر مايو">
+                </div>
+                <div class="form-group">
+                    <label>تاريخ الاستحقاق</label>
+                    <input type="date" id="invoiceDueDate" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="submitInvoice()"
+                        style="width:100%; justify-content:center; margin-top:15px;">
+                    إصدار الفاتورة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div class="modal-overlay" id="editStudentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ تعديل بيانات الطالب</h3>
+                <button class="modal-close" onclick="closeModal('editStudentModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editStudentId">
+                <div class="form-group">
+                    <label>الاسم الثلاثي *</label>
+                    <input type="text" id="editStudentName" class="form-control">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>تاريخ الميلاد *</label>
+                        <input type="date" id="editStudentBirthDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ التسجيل *</label>
+                        <input type="date" id="editStudentRegistrationDate" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>رقم هاتف الطالب (اختياري)</label>
+                        <input type="tel" id="editStudentPhone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>السكن (اختياري)</label>
+                        <input type="text" id="editStudentResidence" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>اسم ولي الأمر *</label>
+                    <input type="text" id="editGuardianName" class="form-control">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>رقم هاتف ولي الأمر *</label>
+                        <input type="tel" id="editParentPhone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>صلة القرابة *</label>
+                        <select id="editGuardianRelationship" class="form-control">
+                            <option value="Father">أب</option>
+                            <option value="Mother">أم</option>
+                            <option value="Uncle">عم</option>
+                            <option value="Brother">أخ</option>
+                            <option value="MaternalUncle">خال</option>
+                            <option value="Other">أخرى</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>المستوى (اختياري)</label>
+                        <select id="editStudentLevel" class="form-control">
+                            <option value="مبتدئ">مبتدئ</option>
+                            <option value="متوسط">متوسط</option>
+                            <option value="متقدم">متقدم</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الحلقة (اختياري)</label>
+                        <select id="editStudentCircle" class="form-control">
+                            <option value="">— بدون حلقة —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editStudentModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitEditStudent()">💾 حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Teacher Modal -->
+    <div class="modal-overlay" id="editTeacherModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ تعديل بيانات المحفظ</h3>
+                <button class="modal-close" onclick="closeModal('editTeacherModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editTeacherId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">الاسم الثلاثي</label>
+                        <input type="text" id="editTeacherName" class="form-input" placeholder="عبدالله أحمد السلمي">
+                    </div>
+                    <div class="form-group">
+                        <!-- ✅ حقل تاريخ الميلاد في Edit -->
+                        <label class="form-label">تاريخ الميلاد</label>
+                        <input type="date" id="editTeacherBirthDate" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">التخصص / المؤهل</label>
+                    <input type="text" id="editTeacherQual" class="form-input" placeholder="حافظ للقرآن الكريم كاملاً">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editTeacherModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitEditTeacher()">💾 حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Circle Modal -->
+    <div class="modal-overlay" id="editCircleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ تعديل الحلقة</h3>
+                <button class="modal-close" onclick="closeModal('editCircleModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editCircleId">
+                <div class="form-group">
+                    <label class="form-label">اسم الحلقة</label>
+                    <input type="text" id="editCircleName" class="form-input">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">المحفظ</label>
+                        <select id="editCircleTeacher" class="form-input">
+                            <option value="">— بدون محفظ —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">القاعة / المكان</label>
+                        <input type="text" id="editCircleLocation" class="form-input">
+                    </div>
+                </div>
+                <!-- ✅ جدول مرن مطابق لـ Add -->
+                <div class="form-group">
+                    <label class="form-label">نوع الجدول</label>
+                    <div style="display:flex;gap:8px;margin-bottom:10px">
+                        <button type="button" class="btn btn-primary" style="flex:1" id="editCircleSchedulePrayer"
+                                onclick="setCircleScheduleType('prayer','editCircleModal')">
+                            🕌 أوقات الصلوات
+                        </button>
+                        <button type="button" class="btn btn-outline" style="flex:1" id="editCircleScheduleCustom"
+                                onclick="setCircleScheduleType('custom','editCircleModal')">
+                            🕐 وقت مخصص
+                        </button>
+                    </div>
+                    <div id="editCirclePrayerPanel">
+                        <select id="editCircleTimeSelect" class="form-input">
+                            <option value="بعد صلاة الفجر">بعد صلاة الفجر</option>
+                            <option value="بعد صلاة الظهر">بعد صلاة الظهر</option>
+                            <option value="بعد صلاة العصر">بعد صلاة العصر</option>
+                            <option value="بعد صلاة المغرب">بعد صلاة المغرب</option>
+                            <option value="بعد صلاة العشاء">بعد صلاة العشاء</option>
+                        </select>
+                    </div>
+                    <div id="editCircleCustomPanel" style="display:none">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">من</label>
+                                <input type="time" id="editCircleTimeFrom" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى</label>
+                                <input type="time" id="editCircleTimeTo" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editCircleTime">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editCircleModal')">إلغاء</button>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#ef4444">
+                    <input type="checkbox" id="editCircleRemoveTeacher"> إزالة المحفظ
+                </label>
+                <button class="btn btn-primary" onclick="submitEditCircle()">💾 حفظ</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal-overlay" id="confirmDeleteModal">
+        <div class="modal" style="max-width:380px">
+            <div class="modal-header">
+                <h3>⚠️ تأكيد الحذف</h3>
+                <button class="modal-close" onclick="closeModal('confirmDeleteModal')">✕</button>
+            </div>
+            <div class="modal-body" style="text-align:center">
+                <div style="font-size:48px;margin-bottom:16px">🗑️</div>
+                <p id="confirmDeleteMsg" style="font-size:15px;font-weight:600;margin-bottom:8px">
+                    هل أنت متأكد من الحذف؟
+                </p>
+                <p style="font-size:13px;color:var(--text-muted)">هذا الإجراء لا يمكن التراجع عنه</p>
+            </div>
+            <div class="modal-footer" style="justify-content:center">
+                <button class="btn btn-outline" onclick="closeModal('confirmDeleteModal')">إلغاء</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn" onclick="executeDelete()">🗑️ حذف</button>
+            </div>
+        </div>
+    </div> <!-- End App Wrapper -->
+    <!-- ─── مودال إضافة ملف للمكتبة ─── -->
+    <div class="modal-overlay" id="uploadLibraryModal" onclick="if(event.target===this) closeUploadLibraryModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>📚 إضافة ملف للمكتبة</h3>
+                <button class="close-modal" onclick="closeUploadLibraryModal()">×</button>
+            </div>
+            <form id="uploadLibraryForm" onsubmit="handleUploadLibrary(event)">
+                <div class="form-group">
+                    <label>عنوان الكتاب أو الملف</label>
+                    <input type="text" class="form-control" name="title" required placeholder="مثال: متن تحفة الأطفال">
+                </div>
+                <div class="form-group">
+                    <label>التصنيف</label>
+                    <select class="form-control" name="category" required>
+                        <option value="مصحف">مصحف</option>
+                        <option value="متن">متن</option>
+                        <option value="تجويد">تجويد</option>
+                        <option value="منهج">منهج</option>
+                        <option value="مراجعة">مراجعة</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الوصف (اختياري)</label>
+                    <textarea class="form-control" name="description" rows="2"
+                              placeholder="وصف مختصر للملف..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>ملف PDF</label>
+                    <input type="file" class="form-control" name="file" accept=".pdf" required>
+                    <small style="color:var(--text-muted)">يسمح بملفات PDF فقط (الحد الأقصى 50 ميجابايت).</small>
+                </div>
+                <div style="margin-top:20px; text-align:left">
+                    <button type="button" class="btn btn-outline" onclick="closeUploadLibraryModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" id="btnUploadLibrary">رفع الملف 📤</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── عارض الـ PDF الداخلي ─── -->
+    <!-- مودال بيانات الحساب الجديد -->
+    <div class="modal-overlay" id="accountCredentialsModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🔐 بيانات الدخول</h3>
+                <button class="close-modal" onclick="closeModal('accountCredentialsModal')">×</button>
+            </div>
+            <div class="modal-body" id="accountCredentialsBody" style="text-align:right;line-height:1.8"></div>
+            <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
+                <button type="button" class="btn btn-outline" onclick="copyAccountCredentials()">📋 نسخ</button>
+                <button type="button" class="btn btn-outline" onclick="printAccountCredentials()">🖨 طباعة</button>
+                <button type="button" class="btn btn-primary" onclick="sendAccountCredentialsWhatsApp()">
+                    💬
+                    واتساب
+                </button>
+                <button type="button" class="btn btn-primary"
+                        onclick="closeModal('accountCredentialsModal')">
+                    تم
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تغيير كلمة المرور (أول دخول) -->
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🔒 تغيير كلمة المرور</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color:var(--text-muted);margin-bottom:16px">يجب تغيير كلمة المرور المؤقتة قبل المتابعة.</p>
+                <div class="form-group">
+                    <label>كلمة المرور الحالية</label>
+                    <input type="password" id="currentPasswordInput" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور الجديدة</label>
+                    <input type="password" id="newPasswordInput" class="form-control" placeholder="8 أحرف على الأقل">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitChangePassword()" style="width:100%">
+                    حفظ
+                    ومتابعة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال إضافة/تعديل قائمة الانتظار -->
+    <div class="modal-overlay" id="waitingListFormModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="waitingListFormTitle">⏳ إضافة لقائمة الانتظار</h3>
+                <button class="close-modal" onclick="closeModal('waitingListFormModal')">×</button>
+            </div>
+            <form id="waitingListForm" onsubmit="saveWaitingListEntry(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="waitingEntryId" value="">
+                    <div class="form-group">
+                        <label>اسم الطالب *</label><input class="form-control" id="wlFullName"
+                                                          required>
+                    </div>
+                    <div class="form-row" style="display:flex;gap:12px">
+                        <div class="form-group" style="flex:1">
+                            <label>هاتف الطالب *</label><input class="form-control"
+                                                               id="wlPhone" type="tel" required placeholder="09xxxxxxxx">
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>العمر</label><input class="form-control"
+                                                       id="wlAge" type="number" min="4" max="80">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم ولي الأمر</label><input class="form-control" id="wlParentName">
+                    </div>
+                    <div class="form-group">
+                        <label>هاتف ولي الأمر</label><input class="form-control" id="wlParentPhone"
+                                                            type="tel" placeholder="09xxxxxxxx">
+                    </div>
+                    <div class="form-row" style="display:flex;gap:12px">
+                        <div class="form-group" style="flex:1">
+                            <label>المستوى المطلوب</label>
+                            <select class="form-control" id="wlLevel">
+                                <option>مبتدئ</option>
+                                <option>متوسط</option>
+                                <option>متقدم</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>الوقت المفضل</label><input class="form-control"
+                                                              id="wlPreferredTime" placeholder="بعد العصر">
+                        </div>
+                    </div>
+                    <div class="form-group" id="wlStatusGroup" style="display:none">
+                        <label>الحالة</label>
+                        <select class="form-control" id="wlStatus">
+                            <option value="Pending">قيد الانتظار</option>
+                            <option value="Contacted">تم التواصل</option>
+                            <option value="Rejected">مرفوض</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات</label><textarea class="form-control" id="wlNotes"
+                                                        rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline"
+                            onclick="closeModal('waitingListFormModal')">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary">💾 حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال تحويل إلى طالب -->
+    <div class="modal-overlay" id="convertWaitingModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🎓 تحويل إلى طالب</h3>
+                <button class="close-modal" onclick="closeModal('convertWaitingModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="convertWaitingName" style="margin-bottom:12px;font-weight:700"></p>
+                <div class="form-group">
+                    <label>اختر الحلقة *</label>
+                    <select class="form-control" id="convertCircleId" required></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('convertWaitingModal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="confirmConvertWaiting()">
+                    ✅ تحويل وإنشاء
+                    حساب
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="pdfViewerModal" onclick="if(event.target===this) closePdfViewerModal()"
+         style="z-index: 10000; padding: 20px;">
+        <div class="modal" onclick="event.stopPropagation()"
+             style="max-width: 900px; width: 100%; height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 id="pdfViewerTitle">عرض الملف</h3>
+                <div style="display: flex; gap: 10px;">
+                    <a href="#" id="pdfViewerDownloadBtn" class="btn btn-primary"
+                       style="padding: 4px 12px; text-decoration: none; font-size: 13px;" download>تنزيل ⬇</a>
+                    <button class="close-modal" onclick="closePdfViewerModal()">×</button>
+                </div>
+            </div>
+            <div style="flex: 1; background: #fff; border-radius: 8px; overflow: hidden; margin-top: 10px;">
+                <iframe id="pdfViewerIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Global Loading Overlay -->
+    <div class="global-loading" id="globalLoading">
+        <div class="loading-spinner-lg"></div>
+        <p class="loading-label" id="loadingText">جاري التحميل...</p>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/utils.js"></script>
+    <script>if (typeof syncNoorUtils === 'function') syncNoorUtils();</script>
+    <script src="/js/api.js"></script>
+    <script src="/js/ui.js?v=10"></script>
+    <script>
+      // شبكة أمان: إن وُجدت الدالة على NoorApp فقط انقلها لـ window (لحماية onclick)
+      if (typeof window.toggleSidebar !== 'function' && window.NoorApp?.ui?.toggleSidebar) {
+        window.toggleSidebar = window.NoorApp.ui.toggleSidebar;
+        window.openSidebar = window.NoorApp.ui.openSidebar;
+        window.closeSidebar = window.NoorApp.ui.closeSidebar;
+      }
+    </script>
+    <script src="/js/modals.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/students.js"></script>
+    <script src="/js/attendance.js"></script>
+    <script src="/js/hifz.js"></script>
+    <script src="/js/parents.js"></script>
+    <script src="/js/users.js"></script>
+
+    <!-- All inline scripts have been extracted into modular JS files -->
+    <script src="/js/exams.js"></script>
+    <script src="/js/teachers.js"></script>
+    <script src="/js/reports.js"></script>
+    <script src="/js/app-ui-extensions.js"></script>
+    <script src="/js/payments.js"></script>
+    <script src="/js/page-controller.js"></script>
+    <script>
+        // ✅ مساعد الجدول المرن للحلقات
+        function setCircleScheduleType(type, modalId) {
+            const prefix = modalId === 'addCircleModal' ? '' : 'edit';
+            const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+            const prayerBtn = document.getElementById(`${prefix}${prefix ? cap('c') : 'c'}ircleSchedulePrayer`);
+            const customBtn = document.getElementById(`${prefix}${prefix ? cap('c') : 'c'}ircleScheduleCustom`);
+            const prayerPanel = document.getElementById(`${prefix ? 'edit' : 'add'}CirclePrayerPanel`);
+            const customPanel = document.getElementById(`${prefix ? 'edit' : 'add'}CircleCustomPanel`);
+
+            if (type === 'prayer') {
+                prayerPanel.style.display = '';
+                customPanel.style.display = 'none';
+                if (prayerBtn) { prayerBtn.classList.replace('btn-outline', 'btn-primary'); }
+                if (customBtn) { customBtn.classList.replace('btn-primary', 'btn-outline'); }
+            } else {
+                prayerPanel.style.display = 'none';
+                customPanel.style.display = '';
+                if (customBtn) { customBtn.classList.replace('btn-outline', 'btn-primary'); }
+                if (prayerBtn) { prayerBtn.classList.replace('btn-primary', 'btn-outline'); }
+            }
+        }
+
+        // ✅ استخراج قيمة الوقت من الجدول المرن
+        function getCircleTimeValue(prefix) {
+            const prayerPanel = document.getElementById(`${prefix}CirclePrayerPanel`);
+            if (!prayerPanel || prayerPanel.style.display !== 'none') {
+                // وضع الصلاة
+                const sel = document.getElementById(`${prefix}CircleTimeSelect`);
+                return sel ? sel.value : '';
+            }
+            // وضع مخصص
+            const from = document.getElementById(`${prefix}CircleTimeFrom`)?.value;
+            const to = document.getElementById(`${prefix}CircleTimeTo`)?.value;
+            return from && to ? `${from} - ${to}` : (from || '');
+        }
+
+        // ✅ printAttendance نظيفة بدون dropdowns
+        function printAttendance() {
+            const rows = [...document.querySelectorAll('#attendanceList tbody tr')];
+            if (!rows.length) { showToast('لا توجد بيانات للطباعة'); return; }
+
+            const date = document.getElementById('currentDate')?.textContent || '';
+            const rowsHtml = rows.map(r => {
+                const cells = r.querySelectorAll('td');
+                const name = cells[0]?.textContent?.trim() || '';
+                const status = cells[1]?.querySelector('.status-badge')?.textContent?.trim() || '—';
+                return `<tr><td>${name}</td><td>${status}</td><td></td></tr>`;
+            }).join('');
+
+            const win = window.open('', '_blank');
+            win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar">
+            <head><meta charset="UTF-8"><title>سجل الحضور</title>
+            <style>
+                body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
+                h2 { text-align: center; margin-bottom: 4px; }
+                p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
+                th { background: #f1f5f9; font-weight: 700; }
+                @media print { body { padding: 0; } }
+            <\/style><\/head>
+            <body>
+                <h2>سجل الحضور والغياب</h2>
+                <p>${date}</p>
+                <table>
+                    <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            <\/body><\/html>`);
+            win.document.close();
+            win.focus();
+            setTimeout(() => { win.print(); win.close(); }, 400);
+        }
+
+        // ✅ دالة بسيطة للتقارير
+        function loadReportData() {
+            const type = document.getElementById('reportType')?.value;
+            const from = document.getElementById('reportFrom')?.value;
+            const to = document.getElementById('reportTo')?.value;
+            const circleId = document.getElementById('reportCircleFilter')?.value || '';
+            const res = document.getElementById('reportResults');
+            if (!res) return;
+            if (!from || !to) {
+                res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:16px">📋</div><p>اختر نوع التقرير والفترة الزمنية</p></div>';
+                return;
+            }
+            res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري تحميل التقرير...</div>';
+            let url = `/reports/summary?type=${encodeURIComponent(type || 'attendance')}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            if (circleId) url += `&circleId=${encodeURIComponent(circleId)}`;
+            (typeof apiFetch === 'function' ? apiFetch(url) : Promise.reject(new Error('apiFetch غير متاح')))
+                .then(data => {
+                    const d = data?.data || data || {};
+                    const labels = {
+                        studentsInScope: 'الطلاب في النطاق',
+                        totalRecords: 'سجلات الحضور',
+                        present: 'حاضر',
+                        late: 'متأخر',
+                        excusedAbsence: 'غياب بعذر',
+                        unexcusedAbsence: 'غياب بدون عذر',
+                        attendanceRate: 'نسبة الحضور %',
+                        sessions: 'جلسات التسميع',
+                        memorizationSessions: 'تسميع جديد',
+                        reviewSessions: 'مراجعة',
+                        versesMemorized: 'آيات محفوظة',
+                        totalInvoices: 'الفواتير',
+                        paid: 'مدفوع',
+                        unpaid: 'غير مدفوع',
+                        amountPaid: 'المبلغ المحصّل',
+                        amountDue: 'المبلغ المستحق',
+                        totalActive: 'طلاب نشطون',
+                        withCircle: 'منضمون لحلقة',
+                        withoutCircle: 'بدون حلقة',
+                        message: 'ملاحظة'
+                    };
+                    const cards = Object.keys(d)
+                        .filter(k => k !== 'byLevel' && d[k] !== undefined && d[k] !== null && typeof d[k] !== 'object')
+                        .map(k => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:140px;flex:1">
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
+                            <div style="font-size:22px;font-weight:800">${d[k]}</div>
+                        </div>`)
+                        .join('');
+                    res.innerHTML = `<div style="text-align:right">
+                        <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
+                    </div>`;
+                })
+                .catch((err) => {
+                    const msg = err?.message || 'تعذر تحميل التقرير';
+                    res.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444">${msg}</div>`;
+                });
+        }
+
+        function generateReport() {
+            const type = document.getElementById('reportType')?.value || 'attendance';
+            const from = document.getElementById('reportFrom')?.value;
+            const to = document.getElementById('reportTo')?.value;
+            if (!from || !to) { showToast('⚠️ حدد الفترة الزمنية أولاً'); return; }
+            window.open(`/api/reports/monthly?month=${new Date(from).getMonth() + 1}&year=${new Date(from).getFullYear()}`, '_blank');
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1100 @@
+            </div>
+
+            <div class="nav-section" id="staffSection">
+                <div class="nav-section-label">الإدارة</div>
+                <div class="nav-item" onclick="navigate('students', this)">
+                    <div class="nav-icon">👨‍🎓</div>
+                    <span>الطلاب</span>
+                </div>
+            </div>
+            <div class="nav-section" id="adminOnlySection" style="display:none">
+                <div class="nav-section-label">المستخدمون</div>
+                <div class="nav-item" onclick="navigate('users', this)">
+                    <div class="nav-icon">👥</div>
+                    <span>المستخدمون</span>
+                </div>
+                <div class="nav-item" onclick="navigate('parents', this)">
+                    <div class="nav-icon">👨‍👦</div>
+                    <span>أولياء الأمور</span>
+                </div>
+                <div class="nav-item" onclick="navigate('teachers', this)">
+                    <div class="nav-icon">👨‍🏫</div>
+                    <span>المحفظون</span>
+                </div>
+                <div class="nav-item" onclick="navigate('circles', this)">
+                    <div class="nav-icon">⭕</div>
+                    <span>الحلقات</span>
+                </div>
+                <div class="nav-item" onclick="navigate('payments', this)">
+                    <div class="nav-icon">💳</div>
+                    <span>المدفوعات</span>
+                </div>
+                <div class="nav-item" onclick="navigate('reports', this)">
+                    <div class="nav-icon">📊</div>
+                    <span>التقارير</span>
+                </div>
+                <div class="nav-item" onclick="navigate('settings', this)">
+                    <div class="nav-icon">⚙️</div>
+                    <span>الإعدادات</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-label">المتابعة</div>
+                <div class="nav-item" onclick="navigate('attendance', this)">
+                    <div class="nav-icon">✅</div>
+                    <span>الحضور والغياب</span>
+                </div>
+                <div class="nav-item" onclick="navigate('memorization', this)">
+                    <div class="nav-icon">📖</div>
+                    <span>الحفظ والتسميع</span>
+                </div>
+                <div class="nav-item" onclick="navigate('exams', this)">
+                    <div class="nav-icon">📝</div>
+                    <span>الاختبارات</span>
+                </div>
+            </div>
+
+            <div class="nav-section" id="libraryNavSection">
+                <div class="nav-section-label">المكتبة</div>
+                <div class="nav-item" onclick="navigate('library', this)">
+                    <div class="nav-icon">📚</div>
+                    <span>مكتبة الطلاب</span>
+                </div>
+            </div>
+
+            <div class="nav-section" id="studentSection" style="display:none">
+                <div class="nav-section-label">بوابة الطالب</div>
+                <div class="nav-item" onclick="navigate('studentView', this)">
+                    <div class="nav-icon">🌟</div>
+                    <span>ملفي الشخصي</span>
+                </div>
+            </div>
+
+            <!-- ✅ إصلاح 3: قسم ولي الأمر -->
+            <div class="nav-section" id="parentSection" style="display:none">
+                <div class="nav-section-label">بوابة ولي الأمر</div>
+                <div class="nav-item" onclick="navigate('parentView', this)">
+                    <div class="nav-icon">👨‍👦</div>
+                    <span>متابعة الأبناء</span>
+                </div>
+                <div class="nav-item" onclick="navigate('parentFees', this)">
+                    <div class="nav-icon">💰</div>
+                    <span>الرسوم الدراسية</span>
+                </div>
+            </div>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="globalSearchInput" placeholder="بحث سريع عن طالب، حلقة، محفظ..."
+                       onkeyup="handleGlobalSearch()">
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn" onclick="logout()">
+                <span>🚪</span>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+        <!-- Top Bar — محسّن مثل الصورة المرجعية -->
+        <div class="topbar">
+            <div class="topbar-avatar" id="topbarAvatar" title="الحساب">👤</div>
+            <span class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="الوضع الليلي"
+                  style="font-size:20px;cursor:pointer;user-select:none">🌙</span>
+            <div class="topbar-title" style="text-align:center;flex:1">
+                <h2 id="pageTitle" style="font-size:19px">لوحة التحكم</h2>
+                <p id="pageSubtitle" style="font-size:12px;color:var(--text-muted);margin-top:2px"></p>
+            </div>
+            <span class="topbar-date" id="topbarDate"></span>
+            <button class="menu-toggle" type="button" onclick="window.toggleSidebar&&window.toggleSidebar()" style="margin-right:0" aria-label="القائمة">☰</button>
+        </div>
+
+        <!-- ===== DASHBOARD ===== -->
+        <div class="content active" id="page-dashboard">
+            <!-- Stats -->
+            <div class="stat-grid">
+                <div class="stat-card green">
+                    <div class="stat-icon">🎓</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashStudents">—</div>
+                        <div class="stat-label">إجمالي الطلاب</div>
+                        <div class="stat-trend trend-up">↑ 12 هذا الشهر</div>
+                    </div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon">👨‍🏫</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashTeachers">—</div>
+                        <div class="stat-label">المحفظون النشطون</div>
+                        <div class="stat-trend trend-up">↑ 2 جديد</div>
+                    </div>
+                </div>
+                <div class="stat-card teal">
+                    <div class="stat-icon">⭕</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashCircles">—</div>
+                        <div class="stat-label">الحلقات الفعالة</div>
+                        <div class="stat-trend trend-up">نشط</div>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value" id="dashAttendance">89%</div>
+                        <div class="stat-label">معدل الحضور</div>
+                        <div class="stat-trend" id="dashAttTrend">آخر 30 يوم</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>نسبة الحضور الأسبوعية</h3>
+                            <p>آخر 7 أيام</p>
+                        </div>
+                        <span class="status-badge status-present" style="font-size:11px">مباشر من API</span>
+                    </div>
+                    <div class="bar-chart" id="weeklyBarChart">
+                        <!-- يُملأ ديناميكياً من fetchStats -->
+                        <div style="text-align:center;width:100%;color:var(--text-muted);font-size:13px;padding:40px 0">
+                            ⏳ جاري التحميل...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>توزيع مستويات الحفظ</h3>
+                        </div>
+                    </div>
+                    <div class="donut-wrap" id="donutChartWrap">
+                        <svg class="donut-svg" id="donutSvg" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" stroke-width="3" />
+                            <text x="18" y="20" text-anchor="middle" font-size="5" fill="var(--text)" font-weight="bold"
+                                  font-family="Tajawal,sans-serif" id="donutCenter">—</text>
+                        </svg>
+                        <div class="donut-legend" style="width:100%" id="donutLegend">
+                            <p style="color:var(--text-muted);font-size:13px;text-align:center">⏳ جاري التحميل...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🏆 المتصدرون (Leaderboard Widget) -->
+            <div class="table-card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <div>
+                        <h3 style="display:flex;align-items:center;gap:8px">🏆 المتصدرون هذا الأسبوع</h3>
+                        <p>قائمة أفضل الطلاب بناءً على النقاط والإنجازات</p>
+                    </div>
+                    <button class="card-action" onclick="fetchLeaderboard()">🔄 تحديث</button>
+                </div>
+                <div style="overflow-x: auto; padding: 10px 20px;">
+                    <div id="leaderboardWrap" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="text-align:center;padding:40px;color:var(--text-muted)">
+                            ⏳ جاري تحميل المتصدرين...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent activity table — يُحمّل ديناميكياً -->
+            <div class="table-card">
+                <div class="card-header">
+                    <div>
+                        <h3>آخر نشاط التسميع</h3>
+                        <p>مباشر من قاعدة البيانات</p>
+                    </div>
+                    <button class="card-action" onclick="navigate('memorization', null)">عرض الكل</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الطالب</th>
+                            <th>الحلقة</th>
+                            <th>السورة / النطاق</th>
+                            <th>التقييم</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentHifzBody">
+                        <tr>
+                            <td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">
+                                ⏳ جاري
+                                التحميل...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- صندوق الإشعارات اليومية — Timeline Style (مثل الصورة) -->
+            <div class="daily-notif-box" id="dailyNotifBox">
+                <div class="daily-notif-header">
+                    <div>
+                        <h3>صندوق الإشعارات اليومية</h3>
+                        <p>يتم عرض إشعارات آخر 24 ساعة فقط</p>
+                    </div>
+                    <button class="notif-bell-btn" title="تحديث" onclick="fetchActivities()">🔔</button>
+                </div>
+                <div class="notif-timeline" id="notifTimeline">
+                    <!-- تُملأ ديناميكياً من buildNotifTimeline() -->
+                    <div class="notif-item">
+                        <div class="notif-dot-wrap">
+                            <div class="notif-dot">🔔</div>
+                            <div class="notif-line"></div>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-content-top">
+                                <p>تم تسجيل حضور حلقة الفجر بنجاح</p>
+                                <div class="notif-green-dot"></div>
+                            </div>
+                            <div class="notif-time">اليوم — 06:24 ص</div>
+                        </div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-dot-wrap">
+                            <div class="notif-dot nd-amber">⭐</div>
+                            <div class="notif-line"></div>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-content-top">
+                                <p>جلسة تسميع: أحمد الزهراني — البقرة (1-20) — ممتاز</p>
+                                <div class="notif-green-dot"></div>
+                            </div>
+                            <div class="notif-time">اليوم — 07:10 ص</div>
+                        </div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-dot-wrap">
+                            <div class="notif-dot nd-red">❌</div>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-content-top">
+                                <p>غياب: سارة القحطاني — حلقة النور</p>
+                            </div>
+                            <div class="notif-time">اليوم — 08:05 ص</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== STUDENTS ===== -->
+        <div class="content" id="page-students">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة الطلاب</h2>
+                    <p id="studentsCount">—</p>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="studentsHeaderActions">
+                    <button type="button" class="btn btn-outline" id="waitingBackBtn" style="display:none"
+                            onclick="exitWaitingList()">
+                        ← رجوع
+                    </button>
+                    <button class="btn btn-outline" onclick="exportStudentsCSV()" id="btnExportStudents"
+                            style="padding:9px 16px;font-size:13px">
+                        📥 تصدير
+                    </button>
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" id="btnAddStudent"
+                            style="padding:9px 16px;font-size:13px">
+                        ➕ إضافة طالب
+                    </button>
+                    <button class="btn btn-primary" onclick="openWaitingListModal()" id="btnAddWaiting"
+                            style="display:none;padding:9px 16px;font-size:13px">
+                        ➕ إضافة لقائمة الانتظار
+                    </button>
+                </div>
+            </div>
+
+            <!-- شريط البحث + Filter Chips — مثل الصورة المرجعية -->
+            <div class="students-search-bar">
+                <div class="search-row">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input type="text" id="studentSearchInput" class="students-search-input"
+                           placeholder="بحث باسم الطالب أو الحلقة..." oninput="filterStudentsLive(this.value)">
+                </div>
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="setStudentFilter('all', this)">الكل</div>
+                    <div class="filter-chip" onclick="setStudentFilter('beginner', this)">مبتدئ ◂</div>
+                    <div class="filter-chip" onclick="setStudentFilter('intermediate', this)">متوسط</div>
+                    <div class="filter-chip" onclick="setStudentFilter('advanced', this)">متقدم</div>
+                    <div class="filter-chip" id="circleFilterChip" onclick="cycleCircleFilter(this)">
+                        جميع الحلقات ◂
+                    </div>
+                    <div class="filter-chip" onclick="setStudentFilter('archived', this)"
+                         style="background:#fee2e2;color:#dc2626;border-color:#fca5a5">الأرشيف 📦</div>
+                    <div class="filter-chip" onclick="setStudentFilter('waiting', this)"
+                         style="background:#fef3c7;color:#b45309;border-color:#fcd34d">قائمة الانتظار ⏳</div>
+                </div>
+            </div>
+
+            <div class="cards-grid" id="studentsGrid">
+                <!-- Student cards generated dynamically -->
+            </div>
+        </div>
+
+        <!-- ===== PARENTS ===== -->
+        <div class="content" id="page-parents">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة أولياء الأمور</h2>
+                    <p>ربط أولياء الأمور بالطلاب وحسابات المنصة</p>
+                </div>
+                <button class="btn btn-primary" onclick="NoorParents.openAddParentModal()">➕ إضافة ولي أمر</button>
+            </div>
+            <div class="students-search-bar" style="margin-bottom:16px">
+                <div class="search-row">
+                    <input type="text" class="students-search-input" placeholder="بحث بالاسم أو رقم الهاتف..."
+                           oninput="NoorParents.searchParents(this.value)">
+                </div>
+            </div>
+            <div class="data-table-wrap" id="parentsTableWrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>عدد الأبناء</th>
+                            <th>الحساب</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="parentsTableBody"></tbody>
+                </table>
+            </div>
+            <div class="empty-state-box" id="parentsEmptyState" style="display:none">
+                <div class="empty-icon">👨‍👦</div>
+                <p>لا يوجد أولياء أمور</p>
+            </div>
+            <div class="pagination-bar">
+                <button class="btn btn-outline" id="parentsPrevBtn" onclick="NoorParents.changeParentsPage(-1)">السابق</button>
+                <span id="parentsPageInfo" style="font-size:13px;color:var(--text-muted)"></span>
+                <button class="btn btn-outline" id="parentsNextBtn" onclick="NoorParents.changeParentsPage(1)">التالي</button>
+            </div>
+        </div>
+
+        <!-- ===== USERS ===== -->
+        <div class="content" id="page-users">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة المستخدمين</h2>
+                    <p>جميع حسابات المنصة والصلاحيات</p>
+                </div>
+            </div>
+            <div class="students-search-bar" style="margin-bottom:16px">
+                <div class="search-row">
+                    <input type="text" class="students-search-input" placeholder="بحث..."
+                           oninput="NoorUsers.searchUsers(this.value)">
+                </div>
+                <div class="filter-chips" style="margin-top:10px">
+                    <div class="filter-chip active" onclick="NoorUsers.filterUsersRole('')">الكل</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Admin')">مشرف</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Teacher')">محفظ</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Student')">طالب</div>
+                    <div class="filter-chip" onclick="NoorUsers.filterUsersRole('Parent')">ولي أمر</div>
+                </div>
+            </div>
+            <div class="data-table-wrap" id="usersTableWrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الدور</th>
+                            <th>الهاتف</th>
+                            <th>آخر دخول</th>
+                            <th>الحالة</th>
+                            <th>تغيير كلمة المرور</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+            <div class="empty-state-box" id="usersEmptyState" style="display:none">
+                <div class="empty-icon">👥</div>
+                <p>لا يوجد مستخدمون</p>
+            </div>
+            <div class="pagination-bar">
+                <button class="btn btn-outline" id="usersPrevBtn" onclick="NoorUsers.changeUsersPage(-1)">السابق</button>
+                <span id="usersPageInfo" style="font-size:13px;color:var(--text-muted)"></span>
+                <button class="btn btn-outline" id="usersNextBtn" onclick="NoorUsers.changeUsersPage(1)">التالي</button>
+            </div>
+        </div>
+
+        <!-- ===== TEACHERS ===== -->
+        <div class="content" id="page-teachers">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة المحفظين</h2>
+                    <p id="teachersPageCount">جاري التحميل...</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addTeacherModal')">➕ إضافة محفظ</button>
+            </div>
+            <!-- ✅ شريط البحث الجديد -->
+            <div class="students-search-bar" style="margin-bottom:16px">
+                <div class="search-row">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input type="text" class="students-search-input" placeholder="بحث بالاسم أو المؤهل..."
+                           oninput="fetchTeachers(this.value)">
+                </div>
+            </div>
+            <div class="cards-grid" id="teachersGrid"></div>
+        </div>
+
+
+        <!-- ===== CIRCLES ===== -->
+        <div class="content" id="page-circles">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة الحلقات</h2>
+                    <p id="circlesPageCount">جاري التحميل...</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addCircleModal')">➕ إنشاء حلقة</button>
+            </div>
+            <div class="cards-grid" id="circlesGrid"></div>
+        </div>
+
+        <!-- ===== ATTENDANCE ===== -->
+        <div class="content" id="page-attendance">
+            <div class="page-header">
+                <div>
+                    <h2 id="svxv4d">تسجيل الحضور والغياب</h2>
+                    <p>سجّل حضور الطلاب بسهولة</p>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-primary" id="jlwm2x" onclick="markAllPresent()">✅ تحديد الجميع حضور</button>
+                    <button class="btn btn-primary" id="btnSaveAttendance" onclick="saveAttendance()" style="display:none">💾 حفظ الحضور</button>
+                    <button class="btn btn-outline" id="jlwm5q" onclick="searchAttendanceReports()">🔍 بحث</button>
+                    <button class="btn btn-outline" id="jlwm6k" onclick="printAttendance()">🖨️ طباعة</button>
+                </div>
+            </div>
+
+            <div class="attendance-header">
+                <div>
+                    <div class="circle-selector" id="attendanceCircleChips">
+                        <span style="font-size:13px;color:var(--text-muted);padding:8px">جاري تحميل الحلقات...</span>
+                    </div>
+                    <!-- Summary badges -->
+                    <div style="display:flex;gap:10px;margin-top:4px">
+                        <span class="status-badge status-present">✅ حاضر: <span id="presentCount">0</span></span>
+                        <span class="status-badge status-absent">❌ غائب: <span id="absentCount">0</span></span>
+                        <span class="status-badge status-late">⏰ متأخر: <span id="lateCount">0</span></span>
+                    </div>
+                </div>
+                <div class="date-nav">
+                    <!-- ✅ حُذف زر "غياب جماعي" -->
+                    <div class="date-nav-dates">
+
+
+                        <button type="button" onclick="changeDate(-1)" aria-label="اليوم السابق">‹</button>
+                        <span id="currentDate">—</span>
+                        <input type="date" id="attendanceDatePicker" class="form-control" style="max-width:150px;padding:6px 10px"
+                               aria-label="اختيار تاريخ الحضور" />
+                        <button type="button" onclick="changeDate(1)" aria-label="اليوم التالي">›</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="attendance-table-wrap" id="attendanceList"></div>
+        </div>
+
+        <!-- ===== MEMORIZATION ===== -->
+        <div class="content" id="page-memorization">
+            <div class="page-header">
+                <div>
+                    <h2>الحفظ والتسميع</h2>
+                    <p>متابعة تقدم الطلاب في حفظ القرآن الكريم</p>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-outline" id="jlwmab" onclick="showCenterSummary()">👥 الإنجاز الجماعي</button>
+                    <button class="btn btn-primary" onclick="openModal('addMemModal')">➕ تسجيل تسميع</button>
+                </div>
+            </div>
+
+            <div class="memorize-layout">
+                <div>
+                    <div class="filter-bar" style="margin-bottom:14px">
+                        <select class="filter-select" id="memStudentFilter" onchange="filterStudent(this.value)">
+                            <option value="">— اختر طالباً —</option>
+                        </select>
+                    </div>
+                    <div class="surah-progress-grid">
+                        <div class="chart-card"
+                             style="border-radius:0;border:none;box-shadow:none;border-bottom:1px solid var(--border)">
+                            <div class="card-header" style="margin-bottom:0">
+                                <div>
+                                    <h3 id="memProgressTitle">تقدم الحفظ</h3>
+                                    <p id="memProgressSub">اختر طالباً لعرض التقدم</p>
+                                </div>
+                                <span class="status-badge status-excellent" id="memProgressBadge">—</span>
+                            </div>
+                            <div style="margin-top:16px">
+                                <div class="progress-wrap">
+                                    <div class="progress-bar" style="height:10px">
+                                        <div class="progress-fill" id="memProgressFill" style="width:0%"></div>
+                                    </div>
+                                    <span class="progress-pct" id="memProgressPct"
+                                          style="font-size:14px;font-weight:900;color:var(--green)">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="surahList"></div>
+                    </div>
+                </div>
+
+                <div class="side-panel">
+                    <div class="panel-card">
+                        <div class="panel-card-header">📅 آخر جلسات التسميع</div>
+                        <div class="panel-card-body" id="recentSessions"></div>
+                    </div>
+                    <div class="panel-card">
+                        <div class="panel-card-header">📈 خطة الحفظ المقترحة</div>
+                        <div class="panel-card-body">
+                            <div style="font-size:13px;color:var(--text-muted);line-height:1.8">
+                                <p>🎯 الهدف الأسبوعي: <strong style="color:var(--text)">نصف حزب</strong></p>
+                                <p>📅 الانتهاء المتوقع: <strong style="color:var(--text)">مارس 2027</strong></p>
+                                <p>⚡ معدل الحفظ: <strong style="color:var(--green)">ممتاز</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== EXAMS ===== -->
+        <div class="content" id="page-exams">
+            <div class="page-header">
+                <div>
+                    <h2>الاختبارات والتقييمات</h2>
+                    <p>إدارة الاختبارات الدورية ورصد النتائج</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addExamModal')">➕ إنشاء اختبار</button>
+            </div>
+            <div class="exam-cards" id="examsList"></div>
+        </div>
+
+        <!-- ===== ANNOUNCEMENTS ===== -->
+        <!-- ─── صفحة مكتبة الطلاب ─── -->
+        <div class="content" id="page-library">
+            <div class="page-header">
+                <div>
+                    <h2>📚 مكتبة الطلاب</h2>
+                    <p style="color:var(--text-muted);font-size:13px;margin-top:4px">
+                        الكتب، المتون، مناهج المركز، وملفات
+                        الحفظ والمراجعة
+                    </p>
+                </div>
+                <div class="actions admin-only teacher-only" id="libraryAdminActions" style="display:none;">
+                    <button type="button" id="btnAddLibraryFile" class="btn btn-primary"
+                            onclick="openUploadLibraryModal()">
+                        ➕ إضافة ملف جديد
+                    </button>
+                </div>
+            </div>
+
+            <!-- شريط البحث والفلترة -->
+            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" id="librarySearchInput" class="form-control" placeholder="ابحث عن كتاب أو ملف..."
+                       style="flex:1; min-width:200px" onkeyup="filterLibraryItems()">
+                <select id="libraryCategoryFilter" class="form-control" style="width:150px"
+                        onchange="filterLibraryItems()">
+                    <option value="">كل التصنيفات</option>
+                    <option value="مصحف">مصحف</option>
+                    <option value="متن">متن</option>
+                    <option value="تجويد">تجويد</option>
+                    <option value="منهج">منهج</option>
+                    <option value="مراجعة">مراجعة</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+            </div>
+
+            <div class="grid-container" id="libraryCards"
+                 style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <!-- البطاقات تُضاف هنا عبر JS -->
+            </div>
+            <div id="libraryEmptyState"
+                 style="display:none; text-align:center; padding:50px; background:var(--surface); border-radius:16px; border:1px solid var(--border)">
+                <div style="font-size:48px; margin-bottom:16px">📂</div>
+                <h3>المكتبة فارغة</h3>
+                <p style="color:var(--text-muted); font-size:14px; margin-top:8px">لم يتم إضافة أي ملفات حتى الآن.</p>
+                <button type="button" class="btn btn-primary" style="margin-top:16px" id="btnAddLibraryFileEmpty"
+                        onclick="openUploadLibraryModal()">
+                    ➕ إضافة ملف جديد
+                </button>
+            </div>
+        </div>
+
+        <div class="content" id="page-announcements">
+            <div class="page-header">
+                <div>
+                    <h2>الإعلانات والتنبيهات</h2>
+                    <p>3 إعلانات جديدة</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addAnnModal')">➕ إعلان جديد</button>
+            </div>
+            <div class="ann-list" id="annList"></div>
+        </div>
+
+        <!-- ===== STUDENT VIEW ===== -->
+        <div class="content" id="page-studentView">
+            <div class="student-profile-hero">
+                <div class="hero-avatar">أح</div>
+                <div class="hero-info">
+                    <h2>أحمد محمد الزهراني</h2>
+                    <p>حلقة الفجر • المحفظ: عبدالله السلمي</p>
+                    <div class="hero-badges">
+                        <span class="hero-badge">🏆 مستوى متقدم</span>
+                        <span class="hero-badge">📅 منذ: سبتمبر 2024</span>
+                        <span class="hero-badge">⭐ 4.8 / 5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="student-stats-row">
+                <div class="stat-card green">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value">78%</div>
+                        <div class="stat-label">نسبة الحفظ</div>
+                    </div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value">94%</div>
+                        <div class="stat-label">نسبة الحضور</div>
+                    </div>
+                </div>
+                <div class="stat-card teal">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value">87</div>
+                        <div class="stat-label">آخر اختبار</div>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-card-body">
+                        <div class="stat-value">4.8</div>
+                        <div class="stat-label">تقييم المحفظ</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="table-card">
+                    <div class="card-header" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--border)">
+                        <div>
+                            <h3>سجل التسميع الأخير</h3>
+                        </div>
+                    </div>
+                    <table id="studentHifzTable">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>السورة</th>
+                                <th>النطاق</th>
+                                <th>التقييم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic Hifz Records Here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>رسائل المحفظ</h3>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px" id="studentNotesList">
+                        <!-- Dynamic Teacher Notes Here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- خريطة الحفظ البصرية -->
+            <div class="table-card" style="margin-top:16px">
+                <div class="card-header" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--border)">
+                    <div>
+                        <h3>🗺️ خريطة حفظ القرآن الكريم</h3>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-outline" style="font-size:12px;color:var(--amber-dark);border-color:var(--amber-dark)"
+                                onclick="grantBadge(window._studentDbId || 1)">
+                            🏆 منح وسام التميز
+                        </button>
+                        <button class="btn btn-outline" style="font-size:12px"
+                                onclick="window.open('/api/reports/certificate/' + (window._studentDbId || 1))">
+                            📄 شهادة
+                        </button>
+                    </div>
+                </div>
+                <div class="quran-map" id="quranMap">
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#86efac"></div> محفوظ
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#fde047"></div> جزئي
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#cbd5e1"></div> لم يُحفظ
+                        </div>
+                    </div>
+                    <div class="surah-grid" id="surahGrid">
+                        <div style="text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1">
+                            ⏳ جاري
+                            التحميل...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ✅ إصلاح 3: بوابة ولي الأمر ===== -->
+        <div class="content" id="page-parentView">
+            <div class="page-header">
+                <div>
+                    <h2>بوابة ولي الأمر</h2>
+                    <p>متابعة تقدم أبنائك في حفظ القرآن الكريم</p>
+                </div>
+            </div>
+            <!-- بطاقات الأبناء -->
+            <div id="parentChildrenGrid" class="cards-grid">
+                <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
+                    ⏳ جاري تحميل بيانات الأبناء...
+                </div>
+            </div>
+        </div>
+
+        <div class="content" id="page-payments">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة المدفوعات والفواتير</h2>
+                    <p class="text-muted">متابعة الرسوم الدراسية وإصدار الفواتير للطلاب</p>
+                </div>
+                <button class="btn btn-primary" onclick="showNewInvoiceModal()">+ إصدار فاتورة</button>
+            </div>
+            <div class="grid" id="paymentsGrid">
+                <!-- Data populated via JS -->
+            </div>
+        </div>
+
+        <div class="content" id="page-parentFees">
+            <div class="page-header">
+                <div>
+                    <h2>الرسوم الدراسية</h2>
+                    <p class="text-muted">متابعة الفواتير ودفع الرسوم المستحقة للأبناء</p>
+                </div>
+            </div>
+            <div class="grid" id="parentFeesGrid">
+                <!-- Data populated via JS -->
+            </div>
+        </div>
+        <!-- ===== REPORTS ===== -->
+        <div class="content" id="page-reports">
+            <div class="page-header">
+                <div>
+                    <h2>📊 التقارير</h2>
+                    <p>تقارير الحضور والحفظ والأداء</p>
+                </div>
+                <button class="btn btn-outline" onclick="generateReport()">📥 تصدير PDF</button>
+            </div>
+
+            <!-- فلاتر التقارير -->
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
+                <div style="font-weight:700;margin-bottom:14px;font-size:14px">🔍 فلاتر التقرير</div>
+                <div class="form-row" style="display:flex;gap:14px;flex-wrap:wrap">
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">نوع التقرير</label>
+                        <select id="reportType" class="form-input" onchange="loadReportData()">
+                            <option value="attendance">تقرير الحضور</option>
+                            <option value="hifz">تقرير الحفظ</option>
+                            <option value="payments">تقرير المدفوعات</option>
+                            <option value="students">تقرير الطلاب</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">من تاريخ</label>
+                        <input type="date" id="reportFrom" class="form-input" onchange="loadReportData()">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">إلى تاريخ</label>
+                        <input type="date" id="reportTo" class="form-input" onchange="loadReportData()">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">الحلقة</label>
+                        <select id="reportCircleFilter" class="form-input" onchange="loadReportData()">
+                            <option value="">كل الحلقات</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="reportResults" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-muted)">
+                <div style="font-size:48px;margin-bottom:16px">📋</div>
+                <p>اختر نوع التقرير والفترة الزمنية لعرض النتائج</p>
+            </div>
+        </div>
+
+        <!-- ===== SETTINGS ===== -->
+        <div class="content" id="page-settings">
+            <div class="page-header">
+                <div>
+                    <h2>⚙️ الإعدادات</h2>
+                    <p>إعدادات المنصة والنظام</p>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+                    <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🏫 معلومات المركز</h3>
+                    <div class="form-group">
+                        <label class="form-label">اسم المركز</label>
+                        <input type="text" class="form-input" value="مركز نور لتحفيظ القرآن الكريم">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">رقم التواصل</label>
+                        <input type="tel" class="form-input" placeholder="09xxxxxxxx">
+                    </div>
+                    <button class="btn btn-primary" style="width:100%;margin-top:8px">💾 حفظ</button>
+                </div>
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+                    <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🌙 المظهر</h3>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                            <span>الوضع الليلي</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ── FAB (Floating Action Button) — مثل الصورة 3 ── -->
+    <div class="fab-container" id="fabContainer">
+        <div class="fab-menu" id="fabMenu">
+            <div class="fab-menu-item" onclick="navigate('circles',null);toggleFab()">
+                <div class="fmi-icon">⭕</div>
+                <span>الحلقات</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('students',null);toggleFab()">
+                <div class="fmi-icon">🎓</div>
+                <span>الطلاب</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('memorization',null);toggleFab()">
+                <div class="fmi-icon">📖</div>
+                <span>الحفظ</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('attendance',null);toggleFab()">
+                <div class="fmi-icon">📅</div>
+                <span>الحضور</span>
+            </div>
+            <div class="fab-menu-item" onclick="navigate('dashboard',null);toggleFab()">
+                <div class="fmi-icon">📊</div>
+                <span>الرئيسية</span>
+            </div>
+        </div>
+        <button class="fab-btn" id="fabBtn" onclick="toggleFab()" title="قائمة سريعة">☰</button>
+    </div>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav" id="bottomNav">
+        <div class="bottom-nav-inner">
+            <div class="bottom-nav-item active" onclick="navBottom('dashboard', this)">
+                <span class="bnav-icon">📊</span>
+                <span>الرئيسية</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('students', this)">
+                <span class="bnav-icon">👨‍🎓</span>
+                <span>الطلاب</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('attendance', this)">
+                <span class="bnav-icon">✅</span>
+                <span>الحضور</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('memorization', this)">
+                <span class="bnav-icon">📖</span>
+                <span>التسميع</span>
+            </div>
+            <div class="bottom-nav-item" onclick="navBottom('announcements', this)">
+                <span class="bnav-icon">📢</span>
+                <span>الإعلانات</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== MODALS ===== -->
+    <!-- ✅ إصلاح 4: مودال إدخال نتائج الاختبار -->
+    <div class="modal-overlay" id="addExamResultModal">
+        <div class="modal" style="max-width:580px">
+            <div class="modal-header">
+                <h3>📊 إدخال نتائج الاختبار</h3>
+                <button class="modal-close" onclick="closeModal('addExamResultModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="examResultFormTitle"
+                     style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:10px">
+                </div>
+                <div id="examResultRows" style="display:flex;flex-direction:column;gap:10px">
+                    <!-- rows injected dynamically -->
+                </div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:12px">
+                    * يمكن ترك خانات الطلاب الغائبين فارغة
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addExamResultModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="submitExamResults()">💾 حفظ النتائج</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal-overlay" id="addStudentModal">
+        <div class="modal">
+
+            <div class="modal-header">
+                <h3>👨‍🎓 إضافة طالب جديد</h3>
+
+                <button class="modal-close" onclick="closeModal('addStudentModal')">
+                    ✕
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label class="form-label">الاسم الثلاثي *</label>
+                    <input id="studentFullName" class="form-input" type="text" placeholder="محمد أحمد الزهراني">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">تاريخ الميلاد *</label>
+                        <input id="birthDate" class="form-input" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">تاريخ التسجيل *</label>
+                        <input id="registrationDate" class="form-input" type="date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">رقم هاتف الطالب (اختياري)</label>
+                        <input id="phone" class="form-input" type="tel" placeholder="09xxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">السكن (اختياري)</label>
+                        <input id="residence" class="form-input" type="text" placeholder="المدينة / الحي">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">الحلقة (اختياري)</label>
+                        <select id="halaqa" class="form-input">
+                            <option value="">— بدون حلقة —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">المستوى (اختياري)</label>
+                        <select id="level" class="form-input">
+                            <option value="">—</option>
+                            <option value="مبتدئ">مبتدئ</option>
+                            <option value="متوسط">متوسط</option>
+                            <option value="متقدم">متقدم</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">اسم ولي الأمر *</label>
+                    <input id="guardianName" class="form-input" type="text" placeholder="اسم ولي الأمر">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">رقم هاتف ولي الأمر *</label>
+                        <input id="parentPhone" class="form-input" type="tel" placeholder="09xxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">صلة القرابة *</label>
+                        <select id="guardianRelationship" class="form-input" required>
+                            <option value="">— اختر —</option>
+                            <option value="Father">أب</option>
+                            <option value="Mother">أم</option>
+                            <option value="Uncle">عم</option>
+                            <option value="Brother">أخ</option>
+                            <option value="MaternalUncle">خال</option>
+                            <option value="Other">أخرى</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-outline" onclick="closeModal('addStudentModal')">
+                    إلغاء
+                </button>
+
+                <button class="btn btn-primary" onclick="saveStudent()">
+                    💾 حفظ الطالب
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Add Memorization Modal -->
+    <div class="modal-overlay" id="addMemModal">
+        <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
+            <div class="modal-header">
+                <h3>📖 تسجيل جلسة تسميع</h3>
+                <button class="modal-close" onclick="closeModal('addMemModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">الحلقة *</label>
+                    <select class="form-input" id="hifzCircleSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الطالب *</label>
+                    <select class="form-input" id="hifzStudentSelect" disabled>
+                        <option value="">— اختر الحلقة أولاً —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">نوع الجلسة</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button type="button" class="btn btn-primary" style="flex:1;min-width:120px;padding:10px"
+                                data-session-type="Memorization">
+                            📗 حفظ جديد
+                        </button>
+                        <button type="button" class="btn btn-outline" style="flex:1;min-width:120px;padding:10px"
+                                data-session-type="Revision">
+                            🔄 مراجعة
+                        </button>
+                    </div>

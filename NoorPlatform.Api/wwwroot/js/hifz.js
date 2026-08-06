@@ -253,13 +253,17 @@
             }
         }
 
+        const btn = document.querySelector('#addMemModal .btn-primary');
         try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await global.apiFetch('/hifz', 'POST', body);
             global.closeModal('addMemModal');
             global.showToast('✅ تم حفظ جلسة التسميع بنجاح');
             if (typeof global.fetchMemorizationData === 'function') global.fetchMemorizationData();
         } catch (e) {
             global.showToast('❌ حدث خطأ أثناء الحفظ');
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }
     }
 

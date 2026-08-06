@@ -57,11 +57,24 @@ public class HifzController : ControllerBase
     public async Task<IActionResult> GetRecent([FromQuery] int count = 10)
     {
         count = Math.Clamp(count, 1, 50);
-        var records = await _context.HifzRecords
+        var query = _context.HifzRecords
             .Include(r => r.Student).ThenInclude(s => s.User)
+            .AsQueryable();
+
+        // ─── إصلاح: تقييد المحفّظ برؤية سجلات طلاب حلقته فقط ───
+        var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        if (isTeacher)
+        {
+            var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
+            query = query.Where(r => r.Student.Circle != null
+                                   && r.Student.Circle.Teacher != null
+                                   && r.Student.Circle.Teacher.UserId == userId);
+        }
+
+        var records = await query
             .OrderByDescending(r => r.Date)
             .Take(count)
-            .Select(r => new
+                .Select(r => new
             {
                 r.Id,
                 r.StudentId,
@@ -163,6 +176,10 @@ public class HifzController : ControllerBase
         var record = await _context.HifzRecords.FindAsync(id);
         if (record == null)
             return NotFound(new { message = "السجل غير موجود" });
+
+        // ─── إصلاح أمني: التحقق من ملكية المعلم للطالب قبل السماح بالحذف ───
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, record.StudentId))
+            return Forbid();
 
         _context.HifzRecords.Remove(record);
         await _context.SaveChangesAsync();

@@ -23,6 +23,10 @@ public static class LibyanPhone
         if (string.IsNullOrWhiteSpace(phone)) return string.Empty;
 
         var digits = DigitsOnly(phone);
+        
+        if (digits.StartsWith("00218") && digits.Length >= 14)
+            return digits.Substring(2, 12);
+
         if (digits.StartsWith("218") && digits.Length >= 12)
             return digits[..12];
 

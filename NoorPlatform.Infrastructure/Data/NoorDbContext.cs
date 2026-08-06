@@ -19,10 +19,11 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<ExamResult> ExamResults => Set<ExamResult>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<ActivityFeed> ActivityFeeds => Set<ActivityFeed>();
-    public DbSet<Payment> Payments { get; set; } = null!;
-    public DbSet<LibraryItem> LibraryItems { get; set; } = null!;
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<LibraryItem> LibraryItems => Set<LibraryItem>();
     public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,7 +35,8 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasDatabaseName("IX_Student_IsDeleted");
 
         modelBuilder.Entity<Student>().HasQueryFilter(s => !s.IsDeleted);
-
+        modelBuilder.Entity<Teacher>().HasQueryFilter(t => !t.IsDeleted);
+        modelBuilder.Entity<Parent>().HasQueryFilter(p => !p.IsDeleted);
         // ⚡ Performance Indexes
         modelBuilder.Entity<Student>()
             .HasIndex(s => s.ParentId)
@@ -53,9 +55,13 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasPrecision(18, 2);
 
         modelBuilder.Entity<Payment>()
-            .Property(p => p.Status)
-            .HasConversion<string>()
-            .HasMaxLength(20);
+    .Property(p => p.Status)
+    .HasConversion<string>()
+    .HasMaxLength(20);
+
+        modelBuilder.Entity<AuditLog>()
+            .Property(a => a.Action)
+            .HasConversion<string>();
 
         modelBuilder.Entity<Payment>()
             .HasOne(p => p.Student)
