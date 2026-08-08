@@ -116,7 +116,26 @@
             const dateStr = ymd(getState().date);
             const data = await apiFetch(`/attendance/circle/${circleId}?date=${dateStr}`);
             getState().records = data;
+
+            // ─── البند 8: جعل الحضور الافتراضي "حاضر" (لليوم الحالي فقط) ───
+            let hasUnrecorded = false;
+            const pending = getPending();
+            const isToday = dateStr === ymd(new Date());
+
+            if (isToday) {
+                data.forEach(r => {
+                    if (!r.status || r.status === 'NotRecorded') {
+                        pending[r.studentId] = 'Present';
+                        hasUnrecorded = true;
+                    }
+                });
+            }
+
             renderAttendanceTable(data);
+            
+            if (hasUnrecorded) {
+                setPendingDirty(true);
+            }
         } catch (e) {
             app().api.handleApiError(e);
         }

@@ -2118,10 +2118,10 @@
             color: var(--text-muted);
             font-weight: 600;
             background: var(--bg);
-            padding: 5px 12px;
+            padding: 4px 12px;
             border-radius: 20px;
             border: 1px solid var(--border);
-            white-space: nowrap;
+            text-align: center;
         }
 
         /* ── FAB (Floating Action Button) — مثل الصورة 3 ── */
@@ -3336,7 +3336,8 @@
                 </div>
             </div>
 
-            <div class="nav-section">
+            <!-- صفحات إدارية (تسجيل حضور / إدخال تسميع / نتائج) — للمحفّظ والمشرف فقط -->
+            <div class="nav-section" id="trackingNavSection">
                 <div class="nav-section-label">المتابعة</div>
                 <div class="nav-item" onclick="navigate('attendance', this)">
                     <div class="nav-icon">✅</div>
@@ -3363,8 +3364,8 @@
             <div class="nav-section" id="studentSection" style="display:none">
                 <div class="nav-section-label">بوابة الطالب</div>
                 <div class="nav-item" onclick="navigate('studentView', this)">
-                    <div class="nav-icon">🌟</div>
-                    <span>ملفي الشخصي</span>
+                    <div class="nav-icon">🏠</div>
+                    <span>الرئيسية</span>
                 </div>
             </div>
 
@@ -3408,7 +3409,10 @@
                 <h2 id="pageTitle" style="font-size:19px">لوحة التحكم</h2>
                 <p id="pageSubtitle" style="font-size:12px;color:var(--text-muted);margin-top:2px"></p>
             </div>
-            <span class="topbar-date" id="topbarDate"></span>
+            <div class="topbar-date" id="topbarDate" style="display:flex;flex-direction:column;align-items:center;line-height:1.5">
+                <span id="topbarDateGregorian"></span>
+                <span id="topbarDateHijri" style="font-size:11px;color:var(--green-dark);opacity:0.85"></span>
+            </div>
             <button class="menu-toggle" type="button" onclick="window.toggleSidebar&&window.toggleSidebar()" style="margin-right:0" aria-label="القائمة">☰</button>
         </div>
 
@@ -3448,6 +3452,14 @@
                         <div class="stat-trend" id="dashAttTrend">آخر 30 يوم</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions" style="margin-top:20px; margin-bottom:24px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; background:var(--card); padding:16px 20px; border-radius:var(--radius); border:1px solid var(--border)">
+                <span style="font-weight:700; color:var(--text); margin-left:8px; font-size:14px">⚡ إجراءات سريعة:</span>
+                <button class="btn btn-primary" onclick="openModal('addStudentModal')" style="font-size:13px; padding:6px 14px">➕ إضافة طالب</button>
+                <button class="btn btn-primary" onclick="openModal('addTeacherModal')" style="font-size:13px; padding:6px 14px">➕ إضافة محفّظ</button>
+                <button class="btn btn-primary" onclick="openModal('addCircleModal')" style="font-size:13px; padding:6px 14px">➕ إنشاء حلقة</button>
             </div>
 
             <!-- Charts -->
@@ -3597,9 +3609,9 @@
                             onclick="exitWaitingList()">
                         ← رجوع
                     </button>
-                    <button class="btn btn-outline" onclick="exportStudentsCSV()" id="btnExportStudents"
+                    <button class="btn btn-outline" onclick="exportStudentsExcel()" id="btnExportStudents"
                             style="padding:9px 16px;font-size:13px">
-                        📥 تصدير
+                        📥 تصدير Excel
                     </button>
                     <button class="btn btn-primary" onclick="openModal('addStudentModal')" id="btnAddStudent"
                             style="padding:9px 16px;font-size:13px">
@@ -3948,7 +3960,7 @@
             <div class="ann-list" id="annList"></div>
         </div>
 
-        <!-- ===== STUDENT VIEW ===== -->
+        <!-- ===== STUDENT VIEW (الرئيسية للطالب) ===== -->
         <div class="content" id="page-studentView">
             <div class="student-profile-hero">
                 <div class="hero-avatar" id="studentHeroAvatar">—</div>
@@ -3959,33 +3971,66 @@
                 </div>
             </div>
 
-            <div class="student-stats-row">
-                <div class="stat-card green">
-                    <div class="stat-icon">📖</div>
-                    <div class="stat-card-body">
-                        <div class="stat-value">—</div>
-                        <div class="stat-label">نسبة الحفظ</div>
+            <!-- 🌟 لوحة تحفيز الطالب — استبدال الكروت القديمة -->
+            <div id="studentGamificationDash" style="display:flex; flex-direction:column; gap:20px; margin-bottom:24px;">
+                <!-- 1. الأهداف الأسبوعية والنقاط -->
+                <div class="charts-row" style="grid-template-columns: 2fr 1fr;">
+                    <div class="stat-card green" style="background:var(--card); color:var(--text); box-shadow:var(--shadow);">
+                        <div class="card-header" style="margin-bottom:12px;border-bottom:none">
+                            <h3 style="font-size:16px;color:var(--text)">🎯 أهدافي الأسبوعية</h3>
+                        </div>
+                        <div style="padding: 0 20px 20px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px">
+                                <span style="font-size:14px; font-weight:700">الآيات المحفوظة هذا الأسبوع</span>
+                                <span style="font-size:14px; font-weight:700; color:var(--primary)" id="gamificationWeeklyProgress">0 / 50</span>
+                            </div>
+                            <div style="width:100%; height:12px; background:#e2e8f0; border-radius:10px; overflow:hidden">
+                                <div id="gamificationProgressBar" style="width: 0%; height:100%; background:var(--gradient); transition:width 0.5s ease;"></div>
+                            </div>
+                            <p style="margin-top:12px; font-size:12px; color:var(--text-muted)" id="gamificationWeeklyMessage">استمر يا بطل! أنت تقترب من هدفك.</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card purple" style="background:var(--card); color:var(--text); box-shadow:var(--shadow);">
+                        <div class="card-header" style="margin-bottom:0; border-bottom:none">
+                            <h3 style="font-size:16px;color:var(--text)">🌟 سجل النقاط والأوسمة</h3>
+                        </div>
+                        <div style="padding: 0 20px 20px; text-align:center">
+                            <div style="font-size:36px; font-weight:900; color:var(--purple-dark); margin:10px 0" id="gamificationPoints">0</div>
+                            <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">نقطة</div>
+                            <div id="gamificationBadges" style="display:flex; justify-content:center; flex-wrap:wrap; gap:8px">
+                                <!-- Badges -->
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card blue">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-card-body">
-                        <div class="stat-value">—</div>
-                        <div class="stat-label">نسبة الحضور</div>
+
+                <!-- 2. ورد المراجعة وترتيب الحلقة -->
+                <div class="charts-row">
+                    <div class="table-card" style="flex:1">
+                        <div class="card-header">
+                            <div>
+                                <h3 style="display:flex;align-items:center;gap:8px">📖 ورد المراجعة القادم</h3>
+                                <p>آخر سورة محفوظة — راجعها جيداً قبل الجلسة القادمة</p>
+                            </div>
+                        </div>
+                        <div style="padding: 20px;" id="gamificationNextReview">
+                            <div style="text-align:center;color:var(--text-muted)">⏳ جاري التحميل...</div>
+                        </div>
                     </div>
-                </div>
-                <div class="stat-card teal">
-                    <div class="stat-icon">📝</div>
-                    <div class="stat-card-body">
-                        <div class="stat-value">—</div>
-                        <div class="stat-label">آخر اختبار</div>
-                    </div>
-                </div>
-                <div class="stat-card purple">
-                    <div class="stat-icon">⭐</div>
-                    <div class="stat-card-body">
-                        <div class="stat-value">—</div>
-                        <div class="stat-label">تقييم المحفظ</div>
+
+                    <div class="table-card" style="flex:1">
+                        <div class="card-header">
+                            <div>
+                                <h3 style="display:flex;align-items:center;gap:8px">🏆 ترتيبي في الحلقة</h3>
+                                <p>أفضل 3 طلاب في حلقتك حسب النقاط</p>
+                            </div>
+                        </div>
+                        <div style="padding: 10px 20px;">
+                            <div id="gamificationCircleLeaderboard" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4017,9 +4062,64 @@
                             <h3>رسائل المحفظ</h3>
                         </div>
                     </div>
+                    <!-- سجل التسميع الكامل -->
+                    <div class="table-card" style="margin-top:16px">
+                        <div class="card-header" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--border)">
+                            <div>
+                                <h3>📚 سجل التسميع الكامل</h3>
+                                <p>كل جلسات الحفظ والمراجعة</p>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>السورة</th>
+                                    <th>النطاق</th>
+                                    <th>النوع</th>
+                                    <th>التقييم</th>
+                                    <th>ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentFullHifzTable">
+                                <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <div style="display:flex;flex-direction:column;gap:10px" id="studentNotesList">
                         <!-- Dynamic Teacher Notes Here -->
                     </div>
+                </div>
+            </div>
+
+
+            <!-- سجل الحضور والتأخر الخاص بالطالب -->
+            <div class="table-card" style="margin-top:16px" id="studentAttendanceCard">
+                <div class="card-header" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--border)">
+                    <div>
+                        <h3>📅 سجل حضوري وتأخري</h3>
+                        <p style="margin:4px 0 0;font-size:13px;color:var(--text-muted)">سجلّك الكامل — حاضر، متأخر، وغائب</p>
+                    </div>
+                    <div id="studentAttendanceSummary" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                        <span class="status-badge status-present">✅ حاضر: <span id="studentAttPresent">0</span></span>
+                        <span class="status-badge status-late">⏰ متأخر: <span id="studentAttLate">0</span></span>
+                        <span class="status-badge status-absent">❌ غائب: <span id="studentAttAbsent">0</span></span>
+                        <span class="status-badge" style="background:var(--bg);color:var(--text)">نسبة الحضور: <span id="studentAttRate">0</span>%</span>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;max-height:360px;overflow-y:auto">
+                    <table id="studentAttendanceTable">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الحالة</th>
+                                <th>ملاحظة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" style="text-align:center;padding:24px;color:var(--text-muted)">⏳ جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -4061,8 +4161,10 @@
                 </div>
             </div>
 
-            <!-- ===== ✅ إصلاح 3: بوابة ولي الأمر ===== -->
-            <div class="content" id="page-parentView">
+        </div> <!-- ===== إغلاق page-studentView ===== -->
+
+        <!-- ===== ✅ إصلاح 3: بوابة ولي الأمر ===== -->
+        <div class="content" id="page-parentView">
                 <div class="page-header">
                     <div>
                         <h2>بوابة ولي الأمر</h2>
@@ -5243,22 +5345,22 @@
             window.closeSidebar = window.NoorApp.ui.closeSidebar;
         }
     </script>
-    <script src="/js/modals.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/dashboard.js"></script>
-    <script src="/js/students.js"></script>
-    <script src="/js/attendance.js"></script>
-    <script src="/js/hifz.js"></script>
-    <script src="/js/parents.js"></script>
-    <script src="/js/users.js"></script>
+    <script src="/js/modals.js?v=2"></script>
+    <script src="/js/auth.js?v=4"></script>
+    <script src="/js/dashboard.js?v=2"></script>
+    <script src="/js/students.js?v=2"></script>
+    <script src="/js/attendance.js?v=4"></script>
+    <script src="/js/hifz.js?v=2"></script>
+    <script src="/js/parents.js?v=2"></script>
+    <script src="/js/users.js?v=2"></script>
 
     <!-- All inline scripts have been extracted into modular JS files -->
-    <script src="/js/exams.js"></script>
-    <script src="/js/teachers.js"></script>
-    <script src="/js/reports.js"></script>
-    <script src="/js/app-ui-extensions.js"></script>
-    <script src="/js/payments.js"></script>
-    <script src="/js/page-controller.js"></script>
+    <script src="/js/exams.js?v=3"></script>
+    <script src="/js/teachers.js?v=2"></script>
+    <script src="/js/reports.js?v=3"></script>
+    <script src="/js/app-ui-extensions.js?v=2"></script>
+    <script src="/js/payments.js?v=2"></script>
+    <script src="/js/page-controller.js?v=3"></script>
     <script>
         // ✅ مساعد الجدول المرن للحلقات
         function setCircleScheduleType(type, modalId) {

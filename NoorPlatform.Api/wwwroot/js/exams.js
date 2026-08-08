@@ -29,9 +29,10 @@
                 <button class="btn btn-primary" style="font-size:12px;padding:8px 14px" onclick="openExamResults(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
                 📊 إدخال نتائج الطلاب
                 </button>
+                ${global.USER?.role === 'Admin' ? `
                 <button class="btn btn-delete" style="font-size:12px;padding:8px 14px" onclick="deleteExam(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
                 🗑 حذف
-                </button>
+                </button>` : ''}
             </div>
             </div>`).join('');
         } catch (err) {

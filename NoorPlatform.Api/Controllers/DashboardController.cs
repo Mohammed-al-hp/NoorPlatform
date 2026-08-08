@@ -220,6 +220,7 @@ public class DashboardController : ControllerBase
 
         // ─── إصلاح متوسط: تحديد عدد السجلات المجلوبة في الذاكرة لمنع اختناق الذاكرة مع مرور الوقت ───
         var student = await _context.Students.AsNoTracking()
+            .Include(s => s.User)
             .Include(s => s.Circle!).ThenInclude(c => c.Teacher!).ThenInclude(t => t.User)
             .Include(s => s.HifzRecords.OrderByDescending(h => h.Date).Take(10))
             .Include(s => s.Attendances.OrderByDescending(a => a.Date).Take(10))
@@ -240,15 +241,74 @@ public class DashboardController : ControllerBase
             .OrderByDescending(r => r.Date)
             .FirstOrDefault();
 
+        const int weeklyGoal = 50;
+        var weekStart = DateTime.UtcNow.Date.AddDays(-6);
+
+        // مجموع آيات الحفظ الجديد هذا الأسبوع (استعلام مستقل — لا يعتمد على Take(10))
+        var weeklyVerses = await _context.HifzRecords.AsNoTracking()
+            .Where(r => r.StudentId == student.Id
+                        && r.Type == RecordType.Memorization
+                        && r.Date >= weekStart)
+            .SumAsync(r => r.VerseCount);
+
+        // آخر سورة محفوظة = ورد المراجعة القادم
+        var lastMemRecord = await _context.HifzRecords.AsNoTracking()
+            .Where(r => r.StudentId == student.Id && r.Type == RecordType.Memorization)
+            .OrderByDescending(r => r.Date)
+            .ThenByDescending(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        // أفضل 3 طلاب في نفس الحلقة حسب النقاط
+        object circleTop3 = Array.Empty<object>();
+        if (student.CircleId != null)
+        {
+            circleTop3 = await _context.Students.AsNoTracking()
+                .Where(s => s.CircleId == student.CircleId && !s.IsDeleted)
+                .OrderByDescending(s => s.Points)
+                .Take(3)
+                .Select(s => new
+                {
+                    studentId = s.Id,
+                    fullName = s.User.FullName,
+                    points = s.Points,
+                    badges = s.Badges,
+                    isCurrentUser = s.Id == student.Id
+                })
+                .ToListAsync();
+        }
+
         return Ok(new
         {
             id = student.Id,
-            fullName = User.Identity?.Name,
+            fullName = student.User?.FullName ?? User.Identity?.Name,
             hifzProgress,
             attendancePercentage = Math.Round(attendancePercent, 1),
             lastEvaluation = lastRecord?.Evaluation ?? "لا يوجد",
             lastSurah = lastRecord != null ? $"{lastRecord.SurahName} ({lastRecord.Verses})" : "—",
             points = student.Points,
+            weeklyVerses,
+            weeklyGoal,
+            circleTop3,
+            nextReview = lastMemRecord != null
+                ? new
+                {
+                    date = lastMemRecord.Date.ToString("yyyy-MM-dd"),
+                    surah = lastMemRecord.SurahName,
+                    toSurah = lastMemRecord.ToSurahName,
+                    verses = lastMemRecord.Verses,
+                    verseCount = lastMemRecord.VerseCount,
+                    evaluation = lastMemRecord.Evaluation
+                }
+                : null,
+            lastMemorization = lastMemRecord != null
+                ? new
+                {
+                    date = lastMemRecord.Date.ToString("yyyy-MM-dd"),
+                    surah = lastMemRecord.SurahName,
+                    toSurah = lastMemRecord.ToSurahName,
+                    verses = lastMemRecord.Verses
+                }
+                : null,
             teacherName = student.Circle?.Teacher?.User?.FullName ?? "—",
             teacherRating = student.Circle?.Teacher?.AverageRating ?? 0.0,
             circleName = student.Circle?.Name ?? "بدون حلقة",

@@ -14,6 +14,13 @@
     const ui = () => app().ui;
     const U = () => (typeof global.getNoorUtils === 'function' ? global.getNoorUtils() : (global.NoorUtils || app().utils));
 
+    // صفحات إدارية — لا يجوز للطالب/ولي الأمر فتحها (تسبب 403 عند التحميل التلقائي)
+    const STAFF_ONLY_PAGES = new Set([
+        'attendance', 'memorization', 'exams',
+        'students', 'teachers', 'circles', 'payments',
+        'reports', 'settings', 'users', 'parents'
+    ]);
+
     function checkAuth() {
         const state = app().state;
         if (state.token && app().isTokenExpired(state.token)) {
@@ -42,7 +49,13 @@
         }
 
         const hash = location.hash.replace('#', '');
+        const isStaff = role === 'Admin' || role === 'Teacher';
+        // تجاهل hash الصفحات الإدارية للطالب/ولي الأمر حتى لا يُستدعى API بـ 403
         if (hash && document.getElementById('page-' + hash)) {
+            if (!isStaff && STAFF_ONLY_PAGES.has(hash)) {
+                history.replaceState({ page: role === 'Parent' ? 'parentView' : 'studentView' }, '', '#' + (role === 'Parent' ? 'parentView' : 'studentView'));
+                return;
+            }
             setTimeout(() => {
                 const navEl = document.querySelector('[onclick*="navigate(\'' + hash + '\'"]');
                 if (navEl) global.navigate(hash, navEl);
@@ -62,11 +75,34 @@
         const parentSection = document.getElementById('parentSection');
         const libraryNavSection = document.getElementById('libraryNavSection');
         const libraryAdminActions = document.getElementById('libraryAdminActions');
+        const trackingNavSection = document.getElementById('trackingNavSection');
         const isStaff = isAdmin || isTeacher;
+
+        // صفحات المتابعة الإدارية (حضور / تسميع / اختبارات) — للمحفّظ والمشرف فقط
+        if (trackingNavSection) trackingNavSection.style.display = isStaff ? 'block' : 'none';
 
         // ─── إصلاح: إخفاء أزرار الوسام/الشهادة الإدارية عن الطالب نفسه ───
         const quranMapActions = document.getElementById('quranMapAdminActions');
         if (quranMapActions) quranMapActions.style.display = isStaff ? 'flex' : 'none';
+
+        // ─── منع المحفظ من اختيار (المحفظون فقط) عند إنشاء إعلان ───
+        const annTargetTeachers = document.querySelector('#annTarget option[value="Teachers"]');
+        if (annTargetTeachers) annTargetTeachers.style.display = isAdmin ? 'block' : 'none';
+
+        // ─── إخفاء عناصر الداشبورد العامة عن الطالب وولي الأمر ───
+        const dashStatGrid = document.querySelector('#page-dashboard .stat-grid');
+        if (dashStatGrid) dashStatGrid.style.display = (isStudent || isParent) ? 'none' : 'grid';
+        
+        const dashLeaderboard = document.querySelector('#leaderboardWrap')?.closest('.table-card');
+        if (dashLeaderboard) dashLeaderboard.style.display = (isStudent || isParent) ? 'none' : 'block';
+        
+        const dashQuickActions = document.querySelector('#page-dashboard .quick-actions');
+        if (dashQuickActions) dashQuickActions.style.display = (isAdmin || isTeacher) ? 'flex' : 'none';
+
+        // لوحة التحفيز أصبحت داخل الصفحة الرئيسية للطالب (#page-studentView)
+        document.querySelectorAll('#page-dashboard .charts-row, #page-dashboard .table-card').forEach(el => {
+            if (isStudent || isParent) el.style.display = 'none';
+        });
 
         if (staffSection) staffSection.style.display = isStaff ? 'block' : 'none';
         if (adminOnlySection) adminOnlySection.style.display = isAdmin ? 'block' : 'none';
@@ -86,9 +122,29 @@
             if (libraryNavSection) libraryNavSection.style.display = 'block';
             if (libraryAdminActions) libraryAdminActions.style.display = 'none';
         }
+
+        // الشريط السفلي والـ FAB: إخفاء روابط الإدارة عن الطالب
+        document.querySelectorAll('#bottomNav .bottom-nav-item').forEach(item => {
+            const onclick = item.getAttribute('onclick') || '';
+            const isAdminNav = /navBottom\('(students|attendance|memorization)'/.test(onclick);
+            if (isAdminNav) item.style.display = isStaff ? '' : 'none';
+        });
+        document.querySelectorAll('#fabMenu .fab-menu-item').forEach(item => {
+            const onclick = item.getAttribute('onclick') || '';
+            const isAdminFab = /navigate\('(students|attendance|memorization|circles)'/.test(onclick);
+            if (isAdminFab) item.style.display = isStaff ? '' : 'none';
+        });
+
         if (isStudent) {
-            global.navigate('studentView', document.querySelector('#studentSection .nav-item'));
+            // الرئيسية للطالب = صفحة التحفيز (studentView)
+            const homeNav = document.querySelector('#studentSection .nav-item');
+            global.navigate('studentView', homeNav);
             if (typeof fetchStudentView === 'function') fetchStudentView();
+            // توجيه أزرار «الرئيسية» لصفحة الطالب
+            const bottomHome = document.querySelector('#bottomNav .bottom-nav-item');
+            if (bottomHome) bottomHome.setAttribute('onclick', "navBottom('studentView', this)");
+            const fabHome = document.querySelector('.fab-menu-item[onclick*="dashboard"]');
+            if (fabHome) fabHome.setAttribute('onclick', "navigate('studentView',null);toggleFab()");
         } else if (isParent) {
             global.navigate('parentView', document.querySelector('#parentSection .nav-item'));
             if (typeof fetchParentView === 'function') fetchParentView();
@@ -172,7 +228,9 @@
                 ui().openModal('changePasswordModal');
                 ui().showToast('⚠️ يرجى تغيير كلمة المرور المؤقتة');
             } else {
-                ui().showToast('✅ تم تسجيل الدخول بنجاح');
+                const userName = data.user?.fullName || data.fullName || '';
+                const firstName = userName.split(' ')[0] || 'مستخدماً';
+                ui().showToast(`✅ أهلاً بك يا ${firstName}`);
                 checkAuth();
             }
         } catch (err) {

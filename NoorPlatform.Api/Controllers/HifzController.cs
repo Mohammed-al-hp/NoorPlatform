@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Api.Security;
+using NoorPlatform.Api.Services;
 using NoorPlatform.Infrastructure.Data;
 using NoorPlatform.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -49,6 +50,68 @@ public class HifzController : ControllerBase
             })
             .ToListAsync();
         return Ok(records);
+    }
+
+    /// <summary>
+    /// سجل تسميع ومراجعة الطالب الحالي بالكامل — الهوية من الـ token فقط (لا يقبل studentId).
+    /// </summary>
+    [HttpGet("my")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> GetMyHifz()
+    {
+        var userId = AuthorizationHelpers.GetUserId(User);
+        if (userId == null)
+            return Unauthorized();
+
+        var student = await _context.Students.AsNoTracking()
+            .Where(s => s.UserId == userId.Value)
+            .Select(s => new { s.Id, s.Level })
+            .FirstOrDefaultAsync();
+
+        if (student == null)
+            return NotFound(new { message = "لم يُعثر على بيانات الطالب" });
+
+        var entityRecords = await _context.HifzRecords.AsNoTracking()
+            .Where(r => r.StudentId == student.Id)
+            .OrderByDescending(r => r.Date)
+            .ThenByDescending(r => r.Id)
+            .ToListAsync();
+
+        var hifzProgress = HifzProgressCalculator.Calculate(entityRecords);
+
+        var memorizationSessions = entityRecords.Count(r => r.Type == RecordType.Memorization);
+        var revisionSessions = entityRecords.Count(r => r.Type == RecordType.Revision);
+        var memorizedVerses = entityRecords
+            .Where(r => r.Type == RecordType.Memorization)
+            .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses));
+
+        var records = entityRecords.Select(r => new
+        {
+            id = r.Id,
+            date = r.Date.ToString("yyyy-MM-dd"),
+            surahName = r.SurahName,
+            toSurahName = r.ToSurahName,
+            verses = r.Verses,
+            verseCount = r.VerseCount,
+            type = r.Type.ToString(),
+            evaluation = r.Evaluation,
+            notes = r.Notes,
+            revisionMode = r.RevisionMode
+        }).ToList();
+
+        return Ok(new
+        {
+            level = student.Level,
+            hifzProgress,
+            summary = new
+            {
+                memorizationSessions,
+                revisionSessions,
+                memorizedVerses,
+                totalSessions = entityRecords.Count
+            },
+            records
+        });
     }
 
     // GET /api/hifz/recent?count=10

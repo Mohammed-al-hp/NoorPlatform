@@ -60,7 +60,7 @@
         }
         if (page === 'attendance') {
             if (typeof renderAttendanceCircleChips === 'function') renderAttendanceCircleChips();
-            if (typeof fetchStudentsAttendance === 'function') fetchStudentsAttendance();
+            if (typeof fetchAttendanceForDate === 'function') fetchAttendanceForDate();
         }
         if (page === 'memorization' && typeof fetchMemorizationData === 'function') fetchMemorizationData();
         if (page === 'library' && typeof fetchLibraryItems === 'function') fetchLibraryItems();

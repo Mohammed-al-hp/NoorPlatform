@@ -62,18 +62,98 @@
         }
     }
 
-    // عرض الطالب
+    function parseStudentBadges(badges) {
+        if (!badges || typeof badges !== 'string') return [];
+        return badges.split(',').map(b => b.trim()).filter(Boolean);
+    }
+
+    function renderStudentGamification(data) {
+        const weeklyGoal = data.weeklyGoal || 50;
+        const weeklyVerses = data.weeklyVerses || 0;
+        const pct = Math.min(100, Math.round((weeklyVerses / weeklyGoal) * 100));
+
+        const weeklyProgress = document.getElementById('gamificationWeeklyProgress');
+        if (weeklyProgress) weeklyProgress.textContent = `${weeklyVerses} / ${weeklyGoal}`;
+
+        const progressBar = document.getElementById('gamificationProgressBar');
+        if (progressBar) progressBar.style.width = pct + '%';
+
+        const weeklyMsg = document.getElementById('gamificationWeeklyMessage');
+        if (weeklyMsg) {
+            if (weeklyVerses >= weeklyGoal) {
+                weeklyMsg.textContent = 'أحسنت! لقد حققت هدفك الأسبوعي 🎉';
+            } else if (weeklyVerses > 0) {
+                weeklyMsg.textContent = `استمر يا بطل! تبقّى عليك ${weeklyGoal - weeklyVerses} آية للوصول للهدف.`;
+            } else {
+                weeklyMsg.textContent = 'ابدأ حفظك هذا الأسبوع — كل آية تقربك من هدفك.';
+            }
+        }
+
+        const pointsEl = document.getElementById('gamificationPoints');
+        if (pointsEl) pointsEl.textContent = data.points || 0;
+
+        const badgesEl = document.getElementById('gamificationBadges');
+        if (badgesEl) {
+            const badges = parseStudentBadges(data.badges);
+            badgesEl.innerHTML = badges.length
+                ? badges.map(b => `<span class="hero-badge" style="background:var(--amber-light);color:var(--amber-dark);">🏆 ${escapeHtml(b)}</span>`).join('')
+                : '<span style="font-size:12px;color:var(--text-muted)">لا توجد أوسمة بعد — واصل التميّز!</span>';
+        }
+
+        const reviewEl = document.getElementById('gamificationNextReview');
+        if (reviewEl) {
+            const review = data.nextReview || data.lastMemorization;
+            if (review && review.surah) {
+                const surahRange = review.toSurah && review.toSurah !== review.surah
+                    ? `${escapeHtml(review.surah)} ← ${escapeHtml(review.toSurah)}`
+                    : escapeHtml(review.surah);
+                reviewEl.innerHTML = `
+                    <div style="text-align:center;padding:8px 0">
+                        <div style="font-size:28px;margin-bottom:8px">📖</div>
+                        <div style="font-size:20px;font-weight:800;color:var(--green-dark);margin-bottom:6px">${surahRange}</div>
+                        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">الآيات: ${escapeHtml(review.verses || '—')}</div>
+                        <div style="font-size:12px;color:var(--text-muted)">آخر حفظ: ${escapeHtml(review.date || '—')}${review.evaluation ? ' • ' + escapeHtml(review.evaluation) : ''}</div>
+                        <p style="margin-top:14px;font-size:13px;color:var(--text-muted);line-height:1.6">هذا هو ورد مراجعتك القادم — راجع ما حفظته جيداً قبل الجلسة التالية.</p>
+                    </div>`;
+            } else {
+                reviewEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">لا يوجد حفظ مسجّل بعد. ابدأ أول تسميع ليظهر ورد المراجعة.</div>';
+            }
+        }
+
+        const boardEl = document.getElementById('gamificationCircleLeaderboard');
+        if (boardEl) {
+            const top3 = data.circleTop3 || [];
+            if (!top3.length) {
+                boardEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">لست منضماً لحلقة بعد، أو لا يوجد طلاب للمقارنة.</div>';
+            } else {
+                const medals = ['🥇', '🥈', '🥉'];
+                boardEl.innerHTML = top3.map((s, i) => {
+                    const highlight = s.isCurrentUser
+                        ? 'background:var(--green-light);border:1px solid var(--green);'
+                        : 'background:var(--bg);border:1px solid var(--border);';
+                    const you = s.isCurrentUser ? ' <span style="font-size:11px;color:var(--green-dark)">(أنت)</span>' : '';
+                    return `
+                        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;${highlight}">
+                            <span style="font-size:22px;width:32px;text-align:center">${medals[i] || (i + 1)}</span>
+                            <div style="flex:1;min-width:0">
+                                <div style="font-weight:800;font-size:14px">${escapeHtml(s.fullName || '—')}${you}</div>
+                                <div style="font-size:12px;color:var(--text-muted)">${s.points || 0} نقطة</div>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+        }
+    }
+
+    // عرض الطالب (الرئيسية)
     async function fetchStudentView() {
         try {
             const data = await apiFetch('/dashboard/student-summary');
-            if (data.id) window._studentDbId = data.id;
-            const stats = document.querySelectorAll('#page-studentView .stat-value');
-            if (stats.length >= 4) {
-                stats[0].textContent = data.hifzProgress + '%';
-                stats[1].textContent = data.attendancePercentage + '%';
-                stats[2].textContent = data.recentGrades?.[0]?.score ?? '—';
-                stats[3].textContent = data.teacherRating > 0 ? data.teacherRating.toFixed(1) : '—';
+            if (data.id) {
+                window._studentDbId = data.id;
+                fetchStudentFullHifzRecord(data.id);
             }
+
             const heroName = document.getElementById('studentHeroName');
             if (heroName) heroName.textContent = data.fullName || '—';
 
@@ -81,22 +161,22 @@
             if (heroAvatar && data.fullName) heroAvatar.textContent = data.fullName.slice(0, 2);
 
             const heroCircle = document.getElementById('studentHeroCircle');
-            if (heroCircle) heroCircle.textContent = `${data.circleName || 'بدون حلقة'} • المحفظ: ${data.teacherName || '—'}`;
+            if (heroCircle) heroCircle.textContent = `${data.circleName || 'بدون حلقة'} • المحفظ: ${data.teacherName || '—'} • حفظ ${data.hifzProgress || 0}% • حضور ${data.attendancePercentage || 0}%`;
 
             const heroBadges = document.getElementById('studentHeroBadges');
             if (heroBadges) {
                 let badgesHtml = `<span class="hero-badge" style="background:var(--amber-light);color:var(--amber-dark);">🌟 ${data.points || 0} نقطة</span>`;
-                if (data.badges) {
-                    const parsedBadges = data.badges.split(',');
-                    parsedBadges.forEach(b => {
-                        if (b.trim()) badgesHtml += `<span class="hero-badge">🏆 ${escapeHtml(b.trim())}</span>`;
-                    });
-                }
+                parseStudentBadges(data.badges).forEach(b => {
+                    badgesHtml += `<span class="hero-badge">🏆 ${escapeHtml(b)}</span>`;
+                });
                 if (data.teacherRating > 0) {
                     badgesHtml += `<span class="hero-badge">⭐ ${data.teacherRating.toFixed(1)} / 5</span>`;
                 }
                 heroBadges.innerHTML = badgesHtml;
             }
+            
+            renderStudentGamification(data);
+            fetchStudentAttendance();
 
             const hifzTbody = document.querySelector('#studentHifzTable tbody');
             if (hifzTbody) {
@@ -146,10 +226,80 @@
             if (typeof showToast === 'function') showToast('❌ تعذر تحميل بيانات الطالب');
         }
     }
+    async function fetchStudentFullHifzRecord(studentId) {
+        const tbody = document.getElementById('studentFullHifzTable');
+        if (!tbody) return;
+        try {
+            const records = await apiFetch(`/hifz/student/${studentId}`);
+            if (!records.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد سجلات تسميع بعد</td></tr>';
+                return;
+            }
+            tbody.innerHTML = records.map(r => {
+                const typeLabel = r.type === 'Memorization' ? 'حفظ جديد' : 'مراجعة';
+                const evalClass = r.evaluation === 'ممتاز' ? 'status-excellent' : (r.evaluation === 'جيد' ? 'status-good' : 'status-late');
+                return `<tr>
+                <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+                <td>${escapeHtml(r.surahName || '')}</td>
+                <td>${escapeHtml(r.verses || '')}</td>
+                <td>${typeLabel}</td>
+                <td><span class="status-badge ${evalClass}">${escapeHtml(r.evaluation || '—')}</span></td>
+                <td>${escapeHtml(r.notes || '—')}</td>
+            </tr>`;
+            }).join('');
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#ef4444">تعذر تحميل السجل</td></tr>';
+        }
+    }
 
-    // إدارة الحضور
-    
-    
+    // إدارة الحضور — سجل الطالب الخاص (من /attendance/my)
+    const STUDENT_ATT_STATUS = {
+        Present: { label: '✅ حاضر', cls: 'status-present' },
+        Late: { label: '⏰ متأخر', cls: 'status-late' },
+        ExcusedAbsence: { label: '📋 غائب بإذن', cls: 'status-absent' },
+        UnexcusedAbsence: { label: '❌ غائب بدون إذن', cls: 'status-absent' }
+    };
+
+    function renderStudentAttendance(data) {
+        const summary = data?.summary || {};
+        const presentEl = document.getElementById('studentAttPresent');
+        const lateEl = document.getElementById('studentAttLate');
+        const absentEl = document.getElementById('studentAttAbsent');
+        const rateEl = document.getElementById('studentAttRate');
+        if (presentEl) presentEl.textContent = summary.present || 0;
+        if (lateEl) lateEl.textContent = summary.late || 0;
+        if (absentEl) absentEl.textContent = (summary.excusedAbsence || 0) + (summary.unexcusedAbsence || 0);
+        if (rateEl) rateEl.textContent = summary.attendanceRate ?? 0;
+
+        const tbody = document.querySelector('#studentAttendanceTable tbody');
+        if (!tbody) return;
+        const records = data?.records || [];
+        if (!records.length) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--text-muted)">لا توجد سجلات حضور بعد</td></tr>';
+            return;
+        }
+        tbody.innerHTML = records.map(r => {
+            const meta = STUDENT_ATT_STATUS[r.status] || { label: escapeHtml(r.status || '—'), cls: 'status-late' };
+            return `<tr>
+                <td>${escapeHtml(r.date || '—')}</td>
+                <td><span class="status-badge ${meta.cls}">${meta.label}</span></td>
+                <td style="color:var(--text-muted);font-size:13px">${r.note ? escapeHtml(r.note) : '—'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function fetchStudentAttendance() {
+        const tbody = document.querySelector('#studentAttendanceTable tbody');
+        try {
+            const data = await apiFetch('/attendance/my');
+            renderStudentAttendance(data);
+        } catch (err) {
+            console.error('Error fetching student attendance:', err);
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:#dc2626">تعذر تحميل سجل الحضور</td></tr>';
+            }
+        }
+    }
 
     async function sendAbsenceWhatsApp(studentId) {
         try {
@@ -296,7 +446,28 @@
         const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
         const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
             'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-        el.textContent = days[now.getDay()] + '، ' + now.getDate() + ' ' + months[now.getMonth()];
+
+        // التاريخ الميلادي
+        const gregEl = document.getElementById('topbarDateGregorian');
+        if (gregEl) gregEl.textContent = days[now.getDay()] + '، ' + now.getDate() + ' ' + months[now.getMonth()];
+
+        // التاريخ الهجري باستخدام Intl API (تقويم أم القرى)
+        const hijriEl = document.getElementById('topbarDateHijri');
+        if (hijriEl) {
+            try {
+                const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+                hijriEl.textContent = '📅 ' + hijriFormatter.format(now);
+            } catch (e) {
+                hijriEl.textContent = '';
+            }
+        }
+
+        // fallback: إذا كانت العناصر الجديدة غير موجودة (توافق عكسي)
+        if (!gregEl && !hijriEl) {
+            el.textContent = days[now.getDay()] + '، ' + now.getDate() + ' ' + months[now.getMonth()];
+        }
     })();
 
     function updateTopbarAvatar() {
@@ -494,6 +665,8 @@
 
     global.fetchParentView = fetchParentView;
     global.fetchStudentView = fetchStudentView;
+    global.fetchStudentFullHifzRecord = fetchStudentFullHifzRecord;
+    global.fetchStudentAttendance = fetchStudentAttendance;
     global.sendAbsenceWhatsApp = sendAbsenceWhatsApp;
     global.renderQuranMap = renderQuranMap;
     global.HifzRecord_ParseVerseCount = HifzRecord_ParseVerseCount;

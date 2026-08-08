@@ -66,6 +66,71 @@ public class AttendanceController : ControllerBase
         return Ok(records);
     }
 
+    /// <summary>
+    /// سجل حضور الطالب الحالي بالكامل — الهوية من الـ token فقط (لا يقبل studentId من الطلب).
+    /// </summary>
+    [HttpGet("my")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> GetMyAttendance([FromQuery] int? days)
+    {
+        var userId = AuthorizationHelpers.GetUserId(User);
+        if (userId == null)
+            return Unauthorized();
+
+        var studentId = await _context.Students.AsNoTracking()
+            .Where(s => s.UserId == userId.Value)
+            .Select(s => (int?)s.Id)
+            .FirstOrDefaultAsync();
+
+        if (studentId == null)
+            return NotFound(new { message = "لم يُعثر على بيانات الطالب" });
+
+        // الاستعلام مقيّد دائمًا بـ StudentId المستخرج من التوكن — لا يوجد معامل ID قابل للتلاعب
+        var query = _context.Attendances.AsNoTracking()
+            .Where(a => a.StudentId == studentId.Value);
+
+        if (days.HasValue)
+        {
+            var clamped = Math.Clamp(days.Value, 1, 3650);
+            var since = DateTime.UtcNow.Date.AddDays(-clamped);
+            query = query.Where(a => a.Date >= since);
+        }
+
+        var records = await query
+            .OrderByDescending(a => a.Date)
+            .ThenByDescending(a => a.Id)
+            .Select(a => new
+            {
+                date = a.Date.ToString("yyyy-MM-dd"),
+                status = a.Status.ToString(),
+                note = a.Note
+            })
+            .ToListAsync();
+
+        var present = records.Count(r => r.status == nameof(AttendanceStatus.Present));
+        var late = records.Count(r => r.status == nameof(AttendanceStatus.Late));
+        var excused = records.Count(r => r.status == nameof(AttendanceStatus.ExcusedAbsence));
+        var unexcused = records.Count(r => r.status == nameof(AttendanceStatus.UnexcusedAbsence));
+        var total = records.Count;
+        var attendanceRate = total > 0
+            ? Math.Round((double)(present + late) / total * 100, 1)
+            : 0.0;
+
+        return Ok(new
+        {
+            summary = new
+            {
+                present,
+                late,
+                excusedAbsence = excused,
+                unexcusedAbsence = unexcused,
+                total,
+                attendanceRate
+            },
+            records
+        });
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> MarkAttendance(

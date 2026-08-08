@@ -2,6 +2,7 @@
 @import url('/css/responsive.css');
 
 /* ─── تخصيص تقويم flatpickr ليتماشى مع هوية المنصة ─── */
+
 .flatpickr-calendar {
     font-family: 'Tajawal', sans-serif !important;
     direction: rtl;

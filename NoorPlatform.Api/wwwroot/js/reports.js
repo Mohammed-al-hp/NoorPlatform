@@ -103,41 +103,75 @@
         }
     }
 
-    function exportStudentsCSV() {
+    function exportStudentsExcel() {
         const students = window._students || window._allStudentsData || [];
         if (!students.length) {
             showToast('⚠️ لا توجد بيانات لتصديرها');
             return;
         }
 
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "الرقم,اسم الطالب,رقم ولي الأمر,الحلقة,المستوى\n";
+        let tableHtml = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta charset="utf-8" />
+                <style>
+                    table { border-collapse: collapse; width: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                    th, td { border: 1px solid #dddddd; text-align: right; padding: 8px; }
+                    th { background-color: #f2f2f2; font-weight: bold; }
+                </style>
+            </head>
+            <body dir="rtl">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الرقم</th>
+                            <th>اسم الطالب</th>
+                            <th>رقم ولي الأمر</th>
+                            <th>الحلقة</th>
+                            <th>المحفظ المسؤول</th>
+                            <th>المستوى</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
 
         students.forEach(s => {
-            const row = [
-                s.id,
-                `"${s.fullName}"`,
-                `"${s.parentPhone || ''}"`,
-                `"${s.circleName || 'غير محدد'}"`,
-                `"${s.level || ''}"`
-            ];
-            csvContent += row.join(",") + "\n";
+            tableHtml += `
+                <tr>
+                    <td>${s.id}</td>
+                    <td>${s.fullName || ''}</td>
+                    <td style="mso-number-format:'\@';">${s.parentPhone || ''}</td>
+                    <td>${s.circleName || 'بدون حلقة'}</td>
+                    <td>${s.teacherName || '—'}</td>
+                    <td>${s.level || ''}</td>
+                </tr>
+            `;
         });
 
-        const encodedUri = encodeURI(csvContent);
+        tableHtml += `
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `طلاب_نور_${new Date().toLocaleDateString('en-CA')}.csv`);
+        link.href = url;
+        link.download = `قائمة_الطلاب_${new Date().toLocaleDateString('en-CA')}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToast('✅ تم التصدير بنجاح');
+        URL.revokeObjectURL(url);
+        
+        showToast('✅ تم التصدير بنجاح كملف Excel');
     }
 
     global.exportStudentPDF = exportStudentPDF;
     global.exportCertificatePDF = exportCertificatePDF;
     global.grantBadge = grantBadge;
-    global.exportStudentsCSV = exportStudentsCSV;
+    global.exportStudentsExcel = exportStudentsExcel;
     global.showLoading = showLoading;
     global.hideLoading = hideLoading;
 })(window);

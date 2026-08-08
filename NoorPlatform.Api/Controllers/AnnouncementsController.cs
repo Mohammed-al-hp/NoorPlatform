@@ -34,10 +34,9 @@ public class AnnouncementsController : ControllerBase
             var isParent = User.IsInRole("Parent");
 
             query = query.Where(a => 
-                a.Target == AnnouncementTarget.All ||
-                (isTeacher && a.Target == AnnouncementTarget.Teachers) ||
-                (isStudent && a.Target == AnnouncementTarget.Students) ||
-                (isParent && a.Target == AnnouncementTarget.Parents)
+                (isTeacher && (a.Target == AnnouncementTarget.All || a.Target == AnnouncementTarget.Teachers)) ||
+                (isStudent && (a.Target == AnnouncementTarget.All || a.Target == AnnouncementTarget.Students)) ||
+                (isParent && (a.Target == AnnouncementTarget.All || a.Target == AnnouncementTarget.Parents))
             );
         }
 

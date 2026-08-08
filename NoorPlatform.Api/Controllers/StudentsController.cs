@@ -39,6 +39,7 @@ public class StudentsController : ControllerBase
             s.ParentPhone,
             s.CircleId,
             circleName = s.Circle != null ? s.Circle.Name : "بدون حلقة",
+            teacherName = s.Circle != null && s.Circle.Teacher != null && s.Circle.Teacher.User != null ? s.Circle.Teacher.User.FullName : "—",
             s.Level,
             attendance = s.Attendances.Any()
                 ? (int)Math.Round(
@@ -56,6 +57,7 @@ public class StudentsController : ControllerBase
             s.ParentPhone,
             s.CircleId,
             s.circleName,
+            s.teacherName,
             s.Level,
             s.attendance,
             progress = Math.Min(100, (int)Math.Round(

@@ -24,7 +24,7 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
-
+    public DbSet<Message> Messages => Set<Message>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -158,6 +158,27 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .WithMany()
             .HasForeignKey(l => l.CircleId)
             .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Message>()
+    .HasOne(m => m.SenderUser)
+    .WithMany()
+    .HasForeignKey(m => m.SenderUserId)
+    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.RecipientTeacher)
+            .WithMany()
+            .HasForeignKey(m => m.RecipientTeacherId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.ParentMessage)
+            .WithMany()
+            .HasForeignKey(m => m.ParentMessageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => m.CreatedAt)
+            .HasDatabaseName("IX_Message_CreatedAt");
 
         // ─────────────────────────────────────────────
         // Indexes — لتسريع الاستعلامات الشائعة
