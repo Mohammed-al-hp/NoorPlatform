@@ -131,10 +131,25 @@ public class StudentsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
     {
-        var validationError = ValidateStudentPayload(request.FullName, request.DateOfBirth, request.GuardianName,
-            request.ParentPhone, request.GuardianRelationship, request.RegistrationDate);
-        if (validationError != null)
-            return BadRequest(new { message = validationError });
+        // ─── إصلاح: إن أُرسل ParentId جاهز، لا حاجة لبيانات ولي أمر جديد ───
+        var linkingExistingParent = request.ParentId.HasValue;
+
+        if (!linkingExistingParent)
+        {
+            var validationError = ValidateStudentPayload(request.FullName, request.DateOfBirth, request.GuardianName,
+                request.ParentPhone, request.GuardianRelationship, request.RegistrationDate);
+            if (validationError != null)
+                return BadRequest(new { message = validationError });
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(request.FullName) || request.DateOfBirth == null || request.RegistrationDate == null)
+                return BadRequest(new { message = "الاسم الثلاثي وتاريخ الميلاد وتاريخ التسجيل مطلوبة" });
+
+            var parentExists = await _context.Parents.AnyAsync(p => p.Id == request.ParentId.Value && !p.IsDeleted);
+            if (!parentExists)
+                return BadRequest(new { message = "ولي الأمر المحدد غير موجود" });
+        }
 
         // ─── إصلاح: منع المحفّظ من إضافة طالب لحلقة خارج نطاقه ───
         var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
@@ -160,7 +175,11 @@ public class StudentsController : ControllerBase
             return BadRequest(new { message = err });
 
         Parent? parent = null;
-        if (!string.IsNullOrWhiteSpace(request.ParentPhone))
+        if (linkingExistingParent)
+        {
+            parent = await _context.Parents.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == request.ParentId!.Value);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.ParentPhone))
         {
             var (p, _, pErr) = await _accounts.EnsureParentAsync(
                 request.GuardianName,
@@ -169,21 +188,22 @@ public class StudentsController : ControllerBase
                 return BadRequest(new { message = pErr });
             parent = p;
         }
-        else if (request.ParentId.HasValue)
-        {
-            parent = await _context.Parents.FindAsync(request.ParentId.Value);
-        }
 
-        if (!Enum.TryParse<GuardianRelationship>(request.GuardianRelationship, true, out var relationship))
-            return BadRequest(new { message = "صلة القرابة غير صالحة" });
+        GuardianRelationship? relationship = null;
+        if (!linkingExistingParent)
+        {
+            if (!Enum.TryParse<GuardianRelationship>(request.GuardianRelationship, true, out var parsedRelationship))
+                return BadRequest(new { message = "صلة القرابة غير صالحة" });
+            relationship = parsedRelationship;
+        }
 
         var student = new Student
         {
             UserId = user.Id,
             Level = request.Level ?? "مبتدئ",
             CircleId = request.CircleId,
-            ParentPhone = AccountProvisioningService.NormalizePhone(request.ParentPhone),
-            GuardianName = request.GuardianName.Trim(),
+            ParentPhone = linkingExistingParent ? (parent?.Phone ?? string.Empty) : AccountProvisioningService.NormalizePhone(request.ParentPhone),
+            GuardianName = linkingExistingParent ? (parent?.User?.FullName ?? string.Empty) : request.GuardianName.Trim(),
             GuardianRelationship = relationship,
             DateOfBirth = request.DateOfBirth,
             RegistrationDate = request.RegistrationDate ?? DateTime.UtcNow.Date,
@@ -247,6 +267,19 @@ public class StudentsController : ControllerBase
             request.ParentPhone, request.GuardianRelationship, request.RegistrationDate);
         if (validationError != null)
             return BadRequest(new { message = validationError });
+
+        // ─── إصلاح: منع المحفّظ من نقل طالب إلى حلقة خارج نطاقه ───
+        var isTeacherUpdate = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        if (isTeacherUpdate && request.CircleId.HasValue && request.CircleId != student.CircleId)
+        {
+            var ownsTargetCircle = await _context.Circles.AnyAsync(c =>
+                c.Id == request.CircleId.Value &&
+                c.Teacher != null &&
+                c.Teacher.UserId == int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!));
+
+            if (!ownsTargetCircle)
+                return Forbid();
+        }
 
         student.User.FullName = request.FullName!.Trim();
         student.Level = request.Level ?? student.Level;

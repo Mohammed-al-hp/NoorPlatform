@@ -58,9 +58,9 @@
                     const legend = document.getElementById('donutLegend');
                     if (legend) {
                         legend.innerHTML = `
-                            <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><span>متقدم</span><span class="legend-val">${ld.advanced}</span></div>
-                            <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>متوسط</span><span class="legend-val">${ld.intermediate}</span></div>
-                            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span>مبتدئ</span><span class="legend-val">${ld.beginner}</span></div>`;
+                            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#10b981"></div><span>متقدم</span><span class="legend-val">${ld.advanced}</span></div>
+                            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#3b82f6"></div><span>متوسط</span><span class="legend-val">${ld.intermediate}</span></div>
+                            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#f59e0b"></div><span>مبتدئ</span><span class="legend-val">${ld.beginner}</span></div>`;
                     }
                 }
                 const centerEl = document.getElementById('donutCenter');

@@ -50,13 +50,16 @@
                             <div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%"></div></div>
                             <span class="progress-pct">${c.progress}%</span>
                         </div>
-                        ${c.lastNote && c.lastNote !== 'لا توجد ملاحظات'
+                       ${c.lastNote && c.lastNote !== 'لا توجد ملاحظات'
                     ? `<div style="background:var(--green-light);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--green-dark);margin-bottom:10px">
-                                💬 <strong>آخر ملاحظة:</strong> ${escapeHtml(c.lastNote)}
-                               </div>`
+                        💬 <strong>آخر ملاحظة:</strong> ${escapeHtml(c.lastNote)}
+                       </div>`
                     : ''}
-                    </div>
-                `).join('');
+                    <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px" onclick="NoorMessages.openChildDetails(${c.id}, '${escapeHtml(c.fullName).replace(/'/g, "\\'")}')">
+                        📋 عرض التفاصيل الكاملة
+                    </button>
+                </div>
+            `).join('');
         } catch {
             grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#dc2626">❌ تعذر تحميل البيانات. تأكد من تسجيل الدخول كولي أمر.</div>';
         }
@@ -303,12 +306,19 @@
 
     async function sendAbsenceWhatsApp(studentId) {
         try {
-            await fetch('/api/notifications/absence', {
+            const res = await fetch('/api/notifications/absence', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ studentId, date: new Date().toISOString() })
             });
-        } catch { }
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'تعذر إرسال إشعار الغياب');
+            }
+            if (typeof showToast === 'function') showToast('✅ تم إرسال إشعار الغياب');
+        } catch (e) {
+            if (typeof showToast === 'function') showToast('❌ ' + (e.message || 'تعذر إرسال إشعار الغياب'));
+        }
     }
 
     // الحلقات

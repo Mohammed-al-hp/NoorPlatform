@@ -115,7 +115,12 @@
             document.getElementById('userEditId').value = String(u.id);
             document.getElementById('userEditFullName').value = u.fullName;
             document.getElementById('userEditPhone').value = u.phone;
-            document.getElementById('userEditRole').value = u.role;
+            const roleSelect = document.getElementById('userEditRole');
+            const roleHint = document.getElementById('userEditRoleHint');
+            const isAdmin = u.role === 'Admin';
+            roleSelect.value = u.role;
+            roleSelect.disabled = isAdmin;
+            if (roleHint) roleHint.style.display = isAdmin ? 'block' : 'none';
             document.getElementById('userEditActive').checked = u.isActive;
             document.getElementById('userEditMustChange').checked = u.mustChangePassword;
             global.openModal('userEditModal');
@@ -123,16 +128,16 @@
             global.showToast('❌ تعذر التحميل');
         }
     }
-
     async function saveUserEdit() {
         const id = document.getElementById('userEditId').value;
         const btn = document.querySelector('#userEditModal .btn-primary');
+        const roleSelect = document.getElementById('userEditRole');
         try {
             global.setBtnLoading(btn, true);
             await global.apiFetch(`/users/${id}`, 'PUT', {
                 fullName: document.getElementById('userEditFullName').value.trim(),
                 phone: document.getElementById('userEditPhone').value.trim(),
-                role: document.getElementById('userEditRole').value,
+                role: roleSelect.disabled ? undefined : roleSelect.value,
                 isActive: document.getElementById('userEditActive').checked,
                 mustChangePassword: document.getElementById('userEditMustChange').checked
             });
@@ -140,8 +145,9 @@
             global.showToast('✅ تم التحديث');
             fetchUsers();
         } catch (e) {
-            global.setBtnLoading(btn, false);
             global.handleApiError(e);
+        } finally {
+            global.setBtnLoading(btn, false);
         }
     }
 

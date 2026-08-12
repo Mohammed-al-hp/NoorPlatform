@@ -70,6 +70,7 @@
         if (page === 'payments' && typeof fetchPayments === 'function') fetchPayments();
         if (page === 'parentFees' && typeof fetchParentFees === 'function') fetchParentFees();
         if (page === 'parents' && global.USER?.role === 'Admin' && global.NoorParents) global.NoorParents.fetchParents();
+        if (page === 'messages' && global.NoorMessages) global.NoorMessages.fetchMessages();
         if (page === 'users' && global.USER?.role === 'Admin' && global.NoorUsers) global.NoorUsers.fetchUsers();
         if (page === 'settings' && global.NoorDashboard) global.NoorDashboard.fetchSettings();
     };
@@ -162,6 +163,7 @@
     async function saveStudent() {
         const modal = document.getElementById('addStudentModal');
         const fullName = modal.querySelector('#studentFullName')?.value.trim() || '';
+        const existingParentId = modal.querySelector('#existingParentId')?.value || '';
         const parentPhone = modal.querySelector('#parentPhone')?.value.trim() || '';
         const phone = modal.querySelector('#phone')?.value.trim() || '';
         const birthDate = modal.querySelector('#birthDate')?.value || '';
@@ -172,8 +174,13 @@
         const guardianRelationship = modal.querySelector('#guardianRelationship')?.value || '';
         const residence = modal.querySelector('#residence')?.value.trim() || '';
 
-        if (!fullName || !parentPhone || !birthDate || !registrationDate || !guardianName || !guardianRelationship) {
+        // إن اختار المستخدم ولي أمر موجوداً مسبقاً، لا حاجة لاسم/هاتف/صلة قرابة جديدة
+        if (!fullName || !birthDate || !registrationDate) {
             showToast('⚠️ يرجى تعبئة جميع الحقول الإلزامية');
+            return;
+        }
+        if (!existingParentId && (!parentPhone || !guardianName || !guardianRelationship)) {
+            showToast('⚠️ اختر ولي أمر موجوداً أو أدخل بيانات ولي أمر جديد كاملة');
             return;
         }
 
@@ -182,9 +189,10 @@
             const data = await apiFetch('/students', 'POST', {
                 fullName,
                 phone: phone || null,
-                parentPhone,
-                guardianName,
-                guardianRelationship,
+                parentId: existingParentId ? parseInt(existingParentId, 10) : null,
+                parentPhone: existingParentId ? null : parentPhone,
+                guardianName: existingParentId ? null : guardianName,
+                guardianRelationship: existingParentId ? null : guardianRelationship,
                 dateOfBirth: birthDate,
                 registrationDate,
                 residence: residence || null,

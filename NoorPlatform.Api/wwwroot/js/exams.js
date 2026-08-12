@@ -51,10 +51,16 @@
             return;
         }
 
+        const parsedDate = new Date(date);
+        if (isNaN(parsedDate.getTime())) {
+            showToast('❌ تاريخ غير صالح');
+            return;
+        }
+
         const btn = document.querySelector('#addExamModal .btn-primary');
         try {
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
-            await apiFetch('/exams', 'POST', { title, date: new Date(date).toISOString(), description: desc });
+            await apiFetch('/exams', 'POST', { title, date: parsedDate.toISOString(), description: desc });
             document.getElementById('examTitle').value = '';
             document.getElementById('examDate').value = '';
             document.getElementById('examDesc').value = '';

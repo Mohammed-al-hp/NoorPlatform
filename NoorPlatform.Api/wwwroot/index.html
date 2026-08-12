@@ -56,6 +56,8 @@
             --surface: #ffffff;
             --amber-light: #fef3c7;
             --amber-dark: #b45309;
+            --indigo-light: #e0e7ff;
+            --indigo-dark: #4338ca;
         }
 
         /* ===== LOGIN SCREEN ===== */
@@ -736,7 +738,7 @@
             width: 100%;
         }
 
-        .legend-item {
+        .donut-legend-item {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -745,13 +747,12 @@
             margin-bottom: 8px;
         }
 
-        .legend-dot {
+        .donut-legend-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             flex-shrink: 0;
         }
-
         .legend-val {
             margin-right: auto;
             font-weight: 700;
@@ -2561,13 +2562,13 @@
             flex-wrap: wrap;
         }
 
-        .legend-item {
+        .map-legend-item {
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .legend-dot {
+        .map-legend-dot {
             width: 12px;
             height: 12px;
             border-radius: 50%;
@@ -2622,6 +2623,47 @@
             color: #f1f5f9;
         }
 
+        body.dark-mode input[type="date"],
+        body.dark-mode input[type="time"] {
+            color-scheme: dark;
+        }
+
+        /* حقل flatpickr البديل (altInput) — أي input نصي داخل حاوية اختيار التاريخ */
+        .date-nav-dates input[type="text"] {
+            background: #fff;
+            color: var(--text) !important;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 13px;
+            text-align: center;
+            max-width: 150px;
+        }
+
+        body.dark-mode .date-nav-dates input[type="text"] {
+            background: #0f172a !important;
+            color: #f1f5f9 !important;
+            border-color: #334155;
+        }
+
+        body.dark-mode .circle-chip {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: #334155;
+        }
+
+            body.dark-mode .circle-chip.active {
+                background: var(--gradient);
+                color: #fff;
+                border-color: transparent;
+            }
+
+            body.dark-mode .circle-chip:hover:not(.active) {
+                border-color: var(--green);
+                color: var(--green);
+            }
+
         body.dark-mode .login-card {
             background: #1e293b;
             border-color: #334155;
@@ -2637,7 +2679,17 @@
             border-color: #334155;
             color: #94a3b8;
         }
+        body.dark-mode .btn-outline {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: #334155;
+        }
 
+            body.dark-mode .btn-outline:hover {
+                background: #334155;
+                border-color: var(--green);
+                color: var(--green);
+            }
         body.dark-mode .search-box {
             background: #0f172a;
             border-color: #334155;
@@ -3352,7 +3404,10 @@
                     <span>الاختبارات</span>
                 </div>
             </div>
-
+            <div class="nav-item" onclick="navigate('messages', this)">
+                <div class="nav-icon">💬</div>
+                <span>الرسائل</span>
+            </div>
             <div class="nav-section" id="libraryNavSection">
                 <div class="nav-section-label">المكتبة</div>
                 <div class="nav-item" onclick="navigate('library', this)">
@@ -3379,6 +3434,10 @@
                 <div class="nav-item" onclick="navigate('parentFees', this)">
                     <div class="nav-icon">💰</div>
                     <span>الرسوم الدراسية</span>
+                </div>
+                <div class="nav-item" onclick="navigate('messages', this)">
+                    <div class="nav-icon">💬</div>
+                    <span>الرسائل</span>
                 </div>
             </div>
             <div class="search-box">
@@ -4141,14 +4200,14 @@
                     </div>
                     <div class="quran-map" id="quranMap">
                         <div class="map-legend">
-                            <div class="legend-item">
-                                <div class="legend-dot" style="background:#86efac"></div> محفوظ
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#86efac"></div> محفوظ
                             </div>
-                            <div class="legend-item">
-                                <div class="legend-dot" style="background:#fde047"></div> جزئي
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#fde047"></div> جزئي
                             </div>
-                            <div class="legend-item">
-                                <div class="legend-dot" style="background:#cbd5e1"></div> لم يُحفظ
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#cbd5e1"></div> لم يُحفظ
                             </div>
                         </div>
                         <div class="surah-grid" id="surahGrid">
@@ -4162,125 +4221,186 @@
             </div>
 
         </div> <!-- ===== إغلاق page-studentView ===== -->
-
         <!-- ===== ✅ إصلاح 3: بوابة ولي الأمر ===== -->
         <div class="content" id="page-parentView">
-                <div class="page-header">
-                    <div>
-                        <h2>بوابة ولي الأمر</h2>
-                        <p>متابعة تقدم أبنائك في حفظ القرآن الكريم</p>
+            <div class="page-header">
+                <div>
+                    <h2>بوابة ولي الأمر</h2>
+                    <p>متابعة تقدم أبنائك في حفظ القرآن الكريم</p>
+                </div>
+            </div>
+            <!-- بطاقات الأبناء -->
+            <div id="parentChildrenGrid" class="cards-grid">
+                <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
+                    ⏳ جاري تحميل بيانات الأبناء...
+                </div>
+            </div>
+        </div>
+
+        <div class="content" id="page-payments">
+            <div class="page-header">
+                <div>
+                    <h2>إدارة المدفوعات والفواتير</h2>
+                    <p class="text-muted">متابعة الرسوم الدراسية وإصدار الفواتير للطلاب</p>
+                </div>
+                <button class="btn btn-primary" onclick="showNewInvoiceModal()">+ إصدار فاتورة</button>
+            </div>
+            <div class="grid" id="paymentsGrid">
+                <!-- Data populated via JS -->
+            </div>
+        </div>
+
+        <div class="content" id="page-parentFees">
+            <div class="page-header">
+                <div>
+                    <h2>الرسوم الدراسية</h2>
+                    <p class="text-muted">متابعة الفواتير ودفع الرسوم المستحقة للأبناء</p>
+                </div>
+            </div>
+            <div class="grid" id="parentFeesGrid">
+                <!-- Data populated via JS -->
+            </div>
+        </div>
+        <!-- ===== MESSAGES ===== -->
+        <div class="content" id="page-messages">
+            <div class="page-header">
+                <div>
+                    <h2>💬 الرسائل</h2>
+                    <p id="messagesSubtitle">التواصل مع الإدارة والمحفظين</p>
+                </div>
+                <button class="btn btn-primary" id="btnNewMessage" style="display:none" onclick="openNewMessageModal()">➕ رسالة جديدة</button>
+            </div>
+            <div class="table-card">
+                <div id="messagesList" style="padding:10px 0">
+                    <div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري التحميل...</div>
+                </div>
+            </div>
+        </div>
+        <!-- New Message Modal -->
+        <div class="modal-overlay" id="newMessageModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>✉️ رسالة جديدة</h3>
+                    <button class="modal-close" onclick="closeModal('newMessageModal')">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">المستلم *</label>
+                        <select id="msgRecipientSelect" class="form-input">
+                            <option value="Admin|">إدارة المركز</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نص الرسالة *</label>
+                        <textarea id="msgContent" class="form-input" rows="5" placeholder="اكتب رسالتك هنا..."></textarea>
                     </div>
                 </div>
-                <!-- بطاقات الأبناء -->
-                <div id="parentChildrenGrid" class="cards-grid">
-                    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
-                        ⏳ جاري تحميل بيانات الأبناء...
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('newMessageModal')">إلغاء</button>
+                    <button class="btn btn-primary" onclick="sendNewMessage()">📤 إرسال</button>
+                </div>
+            </div>
+        </div>
+        <!-- Child Details Modal -->
+        <div class="modal-overlay" id="childDetailsModal">
+            <div class="modal" style="max-width:600px">
+                <div class="modal-header">
+                    <h3 id="childDetailsTitle">تفاصيل الطالب</h3>
+                    <button class="modal-close" onclick="closeModal('childDetailsModal')">✕</button>
+                </div>
+                <div class="modal-body">
+                    <h4 style="font-size:14px;margin-bottom:10px">📅 سجل الحضور (آخر 30 يوم)</h4>
+                    <div id="childAttendanceList" style="max-height:200px;overflow-y:auto;margin-bottom:20px">
+                        <div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>
+                    </div>
+                    <h4 style="font-size:14px;margin-bottom:10px">📖 سجل التسميع</h4>
+                    <div id="childHifzList" style="max-height:250px;overflow-y:auto">
+                        <div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('childDetailsModal')">إغلاق</button>
+                </div>
+            </div>
+        </div>
+        <!-- ===== REPORTS ===== -->
+        <div class="content" id="page-reports">
+            <div class="page-header">
+                <div>
+                    <h2>📊 التقارير</h2>
+                    <p>تقارير الحضور والحفظ والأداء</p>
+                </div>
+                <button class="btn btn-outline" onclick="generateReport()">📥 تصدير PDF</button>
+            </div>
+
+            <!-- فلاتر التقارير -->
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
+                <div style="font-weight:700;margin-bottom:14px;font-size:14px">🔍 فلاتر التقرير</div>
+                <div class="form-row" style="display:flex;gap:14px;flex-wrap:wrap">
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">نوع التقرير</label>
+                        <select id="reportType" class="form-input" onchange="loadReportData()">
+                            <option value="attendance">تقرير الحضور</option>
+                            <option value="hifz">تقرير الحفظ</option>
+                            <option value="payments">تقرير المدفوعات</option>
+                            <option value="students">تقرير الطلاب</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">من تاريخ</label>
+                        <input type="date" id="reportFrom" class="form-input" onchange="loadReportData()">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">إلى تاريخ</label>
+                        <input type="date" id="reportTo" class="form-input" onchange="loadReportData()">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:140px">
+                        <label class="form-label">الحلقة</label>
+                        <select id="reportCircleFilter" class="form-input" onchange="loadReportData()">
+                            <option value="">كل الحلقات</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <div class="content" id="page-payments">
-                <div class="page-header">
-                    <div>
-                        <h2>إدارة المدفوعات والفواتير</h2>
-                        <p class="text-muted">متابعة الرسوم الدراسية وإصدار الفواتير للطلاب</p>
-                    </div>
-                    <button class="btn btn-primary" onclick="showNewInvoiceModal()">+ إصدار فاتورة</button>
-                </div>
-                <div class="grid" id="paymentsGrid">
-                    <!-- Data populated via JS -->
+            <div id="reportResults" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-muted)">
+                <div style="font-size:48px;margin-bottom:16px">📋</div>
+                <p>اختر نوع التقرير والفترة الزمنية لعرض النتائج</p>
+            </div>
+        </div>
+
+        <!-- ===== SETTINGS ===== -->
+        <div class="content" id="page-settings">
+            <div class="page-header">
+                <div>
+                    <h2>⚙️ الإعدادات</h2>
+                    <p>إعدادات المنصة والنظام</p>
                 </div>
             </div>
-
-            <div class="content" id="page-parentFees">
-                <div class="page-header">
-                    <div>
-                        <h2>الرسوم الدراسية</h2>
-                        <p class="text-muted">متابعة الفواتير ودفع الرسوم المستحقة للأبناء</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+                    <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🏫 معلومات المركز</h3>
+                    <div class="form-group">
+                        <label class="form-label">اسم المركز</label>
+                        <input type="text" id="settingsCenterName" class="form-input" value="مركز نور لتحفيظ القرآن الكريم">
                     </div>
-                </div>
-                <div class="grid" id="parentFeesGrid">
-                    <!-- Data populated via JS -->
-                </div>
-            </div>
-            <!-- ===== REPORTS ===== -->
-            <div class="content" id="page-reports">
-                <div class="page-header">
-                    <div>
-                        <h2>📊 التقارير</h2>
-                        <p>تقارير الحضور والحفظ والأداء</p>
+                    <div class="form-group">
+                        <label class="form-label">رقم التواصل</label>
+                        <input type="tel" id="settingsContactPhone" class="form-input" placeholder="09xxxxxxxx">
                     </div>
-                    <button class="btn btn-outline" onclick="generateReport()">📥 تصدير PDF</button>
+                    <button class="btn btn-primary" id="btnSaveSettings" style="width:100%;margin-top:8px" onclick="saveSettings()">💾 حفظ</button>
                 </div>
-
-                <!-- فلاتر التقارير -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
-                    <div style="font-weight:700;margin-bottom:14px;font-size:14px">🔍 فلاتر التقرير</div>
-                    <div class="form-row" style="display:flex;gap:14px;flex-wrap:wrap">
-                        <div class="form-group" style="flex:1;min-width:140px">
-                            <label class="form-label">نوع التقرير</label>
-                            <select id="reportType" class="form-input" onchange="loadReportData()">
-                                <option value="attendance">تقرير الحضور</option>
-                                <option value="hifz">تقرير الحفظ</option>
-                                <option value="payments">تقرير المدفوعات</option>
-                                <option value="students">تقرير الطلاب</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex:1;min-width:140px">
-                            <label class="form-label">من تاريخ</label>
-                            <input type="date" id="reportFrom" class="form-input" onchange="loadReportData()">
-                        </div>
-                        <div class="form-group" style="flex:1;min-width:140px">
-                            <label class="form-label">إلى تاريخ</label>
-                            <input type="date" id="reportTo" class="form-input" onchange="loadReportData()">
-                        </div>
-                        <div class="form-group" style="flex:1;min-width:140px">
-                            <label class="form-label">الحلقة</label>
-                            <select id="reportCircleFilter" class="form-input" onchange="loadReportData()">
-                                <option value="">كل الحلقات</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="reportResults" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-muted)">
-                    <div style="font-size:48px;margin-bottom:16px">📋</div>
-                    <p>اختر نوع التقرير والفترة الزمنية لعرض النتائج</p>
-                </div>
-            </div>
-
-            <!-- ===== SETTINGS ===== -->
-            <div class="content" id="page-settings">
-                <div class="page-header">
-                    <div>
-                        <h2>⚙️ الإعدادات</h2>
-                        <p>إعدادات المنصة والنظام</p>
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
-                    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
-                        <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🏫 معلومات المركز</h3>
-                        <div class="form-group">
-                            <label class="form-label">اسم المركز</label>
-                            <input type="text" id="settingsCenterName" class="form-input" value="مركز نور لتحفيظ القرآن الكريم">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">رقم التواصل</label>
-                            <input type="tel" id="settingsContactPhone" class="form-input" placeholder="09xxxxxxxx">
-                        </div>
-                        <button class="btn btn-primary" id="btnSaveSettings" style="width:100%;margin-top:8px" onclick="saveSettings()">💾 حفظ</button>
-                    </div>
-                    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
-                        <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🌙 المظهر</h3>
-                        <div class="form-group">
-                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-                                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
-                                <span>الوضع الليلي</span>
-                            </label>
-                        </div>
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+                    <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🌙 المظهر</h3>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                            <span>الوضع الليلي</span>
+                        </label>
                     </div>
                 </div>
             </div>
+        </div>
     </main>
 
     <!-- ── FAB (Floating Action Button) — مثل الصورة 3 ── -->
@@ -4419,6 +4539,13 @@
                             <option value="متقدم">متقدم</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">ولي أمر موجود مسبقاً (اختياري)</label>
+                    <select id="existingParentId" class="form-input">
+                        <option value="">— أدخل بيانات ولي أمر جديد بالأسفل —</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -4648,6 +4775,7 @@
                         <option value="Student">طالب</option>
                         <option value="Parent">ولي أمر</option>
                     </select>
+                    <small id="userEditRoleHint" style="color:var(--text-muted);display:none;margin-top:4px">لا يمكن تغيير دور المشرف من هذه الواجهة</small>
                 </div>
                 <label style="display:flex;gap:8px;font-size:13px;margin:8px 0">
                     <input type="checkbox" id="userEditActive"> حساب نشط
@@ -4726,11 +4854,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">التخصص / المؤهل</label>
-                    <input type="text" id="editTeacherQual" class="form-input" placeholder="حافظ للقرآن الكريم كاملاً">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">التقييم (من 5)</label>
-                    <input type="number" id="editTeacherRating" class="form-input" min="0" max="5" step="0.1" placeholder="4.5">
+                    <input type="text" id="teacherQualification" class="form-input" placeholder="حافظ للقرآن الكريم كاملاً">
                 </div>
                 <p style="font-size:12px;color:var(--text-muted);margin-top:8px">⚠️ يُنشأ حساب تلقائياً بكلمة مرور مؤقتة — ستُعرض بعد الحفظ</p>
             </div>
@@ -5353,6 +5477,7 @@
     <script src="/js/hifz.js?v=2"></script>
     <script src="/js/parents.js?v=2"></script>
     <script src="/js/users.js?v=2"></script>
+    <script src="/js/messages.js"></script>
 
     <!-- All inline scripts have been extracted into modular JS files -->
     <script src="/js/exams.js?v=3"></script>
@@ -5385,19 +5510,7 @@
             }
         }
 
-        // ✅ استخراج قيمة الوقت من الجدول المرن
-        function getCircleTimeValue(prefix) {
-            const prayerPanel = document.getElementById(`${prefix}CirclePrayerPanel`);
-            if (!prayerPanel || prayerPanel.style.display !== 'none') {
-                // وضع الصلاة
-                const sel = document.getElementById(`${prefix}CircleTimeSelect`);
-                return sel ? sel.value : '';
-            }
-            // وضع مخصص
-            const from = document.getElementById(`${prefix}CircleTimeFrom`)?.value;
-            const to = document.getElementById(`${prefix}CircleTimeTo`)?.value;
-            return from && to ? `${from} - ${to}` : (from || '');
-        }
+
 
         // ✅ printAttendance نظيفة بدون dropdowns
         function printAttendance() {
@@ -5414,24 +5527,24 @@
 
             const win = window.open('', '_blank');
             win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar">
-                <head><meta charset="UTF-8"><title>سجل الحضور</title>
-                <style>
-                    body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
-                    h2 { text-align: center; margin-bottom: 4px; }
-                    p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
-                    th { background: #f1f5f9; font-weight: 700; }
-                    @media print { body { padding: 0; } }
-                <\/style><\/head>
-                <body>
-                    <h2>سجل الحضور والغياب</h2>
-                    <p>${date}</p>
-                    <table>
-                        <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
-                        <tbody>${rowsHtml}</tbody>
-                    </table>
-                <\/body><\/html>`);
+                    <head><meta charset="UTF-8"><title>سجل الحضور</title>
+                    <style>
+                        body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
+                        h2 { text-align: center; margin-bottom: 4px; }
+                        p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
+                        th { background: #f1f5f9; font-weight: 700; }
+                        @media print { body { padding: 0; } }
+                    <\/style><\/head>
+                    <body>
+                        <h2>سجل الحضور والغياب</h2>
+                        <p>${date}</p>
+                        <table>
+                            <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    <\/body><\/html>`);
             win.document.close();
             win.focus();
             setTimeout(() => { win.print(); win.close(); }, 400);
@@ -5480,14 +5593,14 @@
                     const cards = Object.keys(d)
                         .filter(k => k !== 'byLevel' && d[k] !== undefined && d[k] !== null && typeof d[k] !== 'object')
                         .map(k => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:140px;flex:1">
-                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
-                                <div style="font-size:22px;font-weight:800">${d[k]}</div>
-                            </div>`)
+                                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
+                                    <div style="font-size:22px;font-weight:800">${d[k]}</div>
+                                </div>`)
                         .join('');
                     res.innerHTML = `<div style="text-align:right">
-                            <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
-                            <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
-                        </div>`;
+                                <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
+                            </div>`;
                 })
                 .catch((err) => {
                     const msg = err?.message || 'تعذر تحميل التقرير';
@@ -5499,8 +5612,11 @@
             const type = document.getElementById('reportType')?.value || 'attendance';
             const from = document.getElementById('reportFrom')?.value;
             const to = document.getElementById('reportTo')?.value;
+            const circleId = document.getElementById('reportCircleFilter')?.value || '';
             if (!from || !to) { showToast('⚠️ حدد الفترة الزمنية أولاً'); return; }
-            window.open(`/api/reports/monthly?month=${new Date(from).getMonth() + 1}&year=${new Date(from).getFullYear()}`, '_blank');
+            let url = `/reports/summary/pdf?type=${encodeURIComponent(type)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            if (circleId) url += `&circleId=${encodeURIComponent(circleId)}`;
+            openPdfInNewTab(url);
         }
     </script>
 

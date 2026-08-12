@@ -157,7 +157,7 @@
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
             if (res?.credentials && typeof global.showAccountCredentialsModal === 'function') {
-                global.showAccountCredentialsModal(res.credentials, res.credentials.Phone || res.credentials.phone);
+                global.showAccountCredentialsModal(res.credentials, res.credentials.phone);
             }
             fetchTeachers();
         } catch (e) {

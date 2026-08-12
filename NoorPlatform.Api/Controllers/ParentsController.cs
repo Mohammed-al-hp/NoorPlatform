@@ -129,20 +129,34 @@ public class ParentsController : ControllerBase
                 .ToListAsync();
 
             // ─── إصلاح: التحقق من عدم ارتباط الطلاب بولي أمر آخر ───
-            if (students.Any(s => s.ParentId != null && s.ParentId != parent.Id))
+            // ملاحظة: parent.Id قد يكون 0 هنا (لو الوالد جديد لم يُحفظ بعد)، لذا الشرط 
+            // s.ParentId != parent.Id لا معنى له في هذه الحالة، نتحقق فقط أن الطالب غير مرتبط بأي أحد
+            if (students.Any(s => s.ParentId != null))
                 return BadRequest(new { message = "بعض الطلاب محددين مرتبطين بالفعل بولي أمر آخر" });
 
+            // ─── إصلاح حرج: استخدام خاصية العلاقة (Navigation) بدل الـ Id الخام
+            // لأن parent الجديد قد لا يكون محفوظًا بعد (Id = 0) ───
             foreach (var s in students)
             {
-                s.ParentId = parent.Id;
+                s.Parent = parent;
                 s.ParentPhone = parent.Phone;
             }
         }
 
         await _context.SaveChangesAsync();
 
-        // ─── إصلاح: عدم إرجاع كلمة المرور في الاستجابة (أمان) ───
-        return Ok(new { message = "تم إضافة ولي الأمر بنجاح، سيتم إرسال بيانات الدخول له", parent.Id });
+        return Ok(new
+        {
+            message = "تم إضافة ولي الأمر بنجاح",
+            parent.Id,
+            credentials = tempPassword != null ? new AccountCredentialsDto(
+                request.FullName,
+                parent.User.UserName!,
+                AccountProvisioningService.ToDisplayPhone(parent.User.UserName!),
+                tempPassword,
+                UserRole.Parent.ToString(),
+                true) : null
+        });
     }
 
     [HttpPut("{id}")]
@@ -182,6 +196,7 @@ public class ParentsController : ControllerBase
                 if (!request.ChildStudentIds.Contains(s.Id))
                 {
                     s.ParentId = null;
+                    s.ParentPhone = string.Empty;
                 }
             }
             foreach (var s in linked)

@@ -9,9 +9,38 @@
     function showToast(msg, type) {
         const c = document.getElementById('toastContainer');
         if (!c) return;
+        const resolvedType = type || (msg.includes('❌') ? 'error' : msg.includes('⚠️') ? 'warning' : 'success');
+        const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+
         const t = document.createElement('div');
-        t.className = 'toast' + (type ? ' toast-' + type : '');
-        t.textContent = msg;
+        t.className = 'toast toast-' + resolvedType;
+
+        const body = document.createElement('div');
+        body.className = 'toast-body';
+        const icon = document.createElement('span');
+        icon.className = 'toast-icon';
+        icon.textContent = icons[resolvedType] || 'ℹ️';
+        const text = document.createElement('span');
+        text.textContent = msg;
+        body.appendChild(icon);
+        body.appendChild(text);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'toast-close';
+        closeBtn.textContent = '×';
+        closeBtn.setAttribute('aria-label', 'إغلاق');
+        closeBtn.addEventListener('click', () => t.remove());
+
+        const progress = document.createElement('div');
+        progress.className = 'toast-progress';
+        const progressFill = document.createElement('div');
+        progressFill.className = 'toast-progress-fill';
+        progressFill.style.animationDuration = '3.2s';
+        progress.appendChild(progressFill);
+
+        t.appendChild(body);
+        t.appendChild(closeBtn);
+        t.appendChild(progress);
         c.appendChild(t);
         setTimeout(() => t.remove(), 3200);
     }

@@ -166,7 +166,7 @@
                 const res = await global.apiFetch('/parents', 'POST', { fullName, phone, childStudentIds: childIds });
                 global.showToast('✅ تم إضافة ولي الأمر');
                 if (res && res.credentials && typeof global.showAccountCredentialsModal === 'function') {
-                    global.showAccountCredentialsModal(res.credentials, res.credentials.Phone || res.credentials.phone);
+                    global.showAccountCredentialsModal(res.credentials, res.credentials.phone);
                 }
             }
             global.closeModal('parentFormModal');

@@ -6,6 +6,7 @@
 
     const PAGE_TITLES = {
         dashboard: ['لوحة التحكم', 'نظرة عامة على المركز'],
+        messages: ['الرسائل', 'التواصل مع الإدارة والمحفظين'],
         students: ['إدارة الطلاب', 'الطلاب المسجلون'],
         teachers: ['إدارة المحفظين', 'فريق التحفيظ'],
         circles: ['الحلقات الدراسية', 'جداول الحلقات'],
@@ -24,12 +25,15 @@
         settings: ['الإعدادات', 'إعدادات المنصة والنظام'],
     };
 
+    // مصدر موحّد — يستخدمه أيضاً auth.js عبر global.NoorStaffOnlyPages
+    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'exams', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents'];
+    global.NoorStaffOnlyPages = STAFF_ONLY_PAGES;
+
     function navigate(page, el) {
         const role = global.NoorApp?.state?.user?.role;
         const isStaff = role === 'Admin' || role === 'Teacher';
         // منع فتح صفحات الإدارة للطالب/ولي الأمر — يمنع استدعاءات API التلقائية و403
-        const staffOnly = ['attendance', 'memorization', 'exams', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents'];
-        if (!isStaff && staffOnly.includes(page)) {
+        if (!isStaff && STAFF_ONLY_PAGES.includes(page)) {
             page = role === 'Parent' ? 'parentView' : 'studentView';
             el = document.querySelector(role === 'Parent'
                 ? '#parentSection .nav-item'

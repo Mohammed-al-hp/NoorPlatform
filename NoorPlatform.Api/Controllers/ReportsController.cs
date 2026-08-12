@@ -216,6 +216,88 @@ public class ReportsController : ControllerBase
         });
     }
 
+    /// <summary>تصدير ملخص التقرير (نفس بيانات GetSummary) كملف PDF.</summary>
+    [HttpGet("summary/pdf")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GetSummaryPdf(
+        [FromQuery] string type = "attendance",
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] int? circleId = null)
+    {
+        var summaryResult = await GetSummary(type, from, to, circleId);
+        if (summaryResult is not OkObjectResult ok)
+            return summaryResult;
+
+        var reportTypeLabels = new Dictionary<string, string>
+        {
+            ["attendance"] = "تقرير الحضور",
+            ["hifz"] = "تقرير الحفظ",
+            ["payments"] = "تقرير المدفوعات",
+            ["students"] = "تقرير الطلاب"
+        };
+
+        var payload = ok.Value!;
+        var payloadType = payload.GetType();
+        var reportType = (payloadType.GetProperty("type")?.GetValue(payload) as string) ?? type;
+        var fromStr = (payloadType.GetProperty("from")?.GetValue(payload) as string) ?? "";
+        var toStr = (payloadType.GetProperty("to")?.GetValue(payload) as string) ?? "";
+        var data = payloadType.GetProperty("data")?.GetValue(payload);
+
+        var rows = new List<(string Label, string Value)>();
+        if (data != null)
+        {
+            foreach (var prop in data.GetType().GetProperties())
+            {
+                var val = prop.GetValue(data);
+                if (val == null || val is System.Collections.IEnumerable and not string) continue;
+                rows.Add((prop.Name, val.ToString() ?? ""));
+            }
+        }
+
+        var pdfBytes = GenerateSummaryReportPdf(
+            reportTypeLabels.GetValueOrDefault(reportType, reportType),
+            fromStr, toStr, rows);
+
+        return File(pdfBytes, "application/pdf", $"تقرير_{reportType}_{fromStr}_{toStr}.pdf");
+    }
+
+    private static byte[] GenerateSummaryReportPdf(string title, string from, string to, List<(string Label, string Value)> rows)
+    {
+        ArabicPdfFonts.EnsureRegistered();
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.5f, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(ArabicPdfFonts.DefaultStyle(12));
+
+                page.Header().Background("#1a5c3a").Padding(15).Column(col =>
+                {
+                    col.Item().AlignCenter().Text(title).FontSize(22).FontColor(Colors.White).Bold();
+                    col.Item().AlignCenter().Text($"الفترة: {from} إلى {to}").FontSize(13).FontColor("#e8f5e9");
+                });
+
+                page.Content().PaddingVertical(20).Column(col =>
+                {
+                    col.Spacing(10);
+                    foreach (var (label, value) in rows)
+                    {
+                        col.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).Row(row =>
+                        {
+                            row.RelativeItem().Text(label).FontColor(Colors.Grey.Darken1);
+                            row.RelativeItem().AlignLeft().Text(value).Bold();
+                        });
+                    }
+                });
+
+                page.Footer().AlignCenter().Text($"تم إنشاء هذا التقرير تلقائياً بواسطة منصة نور — {DateTime.UtcNow:yyyy/MM/dd}").FontSize(10).FontColor(Colors.Grey.Medium);
+            });
+        }).GeneratePdf();
+    }
+
     private IQueryable<Student> ScopedStudents(int? circleId, int? teacherUserId)
     {
         var q = _context.Students.AsNoTracking().Where(s => !s.IsDeleted);

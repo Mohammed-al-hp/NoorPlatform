@@ -202,6 +202,19 @@
         });
     }
 
+    async function populateExistingParentSelect() {
+        const sel = document.getElementById('existingParentId');
+        if (!sel) return;
+        try {
+            const res = await apiFetch('/parents?pageSize=100');
+            const items = res.items || [];
+            sel.innerHTML = '<option value="">— أدخل بيانات ولي أمر جديد بالأسفل —</option>' +
+                items.map(p => `<option value="${p.id}">${esc(p.fullName)} — ${esc(p.accountPhone)}</option>`).join('');
+        } catch (e) {
+            sel.innerHTML = '<option value="">— تعذر تحميل قائمة أولياء الأمور —</option>';
+        }
+    }
+
     global.NoorStudents = {
         fetchStudents,
         renderStudentCards,
@@ -211,8 +224,10 @@
         fetchWaitingList,
         deleteStudent,
         restoreStudent,
-        cycleCircleFilter
+        cycleCircleFilter,
+        populateExistingParentSelect
     };
+    global.populateExistingParentSelect = populateExistingParentSelect;
     global.fetchStudents = fetchStudents;
     global.filterStudentsLive = filterStudentsLive;
     global.setStudentFilter = setStudentFilter;

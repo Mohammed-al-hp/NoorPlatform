@@ -99,9 +99,57 @@
         }
     }
 
-    const api = { apiFetch, apiFetchSafe, handleApiError };
+    async function apiFetchBlob(endpoint) {
+        const state = app().state;
+        if (!state.token) {
+            const err = new Error('يرجى تسجيل الدخول');
+            err.status = 401;
+            throw err;
+        }
+
+        let res;
+        try {
+            res = await fetch(state.apiUrl + endpoint, {
+                method: 'GET',
+                headers: { Authorization: 'Bearer ' + state.token }
+            });
+        } catch {
+            const err = new Error('لا يوجد اتصال بالإنترنت أو الخادم غير متاح');
+            err.status = 0;
+            throw err;
+        }
+
+        if (res.status === 401) {
+            const err = new Error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً');
+            err.status = 401;
+            throw err;
+        }
+
+        if (!res.ok) {
+            const payload = await res.json().catch(() => ({}));
+            const err = new Error(payload.message || 'HTTP ' + res.status);
+            err.status = res.status;
+            throw err;
+        }
+
+        const blob = await res.blob();
+        return URL.createObjectURL(blob);
+    }
+
+    async function openPdfInNewTab(endpoint, options) {
+        const opts = options || {};
+        try {
+            const blobUrl = await apiFetchBlob(endpoint);
+            window.open(blobUrl, '_blank');
+        } catch (e) {
+            handleApiError(e, opts);
+        }
+    }
+
+    const api = { apiFetch, apiFetchSafe, handleApiError, apiFetchBlob, openPdfInNewTab };
     app().api = api;
 
     global.apiFetch = apiFetch;
     global.handleApiError = handleApiError;
+    global.openPdfInNewTab = openPdfInNewTab;
 })(window);

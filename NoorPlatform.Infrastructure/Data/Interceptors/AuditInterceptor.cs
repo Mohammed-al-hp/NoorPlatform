@@ -34,9 +34,38 @@ namespace NoorPlatform.Infrastructure.Data.Interceptors
             return base.SavingChangesAsync(eventData, result, cancellationToken);
         }
 
+        public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
+        {
+            UpdateTemporaryEntityIds();
+            return base.SavedChanges(eventData, result);
+        }
+
+        public override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
+        {
+            UpdateTemporaryEntityIds();
+            return base.SavedChangesAsync(eventData, result, cancellationToken);
+        }
+
+        private void UpdateTemporaryEntityIds()
+        {
+            foreach (var auditEntry in _pendingAuditEntries)
+            {
+                if (auditEntry.TemporaryProperties.Count == 0) continue;
+
+                foreach (var prop in auditEntry.TemporaryProperties)
+                {
+                    if (prop.Metadata.IsPrimaryKey())
+                        auditEntry.AuditLogEntity.EntityId = prop.CurrentValue?.ToString() ?? string.Empty;
+                }
+            }
+            _pendingAuditEntries.Clear();
+        }
+        private readonly List<AuditEntry> _pendingAuditEntries = new();
+
         private void ProcessAuditLogs(DbContext? context)
         {
             if (context == null) return;
+            _pendingAuditEntries.Clear();
 
             var httpContext = _httpContextAccessor.HttpContext;
             var userId = httpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "System";
@@ -104,7 +133,11 @@ namespace NoorPlatform.Infrastructure.Data.Interceptors
 
             foreach (var auditEntry in auditEntries)
             {
-                context.Set<AuditLog>().Add(auditEntry.ToAuditLog());
+                var log = auditEntry.ToAuditLog();
+                auditEntry.AuditLogEntity = log;
+                context.Set<AuditLog>().Add(log);
+                if (auditEntry.TemporaryProperties.Count > 0)
+                    _pendingAuditEntries.Add(auditEntry);
             }
         }
     }
@@ -125,7 +158,7 @@ namespace NoorPlatform.Infrastructure.Data.Interceptors
         public Dictionary<string, object?> OldValues { get; } = new();
         public Dictionary<string, object?> NewValues { get; } = new();
         public List<PropertyEntry> TemporaryProperties { get; } = new();
-
+        public AuditLog AuditLogEntity { get; set; } = null!;
         public AuditLog ToAuditLog()
         {
             return new AuditLog

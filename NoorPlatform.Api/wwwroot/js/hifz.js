@@ -261,7 +261,8 @@
             global.showToast('✅ تم حفظ جلسة التسميع بنجاح');
             if (typeof global.fetchMemorizationData === 'function') global.fetchMemorizationData();
         } catch (e) {
-            global.showToast('❌ حدث خطأ أثناء الحفظ');
+            if (global.handleApiError) global.handleApiError(e);
+            else global.showToast('❌ ' + (e.message || 'حدث خطأ أثناء الحفظ'));
         } finally {
             if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }

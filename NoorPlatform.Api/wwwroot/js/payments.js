@@ -126,8 +126,12 @@
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-primary';
                     btn.style.cssText = 'margin-top:10px; width:100%; justify-content:center';
-                    btn.textContent = '💳 سداد الآن';
-                    btn.addEventListener('click', function() { payInvoice(p.id, this); });
+                    btn.textContent = '💳 سداد الآن (تجريبي)';
+                    btn.title = 'هذا سداد تجريبي لأغراض العرض فقط — لا يوجد بوابة دفع فعلية بعد';
+                    btn.addEventListener('click', function () {
+                        if (!confirm('⚠️ هذا سداد تجريبي فقط ولا يحوّل أي مبلغ فعلياً. سيتم تعليم الفاتورة كمدفوعة في النظام مباشرة.\n\nهل تريد المتابعة؟')) return;
+                        payInvoice(p.id, this);
+                    });
                     body.appendChild(btn);
                 }
 
