@@ -173,6 +173,36 @@
         });
     }
 
+    async function saveNewAdmin() {
+        const fullName = document.getElementById('adminFullName')?.value?.trim();
+        const phone = document.getElementById('adminPhone')?.value?.trim();
+
+        if (!fullName || !phone) {
+            global.showToast('❌ الاسم ورقم الهاتف مطلوبان');
+            return;
+        }
+
+        const btn = document.querySelector('#addAdminModal .btn-primary');
+        try {
+            global.setBtnLoading(btn, true);
+            const res = await global.apiFetch('/users/admin', 'POST', { fullName, phone });
+            global.closeModal('addAdminModal');
+            global.showToast('✅ تم إنشاء حساب المشرف بنجاح');
+
+            document.getElementById('adminFullName').value = '';
+            document.getElementById('adminPhone').value = '';
+
+            if (res?.credentials && typeof global.showAccountCredentialsModal === 'function') {
+                global.showAccountCredentialsModal(res.credentials, res.credentials.Phone || res.credentials.phone);
+            }
+            fetchUsers();
+        } catch (e) {
+            global.handleApiError(e);
+        } finally {
+            global.setBtnLoading(btn, false);
+        }
+    }
+
     global.NoorUsers = {
         fetchUsers,
         searchUsers,
@@ -182,6 +212,8 @@
         editUser,
         saveUserEdit,
         toggleUser,
-        deleteUser
+        deleteUser,
+        saveNewAdmin
     };
+    global.saveNewAdmin = saveNewAdmin;
 })(window);

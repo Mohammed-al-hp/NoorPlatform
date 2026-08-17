@@ -40,6 +40,14 @@
                 : '#studentSection .nav-item');
         }
 
+        // ─── إصلاح: صفحات حصرية للأدمن فقط دون المحفّظ ───
+        const ADMIN_ONLY_PAGES = ['users', 'parents', 'teachers', 'circles', 'payments', 'reports', 'settings'];
+        if (role === 'Teacher' && ADMIN_ONLY_PAGES.includes(page)) {
+            page = 'dashboard';
+            el = document.querySelector('.nav-item');
+            if (typeof global.showToast === 'function') global.showToast('❌ غير مصرح لك بالوصول لهذه الصفحة');
+        }
+
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const target = document.getElementById('page-' + page);

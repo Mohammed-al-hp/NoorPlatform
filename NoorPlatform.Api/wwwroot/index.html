@@ -3404,7 +3404,7 @@
                     <span>الاختبارات</span>
                 </div>
             </div>
-            <div class="nav-item" onclick="navigate('messages', this)">
+            <div class="nav-item" id="staffMessagesNav" onclick="navigate('messages', this)">
                 <div class="nav-icon">💬</div>
                 <span>الرسائل</span>
             </div>
@@ -3517,8 +3517,9 @@
             <div class="quick-actions" style="margin-top:20px; margin-bottom:24px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; background:var(--card); padding:16px 20px; border-radius:var(--radius); border:1px solid var(--border)">
                 <span style="font-weight:700; color:var(--text); margin-left:8px; font-size:14px">⚡ إجراءات سريعة:</span>
                 <button class="btn btn-primary" onclick="openModal('addStudentModal')" style="font-size:13px; padding:6px 14px">➕ إضافة طالب</button>
-                <button class="btn btn-primary" onclick="openModal('addTeacherModal')" style="font-size:13px; padding:6px 14px">➕ إضافة محفّظ</button>
-                <button class="btn btn-primary" onclick="openModal('addCircleModal')" style="font-size:13px; padding:6px 14px">➕ إنشاء حلقة</button>
+                <button class="btn btn-primary" onclick="navigate('attendance', null)" style="font-size:13px; padding:6px 14px">✅ تسجيل حضور</button>
+                <button class="btn btn-primary admin-only-action" onclick="openModal('addTeacherModal')" style="font-size:13px; padding:6px 14px">➕ إضافة محفّظ</button>
+                <button class="btn btn-primary admin-only-action" onclick="openModal('addCircleModal')" style="font-size:13px; padding:6px 14px">➕ إنشاء حلقة</button>
             </div>
 
             <!-- Charts -->
@@ -3754,6 +3755,7 @@
             </div>
         </div>
 
+
         <!-- ===== USERS ===== -->
         <div class="content" id="page-users">
             <div class="page-header">
@@ -3761,6 +3763,7 @@
                     <h2>إدارة المستخدمين</h2>
                     <p>جميع حسابات المنصة والصلاحيات</p>
                 </div>
+                <button class="btn btn-primary" onclick="openModal('addAdminModal')">➕ إضافة مشرف</button>
             </div>
             <div class="students-search-bar" style="margin-bottom:16px">
                 <div class="search-row">
@@ -4988,7 +4991,30 @@
 
         </div>
     </div>
-
+    <!-- Add Admin Modal -->
+    <div class="modal-overlay" id="addAdminModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ إضافة مشرف جديد</h3>
+                <button class="modal-close" onclick="closeModal('addAdminModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">الاسم الثلاثي *</label>
+                    <input id="adminFullName" class="form-input" type="text" placeholder="محمد أحمد الزهراني">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رقم الهاتف *</label>
+                    <input id="adminPhone" class="form-input" type="tel" placeholder="09xxxxxxxx">
+                </div>
+                <p style="font-size:12px;color:#ef4444;margin-top:8px">⚠️ سيحصل هذا الحساب على صلاحيات كاملة على المنصة. تأكد من هوية الشخص قبل المتابعة.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addAdminModal')">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveNewAdmin()">💾 إنشاء الحساب</button>
+            </div>
+        </div>
+    </div>
     <!-- Center Summary Modal -->
     <div class="modal-overlay" id="centerSummaryModal">
         <div class="modal" style="max-width:600px">
@@ -5527,24 +5553,24 @@
 
             const win = window.open('', '_blank');
             win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar">
-                    <head><meta charset="UTF-8"><title>سجل الحضور</title>
-                    <style>
-                        body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
-                        h2 { text-align: center; margin-bottom: 4px; }
-                        p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
-                        th { background: #f1f5f9; font-weight: 700; }
-                        @media print { body { padding: 0; } }
-                    <\/style><\/head>
-                    <body>
-                        <h2>سجل الحضور والغياب</h2>
-                        <p>${date}</p>
-                        <table>
-                            <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
-                            <tbody>${rowsHtml}</tbody>
-                        </table>
-                    <\/body><\/html>`);
+                        <head><meta charset="UTF-8"><title>سجل الحضور</title>
+                        <style>
+                            body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
+                            h2 { text-align: center; margin-bottom: 4px; }
+                            p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
+                            th { background: #f1f5f9; font-weight: 700; }
+                            @media print { body { padding: 0; } }
+                        <\/style><\/head>
+                        <body>
+                            <h2>سجل الحضور والغياب</h2>
+                            <p>${date}</p>
+                            <table>
+                                <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
+                                <tbody>${rowsHtml}</tbody>
+                            </table>
+                        <\/body><\/html>`);
             win.document.close();
             win.focus();
             setTimeout(() => { win.print(); win.close(); }, 400);
@@ -5593,14 +5619,14 @@
                     const cards = Object.keys(d)
                         .filter(k => k !== 'byLevel' && d[k] !== undefined && d[k] !== null && typeof d[k] !== 'object')
                         .map(k => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:140px;flex:1">
-                                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
-                                    <div style="font-size:22px;font-weight:800">${d[k]}</div>
-                                </div>`)
+                                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
+                                        <div style="font-size:22px;font-weight:800">${d[k]}</div>
+                                    </div>`)
                         .join('');
                     res.innerHTML = `<div style="text-align:right">
-                                <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
-                                <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
-                            </div>`;
+                                    <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
+                                    <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
+                                </div>`;
                 })
                 .catch((err) => {
                     const msg = err?.message || 'تعذر تحميل التقرير';

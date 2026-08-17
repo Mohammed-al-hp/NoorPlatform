@@ -18,10 +18,13 @@ public class UsersController : ControllerBase
     private readonly NoorDbContext _context;
     private readonly UserManager<User> _userManager;
 
-    public UsersController(NoorDbContext context, UserManager<User> userManager)
+    private readonly AccountProvisioningService _accounts;
+
+    public UsersController(NoorDbContext context, UserManager<User> userManager, AccountProvisioningService accounts)
     {
         _context = context;
         _userManager = userManager;
+        _accounts = accounts;
     }
 
     [HttpGet]
@@ -194,8 +197,40 @@ public class UsersController : ControllerBase
         await _userManager.UpdateAsync(user);
         return Ok(new { message = "تم تعطيل الحساب" });
     }
+
+    // POST /api/users/admin — إنشاء مشرف جديد (Admin فقط، محمي بشكل صارم)
+    [HttpPost("admin")]
+    public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone))
+            return BadRequest(new { message = "الاسم الثلاثي ورقم الهاتف مطلوبان" });
+
+        var (user, tempPassword, err) = await _accounts.CreateUserAsync(
+            request.Phone, request.FullName, UserRole.Admin);
+
+        if (err != null)
+            return BadRequest(new { message = err });
+
+        return Ok(new
+        {
+            message = "تم إنشاء حساب المشرف بنجاح",
+            userId = user.Id,
+            credentials = new AccountCredentialsDto(
+                request.FullName,
+                user.UserName!,
+                AccountProvisioningService.ToDisplayPhone(user.UserName!),
+                tempPassword,
+                UserRole.Admin.ToString(),
+                true)
+        });
+    }
 }
 
+public class CreateAdminRequest
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+}
 public class UpdateUserRequest
 {
     public string? FullName { get; set; }

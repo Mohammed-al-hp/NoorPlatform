@@ -100,10 +100,22 @@
         const dashQuickActions = document.querySelector('#page-dashboard .quick-actions');
         if (dashQuickActions) dashQuickActions.style.display = (isAdmin || isTeacher) ? 'flex' : 'none';
 
+        // ─── إصلاح: إخفاء إجراءات حصرية للأدمن (إضافة محفّظ / إنشاء حلقة) عن المحفّظ ───
+        document.querySelectorAll('.admin-only-action').forEach(btn => {
+            btn.style.display = isAdmin ? '' : 'none';
+        });
         // لوحة التحفيز أصبحت داخل الصفحة الرئيسية للطالب (#page-studentView)
         document.querySelectorAll('#page-dashboard .charts-row, #page-dashboard .table-card').forEach(el => {
             if (isStudent || isParent) el.style.display = 'none';
         });
+
+        // ─── إصلاح: إخفاء صندوق الإشعارات اليومية العام (خاص بالمركز) عن الطالب/ولي الأمر ───
+        const dailyNotifBox = document.getElementById('dailyNotifBox');
+        if (dailyNotifBox) dailyNotifBox.style.display = (isStudent || isParent) ? 'none' : 'block';
+
+        // ─── إصلاح: رابط "الرسائل" الأول خاص بصندوق وارد المحفّظ/الأدمن فقط ───
+        const staffMessagesNav = document.getElementById('staffMessagesNav');
+        if (staffMessagesNav) staffMessagesNav.style.display = isStaff ? '' : 'none';
 
         if (staffSection) staffSection.style.display = isStaff ? 'block' : 'none';
         if (adminOnlySection) adminOnlySection.style.display = isAdmin ? 'block' : 'none';
