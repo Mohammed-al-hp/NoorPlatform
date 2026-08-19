@@ -171,6 +171,7 @@
                 <th style="padding:12px 16px">الطالب</th>
                 <th style="padding:12px 16px">الحالة</th>
                 <th style="padding:12px 16px">تسجيل</th>
+                <th style="padding:12px 16px">ملاحظات سلوكية</th>
               </tr></thead>
               <tbody>${records.map(r => {
             const sid = r.studentId;
@@ -180,6 +181,9 @@
                 <td style="padding:12px 16px;font-weight:600">${utils().escapeHtml(r.fullName || r.studentName)}</td>
                 <td id="att-status-${sid}">${statusBadgeHtml(st)}</td>
                 <td>${actionButtonsHtml(sid, st === 'NotRecorded' ? '' : st)}</td>
+                <td style="padding:12px 16px;">
+                    <input type="text" class="form-control" data-note-id="${sid}" value="${utils().escapeHtml(r.note || '')}" placeholder="ملاحظة (اختياري)..." style="font-size:12px; padding:6px 10px; width: 100%; min-width: 120px;" onchange="NoorAttendance.stageNote(${sid}, this.value)">
+                </td>
             </tr>`;
         }).join('')}
               </tbody></table>`;
@@ -201,19 +205,36 @@
 
         const row = statusCell?.closest('tr');
         if (row) {
-            const td = row.querySelector('td:last-child');
+            const td = row.querySelector('td:nth-child(3)');
             if (td) td.innerHTML = actionButtonsHtml(studentId, display === 'NotRecorded' ? '' : display);
         }
 
-        const hasPending = Object.keys(getPending()).length > 0;
+        const hasPending = Object.keys(getPending()).length > 0 || Object.keys(getState().pendingNotes || {}).length > 0;
         setPendingDirty(hasPending);
         updateAttendanceCounts();
     }
 
+    function stageNote(studentId, note) {
+        const saved = (getState().records || []).find(r => r.studentId === studentId);
+        const savedNote = saved?.note || '';
+        if (!getState().pendingNotes) getState().pendingNotes = {};
+        
+        if (note === savedNote) {
+            delete getState().pendingNotes[studentId];
+        } else {
+            getState().pendingNotes[studentId] = note;
+        }
+
+        const hasPending = Object.keys(getPending()).length > 0 || Object.keys(getState().pendingNotes).length > 0;
+        setPendingDirty(hasPending);
+    }
+
     async function savePendingAttendance() {
         const pending = getPending();
-        const entries = Object.entries(pending);
-        if (!entries.length) {
+        const pendingNotes = getState().pendingNotes || {};
+        const studentIds = new Set([...Object.keys(pending), ...Object.keys(pendingNotes)]);
+        
+        if (!studentIds.size) {
             app().ui.showToast('لا توجد تغييرات للحفظ');
             return;
         }
@@ -221,14 +242,22 @@
         const btn = document.getElementById('btnSaveAttendance');
         try {
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
+            const recordsToSave = Array.from(studentIds).map(id => {
+                const sid = parseInt(id, 10);
+                const saved = (getState().records || []).find(r => r.studentId === sid);
+                return {
+                    studentId: sid,
+                    status: pending[id] !== undefined ? pending[id] : (saved?.status || 'Present'),
+                    note: pendingNotes[id] !== undefined ? pendingNotes[id] : (saved?.note || '')
+                };
+            });
+
             await apiFetch('/attendance/bulk', 'POST', {
                 date: dateStr,
-                records: entries.map(([studentId, status]) => ({
-                    studentId: parseInt(studentId, 10),
-                    status
-                }))
+                records: recordsToSave
             });
             Object.keys(pending).forEach(k => delete pending[k]);
+            Object.keys(pendingNotes).forEach(k => delete pendingNotes[k]);
             setPendingDirty(false);
             app().ui.showToast('✅ تم حفظ سجل الحضور بنجاح');
             await fetchAttendanceForDate();
@@ -296,7 +325,8 @@
         savePendingAttendance,
         markAllPresentLocal,
         updateAttendanceCounts,
-        onAttendanceDatePicked
+        onAttendanceDatePicked,
+        stageNote
     };
 
     global.NoorAttendance = mod;

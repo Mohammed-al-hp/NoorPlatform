@@ -44,7 +44,8 @@ public class AttendanceController : ControllerBase
         {
             studentId = s.Id,
             fullName = s.User.FullName,
-            status = s.Attendances.FirstOrDefault()?.Status.ToString() ?? "NotRecorded"
+            status = s.Attendances.FirstOrDefault()?.Status.ToString() ?? "NotRecorded",
+            note = s.Attendances.FirstOrDefault()?.Note
         });
 
         return Ok(result);
@@ -303,6 +304,7 @@ public class AttendanceController : ControllerBase
             {
                 att.Status = status;
                 att.Date = targetDate;
+                att.Note = record.Note;
             }
             else
             {
@@ -310,7 +312,8 @@ public class AttendanceController : ControllerBase
                 {
                     StudentId = record.StudentId,
                     Status = status,
-                    Date = targetDate
+                    Date = targetDate,
+                    Note = record.Note
                 });
 
                 // إضافة نقاط للحاضرين الجدد
@@ -360,4 +363,5 @@ public class AttendanceRecord
 {
     public int StudentId { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string? Note { get; set; }
 }

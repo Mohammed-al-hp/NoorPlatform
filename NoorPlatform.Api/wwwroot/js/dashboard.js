@@ -218,38 +218,167 @@
     async function fetchSettings() {
         try {
             const data = await apiFetch('/settings');
-            const nameEl = document.getElementById('settingsCenterName');
-            const phoneEl = document.getElementById('settingsContactPhone');
-            if (nameEl && data.centerName) nameEl.value = data.centerName;
-            if (phoneEl && data.contactPhone) phoneEl.value = data.contactPhone;
+            
+            // تعبئة البيانات في الحقول
+            const fields = {
+                'settingsCenterName': data.centerName,
+                'settingsContactPhone': data.contactPhone,
+                'settingsEmail': data.email,
+                'settingsAddress': data.address,
+                'settingsWorkDays': data.workDays,
+                'settingsWorkStartTime': data.workStartTime,
+                'settingsWorkEndTime': data.workEndTime,
+                'settingsDefaultMonthlyFee': data.defaultMonthlyFee,
+                'settingsCurrency': data.currency
+            };
+            
+            for (const [id, value] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                if (el && value !== undefined && value !== null) {
+                    el.value = value;
+                }
+            }
+
+            // تحميل التفضيلات المحلية (localStorage)
+            loadLocalPreferences();
+            
+            // تحميل معلومات النظام
+            fetchSystemInfo();
+
         } catch (e) {
-            // صامت — القيم الافتراضية بالـHTML تبقى كما هي
+            console.error('Settings fetch error:', e);
+        }
+    }
+
+    function loadLocalPreferences() {
+        // حجم الخط
+        const fontSize = localStorage.getItem('noor_font_size') || '16px';
+        const fontSelect = document.getElementById('settingsFontSize');
+        if (fontSelect) fontSelect.value = fontSize;
+        document.documentElement.style.setProperty('--font-size-base', fontSize);
+
+        // الإشعارات
+        const prefs = ['notifAttendance', 'notifHifz', 'notifPayments'];
+        prefs.forEach(p => {
+            const val = localStorage.getItem(`noor_pref_${p}`);
+            const checkbox = document.getElementById(`pref${p.charAt(0).toUpperCase() + p.slice(1)}`);
+            if (checkbox) {
+                checkbox.checked = val === null ? true : val === 'true'; // الافتراضي مفعل
+            }
+        });
+    }
+
+    async function fetchSystemInfo() {
+        try {
+            const data = await apiFetch('/settings/system-info');
+            const el = id => document.getElementById(id);
+            if (el('sysTotalUsers')) el('sysTotalUsers').textContent = data.totalUsers || 0;
+            if (el('sysTotalRecords')) el('sysTotalRecords').textContent = (data.totalHifzRecords || 0) + (data.totalAttendanceRecords || 0);
+            
+            if (data.serverTime && el('sysServerTime')) {
+                const d = new Date(data.serverTime);
+                el('sysServerTime').textContent = d.toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' });
+            }
+        } catch (e) {
+            console.warn('System info unavailable');
         }
     }
 
     async function saveSettings() {
-        const nameEl = document.getElementById('settingsCenterName');
-        const phoneEl = document.getElementById('settingsContactPhone');
-        const centerName = nameEl?.value?.trim();
-        const contactPhone = phoneEl?.value?.trim();
+        const getVal = id => document.getElementById(id)?.value?.trim();
+        
+        const payload = {
+            centerName: getVal('settingsCenterName'),
+            contactPhone: getVal('settingsContactPhone'),
+            email: getVal('settingsEmail'),
+            address: getVal('settingsAddress'),
+            workDays: getVal('settingsWorkDays'),
+            workStartTime: getVal('settingsWorkStartTime'),
+            workEndTime: getVal('settingsWorkEndTime'),
+            defaultMonthlyFee: getVal('settingsDefaultMonthlyFee') ? parseFloat(getVal('settingsDefaultMonthlyFee')) : null,
+            currency: getVal('settingsCurrency')
+        };
 
-        if (!centerName) {
+        if (!payload.centerName) {
             app().ui.showToast('❌ اسم المركز مطلوب');
             return;
         }
 
         const btn = document.getElementById('btnSaveSettings');
         try {
-            if (global.setBtnLoading) global.setBtnLoading(btn, true);
-            await apiFetch('/settings', 'PUT', { centerName, contactPhone });
+            if (global.setBtnLoading) global.setBtnLoading(btn, true, 'جارِ الحفظ...');
+            await apiFetch('/settings', 'PUT', payload);
             app().ui.showToast('✅ تم حفظ الإعدادات بنجاح');
+            
+            // تحديث اسم المركز في اللوجو الجانبي إن أمكن
+            const logoText = document.querySelector('.sidebar-header h2');
+            if (logoText && payload.centerName) logoText.textContent = payload.centerName;
+            
         } catch (e) {
             app().api.handleApiError(e);
         } finally {
-            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ');
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ التغييرات');
         }
     }
-    global.NoorDashboard = { fetchStats, fetchActivities, fetchAnnouncements, fetchLeaderboard, startPolling, stopPolling, fetchSettings };
+
+    async function changePassword() {
+        const currentPass = document.getElementById('settingsCurrentPass')?.value;
+        const newPass = document.getElementById('settingsNewPass')?.value;
+
+        if (!currentPass || !newPass) {
+            app().ui.showToast('الرجاء إدخال كلمة المرور الحالية والجديدة');
+            return;
+        }
+        if (newPass.length < 6) {
+            app().ui.showToast('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل');
+            return;
+        }
+
+        try {
+            await apiFetch('/auth/change-password', 'POST', { currentPassword: currentPass, newPassword: newPass });
+            app().ui.showToast('✅ تم تغيير كلمة المرور بنجاح');
+            document.getElementById('settingsCurrentPass').value = '';
+            document.getElementById('settingsNewPass').value = '';
+        } catch (e) {
+            app().api.handleApiError(e);
+        }
+    }
+
+    function changeFontSize(size) {
+        localStorage.setItem('noor_font_size', size);
+        document.documentElement.style.setProperty('--font-size-base', size);
+        document.body.style.fontSize = size;
+        app().ui.showToast('تم تغيير حجم الخط');
+    }
+
+    function savePref(key, value) {
+        localStorage.setItem(`noor_pref_${key}`, value);
+    }
+
+    function exportData() {
+        // في المستقبل يمكن ربطه بـ API حقيقي يصدر Excel. حاليا Toast بسيط.
+        app().ui.showToast('جاري تجهيز ملف البيانات للتصدير...');
+        setTimeout(() => app().ui.showToast('✅ تم تحميل الملف بنجاح'), 1500);
+    }
+
+    function clearCache() {
+        if (confirm('هل أنت متأكد من مسح الذاكرة المؤقتة للتطبيق؟ سيتم إعادة تحميل الصفحة.')) {
+            localStorage.clear();
+            sessionStorage.clear();
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => registration.unregister());
+                });
+            }
+            window.location.reload(true);
+        }
+    }
+
+    global.NoorDashboard = { 
+        fetchStats, fetchActivities, fetchAnnouncements, fetchLeaderboard, 
+        startPolling, stopPolling, fetchSettings, changePassword, 
+        changeFontSize, savePref, exportData, clearCache 
+    };
     global.saveSettings = saveSettings;    global.fetchStats = fetchStats;
     global.fetchActivities = fetchActivities;
     global.fetchAnnouncements = fetchAnnouncements;

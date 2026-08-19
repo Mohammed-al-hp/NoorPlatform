@@ -60,6 +60,17 @@
             --indigo-dark: #4338ca;
         }
 
+        body.dark-mode {
+            --bg: #0f172a;
+            --bg-secondary: #1e293b;
+            --sidebar-bg: #020617;
+            --card: #1e293b;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
         /* ===== LOGIN SCREEN ===== */
         .login-overlay {
             position: fixed;
@@ -4377,31 +4388,170 @@
             <div class="page-header">
                 <div>
                     <h2>⚙️ الإعدادات</h2>
-                    <p>إعدادات المنصة والنظام</p>
+                    <p>إعدادات المنصة، النظام، تفضيلات المستخدم</p>
                 </div>
+                <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()">💾 حفظ التغييرات</button>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
-                    <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🏫 معلومات المركز</h3>
+            
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-bottom:40px;">
+                
+                <!-- 1. معلومات المركز -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span style="font-size:20px">🏫</span> معلومات المركز
+                    </h3>
                     <div class="form-group">
                         <label class="form-label">اسم المركز</label>
-                        <input type="text" id="settingsCenterName" class="form-input" value="مركز نور لتحفيظ القرآن الكريم">
+                        <input type="text" id="settingsCenterName" class="form-input" placeholder="مثال: مركز نور">
                     </div>
                     <div class="form-group">
                         <label class="form-label">رقم التواصل</label>
                         <input type="tel" id="settingsContactPhone" class="form-input" placeholder="09xxxxxxxx">
                     </div>
-                    <button class="btn btn-primary" id="btnSaveSettings" style="width:100%;margin-top:8px" onclick="saveSettings()">💾 حفظ</button>
-                </div>
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
-                    <h3 style="font-size:15px;font-weight:800;margin-bottom:16px">🌙 المظهر</h3>
                     <div class="form-group">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" id="settingsEmail" class="form-input" placeholder="info@example.com">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">العنوان</label>
+                        <input type="text" id="settingsAddress" class="form-input" placeholder="المدينة، الشارع...">
+                    </div>
+                </div>
+
+                <!-- 2. إعدادات الدوام -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span style="font-size:20px">📅</span> إعدادات الدوام
+                    </h3>
+                    <div class="form-group">
+                        <label class="form-label">أيام العمل الأسبوعية (مفصولة بفاصلة)</label>
+                        <input type="text" id="settingsWorkDays" class="form-input" placeholder="السبت, الأحد, الاثنين...">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="form-group">
+                            <label class="form-label">وقت البداية</label>
+                            <input type="time" id="settingsWorkStartTime" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">وقت النهاية</label>
+                            <input type="time" id="settingsWorkEndTime" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. إعدادات المالية -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span style="font-size:20px">💰</span> إعدادات المالية
+                    </h3>
+                    <div class="form-group">
+                        <label class="form-label">الرسوم الشهرية الافتراضية</label>
+                        <input type="number" id="settingsDefaultMonthlyFee" class="form-input" placeholder="مثال: 50">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العملة المحلية</label>
+                        <input type="text" id="settingsCurrency" class="form-input" placeholder="د.ل">
+                    </div>
+                </div>
+
+                <!-- 4. المظهر -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span style="font-size:20px">🎨</span> المظهر والتخصيص
+                    </h3>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)" style="width:20px;height:20px;accent-color:var(--green)">
+                            <div style="display:flex;flex-direction:column">
+                                <span style="font-weight:700">الوضع الليلي (Dark Mode)</span>
+                                <span style="font-size:12px;color:var(--text-muted)">تبديل واجهة النظام للون الداكن</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="form-group" style="margin-top:20px">
+                        <label class="form-label">حجم الخط الأساسي</label>
+                        <select id="settingsFontSize" class="form-input" onchange="NoorDashboard.changeFontSize(this.value)">
+                            <option value="14px">صغير (14px)</option>
+                            <option value="16px" selected>افتراضي (16px)</option>
+                            <option value="18px">كبير (18px)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 5. الإشعارات والتنبيهات -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span style="font-size:20px">🔔</span> الإشعارات والتنبيهات
+                    </h3>
+                    <div style="display:flex;flex-direction:column;gap:12px">
                         <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
-                            <span>الوضع الليلي</span>
+                            <input type="checkbox" id="prefNotifAttendance" checked onchange="NoorDashboard.savePref('notifAttendance', this.checked)">
+                            <span>إشعارات الغياب والحضور</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                            <input type="checkbox" id="prefNotifHifz" checked onchange="NoorDashboard.savePref('notifHifz', this.checked)">
+                            <span>إشعارات الحفظ والتسميع</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                            <input type="checkbox" id="prefNotifPayments" checked onchange="NoorDashboard.savePref('notifPayments', this.checked)">
+                            <span>إشعارات المدفوعات المستحقة</span>
                         </label>
                     </div>
                 </div>
+
+                <!-- 6. الأمان -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:var(--blue)">
+                        <span style="font-size:20px">🔐</span> الأمان
+                    </h3>
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور الحالية</label>
+                        <input type="password" id="settingsCurrentPass" class="form-input" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور الجديدة</label>
+                        <input type="password" id="settingsNewPass" class="form-input" placeholder="••••••••">
+                    </div>
+                    <button class="btn btn-outline" style="width:100%" onclick="NoorDashboard.changePassword()">تحديث كلمة المرور</button>
+                </div>
+
+                <!-- 7. معلومات النظام -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);grid-column:1/-1">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:var(--text-muted)">
+                        <span style="font-size:20px">📊</span> معلومات النظام (للقراءة فقط)
+                    </h3>
+                    <div id="sysInfoContainer" style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--text-muted)">
+                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
+                            <div style="font-size:24px;font-weight:bold;color:var(--text)" id="sysTotalUsers">0</div>
+                            <div>إجمالي المستخدمين</div>
+                        </div>
+                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
+                            <div style="font-size:24px;font-weight:bold;color:var(--text)" id="sysTotalRecords">0</div>
+                            <div>السجلات المدخلة</div>
+                        </div>
+                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
+                            <div style="font-size:24px;font-weight:bold;color:var(--text)" id="sysVersion">v1.0.0</div>
+                            <div>نسخة المنصة</div>
+                        </div>
+                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
+                            <div style="font-size:16px;font-weight:bold;color:var(--text);margin-top:6px" id="sysServerTime">--</div>
+                            <div>توقيت السيرفر</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. صيانة البيانات -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);grid-column:1/-1;border-right:4px solid var(--blue)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span style="font-size:20px">🛠️</span> صيانة وتصدير البيانات
+                    </h3>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">يمكنك تحميل نسخة من البيانات الأساسية على شكل ملف Excel أو مسح الذاكرة المؤقتة (Cache) للتطبيق في حال وجود خلل.</p>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap">
+                        <button class="btn btn-primary" onclick="NoorDashboard.exportData()">📥 تصدير البيانات (Excel)</button>
+                        <button class="btn btn-outline" style="color:var(--text-muted);border-color:var(--border)" onclick="NoorDashboard.clearCache()">🧹 تفريغ الذاكرة المؤقتة (Cache)</button>
+                    </div>
+                </div>
+                
             </div>
         </div>
     </main>

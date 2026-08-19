@@ -54,6 +54,10 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .Property(p => p.Amount)
             .HasPrecision(18, 2);
 
+        modelBuilder.Entity<PlatformSettings>()
+            .Property(p => p.DefaultMonthlyFee)
+            .HasPrecision(18, 2);
+
         modelBuilder.Entity<Payment>()
     .Property(p => p.Status)
     .HasConversion<string>()
