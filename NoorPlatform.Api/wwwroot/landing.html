@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="منصة نور — نظام متكامل لإدارة مراكز وحلقات تحفيظ القرآن الكريم. إدارة الطلاب، الحضور، التسميع، والتقارير في مكان واحد.">
+    <meta name="keywords" content="تحفيظ القرآن, مراكز تحفيظ, حلقات قرآن, إدارة طلاب, منصة نور, حفظ القرآن">
+    <meta name="author" content="منصة نور">
+    <title>منصة نور — نظام إدارة مراكز تحفيظ القرآن الكريم</title>
+    <link rel="icon" href="/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/landing.css">
+</head>
+<body>
+
+    <!-- ═══════ Navbar ═══════ -->
+    <nav class="landing-nav" id="landingNav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="nav-logo-icon">🕌</div>
+                <span class="nav-logo-text">منصة نور</span>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#features">المميزات</a></li>
+                <li><a href="#stats">إحصائيات</a></li>
+                <li><a href="#how-it-works">كيف تعمل</a></li>
+            </ul>
+            <div class="nav-cta">
+                <button class="btn-outline-landing" onclick="toggleDarkMode()" id="darkToggle" title="الوضع الليلي" style="padding:10px 14px;">🌙</button>
+                <a href="/index.html" class="btn-primary-landing" id="navLoginBtn">
+                    تسجيل الدخول ←
+                </a>
+            </div>
+            <button class="mobile-toggle" id="mobileToggle" onclick="toggleMobileMenu()">☰</button>
+        </div>
+    </nav>
+
+    <!-- ═══════ Hero Section ═══════ -->
+    <section class="hero" id="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">🌟 منصة تعليمية متكاملة</div>
+                <h1 class="hero-title">
+                    نظام متكامل لإدارة
+                    <br>
+                    <span class="highlight">مراكز تحفيظ القرآن</span>
+                </h1>
+                <p class="hero-desc">
+                    منصة نور تقدم حلاً شاملاً لإدارة حلقات التحفيظ — من تسجيل الطلاب
+                    ومتابعة الحضور إلى تقييم مستوى الحفظ وإصدار التقارير التفصيلية.
+                </p>
+                <div class="hero-actions">
+                    <a href="/index.html" class="btn-primary-landing" style="font-size:17px; padding:14px 36px;">
+                        ابدأ الآن 🚀
+                    </a>
+                    <a href="#features" class="btn-outline-landing" style="font-size:17px; padding:14px 36px;">
+                        اكتشف المنصة
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="floating-badge top-left">
+                    <span style="color:#10b981">✅</span> تسميع ممتاز
+                </div>
+                <div class="floating-badge bottom-right">
+                    <span style="color:#3b82f6">📊</span> نسبة الحضور 96%
+                </div>
+                <div class="hero-card-main">
+                    <div class="card-header-landing">
+                        <div class="card-dot red"></div>
+                        <div class="card-dot yellow"></div>
+                        <div class="card-dot green"></div>
+                        <span style="margin-right:auto; font-size:13px; color:var(--text-muted)">لوحة التحكم</span>
+                    </div>
+                    <div class="hero-stats-grid">
+                        <div class="hero-stat">
+                            <div class="hero-stat-icon">👨‍🎓</div>
+                            <div class="hero-stat-value">156</div>
+                            <div class="hero-stat-label">طالب مسجل</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-icon">👨‍🏫</div>
+                            <div class="hero-stat-value">12</div>
+                            <div class="hero-stat-label">محفّظ</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-icon">⭕</div>
+                            <div class="hero-stat-value">8</div>
+                            <div class="hero-stat-label">حلقات نشطة</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-icon">📖</div>
+                            <div class="hero-stat-value">94%</div>
+                            <div class="hero-stat-label">نسبة الحضور</div>
+                        </div>
+                    </div>
+                    <div class="hero-progress">
+                        <div class="hero-progress-header">
+                            <span>تقدم الحفظ الأسبوعي</span>
+                            <span style="color:var(--green-dark)">72%</span>
+                        </div>
+                        <div class="hero-progress-bar">
+                            <div class="hero-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════ Features Section ═══════ -->
+    <section class="section" id="features">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-badge">⚡ مميزات المنصة</div>
+                <h2 class="section-title">كل ما تحتاجه لإدارة مركز التحفيظ</h2>
+                <p class="section-desc">
+                    أدوات متكاملة مصممة خصيصاً لتلبية احتياجات مراكز تحفيظ القرآن الكريم
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card fade-up">
+                    <div class="feature-icon">👨‍🎓</div>
+                    <h3 class="feature-title">إدارة الطلاب</h3>
+                    <p class="feature-desc">
+                        تسجيل بيانات الطلاب، تصنيفهم حسب الحلقات، ومتابعة تقدمهم الدراسي مع نظام نقاط تحفيزي متكامل.
+                    </p>
+                </div>
+                <div class="feature-card fade-up" style="transition-delay:0.1s">
+                    <div class="feature-icon">📋</div>
+                    <h3 class="feature-title">تسجيل الحضور</h3>
+                    <p class="feature-desc">
+                        نظام حضور ذكي يدعم التسجيل اليومي مع إشعارات تلقائية لأولياء الأمور عند الغياب.
+                    </p>
+                </div>
+                <div class="feature-card fade-up" style="transition-delay:0.2s">
+                    <div class="feature-icon">📖</div>
+                    <h3 class="feature-title">متابعة التسميع</h3>
+                    <p class="feature-desc">
+                        تسجيل جلسات الحفظ والمراجعة مع تقييم الأداء وخريطة حفظ القرآن الكامل لكل طالب.
+                    </p>
+                </div>
+                <div class="feature-card fade-up" style="transition-delay:0.3s">
+                    <div class="feature-icon">⭐</div>
+                    <h3 class="feature-title">نظام الاختبارات</h3>
+                    <p class="feature-desc">
+                        إنشاء وإدارة اختبارات الحفظ الدورية مع نتائج فورية وتقارير أداء مفصلة.
+                    </p>
+                </div>
+                <div class="feature-card fade-up" style="transition-delay:0.4s">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">التقارير والإحصائيات</h3>
+                    <p class="feature-desc">
+                        تقارير شاملة قابلة للتصدير بصيغة PDF تشمل الحضور والتسميع والمدفوعات.
+                    </p>
+                </div>
+                <div class="feature-card fade-up" style="transition-delay:0.5s">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">تطبيق جوال PWA</h3>
+                    <p class="feature-desc">
+                        تطبيق ويب متقدم يعمل على جميع الأجهزة مع دعم العمل بدون اتصال بالإنترنت.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════ Stats Section ═══════ -->
+    <section class="section stats-section" id="stats">
+        <div class="section-container">
+            <div class="stats-grid">
+                <div class="stat-item fade-up">
+                    <div class="stat-number" data-count="500">0</div>
+                    <div class="stat-label-landing">طالب وطالبة</div>
+                </div>
+                <div class="stat-item fade-up" style="transition-delay:0.1s">
+                    <div class="stat-number" data-count="30">0</div>
+                    <div class="stat-label-landing">محفّظ ومحفّظة</div>
+                </div>
+                <div class="stat-item fade-up" style="transition-delay:0.2s">
+                    <div class="stat-number" data-count="20">0</div>
+                    <div class="stat-label-landing">حلقة تحفيظ</div>
+                </div>
+                <div class="stat-item fade-up" style="transition-delay:0.3s">
+                    <div class="stat-number" data-count="10000">0</div>
+                    <div class="stat-label-landing">جلسة تسميع</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════ How It Works ═══════ -->
+    <section class="section" id="how-it-works">
+        <div class="section-container">
+            <div class="section-header fade-up">
+                <div class="section-badge">🔄 كيف تعمل المنصة</div>
+                <h2 class="section-title">أربع خطوات بسيطة للبدء</h2>
+                <p class="section-desc">
+                    ابدأ باستخدام منصة نور في دقائق معدودة بخطوات سهلة وواضحة
+                </p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card fade-up">
+                    <div class="step-number">١</div>
+                    <h3 class="step-title">سجّل المركز</h3>
+                    <p class="step-desc">أنشئ حساب المركز وأدخل البيانات الأساسية للبدء بالعمل.</p>
+                </div>
+                <div class="step-card fade-up" style="transition-delay:0.1s">
+                    <div class="step-number">٢</div>
+                    <h3 class="step-title">أضف المحفظين</h3>
+                    <p class="step-desc">سجّل بيانات المحفظين وحدد صلاحياتهم لإدارة حلقاتهم.</p>
+                </div>
+                <div class="step-card fade-up" style="transition-delay:0.2s">
+                    <div class="step-number">٣</div>
+                    <h3 class="step-title">سجّل الطلاب</h3>
+                    <p class="step-desc">أضف الطلاب ووزّعهم على الحلقات مع ربط أولياء الأمور.</p>
+                </div>
+                <div class="step-card fade-up" style="transition-delay:0.3s">
+                    <div class="step-number">٤</div>
+                    <h3 class="step-title">تابع التقدم</h3>
+                    <p class="step-desc">راقب الحضور والحفظ والنتائج عبر لوحة تحكم شاملة.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════ CTA Section ═══════ -->
+    <section class="section cta-section">
+        <div class="section-container">
+            <div class="cta-card fade-up">
+                <div class="cta-icon">🕌</div>
+                <h2 class="cta-title">جاهز للبدء بإدارة مركزك؟</h2>
+                <p class="cta-desc">
+                    انضم إلى منصة نور اليوم واستمتع بتجربة إدارة حديثة لمركز تحفيظ القرآن الكريم.
+                </p>
+                <div class="cta-actions">
+                    <a href="/index.html" class="btn-primary-landing" style="font-size:17px; padding:16px 40px;">
+                        سجّل دخولك الآن 🚀
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════ Footer ═══════ -->
+    <footer class="landing-footer">
+        <div class="section-container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                        <div class="nav-logo-icon">🕌</div>
+                        <span class="nav-logo-text" style="background:none;-webkit-text-fill-color:#fff;">منصة نور</span>
+                    </div>
+                    <p class="footer-desc">
+                        منصة نور — نظام متكامل لإدارة مراكز تحفيظ القرآن الكريم.
+                        مصمم بعناية لتسهيل العمل الإداري والتعليمي في حلقات التحفيظ.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="footer-title">روابط سريعة</h4>
+                    <ul class="footer-links">
+                        <li><a href="#features">المميزات</a></li>
+                        <li><a href="#stats">الإحصائيات</a></li>
+                        <li><a href="#how-it-works">كيف تعمل</a></li>
+                        <li><a href="/index.html">تسجيل الدخول</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">تواصل معنا</h4>
+                    <ul class="footer-links">
+                        <li>📧 info@noorplatform.com</li>
+                        <li>📞 +218 XX XXX XXXX</li>
+                        <li>📍 ليبيا</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 منصة نور — جميع الحقوق محفوظة. صُنع بـ ❤️ لخدمة كتاب الله.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══════ Scripts ═══════ -->
+    <script>
+        // ─── Auto-redirect if already logged in ───
+        (function() {
+            var token = sessionStorage.getItem('noor_token');
+            if (token) {
+                try {
+                    var payload = JSON.parse(atob(token.split('.')[1]));
+                    if (payload.exp * 1000 > Date.now()) {
+                        window.location.href = '/index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+        })();
+
+        // ─── Navbar scroll effect ───
+        var nav = document.getElementById('landingNav');
+        window.addEventListener('scroll', function() {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // ─── Scroll animations (Intersection Observer) ───
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.fade-up').forEach(function(el) {
+            observer.observe(el);
+        });
+
+        // ─── Counter animation ───
+        var counterObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    var el = entry.target;
+                    var target = parseInt(el.dataset.count);
+                    var duration = 2000;
+                    var start = 0;
+                    var startTime = null;
+
+                    function animate(currentTime) {
+                        if (!startTime) startTime = currentTime;
+                        var progress = Math.min((currentTime - startTime) / duration, 1);
+                        var eased = 1 - Math.pow(1 - progress, 3);
+                        var current = Math.floor(eased * target);
+                        el.textContent = current.toLocaleString('ar-SA');
+                        if (progress < 1) requestAnimationFrame(animate);
+                        else el.textContent = target.toLocaleString('ar-SA') + '+';
+                    }
+                    requestAnimationFrame(animate);
+                    counterObserver.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.stat-number[data-count]').forEach(function(el) {
+            counterObserver.observe(el);
+        });
+
+        // ─── Dark mode ───
+        function toggleDarkMode() {
+            var isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('noor_dark', isDark ? '1' : '0');
+            document.getElementById('darkToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+        if (localStorage.getItem('noor_dark') === '1') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkToggle').textContent = '☀️';
+        }
+
+        // ─── Mobile menu ───
+        function toggleMobileMenu() {
+            var links = document.getElementById('navLinks');
+            if (links.style.display === 'flex') {
+                links.style.display = 'none';
+            } else {
+                links.style.display = 'flex';
+                links.style.position = 'fixed';
+                links.style.top = '72px';
+                links.style.right = '0';
+                links.style.left = '0';
+                links.style.background = 'var(--card)';
+                links.style.flexDirection = 'column';
+                links.style.padding = '20px';
+                links.style.gap = '16px';
+                links.style.borderRadius = '0 0 20px 20px';
+                links.style.boxShadow = '0 12px 40px rgba(0,0,0,0.1)';
+                links.style.borderTop = '1px solid var(--border)';
+                links.style.zIndex = '999';
+            }
+        }
+
+        // ─── Smooth scroll for anchor links ───
+        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                var target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Close mobile menu if open
+                    var links = document.getElementById('navLinks');
+                    if (window.innerWidth <= 768) links.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

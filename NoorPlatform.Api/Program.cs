@@ -229,7 +229,10 @@ app.UseCors(corsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseDefaultFiles();
+var defaultFilesOptions = new DefaultFilesOptions();
+defaultFilesOptions.DefaultFileNames.Clear();
+defaultFilesOptions.DefaultFileNames.Add("landing.html");
+app.UseDefaultFiles(defaultFilesOptions);
 app.UseStaticFiles();
 
 app.MapHealthChecks("/api/health");
