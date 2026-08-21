@@ -20,6 +20,7 @@
             const url = st().archive ? '/students/archived' : '/students';
             const data = await apiFetch(url);
             st().all = data;
+            window._students = data; // لضمان توافق التصدير إلى Excel في reports.js
             const map = { all: null, beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم' };
             const level = map[st().filter];
             const filtered = (level && !st().archive) ? data.filter(s => s.level === level) : data;

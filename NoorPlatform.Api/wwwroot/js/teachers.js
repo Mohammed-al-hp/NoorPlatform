@@ -21,7 +21,7 @@
         const count = document.getElementById('teachersPageCount');
         if (!grid) return;
 
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+        grid.innerHTML = `<div style="grid-column:1/-1">${[1, 2, 3].map(() => '<div class="skeleton" style="height:160px;border-radius:20px;margin-bottom:12px"></div>').join('')}</div>`;
 
         try {
             const q = _teacherSearch ? `?search=${encodeURIComponent(_teacherSearch)}` : '';
@@ -217,7 +217,7 @@
         const count = document.getElementById('circlesPageCount');
         if (!grid) return;
 
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+        grid.innerHTML = `<div style="grid-column:1/-1">${[1, 2, 3].map(() => '<div class="skeleton" style="height:160px;border-radius:20px;margin-bottom:12px"></div>').join('')}</div>`;
 
         try {
             const data = await apiFetch('/circles');

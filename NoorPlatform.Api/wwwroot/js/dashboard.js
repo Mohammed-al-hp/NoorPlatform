@@ -9,6 +9,9 @@
     const utils = () => (typeof global.getNoorUtils === 'function' ? global.getNoorUtils() : (global.NoorUtils || app().utils));
     const esc = (s) => utils().escapeHtml(s);
 
+    let barChartInstance = null;
+    let donutChartInstance = null;
+
     async function fetchStats() {
         try {
             const data = await apiFetch('/dashboard/stats');
@@ -21,50 +24,76 @@
             const weekly = Array.isArray(data.weeklyAttendance)
                 ? data.weeklyAttendance
                 : (data.weeklyAttendance ? Object.values(data.weeklyAttendance) : []);
-            if (weekly.length) {
-                const barChart = document.getElementById('weeklyBarChart');
-                if (barChart) {
-                    barChart.innerHTML = weekly.map(d => {
-                        const pct = Number(d.percentage) || 0;
-                        const barPx = Math.max(Math.round(pct * 1.2), pct > 0 ? 10 : 4);
-                        const color = pct > 70 ? 'var(--gradient)' : 'linear-gradient(135deg,#94a3b8,#cbd5e1)';
-                        return `<div class="bar-col">
-                            <div class="bar" style="height:${barPx}px;background:${color}" title="${pct}%"></div>
-                            <div class="bar-label">${esc(d.dayName)}</div>
-                        </div>`;
-                    }).join('');
+            
+            if (weekly.length && global.Chart) {
+                const ctx = document.getElementById('weeklyBarChartCanvas');
+                if (ctx) {
+                    const labels = weekly.map(d => d.dayName);
+                    const values = weekly.map(d => Number(d.percentage) || 0);
+                    
+                    if (barChartInstance) {
+                        barChartInstance.data.labels = labels;
+                        barChartInstance.data.datasets[0].data = values;
+                        barChartInstance.update();
+                    } else {
+                        barChartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'نسبة الحضور',
+                                    data: values,
+                                    backgroundColor: values.map(v => v > 70 ? '#10b981' : '#cbd5e1'),
+                                    borderRadius: 6,
+                                    barPercentage: 0.6
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: { beginAtZero: true, max: 100, ticks: { callback: function(val) { return val + '%'; } } }
+                                },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }
                 }
             }
 
-            if (data.levelDistribution) {
+            if (data.levelDistribution && global.Chart) {
                 const ld = data.levelDistribution;
                 const total = ld.advanced + ld.intermediate + ld.beginner;
-                if (total > 0) {
-                    const advPct = Math.round(ld.advanced / total * 100);
-                    const intPct = Math.round(ld.intermediate / total * 100);
-                    const begPct = 100 - advPct - intPct;
-                    const svg = document.getElementById('donutSvg');
-                    if (svg) {
-                        svg.innerHTML = `
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" stroke-width="3"/>
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10b981" stroke-width="3"
-                                stroke-dasharray="${advPct} ${100 - advPct}" stroke-dashoffset="25" stroke-linecap="round"/>
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#3b82f6" stroke-width="3"
-                                stroke-dasharray="${intPct} ${100 - intPct}" stroke-dashoffset="${25 - advPct}" stroke-linecap="round"/>
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f59e0b" stroke-width="3"
-                                stroke-dasharray="${begPct} ${100 - begPct}" stroke-dashoffset="${25 - advPct - intPct}" stroke-linecap="round"/>
-                            <text x="18" y="20" text-anchor="middle" font-size="5" fill="var(--text)" font-weight="bold" font-family="Tajawal,sans-serif">${total}</text>`;
-                    }
-                    const legend = document.getElementById('donutLegend');
-                    if (legend) {
-                        legend.innerHTML = `
-                            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#10b981"></div><span>متقدم</span><span class="legend-val">${ld.advanced}</span></div>
-                            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#3b82f6"></div><span>متوسط</span><span class="legend-val">${ld.intermediate}</span></div>
-                            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#f59e0b"></div><span>مبتدئ</span><span class="legend-val">${ld.beginner}</span></div>`;
+                const ctx2 = document.getElementById('donutChartCanvas');
+                if (ctx2 && total > 0) {
+                    const chartData = [ld.advanced, ld.intermediate, ld.beginner];
+                    
+                    if (donutChartInstance) {
+                        donutChartInstance.data.datasets[0].data = chartData;
+                        donutChartInstance.update();
+                    } else {
+                        donutChartInstance = new Chart(ctx2, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['متقدم', 'متوسط', 'مبتدئ'],
+                                datasets: [{
+                                    data: chartData,
+                                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                                    borderWidth: 0,
+                                    hoverOffset: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                cutout: '75%',
+                                plugins: {
+                                    legend: { position: 'bottom', labels: { font: { family: 'Tajawal' } } }
+                                }
+                            }
+                        });
                     }
                 }
-                const centerEl = document.getElementById('donutCenter');
-                if (centerEl) centerEl.textContent = ld.advanced + ld.intermediate + ld.beginner;
             }
 
             if (data.recentHifz) {

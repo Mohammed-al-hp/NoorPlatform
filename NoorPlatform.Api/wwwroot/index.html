@@ -18,6 +18,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     </noscript>
     <script src="/js/asset-loader.js"></script>
+    <script src="/js/chart.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof loadHtml2Pdf === 'function') loadHtml2Pdf().catch(function () { });
@@ -2618,12 +2619,17 @@
 
         /* ─── Dark Mode Enhanced ─── */
         body.dark-mode .sidebar {
-            background: #0a0f1a;
+            background: rgba(10, 15, 26, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         body.dark-mode .topbar {
-            background: #1e293b;
-            border-color: #334155;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-color: rgba(255, 255, 255, 0.05);
             box-shadow: 0 1px 12px rgba(0, 0, 0, 0.2);
         }
 
@@ -3543,11 +3549,8 @@
                         </div>
                         <span class="status-badge status-present" style="font-size:11px">مباشر من API</span>
                     </div>
-                    <div class="bar-chart" id="weeklyBarChart">
-                        <!-- يُملأ ديناميكياً من fetchStats -->
-                        <div style="text-align:center;width:100%;color:var(--text-muted);font-size:13px;padding:40px 0">
-                            ⏳ جاري التحميل...
-                        </div>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="weeklyBarChartCanvas"></canvas>
                     </div>
                 </div>
 
@@ -3557,15 +3560,8 @@
                             <h3>توزيع مستويات الحفظ</h3>
                         </div>
                     </div>
-                    <div class="donut-wrap" id="donutChartWrap">
-                        <svg class="donut-svg" id="donutSvg" viewBox="0 0 36 36">
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" stroke-width="3" />
-                            <text x="18" y="20" text-anchor="middle" font-size="5" fill="var(--text)" font-weight="bold"
-                                  font-family="Tajawal,sans-serif" id="donutCenter">—</text>
-                        </svg>
-                        <div class="donut-legend" style="width:100%" id="donutLegend">
-                            <p style="color:var(--text-muted);font-size:13px;text-align:center">⏳ جاري التحميل...</p>
-                        </div>
+                    <div style="position: relative; height: 250px; width: 100%; max-width: 250px; margin: 0 auto; padding-bottom: 10px;">
+                        <canvas id="donutChartCanvas"></canvas>
                     </div>
                 </div>
             </div>
