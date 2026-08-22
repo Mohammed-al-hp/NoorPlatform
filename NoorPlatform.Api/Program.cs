@@ -135,14 +135,10 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Development", b =>
-        b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        b.SetIsOriginAllowed(_ => true).AllowAnyMethod().AllowAnyHeader());
 
     options.AddPolicy("Production", b =>
-        b.WithOrigins(
-            "https://noorplatform.com",
-            "capacitor://localhost",
-            "http://localhost"
-        ).AllowAnyMethod().AllowAnyHeader());
+        b.SetIsOriginAllowed(_ => true).AllowAnyMethod().AllowAnyHeader());
 });
 
 // ─── HttpClient لخدمة واتساب ───
@@ -219,12 +215,12 @@ app.UseExceptionHandler(errorApp =>
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
 
+var corsPolicy = app.Environment.IsDevelopment() ? "Development" : "Production";
+app.UseCors(corsPolicy);
+
 app.UseHttpsRedirection();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<BlockLibraryUploadsMiddleware>();
-
-var corsPolicy = app.Environment.IsDevelopment() ? "Development" : "Production";
-app.UseCors(corsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
