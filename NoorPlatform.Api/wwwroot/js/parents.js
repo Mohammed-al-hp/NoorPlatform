@@ -28,7 +28,7 @@
             tbody.innerHTML = '';
             if (empty) empty.style.display = 'block';
             if (wrap) wrap.style.display = 'none';
-            global.showToast('❌ تعذر تحميل أولياء الأمور');
+            global.showToast('تعذر تحميل أولياء الأمور', 'error');
         }
     }
 
@@ -97,15 +97,15 @@
                 <p><strong>الحالة:</strong> ${p.isActive ? 'نشط' : 'معطّل'}</p>
                 <p><strong>يجب تغيير كلمة المرور:</strong> ${p.mustChangePassword ? 'نعم' : 'لا'}</p>
                 <h4 style="margin-top:16px">الأبناء</h4>
-                <ul style="padding-right:20px">${childrenHtml}</ul>`, '👨‍👦 تفاصيل ولي الأمر');
+                <ul style="padding-right:20px">${childrenHtml}</ul>`, (window.Icon ? window.Icon('users', {size:16}) : '') + ' تفاصيل ولي الأمر');
             global.openModal('parentDetailModal');
         } catch (e) {
-            global.showToast('❌ تعذر تحميل التفاصيل');
+            global.showToast('تعذر تحميل التفاصيل', 'error');
         }
     }
 
     async function openAddParentModal() {
-        document.getElementById('parentFormTitle').textContent = '➕ إضافة ولي أمر';
+        document.getElementById('parentFormTitle').innerHTML = (window.Icon ? window.Icon('plus', {size:16}) : '') + ' إضافة ولي أمر';
         document.getElementById('parentEditId').value = '';
         document.getElementById('parentFormFullName').value = '';
         document.getElementById('parentFormPhone').value = '';
@@ -116,14 +116,14 @@
     async function editParent(id) {
         try {
             const p = await global.apiFetch(`/parents/${id}`);
-            document.getElementById('parentFormTitle').textContent = '✏️ تعديل ولي أمر';
+            document.getElementById('parentFormTitle').innerHTML = (window.Icon ? window.Icon('edit', {size:16}) : '') + ' تعديل ولي أمر';
             document.getElementById('parentEditId').value = String(p.id);
             document.getElementById('parentFormFullName').value = p.fullName;
             document.getElementById('parentFormPhone').value = p.phone;
             await loadParentStudentCheckboxes((p.children || []).map(c => c.id));
             global.openModal('parentFormModal');
         } catch (e) {
-            global.showToast('❌ تعذر تحميل البيانات');
+            global.showToast('تعذر تحميل البيانات', 'error');
         }
     }
 
@@ -152,7 +152,7 @@
         const childIds = [...document.querySelectorAll('#parentChildrenCheckboxes input:checked')].map(cb => parseInt(cb.value, 10));
 
         if (!fullName || !phone) {
-            global.showToast('❌ الاسم والهاتف مطلوبان');
+            global.showToast('الاسم والهاتف مطلوبان', 'error');
             return;
         }
 
@@ -161,10 +161,10 @@
             global.setBtnLoading(btn, true);
             if (id) {
                 await global.apiFetch(`/parents/${id}`, 'PUT', { fullName, phone, childStudentIds: childIds });
-                global.showToast('✅ تم تحديث ولي الأمر');
+                global.showToast('تم تحديث ولي الأمر', 'success');
             } else {
                 const res = await global.apiFetch('/parents', 'POST', { fullName, phone, childStudentIds: childIds });
-                global.showToast('✅ تم إضافة ولي الأمر');
+                global.showToast('تم إضافة ولي الأمر', 'success');
                 if (res && res.credentials && typeof global.showAccountCredentialsModal === 'function') {
                     global.showAccountCredentialsModal(res.credentials, res.credentials.phone);
                 }
@@ -172,7 +172,7 @@
             global.closeModal('parentFormModal');
             fetchParents();
         } catch (e) {
-            global.showToast('❌ ' + (e.message || 'فشل الحفظ'));
+            global.showToast('' + (e.message || 'فشل الحفظ', 'error'));
         } finally {
             global.setBtnLoading(btn, false);
         }
@@ -182,10 +182,10 @@
         global.confirmDelete('أرشفة ولي الأمر وفك ربط الأبناء؟ (يمكن استعادته لاحقًا)', async () => {
             try {
                 await global.apiFetch(`/parents/${id}`, 'DELETE');
-                global.showToast('✅ تم الحذف');
+                global.showToast('تم الحذف', 'success');
                 fetchParents();
             } catch (e) {
-                global.showToast('❌ تعذر الحذف');
+                global.showToast('تعذر الحذف', 'error');
             }
         });
     }

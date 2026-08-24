@@ -9,20 +9,23 @@
     const utils = () => (typeof global.getNoorUtils === 'function' ? global.getNoorUtils() : (global.NoorUtils || app().utils));
     const fmt = (d, o) => utils().formatDateEnGb(d, o);
     const ymd = (d) => utils().formatLocalDateYmd(d);
+    const icon = (name, opts) => (global.Icon ? global.Icon(name, opts) : '');
 
+    // ملاحظة: label تبقى نص عربي صِرف (تستخدمها updateAttendanceCounts بفحص .includes)،
+    // والأيقونة تُضاف بشكل منفصل عبر iconName عند العرض في statusBadgeHtml/actionButtonsHtml.
     const STATUS = {
-        Present: { label: '✅ حاضر', bg: '#dcfce7', color: '#16a34a' },
-        Late: { label: '⏰ متأخر', bg: '#fef9c3', color: '#ca8a04' },
-        ExcusedAbsence: { label: '📋 غائب بإذن', bg: '#dbeafe', color: '#1d4ed8' },
-        UnexcusedAbsence: { label: '❌ غائب بدون إذن', bg: '#fee2e2', color: '#dc2626' },
-        NotRecorded: { label: '— لم يُسجّل', bg: '#f1f5f9', color: '#64748b' }
+        Present: { label: 'حاضر', iconName: 'check-circle', bg: '#dcfce7', color: '#16a34a' },
+        Late: { label: 'متأخر', iconName: 'clock', bg: '#fef9c3', color: '#ca8a04' },
+        ExcusedAbsence: { label: 'غائب بإذن', iconName: 'file-text', bg: '#dbeafe', color: '#1d4ed8' },
+        UnexcusedAbsence: { label: 'غائب بدون إذن', iconName: 'x-circle', bg: '#fee2e2', color: '#dc2626' },
+        NotRecorded: { label: 'لم يُسجّل', iconName: null, bg: '#f1f5f9', color: '#64748b' }
     };
 
     const STATUS_BUTTONS = [
-        { key: 'Present', short: '✅ حاضر' },
-        { key: 'Late', short: '⏰ متأخر' },
-        { key: 'ExcusedAbsence', short: '📋 بإذن' },
-        { key: 'UnexcusedAbsence', short: '❌ بدون إذن' }
+        { key: 'Present', short: 'حاضر', iconName: 'check-circle' },
+        { key: 'Late', short: 'متأخر', iconName: 'clock' },
+        { key: 'ExcusedAbsence', short: 'بإذن', iconName: 'file-text' },
+        { key: 'UnexcusedAbsence', short: 'بدون إذن', iconName: 'x-circle' }
     ];
 
     function getState() {
@@ -143,7 +146,8 @@
 
     function statusBadgeHtml(status) {
         const cfg = STATUS[status] || STATUS.NotRecorded;
-        return `<span class="status-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.label}</span>`;
+        const ic = cfg.iconName ? icon(cfg.iconName, { size: 13 }) + ' ' : '— ';
+        return `<span class="status-badge" style="background:${cfg.bg};color:${cfg.color}">${ic}${cfg.label}</span>`;
     }
 
     function actionButtonsHtml(studentId, activeStatus) {
@@ -151,7 +155,7 @@
             ${STATUS_BUTTONS.map(b => {
             const active = activeStatus === b.key;
             return `<button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:12px${active ? ';font-weight:700;border-width:2px' : ''}"
-                data-att-id="${studentId}" data-att-status="${b.key}">${b.short}</button>`;
+                data-att-id="${studentId}" data-att-status="${b.key}">${icon(b.iconName, { size: 12 })} ${b.short}</button>`;
         }).join('')}
         </div>`;
     }
@@ -235,7 +239,7 @@
         const studentIds = new Set([...Object.keys(pending), ...Object.keys(pendingNotes)]);
         
         if (!studentIds.size) {
-            app().ui.showToast('لا توجد تغييرات للحفظ');
+            app().ui.showToast('لا توجد تغييرات للحفظ', 'info');
             return;
         }
         const dateStr = ymd(getState().date);
@@ -259,7 +263,7 @@
             Object.keys(pending).forEach(k => delete pending[k]);
             Object.keys(pendingNotes).forEach(k => delete pendingNotes[k]);
             setPendingDirty(false);
-            app().ui.showToast('✅ تم حفظ سجل الحضور بنجاح');
+            app().ui.showToast('تم حفظ سجل الحضور بنجاح', 'success');
             await fetchAttendanceForDate();
             global.NoorDashboard?.fetchStats?.();
         } catch (e) {
@@ -272,10 +276,12 @@
     function markAllPresentLocal() {
         const records = getState().records || [];
         records.forEach(r => stageAttendance(r.studentId, 'Present'));
-        app().ui.showToast('تم تحديد الجميع حاضر — اضغط «حفظ الحضور» للتأكيد');
+        app().ui.showToast('تم تحديد الجميع حاضر — اضغط «حفظ الحضور» للتأكيد', 'info');
     }
 
     function updateAttendanceCounts() {
+        // ملاحظة: الفحص هنا يعتمد على النص العربي فقط (بدون الأيقونة)، وهذا سليم
+        // لأن label في STATUS ما زال نصًا عربيًا صرفًا؛ الأيقونة تُضاف بشكل منفصل في statusBadgeHtml.
         const cells = document.querySelectorAll('[id^="att-status-"] .status-badge');
         let present = 0, late = 0, excused = 0, unexcused = 0;
         cells.forEach(el => {

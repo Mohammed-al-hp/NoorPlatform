@@ -211,14 +211,15 @@ app.UseExceptionHandler(errorApp =>
         await context.Response.WriteAsJsonAsync(new { message, statusCode = 500 });
     });
 });
-
 if (!app.Environment.IsDevelopment())
+{
     app.UseHsts();
+    app.UseHttpsRedirection();
+}
 
 var corsPolicy = app.Environment.IsDevelopment() ? "Development" : "Production";
 app.UseCors(corsPolicy);
 
-app.UseHttpsRedirection();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<BlockLibraryUploadsMiddleware>();
 

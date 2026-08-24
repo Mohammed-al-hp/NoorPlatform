@@ -9,8 +9,8 @@
     function showToast(msg, type) {
         const c = document.getElementById('toastContainer');
         if (!c) return;
-        const resolvedType = type || (msg.includes('❌') ? 'error' : msg.includes('⚠️') ? 'warning' : 'success');
-        const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+        const resolvedType = type || 'success';
+        const iconNames = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
 
         const t = document.createElement('div');
         t.className = 'toast toast-' + resolvedType;
@@ -19,7 +19,7 @@
         body.className = 'toast-body';
         const icon = document.createElement('span');
         icon.className = 'toast-icon';
-        icon.textContent = icons[resolvedType] || 'ℹ️';
+        icon.innerHTML = global.Icon ? global.Icon(iconNames[resolvedType] || 'info', { size: 18 }) : '';
         const text = document.createElement('span');
         text.textContent = msg;
         body.appendChild(icon);
@@ -91,7 +91,8 @@
         if (loading) {
             btn.dataset.origText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '⏳ جاري المعالجة...';
+            const spinner = global.Icon ? global.Icon('loader', { size: 16, className: 'spin-icon' }) : '';
+            btn.innerHTML = spinner + ' جاري المعالجة...';
         } else {
             btn.disabled = false;
             if (btn.dataset.origText) btn.innerHTML = btn.dataset.origText;

@@ -155,7 +155,7 @@
                 <input class="form-input hifz-q-text" type="text" placeholder="مثال: اقرأ من منتصف سورة الملك">
             </div>
             <div class="form-group full" style="text-align:left">
-                <button type="button" class="btn btn-outline" style="font-size:12px" data-remove-q="${id}">🗑 حذف السؤال</button>
+                <button type="button" class="btn btn-outline" style="font-size:12px" data-remove-q="${id}">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف السؤال</button>
             </div>`;
         container.appendChild(row);
         row.querySelector('[data-remove-q]').addEventListener('click', () => row.remove());
@@ -190,7 +190,7 @@
     async function saveSession() {
         const studentId = parseInt(document.getElementById('hifzStudentSelect')?.value, 10);
         if (!studentId || isNaN(studentId)) {
-            global.showToast('❌ يرجى اختيار الحلقة والطالب');
+            global.showToast('يرجى اختيار الحلقة والطالب', 'error');
             return;
         }
 
@@ -230,7 +230,7 @@
                     });
                 });
                 if (!questions.length) {
-                    global.showToast('❌ أضف سؤال مراجعة واحد على الأقل');
+                    global.showToast('أضف سؤال مراجعة واحد على الأقل', 'error');
                     return;
                 }
                 body.surahName = questions[0].surah || '';
@@ -241,7 +241,7 @@
                 const from = document.getElementById('hifzSeqFromSurah')?.value;
                 const to = document.getElementById('hifzSeqToSurah')?.value;
                 if (!from || !to) {
-                    global.showToast('❌ حدد من سورة وإلى سورة للمراجعة');
+                    global.showToast('حدد من سورة وإلى سورة للمراجعة', 'error');
                     return;
                 }
                 const range = U().getSurahsInRange(from, to);
@@ -249,7 +249,7 @@
                 body.toSurahName = to;
                 body.verses = 'مراجعة تسلسلية';
                 body.sessionDetailsJson = JSON.stringify({ surahs: range.map(s => s.name) });
-                body.notes = (notes ? notes + '\n' : '') + 'سور المراجعة: ' + range.map(s => s.name).join(' → ');
+                body.notes = (notes ? notes + '\n' : '') + 'سور المراجعة: ' + range.map(s => s.name).join(' -> ');
             }
         }
 
@@ -258,11 +258,11 @@
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await global.apiFetch('/hifz', 'POST', body);
             global.closeModal('addMemModal');
-            global.showToast('✅ تم حفظ جلسة التسميع بنجاح');
+            global.showToast('تم حفظ جلسة التسميع بنجاح', 'success');
             if (typeof global.fetchMemorizationData === 'function') global.fetchMemorizationData();
         } catch (e) {
             if (global.handleApiError) global.handleApiError(e);
-            else global.showToast('❌ ' + (e.message || 'حدث خطأ أثناء الحفظ'));
+            else global.showToast('' + (e.message || 'حدث خطأ أثناء الحفظ', 'error'));
         } finally {
             if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }

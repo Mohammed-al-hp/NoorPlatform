@@ -45,7 +45,7 @@
         if (role === 'Teacher' && ADMIN_ONLY_PAGES.includes(page)) {
             page = 'dashboard';
             el = document.querySelector('.nav-item');
-            if (typeof global.showToast === 'function') global.showToast('❌ غير مصرح لك بالوصول لهذه الصفحة');
+            if (typeof global.showToast === 'function') global.showToast('غير مصرح لك بالوصول لهذه الصفحة', 'error');
         }
 
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));

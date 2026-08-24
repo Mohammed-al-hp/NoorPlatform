@@ -174,10 +174,13 @@
         if (roleName) roleName.textContent = user.fullName || '';
         if (roleEmail) roleEmail.textContent = user.role || '';
         if (roleAvatar) {
-            roleAvatar.textContent = user.role === 'Admin' ? '👤' : user.role === 'Teacher' ? '👨‍🏫' : '👨‍🎓';
+            if (window.Icon) {
+                var iconName = user.role === 'Admin' ? 'user' : user.role === 'Teacher' ? 'user-check' : 'graduation-cap';
+                roleAvatar.innerHTML = window.Icon(iconName, { size: 22 });
+            }
         }
         const topAv = document.getElementById('topbarAvatar');
-        if (topAv && user.fullName) topAv.textContent = user.fullName.slice(0, 2);
+        if (topAv && window.Icon) topAv.innerHTML = window.Icon('user', { size: 18 });
     }
 
     function toggleAuthMode(mode) {
@@ -239,11 +242,11 @@
 
             if (data.mustChangePassword) {
                 ui().openModal('changePasswordModal');
-                ui().showToast('⚠️ يرجى تغيير كلمة المرور المؤقتة');
+                ui().showToast('يرجى تغيير كلمة المرور المؤقتة', 'warning');
             } else {
                 const userName = data.user?.fullName || data.fullName || '';
                 const firstName = userName.split(' ')[0] || 'مستخدماً';
-                ui().showToast(`✅ أهلاً بك يا ${firstName}`);
+                ui().showToast(`أهلاً بك يا ${firstName}`, 'success');
                 checkAuth();
             }
         } catch (err) {
@@ -257,13 +260,13 @@
         const current = document.getElementById('currentPasswordInput')?.value;
         const newPass = document.getElementById('newPasswordInput')?.value;
         if (!current || !newPass || newPass.length < 8) {
-            ui().showToast('⚠️ كلمة المرور الجديدة 8 أحرف على الأقل');
+            ui().showToast('كلمة المرور الجديدة 8 أحرف على الأقل', 'warning');
             return;
         }
         try {
             await apiFetch('/auth/change-password', 'POST', { currentPassword: current, newPassword: newPass });
             ui().closeModal('changePasswordModal');
-            ui().showToast('✅ تم تغيير كلمة المرور');
+            ui().showToast('تم تغيير كلمة المرور', 'success');
             checkAuth();
         } catch (e) {
             handleApiError(e, { skipLogout: true });
@@ -276,7 +279,7 @@
     }
 
     async function handleRegister() {
-        ui().showToast('❌ التسجيل الذاتي غير متاح');
+        ui().showToast('التسجيل الذاتي غير متاح', 'error');
         toggleAuthMode('login');
     }
 

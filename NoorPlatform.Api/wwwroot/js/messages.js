@@ -20,7 +20,7 @@
 
         if (btnNew) btnNew.style.display = isParent() ? 'inline-flex' : 'none';
 
-        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:14}) : '') + '</span> جاري التحميل...</div>';
 
         try {
             const endpoint = isParent() ? '/messages/sent' : '/messages/inbox';
@@ -48,7 +48,7 @@
                             <span style="font-size:11px;color:var(--text-muted)">${utils().formatDateTimeEnGb(m.createdAt)}</span>
                         </div>
                         <p style="font-size:13px;color:var(--text)">${esc(m.content)}</p>
-                        ${!m.isRead ? `<button class="btn btn-outline" style="margin-top:8px;padding:4px 10px;font-size:11px" onclick="NoorMessages.markAsRead(${m.id})">✓ تعليم كمقروءة</button>` : ''}
+                        ${!m.isRead ? `<button class="btn btn-outline" style="margin-top:8px;padding:4px 10px;font-size:11px" onclick="NoorMessages.markAsRead(${m.id})">${window.Icon ? window.Icon('check', {size:12}) : ''} تعليم كمقروءة</button>` : ''}
                     </div>`).join('');
             }
         } catch (e) {
@@ -85,7 +85,7 @@
         const content = document.getElementById('msgContent')?.value?.trim();
 
         if (!content) {
-            app().ui.showToast('❌ نص الرسالة مطلوب');
+            app().ui.showToast('نص الرسالة مطلوب', 'error');
             return;
         }
 
@@ -100,7 +100,7 @@
                 content
             });
             app().ui.closeModal('newMessageModal');
-            app().ui.showToast('✅ تم إرسال الرسالة بنجاح');
+            app().ui.showToast('تم إرسال الرسالة بنجاح', 'success');
             fetchMessages();
         } catch (e) {
             app().api.handleApiError(e);
@@ -109,20 +109,26 @@
         }
     }
     async function openChildDetails(studentId, fullName) {
-        document.getElementById('childDetailsTitle').textContent = '📋 تفاصيل: ' + fullName;
+        document.getElementById('childDetailsTitle').innerHTML = (window.Icon ? window.Icon('clipboard-list', {size:16}) : '') + ' تفاصيل: ' + fullName;
         app().ui.openModal('childDetailsModal');
 
         const attList = document.getElementById('childAttendanceList');
         const hifzList = document.getElementById('childHifzList');
-        attList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
-        hifzList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+        attList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:14}) : '') + '</span> جاري التحميل...</div>';
+        hifzList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:14}) : '') + '</span> جاري التحميل...</div>';
 
         try {
             const records = await apiFetch(`/attendance/student/${studentId}`);
             if (!records.length) {
                 attList.innerHTML = '<p style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">لا توجد سجلات حضور بعد</p>';
             } else {
-                const statusLabels = { Present: '✅ حاضر', Late: '⏰ متأخر', ExcusedAbsence: '📋 غائب بإذن', UnexcusedAbsence: '❌ غائب بدون إذن' };
+                const ic = (n, s) => window.Icon ? window.Icon(n, {size: s || 12}) : '';
+            const statusLabels = {
+                Present: ic('check-circle') + ' حاضر',
+                Late: ic('clock') + ' متأخر',
+                ExcusedAbsence: ic('file-text') + ' غائب بإذن',
+                UnexcusedAbsence: ic('x-circle') + ' غائب بدون إذن'
+            };
                 attList.innerHTML = records.map(r => `
                 <div style="display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border);font-size:13px">
                     <span>${utils().formatDateEnGb(r.date)}</span>

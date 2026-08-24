@@ -39,9 +39,9 @@
             a.remove();
             window.URL.revokeObjectURL(url);
 
-            showToast('✅ تم تصدير التقرير بنجاح');
+            showToast('تم تصدير التقرير بنجاح', 'success');
         } catch (err) {
-            showToast('❌ ' + (err.message || 'فشل تصدير PDF'));
+            showToast('' + (err.message || 'فشل تصدير PDF', 'error'));
         } finally {
             hideLoading();
         }
@@ -72,9 +72,9 @@
             a.remove();
             window.URL.revokeObjectURL(url);
 
-            showToast('✅ تم تصدير الشهادة بنجاح');
+            showToast('تم تصدير الشهادة بنجاح', 'success');
         } catch (err) {
-            showToast('❌ ' + (err.message || 'فشل تصدير الشهادة'));
+            showToast('' + (err.message || 'فشل تصدير الشهادة', 'error'));
         } finally {
             hideLoading();
         }
@@ -95,9 +95,9 @@
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.message || 'تعذر منح الوسام');
             }
-            showToast('✅ تم منح وسام التميز بنجاح');
+            showToast('تم منح وسام التميز بنجاح', 'success');
         } catch (err) {
-            showToast('❌ ' + (err.message || 'فشل منح الوسام'));
+            showToast('' + (err.message || 'فشل منح الوسام', 'error'));
         } finally {
             hideLoading();
         }
@@ -106,7 +106,7 @@
     function exportStudentsExcel() {
         const students = window._students || window._allStudentsData || [];
         if (!students.length) {
-            showToast('⚠️ لا توجد بيانات لتصديرها');
+            showToast('لا توجد بيانات لتصديرها', 'warning');
             return;
         }
 
@@ -165,7 +165,7 @@
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        showToast('✅ تم التصدير بنجاح كملف Excel');
+        showToast('تم التصدير بنجاح كملف Excel', 'success');
     }
 
     global.exportStudentPDF = exportStudentPDF;

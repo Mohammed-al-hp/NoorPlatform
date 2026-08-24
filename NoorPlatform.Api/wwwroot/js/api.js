@@ -31,7 +31,7 @@
         }
 
         if (!opts.silent && app().ui?.showToast) {
-            app().ui.showToast('❌ ' + message);
+            app().ui.showToast(message, 'error');
         }
         return message;
     }

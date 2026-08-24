@@ -57,7 +57,7 @@
                 <td dir="ltr">${U().escapeHtml(u.phone)}</td>
                 <td>${u.lastLoginAt ? U().formatDateTimeEnGb(u.lastLoginAt) : '—'}</td>
                 <td><span class="status-badge ${u.isActive ? 'status-present' : 'status-absent'}">${u.isActive ? 'نشط' : 'معطّل'}</span></td>
-                <td>${u.mustChangePassword ? '⚠️ نعم' : 'لا'}</td>
+                <td>${u.mustChangePassword ? (window.Icon ? window.Icon('alert-triangle', {size:12}) : '') + ' نعم' : 'لا'}</td>
                 <td>
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.viewUser(${u.id})">عرض</button>
@@ -102,10 +102,10 @@
                 <p><strong>آخر دخول:</strong> ${u.lastLoginAt ? U().formatDateTimeEnGb(u.lastLoginAt) : '—'}</p>
                 <p><strong>الحالة:</strong> ${u.isActive ? 'نشط' : 'معطّل'}</p>
                 <p><strong>تغيير كلمة المرور:</strong> ${u.mustChangePassword ? 'مطلوب' : 'لا'}</p>
-                <p><strong>تاريخ الإنشاء:</strong> ${U().formatDateEnGb(u.createdAt)}</p>`, '👤 تفاصيل المستخدم');
+                <p><strong>تاريخ الإنشاء:</strong> ${U().formatDateEnGb(u.createdAt)}</p>`, (window.Icon ? window.Icon('user', {size:16}) : '') + ' تفاصيل المستخدم');
             global.openModal('userDetailModal');
         } catch (e) {
-            global.showToast('❌ تعذر التحميل');
+            global.showToast('تعذر التحميل', 'error');
         }
     }
 
@@ -125,7 +125,7 @@
             document.getElementById('userEditMustChange').checked = u.mustChangePassword;
             global.openModal('userEditModal');
         } catch (e) {
-            global.showToast('❌ تعذر التحميل');
+            global.showToast('تعذر التحميل', 'error');
         }
     }
     async function saveUserEdit() {
@@ -142,7 +142,7 @@
                 mustChangePassword: document.getElementById('userEditMustChange').checked
             });
             global.closeModal('userEditModal');
-            global.showToast('✅ تم التحديث');
+            global.showToast('تم التحديث', 'success');
             fetchUsers();
         } catch (e) {
             global.handleApiError(e);
@@ -154,7 +154,7 @@
     async function toggleUser(id) {
         try {
             await global.apiFetch(`/users/${id}/toggle-active`, 'PATCH');
-            global.showToast('✅ تم تحديث الحالة');
+            global.showToast('تم تحديث الحالة', 'success');
             fetchUsers();
         } catch (e) {
             global.handleApiError(e);
@@ -165,7 +165,7 @@
         global.confirmDelete('هل أنت متأكد من تعطيل/حذف هذا الحساب؟', async () => {
             try {
                 await global.apiFetch(`/users/${id}`, 'DELETE');
-                global.showToast('✅ تم تعطيل الحساب');
+                global.showToast('تم تعطيل الحساب', 'success');
                 fetchUsers();
             } catch (e) {
                 global.handleApiError(e);
@@ -178,7 +178,7 @@
         const phone = document.getElementById('adminPhone')?.value?.trim();
 
         if (!fullName || !phone) {
-            global.showToast('❌ الاسم ورقم الهاتف مطلوبان');
+            global.showToast('الاسم ورقم الهاتف مطلوبان', 'error');
             return;
         }
 
@@ -187,7 +187,7 @@
             global.setBtnLoading(btn, true);
             const res = await global.apiFetch('/users/admin', 'POST', { fullName, phone });
             global.closeModal('addAdminModal');
-            global.showToast('✅ تم إنشاء حساب المشرف بنجاح');
+            global.showToast('تم إنشاء حساب المشرف بنجاح', 'success');
 
             document.getElementById('adminFullName').value = '';
             document.getElementById('adminPhone').value = '';

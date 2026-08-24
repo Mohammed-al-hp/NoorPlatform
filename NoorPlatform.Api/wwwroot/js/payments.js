@@ -126,10 +126,10 @@
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-primary';
                     btn.style.cssText = 'margin-top:10px; width:100%; justify-content:center';
-                    btn.textContent = '💳 سداد الآن (تجريبي)';
+                    btn.innerHTML = (window.Icon ? window.Icon('credit-card', {size:14}) : '') + ' سداد الآن (تجريبي)';
                     btn.title = 'هذا سداد تجريبي لأغراض العرض فقط — لا يوجد بوابة دفع فعلية بعد';
                     btn.addEventListener('click', function () {
-                        if (!confirm('⚠️ هذا سداد تجريبي فقط ولا يحوّل أي مبلغ فعلياً. سيتم تعليم الفاتورة كمدفوعة في النظام مباشرة.\n\nهل تريد المتابعة؟')) return;
+                        if (!confirm('هذا سداد تجريبي فقط ولا يحوّل أي مبلغ فعلياً. سيتم تعليم الفاتورة كمدفوعة في النظام مباشرة.\n\nهل تريد المتابعة؟')) return;
                         payInvoice(p.id, this);
                     });
                     body.appendChild(btn);
@@ -160,7 +160,7 @@
             document.getElementById('invoiceDueDate').value = '';
             document.getElementById('addInvoiceModal').classList.add('open');
         } catch (err) {
-            showToast('❌ حدث خطأ في جلب الطلاب');
+            showToast('حدث خطأ في جلب الطلاب', 'error');
         }
     }
 
@@ -171,13 +171,13 @@
         const dueDate = document.getElementById('invoiceDueDate').value;
 
         if (!studentId || !amount || !dueDate) {
-            showToast('❌ يرجى تعبئة الحقول المطلوبة');
+            showToast('يرجى تعبئة الحقول المطلوبة', 'error');
             return;
         }
 
         // ─── إصلاح: التحقق من القيمة قبل الإرسال (تتوافق مع Backend) ───
         if (parseFloat(amount) <= 0) {
-            showToast('❌ المبلغ يجب أن يكون أكبر من صفر');
+            showToast('المبلغ يجب أن يكون أكبر من صفر', 'error');
             return;
         }
 
@@ -195,10 +195,10 @@
                 dueDate: dueDate
             });
             closeModal('addInvoiceModal');
-            showToast('✅ تم إصدار الفاتورة بنجاح');
+            showToast('تم إصدار الفاتورة بنجاح', 'success');
             fetchPayments();
         } catch (err) {
-            showToast('❌ ' + err.message);
+            showToast(err.message, 'error');
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -212,12 +212,12 @@
         try {
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await apiFetch(`/payments/${id}/pay`, 'POST');
-            showToast('✅ تم الدفع بنجاح!');
+            showToast('تم الدفع بنجاح!', 'success');
             fetchParentFees();
         } catch (err) {
-            showToast('❌ ' + err.message);
+            showToast(err.message, 'error');
         } finally {
-            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💳 سداد الآن');
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, (window.Icon ? window.Icon('credit-card', {size:14}) : '') + ' سداد الآن');
         }
     }
 

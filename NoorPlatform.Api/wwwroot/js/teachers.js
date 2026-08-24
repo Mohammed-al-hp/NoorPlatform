@@ -30,7 +30,7 @@
 
             if (!data.length) {
                 grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
-                    <div style="font-size:48px;margin-bottom:16px">👨‍🏫</div>
+                    <div style="margin-bottom:16px">${window.Icon ? window.Icon('user-check', {size:48}) : ''}</div>
                     <p>لا يوجد محفظون مسجلون</p>
                 </div>`;
                 return;
@@ -45,13 +45,14 @@
 
     function renderTeacherCard(t) {
         const rating = t.averageRating > 0 ? t.averageRating.toFixed(1) : '—';
-        const stars = t.averageRating > 0 ? '⭐'.repeat(Math.round(t.averageRating)) : '';
+        const starIcon = window.Icon ? window.Icon('star', {size:12}) : '';
+        const stars = t.averageRating > 0 ? starIcon.repeat(Math.round(t.averageRating)) : '';
         const birthStr = t.birthDate ? new Date(t.birthDate).toLocaleDateString('ar-LY', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
 
         return `
         <div class="student-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;gap:14px">
-                <div style="width:52px;height:52px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👨‍🏫</div>
+                <div style="width:52px;height:52px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;flex-shrink:0">${window.Icon ? window.Icon('user-check', {size:20}) : ''}</div>
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:800;font-size:15px;color:var(--text)">${esc(t.fullName)}</div>
                     <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${esc(t.circleName)}</div>
@@ -74,14 +75,14 @@
             </div>
 
             <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
-                <span>🎂</span>
+                <span>${window.Icon ? window.Icon('calendar', {size:12}) : ''}</span>
                 <span>${birthStr}</span>
             </div>
 
             <div style="display:flex;gap:8px;margin-top:4px">
-                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="viewTeacher(${t.id})">👁 عرض</button>
-                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="editTeacher(${t.id})">✏️ تعديل</button>
-                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteTeacher(${t.id}, '${esc(t.fullName)}')">🗑 حذف</button>
+                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="viewTeacher(${t.id})">${window.Icon ? window.Icon('eye', {size:12}) : ''} عرض</button>
+                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="editTeacher(${t.id})">${window.Icon ? window.Icon('edit', {size:12}) : ''} تعديل</button>
+                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteTeacher(${t.id}, '${esc(t.fullName)}')">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف</button>
             </div>
         </div>`;
     }
@@ -94,7 +95,7 @@
 
             global.setModalBody('teacherProfileBody', `
                 <div style="text-align:center;margin-bottom:20px">
-                    <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px">👨‍🏫</div>
+                    <div style="width:64px;height:64px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">${window.Icon ? window.Icon('user-check', {size:28}) : ''}</div>
                     <h3 style="font-size:18px;font-weight:800">${esc(t.fullName)}</h3>
                     <p style="color:var(--text-muted);font-size:13px">${esc(t.qualification || '—')}</p>
                 </div>
@@ -112,10 +113,10 @@
                 <p style="margin-top:8px"><strong>البريد الإلكتروني:</strong> ${esc(t.email || '—')}</p>
                 <h4 style="margin-top:16px;margin-bottom:8px">الحلقات</h4>
                 <ul style="padding-right:20px;line-height:2">${circlesHtml}</ul>
-            `, '📋 ملف المحفظ');
+            `, (window.Icon ? window.Icon('clipboard-list', {size:16}) : '') + ' ملف المحفظ');
             global.openModal('teacherProfileModal');
         } catch (e) {
-            ui().showToast('❌ تعذر تحميل بيانات المحفظ');
+            ui().showToast('تعذر تحميل بيانات المحفظ', 'error');
         }
     }
 
@@ -129,7 +130,7 @@
             document.getElementById('editTeacherRating').value = t.averageRating || '';
             global.openModal('editTeacherModal');
         } catch (e) {
-            ui().showToast('❌ تعذر تحميل بيانات المحفظ');
+            ui().showToast('تعذر تحميل بيانات المحفظ', 'error');
         }
     }
 
@@ -140,7 +141,7 @@
         const birthDate = document.getElementById('teacherBirthDate')?.value;
 
         if (!fullName || !phone) {
-            ui().showToast('❌ الاسم الثلاثي ورقم الهاتف مطلوبان');
+            ui().showToast('الاسم الثلاثي ورقم الهاتف مطلوبان', 'error');
             return;
         }
 
@@ -150,7 +151,7 @@
             const res = await apiFetch('/teachers', 'POST', {
                 fullName, phone, qualification: qualification || '', birthDate: birthDate || null
             });
-            ui().showToast('✅ تم إضافة المحفظ بنجاح');
+            ui().showToast('تم إضافة المحفظ بنجاح', 'success');
             global.closeModal('addTeacherModal');
 
             ['teacherFullName', 'teacherPhone', 'teacherQualification', 'teacherBirthDate']
@@ -186,7 +187,7 @@
                 birthDate: birthDate || null,
                 averageRating
             });
-            ui().showToast('✅ تم تحديث بيانات المحفظ');
+            ui().showToast('تم تحديث بيانات المحفظ', 'success');
             global.closeModal('editTeacherModal');
             fetchTeachers();
         } catch (e) {
@@ -200,7 +201,7 @@
         global.confirmDelete(`هل تريد أرشفة المحفظ "${name}"؟\nيمكن استعادته لاحقًا من الأرشيف.`, async () => {
             try {
                 await apiFetch(`/teachers/${id}`, 'DELETE');
-                ui().showToast('✅ تم حذف المحفظ');
+                ui().showToast('تم حذف المحفظ', 'success');
                 fetchTeachers();
             } catch (e) {
                 global.NoorApp.api.handleApiError(e);
@@ -227,7 +228,7 @@
 
             if (!data.length) {
                 grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
-                    <div style="font-size:48px;margin-bottom:16px">⭕</div>
+                    <div style="margin-bottom:16px">${window.Icon ? window.Icon('circle-dot', {size:48}) : ''}</div>
                     <p>لا توجد حلقات بعد</p>
                 </div>`;
                 return;
@@ -244,10 +245,10 @@
         return `
         <div class="student-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;gap:14px">
-                <div style="width:52px;height:52px;border-radius:14px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${c.icon || '⭕'}</div>
+                <div style="width:52px;height:52px;border-radius:14px;background:var(--gradient);display:flex;align-items:center;justify-content:center;flex-shrink:0">${c.icon || (window.Icon ? window.Icon('circle-dot', {size:24}) : '')}</div>
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:800;font-size:15px">${esc(c.name)}</div>
-                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">👨‍🏫 ${esc(c.teacherName || 'لم يحدد')}</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${window.Icon ? window.Icon('user-check', {size:12}) : ''} ${esc(c.teacherName || 'لم يحدد')}</div>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -260,10 +261,10 @@
                     <div style="font-size:11px;color:var(--text-muted)">الوقت</div>
                 </div>
             </div>
-            ${c.location ? `<div style="font-size:12px;color:var(--text-muted)">📍 ${esc(c.location)}</div>` : ''}
+            ${c.location ? `<div style="font-size:12px;color:var(--text-muted)">${window.Icon ? window.Icon('map-pin', {size:12}) : ''} ${esc(c.location)}</div>` : ''}
             <div style="display:flex;gap:8px;margin-top:4px">
-                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="editCircle(${c.id})">✏️ تعديل</button>
-                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteCircle(${c.id}, '${esc(c.name)}')">🗑 حذف</button>
+                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="editCircle(${c.id})">${window.Icon ? window.Icon('edit', {size:12}) : ''} تعديل</button>
+                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteCircle(${c.id}, '${esc(c.name)}')">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف</button>
             </div>
         </div>`;
     }
@@ -286,7 +287,7 @@
         const name = document.getElementById('circleName')?.value?.trim();
         const teacher = document.getElementById('circleTeacher')?.value;
         const location = document.getElementById('circleLocation')?.value?.trim();
-        if (!name) { ui().showToast('❌ اسم الحلقة مطلوب'); return; }
+        if (!name) { ui().showToast('اسم الحلقة مطلوب', 'error'); return; }
 
         const time = getCircleTimeValue('add');
         const btn = document.querySelector('#addCircleModal .btn-primary');
@@ -295,7 +296,7 @@
             await apiFetch('/circles', 'POST', {
                 name, time: time || '', location: location || '', teacherId: teacher ? parseInt(teacher) : null
             });
-            ui().showToast('✅ تم إنشاء الحلقة بنجاح');
+            ui().showToast('تم إنشاء الحلقة بنجاح', 'success');
             global.closeModal('addCircleModal');
             ['circleName', 'circleLocation', 'circleTime'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             fetchCircles();
@@ -340,7 +341,7 @@
 
             global.openModal('editCircleModal');
         } catch (e) {
-            ui().showToast('❌ تعذر تحميل بيانات الحلقة');
+            ui().showToast('تعذر تحميل بيانات الحلقة', 'error');
         }
     }
 
@@ -360,7 +361,7 @@
                 name: name || undefined, time: time || undefined, location: location || undefined,
                 teacherId: teacher && !removeTeacher ? parseInt(teacher) : undefined, removeTeacher
             });
-            ui().showToast('✅ تم تحديث الحلقة');
+            ui().showToast('تم تحديث الحلقة', 'success');
             global.closeModal('editCircleModal');
             fetchCircles();
         } catch (e) {
@@ -374,7 +375,7 @@
         global.confirmDelete(`هل تريد حذف الحلقة "${name}"؟\nتأكد من نقل الطلاب أولاً.`, async () => {
             try {
                 await apiFetch(`/circles/${id}`, 'DELETE');
-                ui().showToast('✅ تم حذف الحلقة');
+                ui().showToast('تم حذف الحلقة', 'success');
                 fetchCircles();
             } catch (e) {
                 global.NoorApp.api.handleApiError(e);

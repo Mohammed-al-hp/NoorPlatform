@@ -1,6 +1,23 @@
 /* منصة نور — أنماط رئيسية (التفصيل في index.html حتى اكتمال التقسيم) */
 @import url('/css/responsive.css');
 
+/* ─── أيقونة تحميل دوّارة (بديل إيموجي ⏳) ─── */
+.spin-icon {
+    animation: noor-spin 1s linear infinite;
+    vertical-align: middle;
+}
+@keyframes noor-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.toast-icon svg,
+.nav-logo-icon svg,
+.feature-icon svg,
+.hero-stat-icon svg,
+.notif-dot svg {
+    display: block;
+}
+
 /* ─── تخصيص تقويم flatpickr ليتماشى مع هوية المنصة ─── */
 
 .flatpickr-calendar {

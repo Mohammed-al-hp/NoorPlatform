@@ -13,6 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/landing.css">
+    <script src="/js/icons.js"></script>
 </head>
 <body>
 
@@ -20,7 +21,7 @@
     <nav class="landing-nav" id="landingNav">
         <div class="nav-container">
             <a href="/" class="nav-logo">
-                <div class="nav-logo-icon">🕌</div>
+                <div class="nav-logo-icon" id="navLogoIcon"></div>
                 <span class="nav-logo-text">منصة نور</span>
             </a>
             <ul class="nav-links" id="navLinks">
@@ -29,12 +30,12 @@
                 <li><a href="#how-it-works">كيف تعمل</a></li>
             </ul>
             <div class="nav-cta">
-                <button class="btn-outline-landing" onclick="toggleDarkMode()" id="darkToggle" title="الوضع الليلي" style="padding:10px 14px;">🌙</button>
+                <button class="btn-outline-landing" onclick="toggleDarkMode()" id="darkToggle" title="الوضع الليلي" style="padding:10px 14px;"></button>
                 <a href="/index.html#login" class="btn-primary-landing" id="navLoginBtn">
                     تسجيل الدخول ←
                 </a>
             </div>
-            <button class="mobile-toggle" id="mobileToggle" onclick="toggleMobileMenu()">☰</button>
+            <button class="mobile-toggle" id="mobileToggle" onclick="toggleMobileMenu()"></button>
         </div>
     </nav>
 
@@ -42,7 +43,7 @@
     <section class="hero" id="hero">
         <div class="hero-container">
             <div class="hero-content">
-                <div class="hero-badge">🌟 منصة تعليمية متكاملة</div>
+                <div class="hero-badge"><span class="badge-icon" data-icon="star" data-icon-size="14"></span> منصة تعليمية متكاملة</div>
                 <h1 class="hero-title">
                     نظام متكامل لإدارة
                     <br>
@@ -54,7 +55,7 @@
                 </p>
                 <div class="hero-actions">
                     <a href="/index.html#login" class="btn-primary-landing" style="font-size:17px; padding:14px 36px;">
-                        ابدأ الآن 🚀
+                        ابدأ الآن <span class="badge-icon" data-icon="rocket" data-icon-size="16"></span>
                     </a>
                     <a href="#features" class="btn-outline-landing" style="font-size:17px; padding:14px 36px;">
                         اكتشف المنصة
@@ -64,10 +65,10 @@
 
             <div class="hero-visual">
                 <div class="floating-badge top-left">
-                    <span style="color:#10b981">✅</span> تسميع ممتاز
+                    <span style="color:#10b981" class="badge-icon" data-icon="check-circle" data-icon-size="16"></span> تسميع ممتاز
                 </div>
                 <div class="floating-badge bottom-right">
-                    <span style="color:#3b82f6">📊</span> نسبة الحضور 96%
+                    <span style="color:#3b82f6" class="badge-icon" data-icon="bar-chart" data-icon-size="16"></span> نسبة الحضور 96%
                 </div>
                 <div class="hero-card-main">
                     <div class="card-header-landing">
@@ -78,22 +79,22 @@
                     </div>
                     <div class="hero-stats-grid">
                         <div class="hero-stat">
-                            <div class="hero-stat-icon">👨‍🎓</div>
+                            <div class="hero-stat-icon" data-icon="graduation-cap" data-icon-size="26"></div>
                             <div class="hero-stat-value">156</div>
                             <div class="hero-stat-label">طالب مسجل</div>
                         </div>
                         <div class="hero-stat">
-                            <div class="hero-stat-icon">👨‍🏫</div>
+                            <div class="hero-stat-icon" data-icon="book-open" data-icon-size="26"></div>
                             <div class="hero-stat-value">12</div>
                             <div class="hero-stat-label">محفّظ</div>
                         </div>
                         <div class="hero-stat">
-                            <div class="hero-stat-icon">⭕</div>
+                            <div class="hero-stat-icon" data-icon="circle-dot" data-icon-size="26"></div>
                             <div class="hero-stat-value">8</div>
                             <div class="hero-stat-label">حلقات نشطة</div>
                         </div>
                         <div class="hero-stat">
-                            <div class="hero-stat-icon">📖</div>
+                            <div class="hero-stat-icon" data-icon="book-open" data-icon-size="26"></div>
                             <div class="hero-stat-value">94%</div>
                             <div class="hero-stat-label">نسبة الحضور</div>
                         </div>
@@ -116,7 +117,7 @@
     <section class="section" id="features">
         <div class="section-container">
             <div class="section-header fade-up">
-                <div class="section-badge">⚡ مميزات المنصة</div>
+                <div class="section-badge"><span class="badge-icon" data-icon="bar-chart" data-icon-size="14"></span> مميزات المنصة</div>
                 <h2 class="section-title">كل ما تحتاجه لإدارة مركز التحفيظ</h2>
                 <p class="section-desc">
                     أدوات متكاملة مصممة خصيصاً لتلبية احتياجات مراكز تحفيظ القرآن الكريم
@@ -124,42 +125,42 @@
             </div>
             <div class="features-grid">
                 <div class="feature-card fade-up">
-                    <div class="feature-icon">👨‍🎓</div>
+                    <div class="feature-icon" data-icon="graduation-cap" data-icon-size="28"></div>
                     <h3 class="feature-title">إدارة الطلاب</h3>
                     <p class="feature-desc">
                         تسجيل بيانات الطلاب، تصنيفهم حسب الحلقات، ومتابعة تقدمهم الدراسي مع نظام نقاط تحفيزي متكامل.
                     </p>
                 </div>
                 <div class="feature-card fade-up" style="transition-delay:0.1s">
-                    <div class="feature-icon">📋</div>
+                    <div class="feature-icon" data-icon="clipboard-list" data-icon-size="28"></div>
                     <h3 class="feature-title">تسجيل الحضور</h3>
                     <p class="feature-desc">
                         نظام حضور ذكي يدعم التسجيل اليومي مع إشعارات تلقائية لأولياء الأمور عند الغياب.
                     </p>
                 </div>
                 <div class="feature-card fade-up" style="transition-delay:0.2s">
-                    <div class="feature-icon">📖</div>
+                    <div class="feature-icon" data-icon="book-open" data-icon-size="28"></div>
                     <h3 class="feature-title">متابعة التسميع</h3>
                     <p class="feature-desc">
                         تسجيل جلسات الحفظ والمراجعة مع تقييم الأداء وخريطة حفظ القرآن الكامل لكل طالب.
                     </p>
                 </div>
                 <div class="feature-card fade-up" style="transition-delay:0.3s">
-                    <div class="feature-icon">⭐</div>
+                    <div class="feature-icon" data-icon="star" data-icon-size="28"></div>
                     <h3 class="feature-title">نظام الاختبارات</h3>
                     <p class="feature-desc">
                         إنشاء وإدارة اختبارات الحفظ الدورية مع نتائج فورية وتقارير أداء مفصلة.
                     </p>
                 </div>
                 <div class="feature-card fade-up" style="transition-delay:0.4s">
-                    <div class="feature-icon">📊</div>
+                    <div class="feature-icon" data-icon="bar-chart" data-icon-size="28"></div>
                     <h3 class="feature-title">التقارير والإحصائيات</h3>
                     <p class="feature-desc">
                         تقارير شاملة قابلة للتصدير بصيغة PDF تشمل الحضور والتسميع والمدفوعات.
                     </p>
                 </div>
                 <div class="feature-card fade-up" style="transition-delay:0.5s">
-                    <div class="feature-icon">📱</div>
+                    <div class="feature-icon" data-icon="smartphone" data-icon-size="28"></div>
                     <h3 class="feature-title">تطبيق جوال PWA</h3>
                     <p class="feature-desc">
                         تطبيق ويب متقدم يعمل على جميع الأجهزة مع دعم العمل بدون اتصال بالإنترنت.
@@ -197,7 +198,7 @@
     <section class="section" id="how-it-works">
         <div class="section-container">
             <div class="section-header fade-up">
-                <div class="section-badge">🔄 كيف تعمل المنصة</div>
+                <div class="section-badge"><span class="badge-icon" data-icon="refresh-cw" data-icon-size="14"></span> كيف تعمل المنصة</div>
                 <h2 class="section-title">أربع خطوات بسيطة للبدء</h2>
                 <p class="section-desc">
                     ابدأ باستخدام منصة نور في دقائق معدودة بخطوات سهلة وواضحة
@@ -232,14 +233,14 @@
     <section class="section cta-section">
         <div class="section-container">
             <div class="cta-card fade-up">
-                <div class="cta-icon">🕌</div>
+                <div class="cta-icon" data-icon="mosque" data-icon-size="40"></div>
                 <h2 class="cta-title">جاهز للبدء بإدارة مركزك؟</h2>
                 <p class="cta-desc">
                     انضم إلى منصة نور اليوم واستمتع بتجربة إدارة حديثة لمركز تحفيظ القرآن الكريم.
                 </p>
                 <div class="cta-actions">
                     <a href="/index.html#login" class="btn-primary-landing" style="font-size:17px; padding:16px 40px;">
-                        سجّل دخولك الآن 🚀
+                        سجّل دخولك الآن <span class="badge-icon" data-icon="rocket" data-icon-size="16"></span>
                     </a>
                 </div>
             </div>
@@ -252,7 +253,7 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-                        <div class="nav-logo-icon">🕌</div>
+                        <div class="nav-logo-icon" id="footerLogoIcon"></div>
                         <span class="nav-logo-text" style="background:none;-webkit-text-fill-color:#fff;">منصة نور</span>
                     </div>
                     <p class="footer-desc">
@@ -272,14 +273,14 @@
                 <div>
                     <h4 class="footer-title">تواصل معنا</h4>
                     <ul class="footer-links">
-                        <li>📧 support@noorplatform.ly</li>
-                        <li>📞 +218 91 123 4567</li>
-                        <li>📍 طرابلس، ليبيا</li>
+                        <li><span class="badge-icon" data-icon="mail" data-icon-size="14"></span> support@noorplatform.ly</li>
+                        <li><span class="badge-icon" data-icon="phone" data-icon-size="14"></span> +218 91 123 4567</li>
+                        <li><span class="badge-icon" data-icon="map-pin" data-icon-size="14"></span> طرابلس، ليبيا</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>© 2026 منصة نور — جميع الحقوق محفوظة. صُنع بـ ❤️ لخدمة كتاب الله.</p>
+                <p>© 2026 منصة نور — جميع الحقوق محفوظة. صُنع لخدمة كتاب الله.</p>
             </div>
         </div>
     </footer>
@@ -287,7 +288,7 @@
     <!-- ═══════ Scripts ═══════ -->
     <script>
         // ─── Auto-redirect if already logged in ───
-        (function() {
+        (function () {
             var token = sessionStorage.getItem('noor_token');
             if (token) {
                 try {
@@ -296,32 +297,56 @@
                         window.location.href = '/index.html';
                         return;
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
         })();
 
+        // ─── Render all data-icon placeholders as SVG (icons.js) ───
+        function renderIcons() {
+            document.querySelectorAll('[data-icon]').forEach(function (el) {
+                var name = el.getAttribute('data-icon');
+                var size = parseInt(el.getAttribute('data-icon-size') || '20', 10);
+                if (window.Icon) el.innerHTML = window.Icon(name, { size: size });
+            });
+        }
+        renderIcons();
+
+        var darkToggleBtn = document.getElementById('darkToggle');
+        var mobileToggleBtn = document.getElementById('mobileToggle');
+        var navLogoIcon = document.getElementById('navLogoIcon');
+        var footerLogoIcon = document.getElementById('footerLogoIcon');
+        if (window.Icon) {
+            navLogoIcon.innerHTML = window.Icon('mosque', { size: 22 });
+            footerLogoIcon.innerHTML = window.Icon('mosque', { size: 22 });
+            mobileToggleBtn.innerHTML = window.Icon('menu', { size: 22 });
+            darkToggleBtn.innerHTML = window.Icon(
+                document.body.classList.contains('dark-mode') ? 'sun' : 'moon',
+                { size: 18 }
+            );
+        }
+
         // ─── Navbar scroll effect ───
         var nav = document.getElementById('landingNav');
-        window.addEventListener('scroll', function() {
+        window.addEventListener('scroll', function () {
             nav.classList.toggle('scrolled', window.scrollY > 50);
         });
 
         // ─── Scroll animations (Intersection Observer) ───
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                 }
             });
         }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
 
-        document.querySelectorAll('.fade-up').forEach(function(el) {
+        document.querySelectorAll('.fade-up').forEach(function (el) {
             observer.observe(el);
         });
 
         // ─── Counter animation ───
-        var counterObserver = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
+        var counterObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
                     var el = entry.target;
                     var target = parseInt(el.dataset.count);
@@ -344,7 +369,7 @@
             });
         }, { threshold: 0.5 });
 
-        document.querySelectorAll('.stat-number[data-count]').forEach(function(el) {
+        document.querySelectorAll('.stat-number[data-count]').forEach(function (el) {
             counterObserver.observe(el);
         });
 
@@ -352,11 +377,12 @@
         function toggleDarkMode() {
             var isDark = document.body.classList.toggle('dark-mode');
             localStorage.setItem('noor_dark', isDark ? '1' : '0');
-            document.getElementById('darkToggle').textContent = isDark ? '☀️' : '🌙';
+            if (window.Icon) {
+                document.getElementById('darkToggle').innerHTML = window.Icon(isDark ? 'sun' : 'moon', { size: 18 });
+            }
         }
         if (localStorage.getItem('noor_dark') === '1') {
             document.body.classList.add('dark-mode');
-            document.getElementById('darkToggle').textContent = '☀️';
         }
 
         // ─── Mobile menu ───
@@ -382,8 +408,8 @@
         }
 
         // ─── Smooth scroll for anchor links ───
-        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
-            anchor.addEventListener('click', function(e) {
+        document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+            anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 var target = document.querySelector(this.getAttribute('href'));
                 if (target) {

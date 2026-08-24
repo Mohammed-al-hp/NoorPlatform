@@ -10,6 +10,7 @@
     const utils = () => (typeof global.getNoorUtils === 'function' ? global.getNoorUtils() : (global.NoorUtils || app().utils));
     const esc = s => utils().escapeHtml(s);
     const wa = p => utils().toWhatsAppLibyanPhone(p);
+    const icon = (name, opts) => (global.Icon ? global.Icon(name, opts) : '');
 
     async function fetchStudents() {
         const grid = document.getElementById('studentsGrid') || document.querySelector('#page-students .cards-grid');
@@ -40,7 +41,7 @@
         const grid = document.getElementById('studentsGrid') || document.querySelector('#page-students .cards-grid');
         if (!grid) return;
         if (!data.length) {
-            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🎓</div><div class="empty-state-title">لا يوجد طلاب</div></div>`;
+            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">${icon('graduation-cap', { size: 40 })}</div><div class="empty-state-title">لا يوجد طلاب</div></div>`;
             return;
         }
         const gradients = ['linear-gradient(135deg,#10b981,#3b82f6)', 'linear-gradient(135deg,#8b5cf6,#3b82f6)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#14b8a6,#10b981)', 'linear-gradient(135deg,#ec4899,#8b5cf6)'];
@@ -66,11 +67,11 @@
                 <span class="progress-pct">${s.progress}%</span>
               </div>
               <div class="student-card-actions">
-                ${st().archive ? `<button class="btn btn-primary" onclick="NoorStudents.restoreStudent(${s.id},'${safeName}')" style="flex:1">🔄 استعادة</button>` : `
-                  <button class="btn btn-view" onclick="viewStudentDetails(${s.id})">👁 عرض</button>
-                  <button class="btn btn-edit" onclick="editStudent(${s.id})">✏️</button>
-                  <button class="btn-pdf" onclick="exportStudentPDF(${s.id})">📄 PDF</button>
-                  <button class="btn btn-delete" onclick="NoorStudents.deleteStudent(${s.id},'${safeName}')">📦 أرشفة</button>`}
+                ${st().archive ? `<button class="btn btn-primary" onclick="NoorStudents.restoreStudent(${s.id},'${safeName}')" style="flex:1">${icon('refresh-cw', { size: 14 })} استعادة</button>` : `
+                  <button class="btn btn-view" onclick="viewStudentDetails(${s.id})">${icon('eye', { size: 14 })} عرض</button>
+                  <button class="btn btn-edit" onclick="editStudent(${s.id})">${icon('edit', { size: 14 })}</button>
+                  <button class="btn-pdf" onclick="exportStudentPDF(${s.id})">${icon('file-text', { size: 14 })} PDF</button>
+                  <button class="btn btn-delete" onclick="NoorStudents.deleteStudent(${s.id},'${safeName}')">${icon('archive', { size: 14 })} أرشفة</button>`}
               </div>
             </div>`;
         }).join('');
@@ -132,13 +133,13 @@
         grid.innerHTML = data.map(w => `
             <div class="student-card waiting-card" data-waiting-id="${w.id}">
               <h4>${esc(w.fullName)}</h4>
-              <span>📱 ${esc(w.displayPhone || w.phone || 'غير متاح')}</span>
+              <span>${icon('phone', { size: 13 })} ${esc(w.displayPhone || w.phone || 'غير متاح')}</span>
               <div style="font-size:12px;color:var(--text-muted);margin:8px 0">ولي الأمر: ${esc(w.parentName || '—')}</div>
               <div class="student-card-actions">
-                <button type="button" class="btn btn-primary btn-convert-waiting" data-id="${w.id}">🎓 تحويل</button>
-                <button type="button" class="btn btn-outline btn-wa-waiting" data-phone="${esc(w.displayParentPhone || w.parentPhone || w.displayPhone || w.phone || '')}" data-name="${esc(w.fullName)}">💬</button>
-                <button type="button" class="btn btn-edit btn-edit-waiting" data-id="${w.id}">✏️</button>
-                <button type="button" class="btn btn-delete btn-del-waiting" data-id="${w.id}">🗑</button>
+                <button type="button" class="btn btn-primary btn-convert-waiting" data-id="${w.id}">${icon('graduation-cap', { size: 14 })} تحويل</button>
+                <button type="button" class="btn btn-outline btn-wa-waiting" data-phone="${esc(w.displayParentPhone || w.parentPhone || w.displayPhone || w.phone || '')}" data-name="${esc(w.fullName)}">${icon('message-circle', { size: 14 })}</button>
+                <button type="button" class="btn btn-edit btn-edit-waiting" data-id="${w.id}">${icon('edit', { size: 14 })}</button>
+                <button type="button" class="btn btn-delete btn-del-waiting" data-id="${w.id}">${icon('trash-2', { size: 14 })}</button>
               </div>
             </div>`).join('');
     }
@@ -147,7 +148,7 @@
         global.confirmDelete(`أرشفة الطالب "${name}"؟`, async () => {
             try {
                 await apiFetch('/students/' + id, 'DELETE');
-                app().ui.showToast('✅ تم الأرشفة');
+                app().ui.showToast('تم الأرشفة', 'success');
                 fetchStudents();
                 global.NoorDashboard?.fetchStats?.();
             } catch (e) {
@@ -160,7 +161,7 @@
         global.confirmDelete(`استعادة "${name}"؟`, async () => {
             try {
                 await apiFetch('/students/' + id + '/restore', 'POST');
-                app().ui.showToast('✅ تمت الاستعادة');
+                app().ui.showToast('تمت الاستعادة', 'success');
                 fetchStudents();
                 global.NoorDashboard?.fetchStats?.();
             } catch (e) {
@@ -236,7 +237,7 @@
     let _convertWaitingId = null;
 
     function openWaitingListModal() {
-        document.getElementById('waitingListFormTitle').textContent = '⏳ إضافة لقائمة الانتظار';
+        document.getElementById('waitingListFormTitle').innerHTML = icon('clock', { size: 16 }) + ' إضافة لقائمة الانتظار';
         document.getElementById('waitingEntryId').value = '';
         document.getElementById('waitingListForm').reset();
         document.getElementById('wlStatusGroup').style.display = 'none';
@@ -246,7 +247,7 @@
     function openEditWaitingModal(id) {
         const w = st().waiting.find(x => x.id === id);
         if (!w) return;
-        document.getElementById('waitingListFormTitle').textContent = '✏️ تعديل قائمة الانتظار';
+        document.getElementById('waitingListFormTitle').innerHTML = icon('edit', { size: 16 }) + ' تعديل قائمة الانتظار';
         document.getElementById('waitingEntryId').value = w.id;
         document.getElementById('wlFullName').value = w.fullName;
         document.getElementById('wlPhone').value = w.displayPhone || w.phone;
@@ -279,7 +280,7 @@
             if (id) await apiFetch(`/waiting-list/${id}`, 'PUT', payload);
             else await apiFetch('/waiting-list', 'POST', payload);
             app().ui.closeModal('waitingListFormModal');
-            app().ui.showToast('✅ تم الحفظ');
+            app().ui.showToast('تم الحفظ', 'success');
             fetchWaitingList();
         } catch (err) {
             app().api.handleApiError(err, { skipLogout: true });
@@ -290,7 +291,7 @@
         global.confirmDelete('حذف هذا السجل من قائمة الانتظار؟', async () => {
             try {
                 await apiFetch(`/waiting-list/${id}`, 'DELETE');
-                app().ui.showToast('✅ تم الحذف');
+                app().ui.showToast('تم الحذف', 'success');
                 fetchWaitingList();
             } catch (e) {
                 app().api.handleApiError(e, { skipLogout: true });
@@ -315,7 +316,7 @@
         try {
             const res = await apiFetch(`/waiting-list/${_convertWaitingId}/convert-to-student`, 'POST', { circleId });
             app().ui.closeModal('convertWaitingModal');
-            app().ui.showToast('✅ ' + (res.message || 'تم التحويل'));
+            app().ui.showToast(res.message || 'تم التحويل', 'success');
             if (res.credentials && typeof showAccountCredentialsModal === 'function') {
                 showAccountCredentialsModal(res.credentials, res.credentials.displayPhone);
             }

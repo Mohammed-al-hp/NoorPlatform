@@ -8,6 +8,7 @@
     const apiFetch = (e, m, b) => app().api.apiFetch(e, m, b);
     const utils = () => (typeof global.getNoorUtils === 'function' ? global.getNoorUtils() : (global.NoorUtils || app().utils));
     const esc = (s) => utils().escapeHtml(s);
+    const icon = (name, opts) => (global.Icon ? global.Icon(name, opts) : '');
 
     let barChartInstance = null;
     let donutChartInstance = null;
@@ -105,13 +106,13 @@
                         const gradients = ['linear-gradient(135deg,#10b981,#3b82f6)', 'linear-gradient(135deg,#14b8a6,#3b82f6)', 'linear-gradient(135deg,#8b5cf6,#3b82f6)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#ec4899,#8b5cf6)'];
                         tbody.innerHTML = data.recentHifz.map((r, i) => {
                             const evalClass = r.evaluation === 'ممتاز' ? 'status-excellent' : r.evaluation === 'جيد' ? 'status-good' : 'status-late';
-                            const evalIcon = r.evaluation === 'ممتاز' ? '⭐' : r.evaluation === 'جيد' ? '👍' : '🔄';
+                            const evalIconName = r.evaluation === 'ممتاز' ? 'star' : r.evaluation === 'جيد' ? 'thumbs-up' : 'refresh-cw';
                             return `<tr>
                                 <td>${i + 1}</td>
                                 <td><div class="student-cell"><div class="avatar" style="background:${gradients[i % 5]}">${esc((r.studentName || '').slice(0, 2))}</div><span>${esc(r.studentName)}</span></div></td>
                                 <td>${esc(r.circleName)}</td>
                                 <td>${esc(r.surahName)} (${esc(r.verses)})</td>
-                                <td><span class="status-badge ${evalClass}">${evalIcon} ${esc(r.evaluation)}</span></td>
+                                <td><span class="status-badge ${evalClass}">${icon(evalIconName, { size: 14 })} ${esc(r.evaluation)}</span></td>
                             </tr>`;
                         }).join('');
                     }
@@ -135,9 +136,12 @@
             timeline.innerHTML = activities.map(a => {
                 const timeStr = new Date(a.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', numberingSystem: 'latn' });
                 const dotClass = a.color === 'green' ? 'nd-green' : a.color === 'blue' ? 'nd-blue' : a.color === 'amber' ? 'nd-amber' : 'nd-red';
+                // ملاحظة: a.icon قادم من الـ API — إذا كان إيموجي من الخلفية، يفضّل تعديل الـ API ليرسل
+                // اسم أيقونة (مثل "check-circle") بدل إيموجي حتى يظهر متسقًا هنا أيضًا.
+                const activityIcon = global.Icon && global.NoorIcons.PATHS[a.icon] ? icon(a.icon, { size: 14 }) : (a.icon || '');
                 return `<div class="notif-item">
                     <div class="notif-dot-wrap">
-                        <div class="notif-dot ${dotClass}">${a.icon}</div>
+                        <div class="notif-dot ${dotClass}">${activityIcon}</div>
                         <div class="notif-line"></div>
                     </div>
                     <div class="notif-content">
@@ -175,11 +179,11 @@
               <div class="ann-card-content">
                 <div class="ann-card-top"><h4>${esc(a.title)}</h4><time>${utils().formatDateEnGb(a.createdAt)}</time></div>
                 <p>${esc(a.content)}</p>
-                <div class="ann-target" style="color:${esc(a.color)}">🎯 ${esc(a.target)}</div>
+                <div class="ann-target" style="color:${esc(a.color)}">${icon('target', { size: 13 })} ${esc(a.target)}</div>
               </div>
             </div>`).join('');
             list.querySelectorAll('.ann-card').forEach(card => {
-                card.addEventListener('click', () => app().ui.showToast('📢 ' + card.dataset.title), { once: false });
+                card.addEventListener('click', () => app().ui.showToast(card.dataset.title, 'info'), { once: false });
             });
         } catch (e) {
             app().api.handleApiError(e);
@@ -196,9 +200,11 @@
                 return;
             }
             wrap.innerHTML = data.map(s => {
-                let medal = s.rank <= 3 ? ['🥇', '🥈', '🥉'][s.rank - 1] : '#' + s.rank;
+                const rankDisplay = s.rank <= 3
+                    ? `<span class="rank-medal rank-${s.rank}">${icon('medal-gold', { size: 22 })}</span>`
+                    : `<span style="font-weight:bold">#${s.rank}</span>`;
                 return `<div style="display:flex;align-items:center;gap:15px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px">
-                    <div style="font-size:24px;font-weight:bold;width:40px;text-align:center">${medal}</div>
+                    <div style="width:40px;text-align:center">${rankDisplay}</div>
                     <div style="flex:1"><div style="font-weight:700">${esc(s.fullName)}</div><div style="font-size:12px;color:var(--text-muted)">${esc(s.circleName)} • حضور: ${s.attendanceRate}%</div></div>
                     <div style="font-weight:800;color:var(--green)">${s.points} نقطة</div>
                 </div>`;
@@ -329,7 +335,7 @@
         };
 
         if (!payload.centerName) {
-            app().ui.showToast('❌ اسم المركز مطلوب');
+            app().ui.showToast('اسم المركز مطلوب', 'error');
             return;
         }
 
@@ -337,7 +343,7 @@
         try {
             if (global.setBtnLoading) global.setBtnLoading(btn, true, 'جارِ الحفظ...');
             await apiFetch('/settings', 'PUT', payload);
-            app().ui.showToast('✅ تم حفظ الإعدادات بنجاح');
+            app().ui.showToast('تم حفظ الإعدادات بنجاح', 'success');
             
             // تحديث اسم المركز في اللوجو الجانبي إن أمكن
             const logoText = document.querySelector('.sidebar-header h2');
@@ -346,7 +352,7 @@
         } catch (e) {
             app().api.handleApiError(e);
         } finally {
-            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ التغييرات');
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, icon('save', { size: 16 }) + ' حفظ التغييرات');
         }
     }
 
@@ -355,17 +361,17 @@
         const newPass = document.getElementById('settingsNewPass')?.value;
 
         if (!currentPass || !newPass) {
-            app().ui.showToast('الرجاء إدخال كلمة المرور الحالية والجديدة');
+            app().ui.showToast('الرجاء إدخال كلمة المرور الحالية والجديدة', 'warning');
             return;
         }
         if (newPass.length < 6) {
-            app().ui.showToast('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل');
+            app().ui.showToast('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل', 'warning');
             return;
         }
 
         try {
             await apiFetch('/auth/change-password', 'POST', { currentPassword: currentPass, newPassword: newPass });
-            app().ui.showToast('✅ تم تغيير كلمة المرور بنجاح');
+            app().ui.showToast('تم تغيير كلمة المرور بنجاح', 'success');
             document.getElementById('settingsCurrentPass').value = '';
             document.getElementById('settingsNewPass').value = '';
         } catch (e) {
@@ -377,7 +383,7 @@
         localStorage.setItem('noor_font_size', size);
         document.documentElement.style.setProperty('--font-size-base', size);
         document.body.style.fontSize = size;
-        app().ui.showToast('تم تغيير حجم الخط');
+        app().ui.showToast('تم تغيير حجم الخط', 'info');
     }
 
     function savePref(key, value) {
@@ -386,8 +392,8 @@
 
     function exportData() {
         // في المستقبل يمكن ربطه بـ API حقيقي يصدر Excel. حاليا Toast بسيط.
-        app().ui.showToast('جاري تجهيز ملف البيانات للتصدير...');
-        setTimeout(() => app().ui.showToast('✅ تم تحميل الملف بنجاح'), 1500);
+        app().ui.showToast('جاري تجهيز ملف البيانات للتصدير...', 'info');
+        setTimeout(() => app().ui.showToast('تم تحميل الملف بنجاح', 'success'), 1500);
     }
 
     function clearCache() {

@@ -27,17 +27,17 @@
             <p style="font-size:13px;color:var(--text-muted);margin-top:8px">${escapeHtml(e.description || '')}</p>
             <div style="margin-top:14px;display:flex;gap:8px">
                 <button class="btn btn-primary" style="font-size:12px;padding:8px 14px" onclick="openExamResults(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
-                📊 إدخال نتائج الطلاب
+                ${window.Icon ? window.Icon('bar-chart', {size:14}) : ''} إدخال نتائج الطلاب
                 </button>
                 ${global.USER?.role === 'Admin' ? `
                 <button class="btn btn-delete" style="font-size:12px;padding:8px 14px" onclick="deleteExam(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
-                🗑 حذف
+                ${window.Icon ? window.Icon('trash-2', {size:14}) : ''} حذف
                 </button>` : ''}
             </div>
             </div>`).join('');
         } catch (err) {
             handleApiError(err, { silent: true });
-            showToast('❌ تعذر تحميل الاختبارات');
+            showToast('تعذر تحميل الاختبارات', 'error');
         }
     }
 
@@ -47,13 +47,13 @@
         const desc = document.getElementById('examDesc')?.value?.trim() || '';
 
         if (!title || !date) {
-            showToast('❌ يرجى ملء العنوان والتاريخ');
+            showToast('يرجى ملء العنوان والتاريخ', 'error');
             return;
         }
 
         const parsedDate = new Date(date);
         if (isNaN(parsedDate.getTime())) {
-            showToast('❌ تاريخ غير صالح');
+            showToast('تاريخ غير صالح', 'error');
             return;
         }
 
@@ -65,12 +65,12 @@
             document.getElementById('examDate').value = '';
             document.getElementById('examDesc').value = '';
             closeModal('addExamModal');
-            showToast('✅ تم إنشاء الاختبار بنجاح');
+            showToast('تم إنشاء الاختبار بنجاح', 'success');
             fetchExams();
         } catch (err) {
             handleApiError(err);
         } finally {
-            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ');
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, (window.Icon ? window.Icon('save', {size:14}) : '') + ' حفظ');
         }
     }
 
@@ -80,9 +80,9 @@
     async function openExamResults(examId, examTitle) {
         _currentExamId = examId;
         openModal('addExamResultModal');
-        document.getElementById('examResultFormTitle').textContent = '📝 ' + examTitle;
+        document.getElementById('examResultFormTitle').innerHTML = (window.Icon ? window.Icon('file-text', {size:16}) : '') + ' ' + examTitle;
         const rowsEl = document.getElementById('examResultRows');
-        rowsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري تحميل الطلاب...</div>';
+        rowsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:14}) : '') + '</span> جاري تحميل الطلاب...</div>';
 
         try {
             const students = await apiFetch('/students');
@@ -126,7 +126,7 @@
         });
 
         if (!results.length) {
-            showToast('⚠️ يرجى إدخال درجة واحدة على الأقل');
+            showToast('يرجى إدخال درجة واحدة على الأقل', 'warning');
             return;
         }
 
@@ -135,12 +135,12 @@
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await apiFetch(`/exams/${_currentExamId}/results`, 'POST', results);
             closeModal('addExamResultModal');
-            showToast(`✅ تم حفظ ${results.length} نتيجة بنجاح`);
+            showToast(`تم حفظ ${results.length} نتيجة بنجاح`, 'success');
             fetchExams();
         } catch (err) {
             handleApiError(err);
         } finally {
-            if (global.setBtnLoading) global.setBtnLoading(btn, false, '💾 حفظ النتائج');
+            if (global.setBtnLoading) global.setBtnLoading(btn, false, (window.Icon ? window.Icon('save', {size:14}) : '') + ' حفظ النتائج');
         }
     }
 

@@ -9,7 +9,7 @@
     function showAccountCredentialsModal(credentials, whatsappPhone) {
         _lastAccountCredentials = { ...credentials, whatsappPhone: whatsappPhone || credentials.displayPhone || credentials.phone };
         const body = document.getElementById('accountCredentialsBody');
-        if(!body) return;
+        if (!body) return;
         body.innerHTML = `
             <p><strong>الاسم:</strong> ${escapeHtml(credentials.fullName)}</p>
             <p><strong>رقم الهاتف (تسجيل الدخول):</strong> <code>${escapeHtml(credentials.displayPhone || credentials.phone)}</code></p>
@@ -22,7 +22,7 @@
         if (!_lastAccountCredentials) return;
         const c = _lastAccountCredentials;
         const text = `منصة نور\nالاسم: ${c.fullName}\nرقم الهاتف: ${c.displayPhone || c.phone}\nكلمة المرور: ${c.tempPassword}`;
-        navigator.clipboard.writeText(text).then(() => showToast('✅ تم النسخ'));
+        navigator.clipboard.writeText(text).then(() => showToast('تم النسخ', 'success'));
     }
 
     function printAccountCredentials() {
@@ -78,7 +78,7 @@
     window.addEventListener('popstate', function (e) {
         if (e.state && e.state.page) {
             var navEl = document.querySelector('[onclick*="navigate(\'' + e.state.page + '\'"]');
-            if(typeof navigate === 'function') navigate(e.state.page, navEl);
+            if (typeof navigate === 'function') navigate(e.state.page, navEl);
         }
     });
 
@@ -105,10 +105,10 @@
                 </div>
                 <h4 style="margin-bottom:8px">آخر سجلات التسميع</h4>
                 ${hifzHtml}`;
-            if (setModalBody('teacherProfileBody', html, '👤 بيانات الطالب')) {
+            if (setModalBody('teacherProfileBody', html, (window.Icon ? window.Icon('user', { size: 16 }) : '') + ' بيانات الطالب')) {
                 openModal('teacherProfileModal');
             }
-        } catch (err) { showToast('❌ ' + err.message); }
+        } catch (err) { showToast(err.message, 'error'); }
     }
 
     async function editStudent(id) {
@@ -133,7 +133,7 @@
             }
             openModal('editStudentModal');
         } catch (err) {
-            showToast('❌ ' + (err.message || 'تعذر تحميل بيانات الطالب'));
+            showToast('' + (err.message || 'تعذر تحميل بيانات الطالب', 'error'));
         }
     }
 
@@ -151,13 +151,13 @@
             level: document.getElementById('editStudentLevel').value,
             circleId: parseInt(document.getElementById('editStudentCircle').value, 10) || null
         };
-        if (!payload.fullName) { showToast('⚠️ الاسم الثلاثي مطلوب'); return; }
+        if (!payload.fullName) { showToast('الاسم الثلاثي مطلوب', 'warning'); return; }
         try {
             await apiFetch(`/students/${id}`, 'PUT', payload);
             closeModal('editStudentModal');
-            showToast('✅ تم تحديث بيانات الطالب');
+            showToast('تم تحديث بيانات الطالب', 'success');
             if (typeof fetchStudents === 'function') fetchStudents();
-        } catch (err) { showToast('❌ ' + err.message); }
+        } catch (err) { showToast(err.message, 'error'); }
     }
 
     async function saveStudent() {
@@ -176,15 +176,15 @@
 
         // إن اختار المستخدم ولي أمر موجوداً مسبقاً، لا حاجة لاسم/هاتف/صلة قرابة جديدة
         if (!fullName || !birthDate || !registrationDate) {
-            showToast('⚠️ يرجى تعبئة جميع الحقول الإلزامية');
+            showToast('يرجى تعبئة جميع الحقول الإلزامية', 'warning');
             return;
         }
         if (!existingParentId && (!parentPhone || !guardianName || !guardianRelationship)) {
-            showToast('⚠️ اختر ولي أمر موجوداً أو أدخل بيانات ولي أمر جديد كاملة');
+            showToast('اختر ولي أمر موجوداً أو أدخل بيانات ولي أمر جديد كاملة', 'warning');
             return;
         }
 
-        showToast('⏳ جاري حفظ البيانات...');
+        showToast('جاري حفظ البيانات...', 'info');
         try {
             const data = await apiFetch('/students', 'POST', {
                 fullName,
@@ -200,11 +200,11 @@
                 level: level || null
             });
             closeModal('addStudentModal');
-            showToast('✅ تم إضافة الطالب بنجاح');
+            showToast('تم إضافة الطالب بنجاح', 'success');
             if (data.credentials) showAccountCredentialsModal(data.credentials, parentPhone);
             if (typeof fetchStudents === 'function') fetchStudents();
         } catch (error) {
-            showToast('❌ ' + (error.message || 'تعذر الاتصال بالخادم'));
+            showToast('' + (error.message || 'تعذر الاتصال بالخادم', 'error'));
         }
     }
 
@@ -217,9 +217,9 @@
         global.confirmDelete('حذف سجل التسميع؟', async () => {
             try {
                 await apiFetch(`/hifz/${id}`, 'DELETE');
-                showToast('✅ تم حذف السجل');
-                if(typeof fetchMemorizationData === 'function') fetchMemorizationData();
-            } catch (err) { showToast('❌ ' + err.message); }
+                showToast('تم حذف السجل', 'success');
+                if (typeof fetchMemorizationData === 'function') fetchMemorizationData();
+            } catch (err) { showToast(err.message, 'error'); }
         });
     }
 
@@ -227,19 +227,19 @@
         global.confirmDelete(`حذف اختبار "${title}"؟`, async () => {
             try {
                 await apiFetch(`/exams/${id}`, 'DELETE');
-                showToast('✅ تم حذف الاختبار');
-                if(typeof fetchExams === 'function') fetchExams();
-            } catch (err) { showToast('❌ ' + err.message); }
+                showToast('تم حذف الاختبار', 'success');
+                if (typeof fetchExams === 'function') fetchExams();
+            } catch (err) { showToast(err.message, 'error'); }
         });
     }
 
     async function sendBulkAbsenceNotifs(circleId) {
         const cid = parseInt(circleId, 10);
         if (!cid || isNaN(cid)) {
-            showToast('⚠️ اختر حلقة أولاً من القائمة أعلاه');
+            showToast('اختر حلقة أولاً من القائمة أعلاه', 'warning');
             return;
         }
-        
+
         global.confirmDelete('إرسال إشعارات غياب لجميع أولياء الأمور عبر واتساب؟', async () => {
             const btns = document.querySelectorAll('button');
             let targetBtn = null;
@@ -247,8 +247,8 @@
             try {
                 if (global.setBtnLoading && targetBtn) global.setBtnLoading(targetBtn, true);
                 const res = await apiFetch('/notifications/bulk-absence', 'POST', { circleId: cid });
-                showToast(`✅ ${res.message}`);
-            } catch (err) { showToast('❌ ' + err.message); }
+                showToast(`${res.message}`, 'success');
+            } catch (err) { showToast(err.message, 'error'); }
             finally {
                 if (global.setBtnLoading && targetBtn) global.setBtnLoading(targetBtn, false, targetBtn.dataset.origText || 'إرسال إشعارات للغائبين');
             }
@@ -258,27 +258,27 @@
     async function sendHifzPraise(studentId, surahName, verses, evaluation) {
         try {
             await apiFetch('/notifications/hifz-praise', 'POST', { studentId, surahName, verses, evaluation });
-            showToast('✅ تم إرسال رسالة المديح لولي الأمر');
-        } catch (err) { showToast('❌ ' + err.message); }
+            showToast('تم إرسال رسالة المديح لولي الأمر', 'success');
+        } catch (err) { showToast(err.message, 'error'); }
     }
-    
+
     async function saveAnn() {
         const title = document.getElementById('annTitle')?.value.trim();
         const content = document.getElementById('annContent')?.value.trim();
         const target = document.getElementById('annTarget')?.value || 'الجميع';
         const btn = document.querySelector('#addAnnModal .btn-primary');
         if (!title || !content) {
-            showToast('⚠️ العنوان ونص الإعلان مطلوبان');
+            showToast('العنوان ونص الإعلان مطلوبان', 'warning');
             return;
         }
         try {
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
             await apiFetch('/announcements', 'POST', { title, content, target });
             closeModal('addAnnModal');
-            showToast('📢 تم نشر الإعلان بنجاح');
+            showToast('تم نشر الإعلان بنجاح', 'success');
             global.NoorDashboard?.fetchAnnouncements?.();
         } catch (err) {
-            showToast('❌ ' + (err.message || 'حدث خطأ أثناء النشر'));
+            showToast('' + (err.message || 'حدث خطأ أثناء النشر', 'error'));
         } finally {
             if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }
@@ -304,8 +304,8 @@
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                   <span class="status-badge ${r.evaluation === 'ممتاز' ? 'status-excellent' : 'status-good'}">${escapeHtml(r.evaluation)}</span>
-                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981" onclick="sendHifzPraise(${r.studentId}, '${escapeHtml(r.surahName).replace(/'/g, "\\'")}', '${escapeHtml(r.verses).replace(/'/g, "\\'")}', '${escapeHtml(r.evaluation).replace(/'/g, "\\'")}')" title="إرسال رسالة مديح لولي الأمر عبر واتساب">💬 مديح</button>
-                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#ef4444;border-color:#ef4444" onclick="deleteHifzRecord(${r.id})" title="حذف السجل">🗑</button>
+                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981" onclick="sendHifzPraise(${r.studentId}, '${escapeHtml(r.surahName).replace(/'/g, "\\'")}', '${escapeHtml(r.verses).replace(/'/g, "\\'")}', '${escapeHtml(r.evaluation).replace(/'/g, "\\'")}')" title="إرسال رسالة مديح لولي الأمر عبر واتساب">${window.Icon ? window.Icon('message-circle', { size: 12 }) : ''} مديح</button>
+                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#ef4444;border-color:#ef4444" onclick="deleteHifzRecord(${r.id})" title="حذف السجل">${window.Icon ? window.Icon('trash-2', { size: 12 }) : ''}</button>
               </div>
             </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px">لا توجد جلسات بعد</p>';
             } catch { panel.innerHTML = '<p style="color:var(--text-muted);font-size:13px">لا توجد جلسات بعد</p>'; }
@@ -326,7 +326,7 @@
             renderLibraryItems();
         } catch (err) {
             console.error(err);
-            showToast('❌ حدث خطأ في تحميل المكتبة');
+            showToast('حدث خطأ في تحميل المكتبة', 'error');
         }
     }
 
@@ -362,8 +362,8 @@
                     </div>
                     <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px">رافع الملف: ${escapeHtml(item.uploadedBy)}</div>
                     <div class="actions" style="margin-top:auto; display:flex; gap:8px">
-                        <button type="button" class="btn btn-primary btn-view-pdf" style="flex:1; padding:8px" data-library-id="${item.id}">👁 عرض</button>
-                        ${canUpload ? `<button class="btn btn-outline" style="padding:8px 12px; color:#ef4444; border-color:#ef4444" onclick="deleteLibraryItem(${item.id})">🗑</button>` : ''}
+                        <button type="button" class="btn btn-primary btn-view-pdf" style="flex:1; padding:8px" data-library-id="${item.id}">${window.Icon ? window.Icon('eye', { size: 12 }) : ''} عرض</button>
+                        ${canUpload ? `<button class="btn btn-outline" style="padding:8px 12px; color:#ef4444; border-color:#ef4444" onclick="deleteLibraryItem(${item.id})">${window.Icon ? window.Icon('trash-2', { size: 12 }) : ''}</button>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -385,8 +385,8 @@
     }
 
     function openUploadLibraryModal() {
-        if (!global.TOKEN) { showToast('⚠️ يرجى تسجيل الدخول أولاً'); return; }
-        if (global.USER?.role !== 'Admin' && global.USER?.role !== 'Teacher') { showToast('⚠️ غير مصرح لك بإضافة ملفات'); return; }
+        if (!global.TOKEN) { showToast('يرجى تسجيل الدخول أولاً', 'warning'); return; }
+        if (global.USER?.role !== 'Admin' && global.USER?.role !== 'Teacher') { showToast('غير مصرح لك بإضافة ملفات', 'warning'); return; }
         document.getElementById('uploadLibraryForm')?.reset();
         openModal('uploadLibraryModal');
     }
@@ -402,7 +402,7 @@
         const btn = document.getElementById('btnUploadLibrary');
         try {
             btn.disabled = true;
-            btn.innerHTML = 'جاري الرفع... ⏳';
+            btn.innerHTML = 'جاري الرفع... ' + (window.Icon ? '<span class="spin-icon">' + window.Icon('loader', { size: 14 }) + '</span>' : '');
             const fileInput = form.querySelector('input[name="file"]');
             if (fileInput?.files[0] && fileInput.files[0].size > 50 * 1024 * 1024) throw new Error('حجم الملف يتجاوز 50 ميجابايت');
 
@@ -416,36 +416,36 @@
             if (ct.includes('application/json')) data = await response.json();
             if (!response.ok) throw new Error(data.message || (response.status === 413 ? 'حجم الملف كبير جداً — الحد الأقصى 50MB' : 'فشل الرفع — تحقق من الاتصال وحجم الملف'));
 
-            showToast('✅ ' + data.message);
+            showToast(data.message, 'success');
             closeUploadLibraryModal();
             fetchLibraryItems();
-        } catch (err) { showToast('❌ ' + err.message); } 
-        finally { btn.disabled = false; btn.innerHTML = 'رفع الملف 📤'; }
+        } catch (err) { showToast(err.message, 'error'); }
+        finally { btn.disabled = false; btn.innerHTML = 'رفع الملف ' + (window.Icon ? window.Icon('upload', { size: 14 }) : ''); }
     }
 
     function deleteLibraryItem(id) {
         global.confirmDelete('هل أنت متأكد من حذف هذا الملف نهائياً؟', async () => {
             try {
                 await apiFetch(`/library/${id}`, 'DELETE');
-                showToast('✅ تم حذف الملف بنجاح');
+                showToast('تم حذف الملف بنجاح', 'success');
                 fetchLibraryItems();
-            } catch (err) { showToast('❌ ' + err.message); }
+            } catch (err) { showToast(err.message, 'error'); }
         });
     }
 
     async function viewLibraryPdf(id, title) {
-        if (!global.TOKEN) { showToast('⚠️ يرجى تسجيل الدخول أولاً'); return; }
+        if (!global.TOKEN) { showToast('يرجى تسجيل الدخول أولاً', 'warning'); return; }
         const iframe = document.getElementById('pdfViewerIframe');
         const titleEl = document.getElementById('pdfViewerTitle');
         const downBtn = document.getElementById('pdfViewerDownloadBtn');
-        if (!iframe || !titleEl || !downBtn) { showToast('❌ عارض الملف غير متوفر'); return; }
+        if (!iframe || !titleEl || !downBtn) { showToast('عارض الملف غير متوفر', 'error'); return; }
 
         titleEl.textContent = title || 'عرض الملف';
         iframe.src = '';
         openModal('pdfViewerModal');
         try {
             const res = await fetch(`${API_URL}/library/${id}/file`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
-            if (res.status === 401) { if(typeof logout === 'function') logout(); return; }
+            if (res.status === 401) { if (typeof logout === 'function') logout(); return; }
             if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || 'تعذر تحميل الملف'); }
             const blob = await res.blob();
             if (!blob.size) throw new Error('الملف فارغ أو تالف');
@@ -456,7 +456,7 @@
             downBtn.href = blobUrl;
             downBtn.download = (title || 'document').replace(/[^\w\u0600-\u06FF\s.-]/g, '') + '.pdf';
         } catch (err) {
-            showToast('❌ ' + (err.message || 'فشل عرض الملف'));
+            showToast('' + (err.message || 'فشل عرض الملف', 'error'));
             closePdfViewerModal();
         }
     }
@@ -468,7 +468,7 @@
             URL.revokeObjectURL(iframe._blobUrl);
             iframe._blobUrl = null;
         }
-        if(iframe) iframe.src = '';
+        if (iframe) iframe.src = '';
     }
 
     // تصدير للدوال
@@ -476,7 +476,7 @@
     global.copyAccountCredentials = copyAccountCredentials;
     global.printAccountCredentials = printAccountCredentials;
     global.sendAccountCredentialsWhatsApp = sendAccountCredentialsWhatsApp;
-    
+
     global.viewStudentDetails = viewStudentDetails;
     global.editStudent = editStudent;
     global.submitEditStudent = submitEditStudent;
@@ -508,8 +508,8 @@
             if (btn) btn.addEventListener('click', e => { e.preventDefault(); openUploadLibraryModal(); });
         });
         const logoutBtn = document.querySelector('.logout-btn');
-        if(logoutBtn) logoutBtn.addEventListener('click', global.logout);
-        if(typeof global.checkAuth === 'function') global.checkAuth();
+        if (logoutBtn) logoutBtn.addEventListener('click', global.logout);
+        if (typeof global.checkAuth === 'function') global.checkAuth();
     });
 
 })(window);
