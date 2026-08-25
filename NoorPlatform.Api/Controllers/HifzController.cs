@@ -53,6 +53,68 @@ public class HifzController : ControllerBase
     }
 
     /// <summary>
+    /// آخر موضع حفظ (تسميع جديد فقط) للطالب — يُستخدم لاقتراح نقطة البداية
+    /// تلقائيًا في نموذج تسجيل جلسة تسميع جديدة.
+    /// GET /api/hifz/last-position/{studentId}
+    /// </summary>
+    [HttpGet("last-position/{studentId}")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GetLastPosition(int studentId)
+    {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
+            return Forbid();
+
+        var studentExists = await _context.Students.AnyAsync(s => s.Id == studentId);
+        if (!studentExists)
+            return NotFound(new { message = "الطالب غير موجود" });
+
+        var lastRecord = await _context.HifzRecords.AsNoTracking()
+            .Where(r => r.StudentId == studentId && r.Type == RecordType.Memorization)
+            .OrderByDescending(r => r.Date)
+            .ThenByDescending(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        if (lastRecord == null)
+        {
+            return Ok(new
+            {
+                hasPrevious = false,
+                surahName = (string?)null,
+                nextVerse = 1
+            });
+        }
+
+        // آخر سورة حفظها الطالب فعليًا: لو الجلسة امتدت لأكثر من سورة (ToSurahName)
+        // نعتبر آخر سورة وصل لها هي ToSurahName، وإلا SurahName نفسها.
+        var effectiveSurah = string.IsNullOrWhiteSpace(lastRecord.ToSurahName)
+            ? lastRecord.SurahName
+            : lastRecord.ToSurahName;
+
+        // استخراج آخر رقم آية من نص Verses (مثال: "17-30" → 30، أو "20" → 20)
+        var lastVerseNumber = ExtractLastVerseNumber(lastRecord.Verses);
+
+        return Ok(new
+        {
+            hasPrevious = true,
+            surahName = effectiveSurah,
+            lastVerse = lastVerseNumber,
+            nextVerse = lastVerseNumber + 1,
+            lastSessionDate = lastRecord.Date.ToString("yyyy-MM-dd")
+        });
+    }
+
+    private static int ExtractLastVerseNumber(string verses)
+    {
+        if (string.IsNullOrWhiteSpace(verses)) return 0;
+        var parts = verses.Trim().Split('-');
+        if (parts.Length == 2 && int.TryParse(parts[1].Trim(), out var to))
+            return to;
+        if (int.TryParse(verses.Trim(), out var single))
+            return single;
+        return 0;
+    }
+
+    /// <summary>
     /// سجل تسميع ومراجعة الطالب الحالي بالكامل — الهوية من الـ token فقط (لا يقبل studentId).
     /// </summary>
     [HttpGet("my")]

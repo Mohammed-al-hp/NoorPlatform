@@ -25,6 +25,11 @@
             circleSel.addEventListener('change', onHifzCircleChange);
         }
 
+        const studentSel = document.getElementById('hifzStudentSelect');
+        if (studentSel) {
+            studentSel.addEventListener('change', onHifzStudentChange);
+        }
+
         document.querySelectorAll('[data-session-type]').forEach(btn => {
             btn.addEventListener('click', function () {
                 selectSessionTypeBtn(this, this.dataset.sessionType);
@@ -51,6 +56,49 @@
             showTo.addEventListener('change', function () {
                 if (toSurahWrap) toSurahWrap.style.display = showTo.checked ? 'block' : 'none';
             });
+        }
+
+        // ─── جلب نص الآيات تلقائيًا (رواية قالون) عند اختيار السورة/الآيات ───
+        const memFromSurah = document.getElementById('hifzFromSurah');
+        const memFromVerse = document.getElementById('hifzFromVerse');
+        const memToVerse = document.getElementById('hifzToVerse');
+        [memFromSurah, memFromVerse, memToVerse].forEach(el => {
+            if (el) el.addEventListener('change', autoFillVerseText);
+        });
+
+        // تتبع التعديل اليدوي: إن كتب المحفّظ بنفسه بهذين الحقلين، لا نستبدل ما كتبه لاحقًا
+        const startInput = document.getElementById('hifzStartText');
+        const endInput = document.getElementById('hifzEndText');
+        if (startInput) startInput.addEventListener('input', () => { startInput.dataset.userEdited = '1'; });
+        if (endInput) endInput.addEventListener('input', () => { endInput.dataset.userEdited = '1'; });
+    }
+
+    async function autoFillVerseText() {
+        const startInput = document.getElementById('hifzStartText');
+        const endInput = document.getElementById('hifzEndText');
+        if (!startInput && !endInput) return;
+        if (!global.NoorQuranText) return; // المصدر غير محمّل بالصفحة
+
+        const surahName = document.getElementById('hifzFromSurah')?.value;
+        const fromVerse = document.getElementById('hifzFromVerse')?.value;
+        const toVerse = document.getElementById('hifzToVerse')?.value || fromVerse;
+        if (!surahName || !fromVerse) return;
+
+        try {
+            if (startInput && !startInput.dataset.userEdited) {
+                startInput.placeholder = 'جاري جلب النص...';
+                const startText = await global.NoorQuranText.fetchVerseTextByName(surahName, fromVerse);
+                if (startText) startInput.value = startText;
+                startInput.placeholder = 'اقرأ من قوله تعالى...';
+            }
+            if (endInput && !endInput.dataset.userEdited) {
+                endInput.placeholder = 'جاري جلب النص...';
+                const endText = await global.NoorQuranText.fetchVerseTextByName(surahName, toVerse);
+                if (endText) endInput.value = endText;
+                endInput.placeholder = '...إلى قوله';
+            }
+        } catch (e) {
+            console.warn('تعذر جلب نص الآيات تلقائيًا:', e);
         }
     }
 
@@ -98,6 +146,48 @@
         }
     }
 
+    async function onHifzStudentChange() {
+        // الاقتراح التلقائي يفيد فقط بوضع "حفظ جديد" (Memorization)
+        if (sessionType !== 'Memorization') return;
+
+        const studentId = parseInt(document.getElementById('hifzStudentSelect')?.value, 10);
+        const hintEl = document.getElementById('hifzLastPositionHint');
+        if (!studentId) {
+            if (hintEl) hintEl.textContent = '';
+            return;
+        }
+
+        if (hintEl) hintEl.textContent = 'جاري التحقق من آخر موضع حفظ...';
+
+        try {
+            const pos = await global.apiFetch(`/hifz/last-position/${studentId}`);
+            if (!pos || !pos.hasPrevious) {
+                if (hintEl) hintEl.textContent = 'لا يوجد سجل حفظ سابق لهذا الطالب — ابدأ من حيث تشاء.';
+                return;
+            }
+
+            const fromSurahSel = document.getElementById('hifzFromSurah');
+            const fromVerseInput = document.getElementById('hifzFromVerse');
+
+            if (fromSurahSel && pos.surahName) {
+                fromSurahSel.value = pos.surahName;
+            }
+            if (fromVerseInput && pos.nextVerse) {
+                fromVerseInput.value = pos.nextVerse;
+            }
+
+            if (hintEl) {
+                hintEl.textContent = `آخر توقف: سورة ${pos.surahName} — الآية ${pos.lastVerse} (بتاريخ ${pos.lastSessionDate}). تم اقتراح البدء من الآية ${pos.nextVerse}.`;
+            }
+
+            // تحديث نص الآية تلقائيًا بناءً على الموضع الجديد المقترح
+            autoFillVerseText();
+        } catch (e) {
+            if (hintEl) hintEl.textContent = '';
+            console.warn('تعذر جلب آخر موضع حفظ للطالب:', e);
+        }
+    }
+
     function selectSessionTypeBtn(btn, type) {
         document.querySelectorAll('#addMemModal [data-session-type]').forEach(b => {
             b.classList.remove('btn-primary');
@@ -111,6 +201,13 @@
         const memPanel = document.getElementById('hifzMemorizationPanel');
         if (revPanel) revPanel.style.display = sessionType === 'Revision' ? 'block' : 'none';
         if (memPanel) memPanel.style.display = sessionType === 'Memorization' ? 'block' : 'none';
+
+        const hintEl = document.getElementById('hifzLastPositionHint');
+        if (sessionType === 'Memorization') {
+            onHifzStudentChange();
+        } else if (hintEl) {
+            hintEl.textContent = '';
+        }
     }
 
     function selectRevisionMode(btn, mode) {
@@ -181,6 +278,13 @@
             const el = document.getElementById(id);
             if (el) el.innerHTML = opts;
         });
+        // إعادة تفعيل الملء التلقائي لنص الآيات لجلسة جديدة
+        const startInput = document.getElementById('hifzStartText');
+        const endInput = document.getElementById('hifzEndText');
+        if (startInput) { startInput.value = ''; delete startInput.dataset.userEdited; }
+        if (endInput) { endInput.value = ''; delete endInput.dataset.userEdited; }
+        const hintEl = document.getElementById('hifzLastPositionHint');
+        if (hintEl) hintEl.textContent = '';
         selectSessionTypeBtn(document.querySelector('#addMemModal [data-session-type="Memorization"]'), 'Memorization');
         const revBtn = document.querySelector('[data-revision-mode="Sequential"]');
         if (revBtn) selectRevisionMode(revBtn, 'Sequential');
@@ -327,7 +431,10 @@
                     circleSel.value = String(st.circleId);
                     await onHifzCircleChange();
                     const studentSel = document.getElementById('hifzStudentSelect');
-                    if (studentSel) studentSel.value = String(studentId);
+                    if (studentSel) {
+                        studentSel.value = String(studentId);
+                        await onHifzStudentChange();
+                    }
                 }
             }
         });

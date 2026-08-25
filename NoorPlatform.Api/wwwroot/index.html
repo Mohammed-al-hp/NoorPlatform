@@ -1170,6 +1170,7 @@
             border-radius: 8px;
             border: 1px solid var(--border);
             background: var(--bg);
+            color: var(--text);
             cursor: pointer;
             font-size: 14px;
             transition: .2s;
@@ -4782,6 +4783,7 @@
                     <select class="form-input" id="hifzStudentSelect" disabled>
                         <option value="">— اختر الحلقة أولاً —</option>
                     </select>
+                    <span id="hifzLastPositionHint" style="font-size:12px;color:var(--green-dark, #16a34a);display:block;margin-top:4px"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">نوع الجلسة</label>
@@ -4823,10 +4825,12 @@
                     <div class="form-group">
                         <label class="form-label">نص بداية الآية</label>
                         <input class="form-input" id="hifzStartText" type="text" placeholder="اقرأ من قوله تعالى...">
+                        <span style="font-size:11px;color:var(--text-muted)">يُملأ تلقائيًا من رواية قالون عند اختيار السورة والآية — يمكن تعديله يدويًا</span>
                     </div>
                     <div class="form-group">
                         <label class="form-label">نص نهاية الآية</label>
                         <input class="form-input" id="hifzEndText" type="text" placeholder="...إلى قوله">
+                        <span style="font-size:11px;color:var(--text-muted)">يُملأ تلقائيًا من رواية قالون عند اختيار السورة والآية — يمكن تعديله يدويًا</span>
                     </div>
                 </div>
                 <div id="hifzRevisionPanel" style="display:none">
@@ -5673,6 +5677,7 @@
     <script src="/js/dashboard.js?v=2"></script>
     <script src="/js/students.js?v=2"></script>
     <script src="/js/attendance.js?v=4"></script>
+    <script src="/js/quran-text.js"></script>
     <script src="/js/hifz.js?v=2"></script>
     <script src="/js/parents.js?v=2"></script>
     <script src="/js/users.js?v=2"></script>

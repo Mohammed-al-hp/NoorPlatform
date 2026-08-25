@@ -12,7 +12,8 @@ public class SecurityHeadersMiddleware
     [
         "https://fonts.googleapis.com",
         "https://fonts.gstatic.com",
-        "https://cdnjs.cloudflare.com"
+        "https://cdnjs.cloudflare.com",
+        "https://cdn.jsdelivr.net"
     ];
 
     public SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment env)
