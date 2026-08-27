@@ -28,4 +28,11 @@ public class Student
     public List<Attendance> Attendances { get; set; } = new();
     public List<HifzRecord> HifzRecords { get; set; } = new();
     public List<ExamResult> ExamResults { get; set; } = new();
+    public List<CircleEnrollment> ExtraEnrollments { get; set; } = new();
+    public List<OralExamSession> OralExamSessions { get; set; } = new();
+    public List<MatnRecord> MatnRecords { get; set; } = new();
+    public List<StudentMonthlyTarget> MonthlyTargets { get; set; } = new();
+    public List<DressRecord> DressRecords { get; set; } = new();
+    public List<PrayerDailyLog> PrayerLogs { get; set; } = new();
+    public List<ParentHomeFeedback> ParentHomeFeedbacks { get; set; } = new();
 }

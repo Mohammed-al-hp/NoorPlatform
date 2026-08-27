@@ -177,7 +177,10 @@
             }
 
             if (hintEl) {
-                hintEl.textContent = `آخر توقف: سورة ${pos.surahName} — الآية ${pos.lastVerse} (بتاريخ ${pos.lastSessionDate}). تم اقتراح البدء من الآية ${pos.nextVerse}.`;
+                const crossedSurah = pos.lastSurahName !== pos.surahName;
+                hintEl.textContent = crossedSurah
+                    ? `آخر توقف: نهاية سورة ${pos.lastSurahName} (الآية ${pos.lastVerse}) بتاريخ ${pos.lastSessionDate}. تم اقتراح البدء من سورة ${pos.surahName} — الآية ${pos.nextVerse} (سورة جديدة).`
+                    : `آخر توقف: سورة ${pos.lastSurahName} — الآية ${pos.lastVerse} (بتاريخ ${pos.lastSessionDate}). تم اقتراح البدء من الآية ${pos.nextVerse}.`;
             }
 
             // تحديث نص الآية تلقائيًا بناءً على الموضع الجديد المقترح

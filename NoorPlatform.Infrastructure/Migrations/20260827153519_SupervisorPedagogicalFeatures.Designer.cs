@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NoorPlatform.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using NoorPlatform.Infrastructure.Data;
 namespace NoorPlatform.Infrastructure.Migrations
 {
     [DbContext(typeof(NoorDbContext))]
-    partial class NoorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827153519_SupervisorPedagogicalFeatures")]
+    partial class SupervisorPedagogicalFeatures
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1057,9 +1060,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("EvaluationsVisibleToStudentsAndParents")
-                        .HasColumnType("bit");
-
                     b.Property<double>("OralAlertPenalty")
                         .HasColumnType("float");
 
@@ -1074,24 +1074,6 @@ namespace NoorPlatform.Infrastructure.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<double>("WeightAttendance")
-                        .HasColumnType("float");
-
-                    b.Property<double>("WeightDress")
-                        .HasColumnType("float");
-
-                    b.Property<double>("WeightHifz")
-                        .HasColumnType("float");
-
-                    b.Property<double>("WeightMatn")
-                        .HasColumnType("float");
-
-                    b.Property<double>("WeightProgress")
-                        .HasColumnType("float");
-
-                    b.Property<double>("WeightRevision")
-                        .HasColumnType("float");
 
                     b.Property<string>("WorkDays")
                         .IsRequired()
@@ -1328,9 +1310,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .HasColumnType("float");
 
                     b.Property<double>("ProgressScore")
-                        .HasColumnType("float");
-
-                    b.Property<double>("RevisionScore")
                         .HasColumnType("float");
 
                     b.Property<string>("SheikhNotes")

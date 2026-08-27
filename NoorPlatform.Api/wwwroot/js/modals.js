@@ -23,10 +23,12 @@
         users: ['إدارة المستخدمين', 'جميع حسابات المنصة'],
         reports: ['التقارير', 'تقارير الأداء والحضور والحفظ'],
         settings: ['الإعدادات', 'إعدادات المنصة والنظام'],
+        expenses: ['إدارة المصروفات', 'تسجيل المصروفات والعهد المالية'],
+        competitions: ['المسابقات القرآنية', 'نتائج وتراتيب المسابقات'],
     };
 
     // مصدر موحّد — يستخدمه أيضاً auth.js عبر global.NoorStaffOnlyPages
-    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'exams', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents'];
+    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'exams', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents', 'expenses', 'competitions'];
     global.NoorStaffOnlyPages = STAFF_ONLY_PAGES;
 
     function navigate(page, el) {
@@ -41,7 +43,7 @@
         }
 
         // ─── إصلاح: صفحات حصرية للأدمن فقط دون المحفّظ ───
-        const ADMIN_ONLY_PAGES = ['users', 'parents', 'teachers', 'circles', 'payments', 'reports', 'settings'];
+        const ADMIN_ONLY_PAGES = ['users', 'parents', 'teachers', 'circles', 'payments', 'reports', 'settings', 'expenses', 'competitions'];
         if (role === 'Teacher' && ADMIN_ONLY_PAGES.includes(page)) {
             page = 'dashboard';
             el = document.querySelector('.nav-item');

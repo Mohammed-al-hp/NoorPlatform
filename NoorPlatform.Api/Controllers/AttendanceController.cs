@@ -32,20 +32,46 @@ public class AttendanceController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessCircleAsync(_context, User, circleId))
             return Forbid();
 
+        var circle = await _context.Circles.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == circleId);
+        if (circle == null)
+            return NotFound(new { message = "الحلقة غير موجودة" });
+
         var (dayStart, dayEnd) = ParseAttendanceDayRange(date);
 
-        var students = await _context.Students
-            .Where(s => s.CircleId == circleId)
-            .Include(s => s.User)
-            .Include(s => s.Attendances.Where(a => a.Date >= dayStart && a.Date < dayEnd))
-            .ToListAsync();
-
-        var result = students.Select(s => new
+        List<Student> students;
+        if (circle.IsExtra)
         {
-            studentId = s.Id,
-            fullName = s.User.FullName,
-            status = s.Attendances.FirstOrDefault()?.Status.ToString() ?? "NotRecorded",
-            note = s.Attendances.FirstOrDefault()?.Note
+            students = await _context.Students
+                .Where(s => s.ExtraEnrollments.Any(e => e.CircleId == circleId))
+                .Include(s => s.User)
+                .Include(s => s.Attendances.Where(a =>
+                    a.Date >= dayStart && a.Date < dayEnd && a.CircleId == circleId))
+                .ToListAsync();
+        }
+        else
+        {
+            students = await _context.Students
+                .Where(s => s.CircleId == circleId)
+                .Include(s => s.User)
+                .Include(s => s.Attendances.Where(a =>
+                    a.Date >= dayStart &&
+                    a.Date < dayEnd &&
+                    (a.CircleId == circleId || a.CircleId == null)))
+                .ToListAsync();
+        }
+
+        var result = students.Select(s =>
+        {
+            var att = s.Attendances.FirstOrDefault();
+            return new
+            {
+                studentId = s.Id,
+                fullName = s.User.FullName,
+                status = att?.Status.ToString() ?? "NotRecorded",
+                note = att?.Note,
+                circleId = att?.CircleId ?? circleId
+            };
         });
 
         return Ok(result);
@@ -61,7 +87,7 @@ public class AttendanceController : ControllerBase
         var records = await _context.Attendances
             .Where(a => a.StudentId == studentId && a.Date >= since)
             .OrderByDescending(a => a.Date)
-            .Select(a => new { a.Date, Status = a.Status.ToString() })
+            .Select(a => new { a.Date, Status = a.Status.ToString(), a.CircleId, a.Note })
             .ToListAsync();
 
         return Ok(records);
@@ -104,7 +130,8 @@ public class AttendanceController : ControllerBase
             {
                 date = a.Date.ToString("yyyy-MM-dd"),
                 status = a.Status.ToString(),
-                note = a.Note
+                note = a.Note,
+                circleId = a.CircleId
             })
             .ToListAsync();
 
@@ -138,11 +165,13 @@ public class AttendanceController : ControllerBase
         [FromQuery] int? studentId,
         [FromQuery] string? status,
         [FromQuery] string? date,
+        [FromQuery] int? circleId,
         [FromBody] MarkAttendanceRequest? body)
     {
         var sid = studentId ?? body?.StudentId;
         var sText = status ?? body?.Status;
         var dateText = date ?? body?.Date;
+        var cid = circleId ?? body?.CircleId;
 
         if (sid == null || string.IsNullOrEmpty(sText))
             return BadRequest(new { message = "studentId و status مطلوبان" });
@@ -153,14 +182,34 @@ public class AttendanceController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, sid.Value))
             return Forbid();
 
+        if (cid.HasValue)
+        {
+            if (!await AuthorizationHelpers.CanAccessCircleAsync(_context, User, cid.Value))
+                return Forbid();
+
+            // للمحفظ: السماح إن كان الطالب في الحلقة الرسمية أو مسجلاً في حلقة إضافية يملكها
+            if (User.IsInRole("Teacher") && !User.IsInRole("Admin"))
+            {
+                var userId = AuthorizationHelpers.GetUserId(User)!.Value;
+                var allowed = await IsStudentAllowedForTeacherCircleAsync(sid.Value, cid.Value, userId);
+                if (!allowed)
+                    return StatusCode(403, new { message = "لا يمكنك تسجيل حضور هذا الطالب في هذه الحلقة" });
+            }
+        }
+
         var (dayStart, dayEnd) = ParseAttendanceDayRange(dateText);
 
         var record = await _context.Attendances
-            .FirstOrDefaultAsync(a => a.StudentId == sid && a.Date >= dayStart && a.Date < dayEnd);
+            .FirstOrDefaultAsync(a =>
+                a.StudentId == sid &&
+                a.Date >= dayStart &&
+                a.Date < dayEnd &&
+                a.CircleId == cid);
 
         if (record != null)
         {
             record.Status = parsedStatus;
+            record.CircleId = cid;
         }
         else
         {
@@ -168,7 +217,8 @@ public class AttendanceController : ControllerBase
             {
                 StudentId = sid.Value,
                 Date = dayStart,
-                Status = parsedStatus
+                Status = parsedStatus,
+                CircleId = cid
             };
             _context.Attendances.Add(record);
 
@@ -195,7 +245,8 @@ public class AttendanceController : ControllerBase
             message = "تم تسجيل الحضور",
             record.StudentId,
             record.Date,
-            Status = record.Status.ToString()
+            Status = record.Status.ToString(),
+            record.CircleId
         });
     }
 
@@ -208,13 +259,13 @@ public class AttendanceController : ControllerBase
 
         // ─── إصلاح: تصفية الحضور حسب حلقات المعلم ───
         var query = _context.Attendances.Where(a => a.Date >= since);
-        
+
         var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
         if (isTeacher)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            query = query.Where(a => a.Student.Circle != null 
-                                  && a.Student.Circle.Teacher != null 
+            query = query.Where(a => a.Student.Circle != null
+                                  && a.Student.Circle.Teacher != null
                                   && a.Student.Circle.Teacher.UserId == userId);
         }
 
@@ -268,29 +319,60 @@ public class AttendanceController : ControllerBase
             return BadRequest(new { message = "تاريخ غير صالح" });
 
         var studentIds = request.Records.Select(r => r.StudentId).Distinct().ToList();
+        var circleId = request.CircleId;
 
-        var isTeacher = User.IsInRole("Teacher");
+        var isTeacherOnly = User.IsInRole("Teacher") && !User.IsInRole("Admin");
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        if (isTeacher)
+        if (isTeacherOnly)
         {
-            var allowed = await _context.Students
-                .Where(s => studentIds.Contains(s.Id) &&
-                            s.Circle != null &&
-                            s.Circle.Teacher != null &&
-                            s.Circle.Teacher.UserId == userId)
-                .Select(s => s.Id)
-                .ToListAsync();
+            if (circleId.HasValue)
+            {
+                if (!await AuthorizationHelpers.CanAccessCircleAsync(_context, User, circleId.Value))
+                    return Forbid();
 
-            var forbidden = studentIds.Except(allowed).ToList();
-            if (forbidden.Any())
-                return StatusCode(403, new { message = "لا يمكنك تسجيل حضور طلاب خارج حلقتك" });
+                var forbidden = new List<int>();
+                foreach (var sid in studentIds)
+                {
+                    if (!await IsStudentAllowedForTeacherCircleAsync(sid, circleId.Value, userId))
+                        forbidden.Add(sid);
+                }
+
+                if (forbidden.Any())
+                    return StatusCode(403, new { message = "لا يمكنك تسجيل حضور طلاب خارج حلقتك أو غير مسجّلين في الحلقة الإضافية" });
+            }
+            else
+            {
+                // بدون CircleId: الحلقة الرسمية للمعلم أو مسجّل في أي حلقة إضافية يملكها
+                var allowed = await _context.Students
+                    .Where(s => studentIds.Contains(s.Id) &&
+                        (
+                            (s.Circle != null && s.Circle.Teacher != null && s.Circle.Teacher.UserId == userId) ||
+                            s.ExtraEnrollments.Any(e =>
+                                e.Circle.Teacher != null && e.Circle.Teacher.UserId == userId)
+                        ))
+                    .Select(s => s.Id)
+                    .ToListAsync();
+
+                var forbidden = studentIds.Except(allowed).ToList();
+                if (forbidden.Any())
+                    return StatusCode(403, new { message = "لا يمكنك تسجيل حضور طلاب خارج حلقتك" });
+            }
+        }
+        else if (circleId.HasValue)
+        {
+            var circleExists = await _context.Circles.AnyAsync(c => c.Id == circleId.Value);
+            if (!circleExists)
+                return BadRequest(new { message = "الحلقة غير موجودة" });
         }
 
         var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
         var existing = await _context.Attendances
-            .Where(a => a.Date.Date == targetDate.Date && studentIds.Contains(a.StudentId))
+            .Where(a =>
+                a.Date.Date == targetDate.Date &&
+                studentIds.Contains(a.StudentId) &&
+                a.CircleId == circleId)
             .ToListAsync();
 
         foreach (var record in request.Records)
@@ -299,12 +381,13 @@ public class AttendanceController : ControllerBase
             if (!Enum.TryParse<AttendanceStatus>(record.Status, true, out var status))
                 continue;
 
-            var att = existing.FirstOrDefault(a => a.StudentId == record.StudentId);
+            var att = existing.FirstOrDefault(a => a.StudentId == record.StudentId && a.CircleId == circleId);
             if (att != null)
             {
                 att.Status = status;
                 att.Date = targetDate;
                 att.Note = record.Note;
+                att.CircleId = circleId;
             }
             else
             {
@@ -313,7 +396,8 @@ public class AttendanceController : ControllerBase
                     StudentId = record.StudentId,
                     Status = status,
                     Date = targetDate,
-                    Note = record.Note
+                    Note = record.Note,
+                    CircleId = circleId
                 });
 
                 // إضافة نقاط للحاضرين الجدد
@@ -340,10 +424,41 @@ public class AttendanceController : ControllerBase
 
         return Ok(new { message = $"تم حفظ {request.Records.Count} سجل حضور بنجاح" });
     }
+
+    /// <summary>
+    /// يسمح للمعلم برصد طالب إذا كان في حلقته الرسمية أو مسجّلاً في حلقته الإضافية المحددة.
+    /// </summary>
+    private async Task<bool> IsStudentAllowedForTeacherCircleAsync(int studentId, int circleId, int teacherUserId)
+    {
+        var circle = await _context.Circles.AsNoTracking()
+            .Include(c => c.Teacher)
+            .FirstOrDefaultAsync(c => c.Id == circleId);
+
+        if (circle?.Teacher == null || circle.Teacher.UserId != teacherUserId)
+            return false;
+
+        if (circle.IsExtra)
+        {
+            var enrolled = await _context.CircleEnrollments
+                .AnyAsync(e => e.CircleId == circleId && e.StudentId == studentId);
+            if (enrolled)
+                return true;
+
+            // أيضاً: طالب حلقته الرسمية تحت نفس المعلم
+            return await _context.Students.AnyAsync(s =>
+                s.Id == studentId &&
+                s.Circle != null &&
+                s.Circle.Teacher != null &&
+                s.Circle.Teacher.UserId == teacherUserId);
+        }
+
+        return await _context.Students.AnyAsync(s =>
+            s.Id == studentId && s.CircleId == circleId);
+    }
 }
 
 // ════════════════════════════════════════════════════════
-// Request Models 
+// Request Models
 // ════════════════════════════════════════════════════════
 
 public class MarkAttendanceRequest
@@ -351,11 +466,13 @@ public class MarkAttendanceRequest
     public int StudentId { get; set; }
     public string Status { get; set; } = "Present";
     public string? Date { get; set; }
+    public int? CircleId { get; set; }
 }
 
 public class BulkAttendanceRequest
 {
     public string Date { get; set; } = string.Empty;
+    public int? CircleId { get; set; }
     public List<AttendanceRecord> Records { get; set; } = new();
 }
 

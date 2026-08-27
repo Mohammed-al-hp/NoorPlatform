@@ -242,12 +242,15 @@
     }
 
     function renderCircleCard(c) {
+        const extraBadge = c.isExtra
+            ? '<span class="status-badge" style="background:#fef3c7;color:#b45309;font-size:11px;margin-right:6px">إضافية</span>'
+            : '';
         return `
         <div class="student-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;gap:14px">
                 <div style="width:52px;height:52px;border-radius:14px;background:var(--gradient);display:flex;align-items:center;justify-content:center;flex-shrink:0">${c.icon || (window.Icon ? window.Icon('circle-dot', {size:24}) : '')}</div>
                 <div style="flex:1;min-width:0">
-                    <div style="font-weight:800;font-size:15px">${esc(c.name)}</div>
+                    <div style="font-weight:800;font-size:15px">${extraBadge}${esc(c.name)}</div>
                     <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${window.Icon ? window.Icon('user-check', {size:12}) : ''} ${esc(c.teacherName || 'لم يحدد')}</div>
                 </div>
             </div>
@@ -262,11 +265,72 @@
                 </div>
             </div>
             ${c.location ? `<div style="font-size:12px;color:var(--text-muted)">${window.Icon ? window.Icon('map-pin', {size:12}) : ''} ${esc(c.location)}</div>` : ''}
-            <div style="display:flex;gap:8px;margin-top:4px">
+            <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+                ${c.isExtra ? `<button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px" onclick="openExtraEnroll(${c.id}, '${esc(c.name).replace(/'/g, "\\'")}')">${window.Icon ? window.Icon('user-plus', {size:12}) : ''} تسجيل طلاب</button>` : ''}
                 <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="editCircle(${c.id})">${window.Icon ? window.Icon('edit', {size:12}) : ''} تعديل</button>
                 <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteCircle(${c.id}, '${esc(c.name)}')">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف</button>
             </div>
         </div>`;
+    }
+
+    async function openExtraEnroll(circleId, circleName) {
+        try {
+            const [detail, students] = await Promise.all([
+                apiFetch(`/circles/${circleId}`),
+                apiFetch('/students')
+            ]);
+            const enrolledIds = new Set((detail.students || []).map(s => s.id));
+            const body = `
+                <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px">اختر طلاب الحلقة الإضافية: <strong>${esc(circleName)}</strong></p>
+                <div style="max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:6px">
+                    ${(students || []).map(s => `
+                        <label style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--border);border-radius:10px;cursor:pointer">
+                            <input type="checkbox" class="extra-enroll-cb" value="${s.id}" ${enrolledIds.has(s.id) ? 'checked' : ''}>
+                            <span style="font-size:13px;font-weight:600">${esc(s.fullName)}</span>
+                        </label>`).join('') || '<p>لا يوجد طلاب</p>'}
+                </div>`;
+            if (typeof global.openConfirmModal === 'function') {
+                // fallback simple: use a dedicated modal if present
+            }
+            let modal = document.getElementById('extraEnrollModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.id = 'extraEnrollModal';
+                modal.innerHTML = `
+                    <div class="modal" style="max-width:520px">
+                        <div class="modal-header"><h3>تسجيل طلاب في حلقة إضافية</h3>
+                        <button class="modal-close" onclick="closeModal('extraEnrollModal')"><span data-icon="x" data-icon-size="16"></span></button></div>
+                        <div class="modal-body" id="extraEnrollBody"></div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline" onclick="closeModal('extraEnrollModal')">إلغاء</button>
+                            <button class="btn btn-primary" id="extraEnrollSaveBtn">حفظ التسجيل</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+            }
+            document.getElementById('extraEnrollBody').innerHTML = body;
+            const saveBtn = document.getElementById('extraEnrollSaveBtn');
+            saveBtn.onclick = async () => {
+                const ids = [...document.querySelectorAll('.extra-enroll-cb:checked')].map(cb => parseInt(cb.value, 10));
+                try {
+                    await apiFetch(`/circles/${circleId}/enrollments`, 'POST', { studentIds: ids });
+                    // إزالة غير المحددين
+                    const toRemove = [...enrolledIds].filter(id => !ids.includes(id));
+                    for (const sid of toRemove) {
+                        try { await apiFetch(`/circles/${circleId}/enrollments/${sid}`, 'DELETE'); } catch { /* ignore */ }
+                    }
+                    ui().showToast('تم تحديث تسجيل الطلاب', 'success');
+                    global.closeModal('extraEnrollModal');
+                    fetchCircles();
+                } catch (e) {
+                    global.NoorApp.api.handleApiError(e);
+                }
+            };
+            global.openModal('extraEnrollModal');
+        } catch (e) {
+            global.NoorApp.api.handleApiError(e);
+        }
     }
 
     function populateCircleDropdowns(circles) {
@@ -277,6 +341,14 @@
             const first = el.options[0]?.outerHTML || '';
             el.innerHTML = first + circles.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
         });
+
+        // حلقات رسمية فقط لخيار الحلقة الأم
+        const parentSel = document.getElementById('circleParentId');
+        if (parentSel) {
+            const first = parentSel.options[0]?.outerHTML || '<option value="">— بدون —</option>';
+            parentSel.innerHTML = first + (circles || []).filter(c => !c.isExtra)
+                .map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+        }
 
         // استعادة تعبئة تاريخ التسجيل التلقائي عند جلب الحلقات
         const reg = document.getElementById('registrationDate');
@@ -290,15 +362,31 @@
         if (!name) { ui().showToast('اسم الحلقة مطلوب', 'error'); return; }
 
         const time = getCircleTimeValue('add');
+        const isExtra = !!document.getElementById('circleIsExtra')?.checked;
+        const sessionDate = document.getElementById('circleSessionDate')?.value || null;
+        const parentRaw = document.getElementById('circleParentId')?.value;
+        const parentCircleId = parentRaw ? parseInt(parentRaw, 10) : null;
         const btn = document.querySelector('#addCircleModal .btn-primary');
         try {
             global.setBtnLoading(btn, true);
             await apiFetch('/circles', 'POST', {
-                name, time: time || '', location: location || '', teacherId: teacher ? parseInt(teacher) : null
+                name,
+                time: time || '',
+                location: location || '',
+                teacherId: teacher ? parseInt(teacher) : null,
+                isExtra,
+                sessionDate: isExtra && sessionDate ? sessionDate : null,
+                parentCircleId: isExtra ? parentCircleId : null
             });
             ui().showToast('تم إنشاء الحلقة بنجاح', 'success');
             global.closeModal('addCircleModal');
-            ['circleName', 'circleLocation', 'circleTime'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            ['circleName', 'circleLocation', 'circleTime', 'circleSessionDate'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            const extraChk = document.getElementById('circleIsExtra');
+            if (extraChk) extraChk.checked = false;
+            const parentSel = document.getElementById('circleParentId');
+            if (parentSel) parentSel.value = '';
             fetchCircles();
         } catch (e) {
             global.NoorApp.api.handleApiError(e);
@@ -408,5 +496,6 @@
     global.editCircle = editCircle;
     global.submitEditCircle = submitEditCircle;
     global.deleteCircle = deleteCircle;
+    global.openExtraEnroll = openExtraEnroll;
 
 })(window);

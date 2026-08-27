@@ -3423,6 +3423,10 @@
                     <div class="nav-icon" data-icon="credit-card" data-icon-size="20"></div>
                     <span>المدفوعات</span>
                 </div>
+                <div class="nav-item" onclick="navigate('expenses', this)">
+                    <div class="nav-icon" data-icon="dollar-sign" data-icon-size="20"></div>
+                    <span>المصروفات</span>
+                </div>
                 <div class="nav-item" onclick="navigate('reports', this)">
                     <div class="nav-icon" data-icon="bar-chart" data-icon-size="20"></div>
                     <span>التقارير</span>
@@ -3448,6 +3452,18 @@
                     <div class="nav-icon" data-icon="file-text" data-icon-size="20"></div>
                     <span>الاختبارات</span>
                 </div>
+                <div class="nav-item" onclick="navigate('oralExams', this)">
+                    <div class="nav-icon" data-icon="mic" data-icon-size="20"></div>
+                    <span>الاختبارات الشفوية</span>
+                </div>
+                <div class="nav-item" onclick="navigate('evaluation', this)">
+                    <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
+                    <span>التقييم التربوي</span>
+                </div>
+                <div class="nav-item" onclick="navigate('competitions', this)">
+                    <div class="nav-icon" data-icon="award" data-icon-size="20"></div>
+                    <span>المسابقات</span>
+                </div>
             </div>
             <div class="nav-item" id="staffMessagesNav" onclick="navigate('messages', this)">
                 <div class="nav-icon" data-icon="message-circle" data-icon-size="20"></div>
@@ -3467,6 +3483,14 @@
                     <div class="nav-icon" data-icon="home" data-icon-size="20"></div>
                     <span>الرئيسية</span>
                 </div>
+                <div class="nav-item" onclick="navigate('myPrayer', this)">
+                    <div class="nav-icon" data-icon="moon" data-icon-size="20"></div>
+                    <span>الصلاة اليومية</span>
+                </div>
+                <div class="nav-item" onclick="navigate('myEvaluations', this)">
+                    <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
+                    <span>تقييماتي</span>
+                </div>
             </div>
 
             <!-- قسم ولي الأمر -->
@@ -3479,6 +3503,14 @@
                 <div class="nav-item" onclick="navigate('parentFees', this)">
                     <div class="nav-icon" data-icon="wallet" data-icon-size="20"></div>
                     <span>الرسوم الدراسية</span>
+                </div>
+                <div class="nav-item" onclick="navigate('parentHome', this)">
+                    <div class="nav-icon" data-icon="home" data-icon-size="20"></div>
+                    <span>متابعة البيت</span>
+                </div>
+                <div class="nav-item" onclick="navigate('myEvaluations', this)">
+                    <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
+                    <span>تقييم الأبناء</span>
                 </div>
                 <div class="nav-item" onclick="navigate('messages', this)">
                     <div class="nav-icon" data-icon="message-circle" data-icon-size="20"></div>
@@ -3995,6 +4027,75 @@
             <div class="exam-cards" id="examsList"></div>
         </div>
 
+        <!-- ===== ORAL EXAMS ===== -->
+        <div class="content" id="page-oralExams">
+            <div class="page-header">
+                <div>
+                    <h2>الاختبارات الشفوية</h2>
+                    <p>سرد كامل وتسمية أثمان — تسجيل الجلسات والأسئلة</p>
+                </div>
+            </div>
+            <div id="oralExamForm"></div>
+            <div id="oralExamsList"></div>
+        </div>
+
+        <!-- ===== PEDAGOGICAL EVALUATION ===== -->
+        <div class="content" id="page-evaluation">
+            <div class="page-header">
+                <div>
+                    <h2>التقييم التربوي</h2>
+                    <p>المتون، الأهداف الشهرية، فترات التقييم، اللباس، والصلاة</p>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+                <button type="button" class="btn btn-primary pedago-tab-btn" data-tab="matn" onclick="showPedagoTab('matn')">المتون</button>
+                <button type="button" class="btn btn-outline pedago-tab-btn" data-tab="targets" onclick="showPedagoTab('targets')">الأهداف الشهرية</button>
+                <button type="button" class="btn btn-outline pedago-tab-btn" data-tab="periods" onclick="showPedagoTab('periods')">فترات التقييم</button>
+                <button type="button" class="btn btn-outline pedago-tab-btn" data-tab="dress" onclick="showPedagoTab('dress')">اللباس</button>
+                <button type="button" class="btn btn-outline pedago-tab-btn" data-tab="prayer" onclick="showPedagoTab('prayer')">الصلاة</button>
+            </div>
+            <div class="pedago-tab-panel" data-tab="matn" id="pedagoMatn"></div>
+            <div class="pedago-tab-panel" data-tab="targets" id="pedagoTargets" style="display:none"></div>
+            <div class="pedago-tab-panel" data-tab="periods" id="pedagoPeriods" style="display:none"></div>
+            <div class="pedago-tab-panel" data-tab="dress" id="pedagoDress" style="display:none"></div>
+            <div class="pedago-tab-panel" data-tab="prayer" id="pedagoPrayer" style="display:none"></div>
+        </div>
+
+        <!-- ===== STUDENT PRAYER ===== -->
+        <div class="content" id="page-myPrayer">
+            <div class="page-header">
+                <div>
+                    <h2>الصلاة اليومية</h2>
+                    <p>سجّل صلاتك اليومية في المسجد</p>
+                </div>
+            </div>
+            <div id="myPrayerForm"></div>
+            <div id="myPrayerList"></div>
+        </div>
+
+        <!-- ===== MY EVALUATIONS (student / parent) ===== -->
+        <div class="content" id="page-myEvaluations">
+            <div class="page-header">
+                <div>
+                    <h2>تقييمات الفترة</h2>
+                    <p>التقييمات العامة المحفوظة من الشيخ (حضور · حفظ · مراجعة · تقدم · متون · لباس)</p>
+                </div>
+            </div>
+            <div id="myEvaluationsList"></div>
+        </div>
+
+        <!-- ===== PARENT HOME ===== -->
+        <div class="content" id="page-parentHome">
+            <div class="page-header">
+                <div>
+                    <h2>متابعة البيت</h2>
+                    <p>تقييم أسبوعي لممارسة الابن في المنزل</p>
+                </div>
+            </div>
+            <div id="parentHomeForm"></div>
+            <div id="parentHomeList"></div>
+        </div>
+
         <!-- ===== ANNOUNCEMENTS ===== -->
         <!-- ─── صفحة مكتبة الطلاب ─── -->
         <div class="content" id="page-library">
@@ -4475,6 +4576,50 @@
                     <div class="form-group">
                         <label class="form-label">العملة المحلية</label>
                         <input type="text" id="settingsCurrency" class="form-input" placeholder="د.ل">
+                    </div>
+                </div>
+
+                <!-- 3b. التقييم التربوي -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span data-icon="clipboard-list" data-icon-size="20"></span> التقييم التربوي
+                    </h3>
+                    <div class="form-group">
+                        <label class="form-label">حد الفتحات لاعتبار غير حافظ</label>
+                        <input type="number" id="settingsOralMaxOpenings" class="form-input" min="1" value="3">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+                        <div class="form-group">
+                            <label class="form-label">خصم التردد</label>
+                            <input type="number" id="settingsOralHesitation" class="form-input" min="0" step="0.5" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">خصم التنبيه</label>
+                            <input type="number" id="settingsOralAlert" class="form-input" min="0" step="0.5" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">خصم الفتح</label>
+                            <input type="number" id="settingsOralOpening" class="form-input" min="0" step="0.5" value="15">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الهدف الشهري الافتراضي (أثمان)</label>
+                        <input type="number" id="settingsDefaultAthman" class="form-input" min="1" value="8">
+                    </div>
+                    <p style="font-size:12px;color:var(--text-muted);margin:8px 0 12px">أوزان أبعاد تقييم الفترة (نسب نسبية)</p>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                        <div class="form-group"><label class="form-label">حضور</label><input type="number" id="settingsWAtt" class="form-input" min="0" step="0.1" value="1"></div>
+                        <div class="form-group"><label class="form-label">حفظ</label><input type="number" id="settingsWHifz" class="form-input" min="0" step="0.1" value="1"></div>
+                        <div class="form-group"><label class="form-label">مراجعة</label><input type="number" id="settingsWRev" class="form-input" min="0" step="0.1" value="1"></div>
+                        <div class="form-group"><label class="form-label">تقدم</label><input type="number" id="settingsWProg" class="form-input" min="0" step="0.1" value="1"></div>
+                        <div class="form-group"><label class="form-label">متون</label><input type="number" id="settingsWMatn" class="form-input" min="0" step="0.1" value="1"></div>
+                        <div class="form-group"><label class="form-label">لباس</label><input type="number" id="settingsWDress" class="form-input" min="0" step="0.1" value="1"></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;margin-top:12px">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                            <input type="checkbox" id="settingsEvalsVisible" checked>
+                            إظهار تقييمات الفترة للطالب وولي الأمر
+                        </label>
                     </div>
                 </div>
 
@@ -5160,6 +5305,23 @@
                     <label class="form-label">السعة القصوى</label>
                     <input id="circleCapacity" class="form-input" type="number" placeholder="20">
                 </div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+                        <input type="checkbox" id="circleIsExtra"> حلقة إضافية (صيف/عطلة/رغبة)
+                    </label>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">تاريخ الجلسة (للإضافية)</label>
+                        <input id="circleSessionDate" class="form-input" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الحلقة الرسمية الأم</label>
+                        <select id="circleParentId" class="form-input">
+                            <option value="">— بدون —</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('addCircleModal')">إلغاء</button>
@@ -5685,6 +5847,7 @@
 
     <!-- All inline scripts have been extracted into modular JS files -->
     <script src="/js/exams.js?v=3"></script>
+    <script src="/js/pedagogical.js?v=1"></script>
     <script src="/js/teachers.js?v=2"></script>
     <script src="/js/reports.js?v=3"></script>
     <script src="/js/app-ui-extensions.js?v=2"></script>
@@ -5849,6 +6012,200 @@
         }
     </script>
 
+    <!-- ==================== NEW PAGES ==================== -->
+    <!-- EXPENSES PAGE -->
+    <div class="content" id="page-expenses">
+        <div class="page-header">
+            <div>
+                <h2>المصروفات والعهد المالية</h2>
+                <p>إدارة وتسجيل المصروفات المختلفة للمركز</p>
+            </div>
+            <button class="btn btn-primary" onclick="NoorExpenses.openAddModal()">
+                <span data-icon="plus" data-icon-size="16"></span> إضافة مصروف
+            </button>
+        </div>
+
+        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-card green">
+                <div class="stat-card-body">
+                    <div class="stat-label">إجمالي المصروفات</div>
+                    <div class="stat-value" id="expTotal">0 د.ل</div>
+                </div>
+                <div class="stat-icon" data-icon="dollar-sign" data-icon-size="24"></div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-card-body">
+                    <div class="stat-label">الرواتب</div>
+                    <div class="stat-value" id="expSalaries">0 د.ل</div>
+                </div>
+                <div class="stat-icon" data-icon="users" data-icon-size="24"></div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-card-body">
+                    <div class="stat-label">عهد مالية</div>
+                    <div class="stat-value" id="expTrusts">0 د.ل</div>
+                </div>
+                <div class="stat-icon" data-icon="briefcase" data-icon-size="24"></div>
+            </div>
+            <div class="stat-card teal">
+                <div class="stat-card-body">
+                    <div class="stat-label">العمليات</div>
+                    <div class="stat-value" id="expCount">0</div>
+                </div>
+                <div class="stat-icon" data-icon="activity" data-icon-size="24"></div>
+            </div>
+        </div>
+
+        <div class="table-card" style="margin-top:20px;">
+            <div class="card-header">
+                <div>
+                    <h3>سجل المصروفات</h3>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>البند</th>
+                            <th>التصنيف</th>
+                            <th>المبلغ</th>
+                            <th>التاريخ</th>
+                            <th>ملاحظات</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPETITIONS PAGE -->
+    <div class="content" id="page-competitions">
+        <div class="page-header">
+            <div>
+                <h2>المسابقات القرآنية</h2>
+                <p>إدارة المسابقات واستعراض تراتيب الطلاب الفائزين</p>
+            </div>
+            <button class="btn btn-primary" onclick="NoorCompetitions.openAddModal()" style="background:var(--blue);box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);">
+                <span data-icon="award" data-icon-size="16"></span> إنشاء مسابقة
+            </button>
+        </div>
+
+        <div class="cards-grid" id="competitionsGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:20px;">
+        </div>
+    </div>
+
+    <!-- ==================== NEW MODALS ==================== -->
+    <!-- Add Expense Modal -->
+    <div class="modal-overlay" id="addExpenseModal" onclick="if(event.target===this) closeModal('addExpenseModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>إضافة مصروف جديد</h3>
+                <button class="modal-close" onclick="closeModal('addExpenseModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addExpenseForm" onsubmit="NoorExpenses.saveExpense(event)">
+                    <div class="form-group">
+                        <label class="form-label">بند الصرف (العنوان)</label>
+                        <input type="text" id="expTitle" class="form-input" required placeholder="مثال: فاتورة كهرباء شهر 7">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">المبلغ (د.ل)</label>
+                            <input type="number" id="expAmount" class="form-input" required step="0.01" min="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">التصنيف</label>
+                            <select id="expCategory" class="form-input" required>
+                                <option value="0">رواتب (Salary)</option>
+                                <option value="1">عهدة (Trust)</option>
+                                <option value="2">صيانة (Maintenance)</option>
+                                <option value="3">مكافآت (Reward)</option>
+                                <option value="4">أخرى (Other)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">تاريخ الصرف</label>
+                        <input type="date" id="expDate" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ملاحظات (اختياري)</label>
+                        <textarea id="expNotes" class="form-input" rows="3"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding: 16px 0 0; border: none;">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('addExpenseModal')">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">حفظ المصروف</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Competition Modal -->
+    <div class="modal-overlay" id="addCompetitionModal" onclick="if(event.target===this) closeModal('addCompetitionModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>إنشاء مسابقة جديدة</h3>
+                <button class="modal-close" onclick="closeModal('addCompetitionModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addCompForm" onsubmit="NoorCompetitions.saveCompetition(event)">
+                    <div class="form-group">
+                        <label class="form-label">اسم المسابقة</label>
+                        <input type="text" id="compName" class="form-input" required placeholder="مثال: مسابقة الماهر بالقرآن (رمضان)">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">تاريخ البدء</label>
+                            <input type="date" id="compStartDate" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">تاريخ الانتهاء</label>
+                            <input type="date" id="compEndDate" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">مستوى المسابقة</label>
+                        <select id="compLevel" class="form-input" required>
+                            <option value="0">داخلية (على مستوى المركز)</option>
+                            <option value="1">محلية (على مستوى المدينة)</option>
+                            <option value="2">وطنية (على مستوى الدولة)</option>
+                            <option value="3">دولية</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">وصف / تفاصيل</label>
+                        <textarea id="compDesc" class="form-input" rows="3"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding: 16px 0 0; border: none;">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('addCompetitionModal')">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">إنشاء المسابقة</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div class="modal-overlay" id="leaderboardModal" onclick="if(event.target===this) closeModal('leaderboardModal')">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="leaderboardModalTitle">تراتيب المسابقة</h3>
+                <button class="modal-close" onclick="closeModal('leaderboardModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="leaderboardBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeModal('leaderboardModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/expenses.js"></script>
+    <script src="/js/competitions.js"></script>
 </body>
 
 </html>

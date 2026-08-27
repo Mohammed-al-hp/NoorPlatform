@@ -34,7 +34,19 @@ public class SettingsController : ControllerBase
                 workStartTime = "08:00",
                 workEndTime = "12:00",
                 defaultMonthlyFee = 0m,
-                currency = "د.ل"
+                currency = "د.ل",
+                oralMaxOpeningsBeforeFail = 3,
+                oralAlertPenalty = 5.0,
+                oralOpeningPenalty = 15.0,
+                oralHesitationPenalty = 2.0,
+                defaultMonthlyAthmanTarget = 8,
+                weightAttendance = 1.0,
+                weightHifz = 1.0,
+                weightRevision = 1.0,
+                weightProgress = 1.0,
+                weightMatn = 1.0,
+                weightDress = 1.0,
+                evaluationsVisibleToStudentsAndParents = true
             });
         }
         return Ok(new
@@ -47,7 +59,19 @@ public class SettingsController : ControllerBase
             settings.WorkStartTime,
             settings.WorkEndTime,
             settings.DefaultMonthlyFee,
-            settings.Currency
+            settings.Currency,
+            settings.OralMaxOpeningsBeforeFail,
+            settings.OralAlertPenalty,
+            settings.OralOpeningPenalty,
+            settings.OralHesitationPenalty,
+            settings.DefaultMonthlyAthmanTarget,
+            settings.WeightAttendance,
+            settings.WeightHifz,
+            settings.WeightRevision,
+            settings.WeightProgress,
+            settings.WeightMatn,
+            settings.WeightDress,
+            settings.EvaluationsVisibleToStudentsAndParents
         });
     }
 
@@ -73,6 +97,30 @@ public class SettingsController : ControllerBase
         settings.WorkEndTime = request.WorkEndTime?.Trim() ?? "12:00";
         settings.DefaultMonthlyFee = request.DefaultMonthlyFee ?? 0;
         settings.Currency = request.Currency?.Trim() ?? "د.ل";
+        if (request.OralMaxOpeningsBeforeFail.HasValue)
+            settings.OralMaxOpeningsBeforeFail = request.OralMaxOpeningsBeforeFail.Value;
+        if (request.OralAlertPenalty.HasValue)
+            settings.OralAlertPenalty = request.OralAlertPenalty.Value;
+        if (request.OralOpeningPenalty.HasValue)
+            settings.OralOpeningPenalty = request.OralOpeningPenalty.Value;
+        if (request.OralHesitationPenalty.HasValue)
+            settings.OralHesitationPenalty = request.OralHesitationPenalty.Value;
+        if (request.DefaultMonthlyAthmanTarget.HasValue)
+            settings.DefaultMonthlyAthmanTarget = request.DefaultMonthlyAthmanTarget.Value;
+        if (request.WeightAttendance.HasValue)
+            settings.WeightAttendance = request.WeightAttendance.Value;
+        if (request.WeightHifz.HasValue)
+            settings.WeightHifz = request.WeightHifz.Value;
+        if (request.WeightRevision.HasValue)
+            settings.WeightRevision = request.WeightRevision.Value;
+        if (request.WeightProgress.HasValue)
+            settings.WeightProgress = request.WeightProgress.Value;
+        if (request.WeightMatn.HasValue)
+            settings.WeightMatn = request.WeightMatn.Value;
+        if (request.WeightDress.HasValue)
+            settings.WeightDress = request.WeightDress.Value;
+        if (request.EvaluationsVisibleToStudentsAndParents.HasValue)
+            settings.EvaluationsVisibleToStudentsAndParents = request.EvaluationsVisibleToStudentsAndParents.Value;
         settings.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -123,4 +171,16 @@ public class UpdateSettingsRequest
     public string? WorkEndTime { get; set; }
     public decimal? DefaultMonthlyFee { get; set; }
     public string? Currency { get; set; }
+    public int? OralMaxOpeningsBeforeFail { get; set; }
+    public double? OralAlertPenalty { get; set; }
+    public double? OralOpeningPenalty { get; set; }
+    public double? OralHesitationPenalty { get; set; }
+    public int? DefaultMonthlyAthmanTarget { get; set; }
+    public double? WeightAttendance { get; set; }
+    public double? WeightHifz { get; set; }
+    public double? WeightRevision { get; set; }
+    public double? WeightProgress { get; set; }
+    public double? WeightMatn { get; set; }
+    public double? WeightDress { get; set; }
+    public bool? EvaluationsVisibleToStudentsAndParents { get; set; }
 }

@@ -264,7 +264,18 @@
                 'settingsWorkStartTime': data.workStartTime,
                 'settingsWorkEndTime': data.workEndTime,
                 'settingsDefaultMonthlyFee': data.defaultMonthlyFee,
-                'settingsCurrency': data.currency
+                'settingsCurrency': data.currency,
+                'settingsOralMaxOpenings': data.oralMaxOpeningsBeforeFail,
+                'settingsOralHesitation': data.oralHesitationPenalty,
+                'settingsOralAlert': data.oralAlertPenalty,
+                'settingsOralOpening': data.oralOpeningPenalty,
+                'settingsDefaultAthman': data.defaultMonthlyAthmanTarget,
+                'settingsWAtt': data.weightAttendance,
+                'settingsWHifz': data.weightHifz,
+                'settingsWRev': data.weightRevision,
+                'settingsWProg': data.weightProgress,
+                'settingsWMatn': data.weightMatn,
+                'settingsWDress': data.weightDress
             };
             
             for (const [id, value] of Object.entries(fields)) {
@@ -272,6 +283,11 @@
                 if (el && value !== undefined && value !== null) {
                     el.value = value;
                 }
+            }
+
+            const vis = document.getElementById('settingsEvalsVisible');
+            if (vis && data.evaluationsVisibleToStudentsAndParents !== undefined) {
+                vis.checked = !!data.evaluationsVisibleToStudentsAndParents;
             }
 
             // تحميل التفضيلات المحلية (localStorage)
@@ -331,7 +347,19 @@
             workStartTime: getVal('settingsWorkStartTime'),
             workEndTime: getVal('settingsWorkEndTime'),
             defaultMonthlyFee: getVal('settingsDefaultMonthlyFee') ? parseFloat(getVal('settingsDefaultMonthlyFee')) : null,
-            currency: getVal('settingsCurrency')
+            currency: getVal('settingsCurrency'),
+            oralMaxOpeningsBeforeFail: getVal('settingsOralMaxOpenings') ? parseInt(getVal('settingsOralMaxOpenings'), 10) : null,
+            oralHesitationPenalty: getVal('settingsOralHesitation') ? parseFloat(getVal('settingsOralHesitation')) : null,
+            oralAlertPenalty: getVal('settingsOralAlert') ? parseFloat(getVal('settingsOralAlert')) : null,
+            oralOpeningPenalty: getVal('settingsOralOpening') ? parseFloat(getVal('settingsOralOpening')) : null,
+            defaultMonthlyAthmanTarget: getVal('settingsDefaultAthman') ? parseInt(getVal('settingsDefaultAthman'), 10) : null,
+            weightAttendance: getVal('settingsWAtt') ? parseFloat(getVal('settingsWAtt')) : null,
+            weightHifz: getVal('settingsWHifz') ? parseFloat(getVal('settingsWHifz')) : null,
+            weightRevision: getVal('settingsWRev') ? parseFloat(getVal('settingsWRev')) : null,
+            weightProgress: getVal('settingsWProg') ? parseFloat(getVal('settingsWProg')) : null,
+            weightMatn: getVal('settingsWMatn') ? parseFloat(getVal('settingsWMatn')) : null,
+            weightDress: getVal('settingsWDress') ? parseFloat(getVal('settingsWDress')) : null,
+            evaluationsVisibleToStudentsAndParents: !!document.getElementById('settingsEvalsVisible')?.checked
         };
 
         if (!payload.centerName) {

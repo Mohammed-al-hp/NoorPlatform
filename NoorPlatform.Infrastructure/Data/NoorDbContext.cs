@@ -20,11 +20,25 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<ActivityFeed> ActivityFeeds => Set<ActivityFeed>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<Competition> Competitions => Set<Competition>();
+    public DbSet<CompetitionResult> CompetitionResults => Set<CompetitionResult>();
     public DbSet<LibraryItem> LibraryItems => Set<LibraryItem>();
     public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<CircleEnrollment> CircleEnrollments => Set<CircleEnrollment>();
+    public DbSet<OralExamSession> OralExamSessions => Set<OralExamSession>();
+    public DbSet<OralExamQuestion> OralExamQuestions => Set<OralExamQuestion>();
+    public DbSet<MatnRecord> MatnRecords => Set<MatnRecord>();
+    public DbSet<StudentMonthlyTarget> StudentMonthlyTargets => Set<StudentMonthlyTarget>();
+    public DbSet<EvaluationPeriod> EvaluationPeriods => Set<EvaluationPeriod>();
+    public DbSet<StudentPeriodEvaluation> StudentPeriodEvaluations => Set<StudentPeriodEvaluation>();
+    public DbSet<DressRecord> DressRecords => Set<DressRecord>();
+    public DbSet<PrayerDailyLog> PrayerDailyLogs => Set<PrayerDailyLog>();
+    public DbSet<ParentHomeFeedback> ParentHomeFeedbacks => Set<ParentHomeFeedback>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -59,9 +73,23 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasPrecision(18, 2);
 
         modelBuilder.Entity<Payment>()
-    .Property(p => p.Status)
-    .HasConversion<string>()
-    .HasMaxLength(20);
+            .Property(p => p.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<Expense>()
+            .Property(e => e.Amount)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Expense>()
+            .Property(e => e.Category)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+
+        modelBuilder.Entity<Competition>()
+            .Property(c => c.Level)
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
         modelBuilder.Entity<AuditLog>()
             .Property(a => a.Action)
@@ -145,6 +173,24 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasForeignKey(er => er.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<CompetitionResult>()
+            .HasOne(cr => cr.Competition)
+            .WithMany(c => c.Results)
+            .HasForeignKey(cr => cr.CompetitionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CompetitionResult>()
+            .HasOne(cr => cr.Student)
+            .WithMany()
+            .HasForeignKey(cr => cr.StudentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Expense>()
+            .HasOne(e => e.RecordedByUser)
+            .WithMany()
+            .HasForeignKey(e => e.RecordedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<ActivityFeed>()
             .HasOne(a => a.User)
             .WithMany()
@@ -162,11 +208,12 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .WithMany()
             .HasForeignKey(l => l.CircleId)
             .OnDelete(DeleteBehavior.SetNull);
+            
         modelBuilder.Entity<Message>()
-    .HasOne(m => m.SenderUser)
-    .WithMany()
-    .HasForeignKey(m => m.SenderUserId)
-    .OnDelete(DeleteBehavior.Restrict);
+            .HasOne(m => m.SenderUser)
+            .WithMany()
+            .HasForeignKey(m => m.SenderUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Message>()
             .HasOne(m => m.RecipientTeacher)
@@ -238,5 +285,163 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.Entity<ActivityFeed>()
             .HasIndex(a => a.CreatedAt)
             .HasDatabaseName("IX_ActivityFeed_CreatedAt");
+
+        modelBuilder.Entity<Expense>()
+            .HasIndex(e => e.Date)
+            .HasDatabaseName("IX_Expense_Date");
+
+        modelBuilder.Entity<CompetitionResult>()
+            .HasIndex(cr => cr.CompetitionId)
+            .HasDatabaseName("IX_CompetitionResult_CompetitionId");
+
+        // ─── حلقات إضافية + تسجيل الطلاب ───
+        modelBuilder.Entity<Circle>()
+            .HasOne(c => c.ParentCircle)
+            .WithMany()
+            .HasForeignKey(c => c.ParentCircleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CircleEnrollment>()
+            .HasOne(e => e.Circle)
+            .WithMany(c => c.Enrollments)
+            .HasForeignKey(e => e.CircleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CircleEnrollment>()
+            .HasOne(e => e.Student)
+            .WithMany(s => s.ExtraEnrollments)
+            .HasForeignKey(e => e.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CircleEnrollment>()
+            .HasIndex(e => new { e.CircleId, e.StudentId })
+            .IsUnique()
+            .HasDatabaseName("IX_CircleEnrollment_Circle_Student");
+
+        modelBuilder.Entity<Attendance>()
+            .HasOne(a => a.Circle)
+            .WithMany()
+            .HasForeignKey(a => a.CircleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ─── اختبارات شفوية ───
+        modelBuilder.Entity<OralExamSession>()
+            .HasOne(s => s.Student)
+            .WithMany(st => st.OralExamSessions)
+            .HasForeignKey(s => s.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OralExamSession>()
+            .HasOne(s => s.Circle)
+            .WithMany()
+            .HasForeignKey(s => s.CircleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<OralExamSession>()
+            .Property(s => s.Kind)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+
+        modelBuilder.Entity<OralExamQuestion>()
+            .HasOne(q => q.Session)
+            .WithMany(s => s.Questions)
+            .HasForeignKey(q => q.SessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OralExamSession>()
+            .HasIndex(s => new { s.StudentId, s.Date })
+            .HasDatabaseName("IX_OralExam_Student_Date");
+
+        // ─── متون + أهداف شهرية ───
+        modelBuilder.Entity<MatnRecord>()
+            .HasOne(m => m.Student)
+            .WithMany(s => s.MatnRecords)
+            .HasForeignKey(m => m.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MatnRecord>()
+            .Property(m => m.Type)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<StudentMonthlyTarget>()
+            .HasOne(t => t.Student)
+            .WithMany(s => s.MonthlyTargets)
+            .HasForeignKey(t => t.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<StudentMonthlyTarget>()
+            .HasIndex(t => new { t.StudentId, t.Year, t.Month })
+            .IsUnique()
+            .HasDatabaseName("IX_MonthlyTarget_Student_YearMonth");
+
+        // ─── فترات التقييم ───
+        modelBuilder.Entity<EvaluationPeriod>()
+            .HasOne(p => p.Circle)
+            .WithMany()
+            .HasForeignKey(p => p.CircleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<StudentPeriodEvaluation>()
+            .HasOne(e => e.Period)
+            .WithMany(p => p.StudentEvaluations)
+            .HasForeignKey(e => e.PeriodId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<StudentPeriodEvaluation>()
+            .HasOne(e => e.Student)
+            .WithMany()
+            .HasForeignKey(e => e.StudentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<StudentPeriodEvaluation>()
+            .HasIndex(e => new { e.PeriodId, e.StudentId })
+            .IsUnique()
+            .HasDatabaseName("IX_PeriodEval_Period_Student");
+
+        // ─── لباس + صلاة + ولي الأمر ───
+        modelBuilder.Entity<DressRecord>()
+            .HasOne(d => d.Student)
+            .WithMany(s => s.DressRecords)
+            .HasForeignKey(d => d.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DressRecord>()
+            .HasIndex(d => new { d.StudentId, d.Date })
+            .IsUnique()
+            .HasDatabaseName("IX_Dress_Student_Date");
+
+        modelBuilder.Entity<PrayerDailyLog>()
+            .HasOne(p => p.Student)
+            .WithMany(s => s.PrayerLogs)
+            .HasForeignKey(p => p.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PrayerDailyLog>()
+            .HasIndex(p => new { p.StudentId, p.Date })
+            .IsUnique()
+            .HasDatabaseName("IX_Prayer_Student_Date");
+
+        modelBuilder.Entity<ParentHomeFeedback>()
+            .HasOne(f => f.Student)
+            .WithMany(s => s.ParentHomeFeedbacks)
+            .HasForeignKey(f => f.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ParentHomeFeedback>()
+            .HasOne(f => f.Parent)
+            .WithMany()
+            .HasForeignKey(f => f.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ParentHomeFeedback>()
+            .Property(f => f.Rating)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<ParentHomeFeedback>()
+            .HasIndex(f => new { f.StudentId, f.WeekStartDate })
+            .IsUnique()
+            .HasDatabaseName("IX_ParentHome_Student_Week");
     }
 }

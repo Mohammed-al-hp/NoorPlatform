@@ -98,7 +98,7 @@
                 return;
             }
             wrap.innerHTML = circles.map((c, i) =>
-                `<div class="circle-chip${i === 0 ? ' active' : ''}" data-id="${c.id}" onclick="NoorAttendance.selectCircle(this)">${utils().escapeHtml(c.name)}</div>`
+                `<div class="circle-chip${i === 0 ? ' active' : ''}" data-id="${c.id}" onclick="NoorAttendance.selectCircle(this)">${utils().escapeHtml(c.name)}${c.isExtra ? ' <span style="opacity:.75">(إضافية)</span>' : ''}</div>`
             ).join('');
             const first = wrap.querySelector('.circle-chip');
             if (first) getState().circleId = parseInt(first.dataset.id, 10);
@@ -258,6 +258,7 @@
 
             await apiFetch('/attendance/bulk', 'POST', {
                 date: dateStr,
+                circleId: getState().circleId || null,
                 records: recordsToSave
             });
             Object.keys(pending).forEach(k => delete pending[k]);

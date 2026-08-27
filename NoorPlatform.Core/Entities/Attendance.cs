@@ -16,4 +16,8 @@ public class Attendance
     public DateTime Date { get; set; }
     public AttendanceStatus Status { get; set; }
     public string? Note { get; set; }
+
+    /// <summary>الحلقة التي سُجّل فيها الحضور (رسمية أو إضافية).</summary>
+    public int? CircleId { get; set; }
+    public Circle? Circle { get; set; }
 }

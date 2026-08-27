@@ -35,9 +35,15 @@ public static class AuthorizationHelpers
         // ─── تأكيد الحماية: المحفظ يرى فقط طلاب حلقته ───
         if (user.IsInRole("Teacher"))
         {
-            return await context.Students.AnyAsync(s =>
+            var inPrimary = await context.Students.AnyAsync(s =>
                 s.Id == studentId && s.Circle != null && s.Circle.Teacher != null &&
                 s.Circle.Teacher.UserId == userId);
+            if (inPrimary) return true;
+
+            return await context.CircleEnrollments.AnyAsync(e =>
+                e.StudentId == studentId &&
+                e.Circle.Teacher != null &&
+                e.Circle.Teacher.UserId == userId);
         }
 
         return false;
