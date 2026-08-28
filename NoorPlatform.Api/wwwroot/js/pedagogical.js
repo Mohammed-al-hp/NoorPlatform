@@ -4,6 +4,7 @@
 
     let _oralQIndex = 0;
     let _currentPeriodId = null;
+    let _periodEvalsCache = [];
     let _activeTab = 'matn';
 
     function todayYmd() {
@@ -11,15 +12,43 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    function currentUserRole() {
+        return global.NoorApp?.state?.user?.role || '';
+    }
+
     function kindLabel(k) {
         if (k === 'FullRecitation') return 'سرد كامل';
-        if (k === 'AthmanSampling') return 'تسمية أثمان';
+        if (k === 'AthmanSampling') return 'تسميع أثمان';
         return k || '—';
     }
 
-    async function loadStudentOptions(selectId) {
+    async function loadParentChildrenInto(selectId, includeAll) {
+        const sel = document.getElementById(selectId);
+        if (!sel) return [];
+        try {
+            const data = await apiFetch('/dashboard/parent-summary');
+            const children = data?.children || [];
+            const first = includeAll
+                ? '<option value="">— الكل —</option>'
+                : '<option value="">— اختر الابن —</option>';
+            sel.innerHTML = first + children.map(c =>
+                `<option value="${c.id}">${escapeHtml(c.fullName)}</option>`).join('');
+            if (!includeAll && children.length === 1) sel.value = String(children[0].id);
+            return children;
+        } catch (e) {
+            handleApiError(e, { silent: true });
+            return [];
+        }
+    }
+
+    async function loadStudentOptions(selectId, opts = {}) {
         const sel = document.getElementById(selectId);
         if (!sel) return;
+        const role = currentUserRole();
+        if (role === 'Parent' || opts.parentOnly) {
+            await loadParentChildrenInto(selectId, false);
+            return;
+        }
         try {
             const students = await apiFetch('/students');
             const keep = sel.options[0]?.outerHTML || '<option value="">— اختر طالباً —</option>';
@@ -28,6 +57,62 @@
         } catch (e) {
             handleApiError(e, { silent: true });
         }
+    }
+
+    async function applyOralDefaultsFromSettings() {
+        const input = document.getElementById('oralMaxOpenings');
+        if (!input || input.dataset.loaded === '1') return;
+        try {
+            const cfg = await apiFetch('/pedagogical/grading-defaults');
+            if (cfg?.oralMaxOpeningsBeforeFail != null) {
+                input.value = cfg.oralMaxOpeningsBeforeFail;
+            }
+            input.dataset.loaded = '1';
+        } catch {
+            /* المحفّظ فقط — تجاهل */
+        }
+    }
+
+    function fillPeriodEvalForm(e) {
+        if (!e) return;
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        set('evalAtt', e.attendanceScore ?? 0);
+        set('evalHifz', e.hifzScore ?? 0);
+        set('evalRev', e.revisionScore ?? 0);
+        set('evalProg', e.progressScore ?? 0);
+        set('evalMatn', e.matnScore ?? 0);
+        set('evalDress', e.dressScore ?? 0);
+        set('evalPrayer', e.prayerAdvisoryScore ?? '');
+        set('evalHome', e.parentHomeAdvisoryScore ?? '');
+        const adv = document.getElementById('evalIncludeAdv');
+        if (adv) adv.checked = !!e.includeAdvisoryInOverall;
+        const notes = document.getElementById('evalNotes');
+        if (notes) notes.value = e.sheikhNotes || '';
+    }
+
+    function onEvalStudentSelected() {
+        const studentId = parseInt(document.getElementById('evalStudentId')?.value, 10);
+        if (!studentId) return;
+        const found = _periodEvalsCache.find(x => x.studentId === studentId);
+        if (found) fillPeriodEvalForm(found);
+    }
+
+    function loadSavedPeriodEval(studentId) {
+        const sid = parseInt(studentId, 10);
+        const sel = document.getElementById('evalStudentId');
+        if (sel) sel.value = String(sid);
+        onEvalStudentSelected();
+        document.getElementById('periodEvalPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closePeriodEvalPanel() {
+        const panel = document.getElementById('periodEvalPanel');
+        if (panel) {
+            panel.style.display = 'none';
+            panel.innerHTML = '';
+        }
+        _currentPeriodId = null;
+        _periodEvalsCache = [];
     }
 
     async function loadCircleOptions(selectId, officialOnly) {
@@ -113,7 +198,7 @@
                             <label class="form-label">النوع *</label>
                             <select id="oralKind" class="form-input">
                                 <option value="FullRecitation">سرد كامل</option>
-                                <option value="AthmanSampling" selected>تسمية أثمان</option>
+                                <option value="AthmanSampling" selected>تسميع أثمان</option>
                             </select>
                         </div>
                     </div>
@@ -153,6 +238,7 @@
             _oralQIndex = 0;
             addOralQuestionRow();
             await Promise.all([loadStudentOptions('oralStudentId'), loadCircleOptions('oralCircleId')]);
+            await applyOralDefaultsFromSettings();
         }
         if (!list) return;
         list.innerHTML = '<p style="text-align:center;padding:24px;color:var(--text-muted)">جاري التحميل...</p>';
@@ -634,15 +720,18 @@
         panel.style.display = '';
         panel.innerHTML = `
             <div class="chart-card">
-                <div class="card-header"><h3>تقييمات: ${escapeHtml(name)}</h3></div>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                    <h3 style="margin:0">تقييمات: ${escapeHtml(name)}</h3>
+                    <button type="button" class="btn btn-outline" style="font-size:12px;padding:6px 12px" onclick="closePeriodEvalPanel()">إغلاق</button>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">الطالب</label>
-                        <select id="evalStudentId" class="form-input"><option value="">— اختر —</option></select>
+                        <select id="evalStudentId" class="form-input" onchange="onEvalStudentSelected()"><option value="">— اختر —</option></select>
                     </div>
-                    <div class="form-group" style="display:flex;align-items:flex-end;gap:8px">
-                        <button class="btn btn-outline" onclick="autoDraftEvaluation()">مسودة تلقائية</button>
-                        <button class="btn btn-primary" onclick="savePeriodEvaluation()">حفظ التقييم</button>
+                    <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap">
+                        <button type="button" class="btn btn-outline" onclick="autoDraftEvaluation()">مسودة تلقائية</button>
+                        <button type="button" class="btn btn-primary" onclick="savePeriodEvaluation()">حفظ التقييم</button>
                     </div>
                 </div>
                 <div class="form-row">
@@ -652,7 +741,7 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label class="form-label">تقدم %</label><input id="evalProg" class="form-input" type="number" min="0" max="100" value="0"></div>
-                    <div class="form-group"><label class="form-label">متن %</label><input id="evalMatn" class="form-input" type="number" min="0" max="100" value="0"></div>
+                    <div class="form-group"><label class="form-label">متون %</label><input id="evalMatn" class="form-input" type="number" min="0" max="100" value="0"></div>
                     <div class="form-group"><label class="form-label">لباس %</label><input id="evalDress" class="form-input" type="number" min="0" max="100" value="0"></div>
                 </div>
                 <div class="form-row">
@@ -673,12 +762,16 @@
         await loadStudentOptions('evalStudentId');
         try {
             const evals = await apiFetch(`/pedagogical/periods/${periodId}/evaluations`);
+            _periodEvalsCache = evals || [];
             const list = document.getElementById('periodEvalsList');
             if (list) {
-                list.innerHTML = !evals?.length
-                    ? '<p style="color:var(--text-muted);font-size:13px">لا توجد تقييمات محفوظة</p>'
-                    : evals.map(e => `
-                        <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between">
+                list.innerHTML = !_periodEvalsCache.length
+                    ? '<p style="color:var(--text-muted);font-size:13px">لا توجد تقييمات محفوظة — اختر طالباً ثم «مسودة تلقائية» أو أدخل الدرجات يدوياً</p>'
+                    : `<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">انقر على تقييم محفوظ لتحميله في النموذج:</p>` +
+                    _periodEvalsCache.map(e => `
+                        <div role="button" tabindex="0" style="padding:10px 8px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;cursor:pointer;border-radius:8px"
+                             onclick="loadSavedPeriodEval(${e.studentId})"
+                             onkeydown="if(event.key==='Enter')loadSavedPeriodEval(${e.studentId})">
                             <span>${escapeHtml(e.studentName)}</span>
                             <span class="status-badge status-excellent">${e.overallScore}% — ${escapeHtml(e.gradeLabel || '')}</span>
                         </div>`).join('');
@@ -686,6 +779,7 @@
         } catch (err) {
             handleApiError(err, { silent: true });
         }
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function autoDraftEvaluation() {
@@ -792,7 +886,7 @@
                 return;
             }
             wrap.innerHTML = `
-                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-muted)">
+                <div class="dress-header-row" style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-muted)">
                     <span>الطالب</span><span>ملتزم</span><span>درجة /10</span><span>ملاحظة</span>
                 </div>
                 ${list.map(s => {
@@ -958,8 +1052,8 @@
 
     async function overridePrayerLog(id) {
         const note = prompt('ملاحظة التعديل (اختياري):') ?? '';
-        const mosque = confirm('هل صليت في المسجد؟ (موافق = نعم)');
-        const onTime = confirm('هل كانت في الوقت؟ (موافق = نعم)');
+        const mosque = confirm('هل صلى الطالب في المسجد؟ (موافق = نعم)');
+        const onTime = confirm('هل كانت الصلاة في الوقت؟ (موافق = نعم)');
         try {
             await apiFetch(`/pedagogical/prayer/${id}/override`, 'PUT', {
                 prayedInMosque: mosque,
@@ -1009,7 +1103,9 @@
                     </div>
                     <button class="btn btn-primary" onclick="saveParentHome()">حفظ التقييم</button>
                 </div>`;
-            await loadStudentOptions('phStudentId');
+            await loadStudentOptions('phStudentId', { parentOnly: true });
+            const phSel = document.getElementById('phStudentId');
+            if (phSel?.value) await loadParentHomeList();
         }
         await loadParentHomeList();
     }
@@ -1064,9 +1160,40 @@
     async function renderMyEvaluationsPage() {
         const list = document.getElementById('myEvaluationsList');
         if (!list) return;
+
+        const role = currentUserRole();
+        let filterWrap = document.getElementById('myEvalFilterWrap');
+        if (role === 'Parent') {
+            if (!filterWrap) {
+                const page = document.getElementById('page-myEvaluations');
+                const header = page?.querySelector('.page-header');
+                if (header) {
+                    filterWrap = document.createElement('div');
+                    filterWrap.id = 'myEvalFilterWrap';
+                    filterWrap.className = 'form-group';
+                    filterWrap.style.cssText = 'max-width:320px;margin:0 0 16px';
+                    filterWrap.innerHTML = `
+                        <label class="form-label">الابن</label>
+                        <select id="myEvalChildFilter" class="form-input" onchange="renderMyEvaluationsPage()">
+                            <option value="">— الكل —</option>
+                        </select>`;
+                    header.insertAdjacentElement('afterend', filterWrap);
+                }
+            }
+            const children = await loadParentChildrenInto('myEvalChildFilter', true);
+            if (children.length <= 1 && filterWrap) filterWrap.style.display = 'none';
+        } else if (filterWrap) {
+            filterWrap.style.display = 'none';
+        }
+
         list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:24px">جاري التحميل...</p>';
         try {
-            const data = await apiFetch('/pedagogical/my-evaluations');
+            let url = '/pedagogical/my-evaluations';
+            if (role === 'Parent') {
+                const childId = parseInt(document.getElementById('myEvalChildFilter')?.value, 10);
+                if (childId) url += `?studentId=${childId}`;
+            }
+            const data = await apiFetch(url);
             if (!data?.length) {
                 list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">لا توجد تقييمات فترة محفوظة بعد، أو أن العرض غير مفعّل من الإعدادات.</p>';
                 return;
@@ -1119,6 +1246,9 @@
     global.syncMonthlyFromOral = syncMonthlyFromOral;
     global.saveEvaluationPeriod = saveEvaluationPeriod;
     global.openPeriodEvaluations = openPeriodEvaluations;
+    global.closePeriodEvalPanel = closePeriodEvalPanel;
+    global.onEvalStudentSelected = onEvalStudentSelected;
+    global.loadSavedPeriodEval = loadSavedPeriodEval;
     global.autoDraftEvaluation = autoDraftEvaluation;
     global.savePeriodEvaluation = savePeriodEvaluation;
     global.loadDressStudents = loadDressStudents;

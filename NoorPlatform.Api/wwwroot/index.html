@@ -2832,6 +2832,20 @@
             }
         }
 
+        /* ─── التقييم التربوي — تجاوب الجوال ─── */
+        @media (max-width: 640px) {
+            .oral-q-row,
+            .dress-row,
+            .dress-header-row {
+                grid-template-columns: 1fr !important;
+            }
+
+            .pedago-tab-btn {
+                font-size: 12px !important;
+                padding: 8px 10px !important;
+            }
+        }
+
         /* ─── Bottom Navigation (Mobile) ─── */
         .bottom-nav {
             display: none;
@@ -3435,6 +3449,10 @@
                     <div class="nav-icon" data-icon="settings" data-icon-size="20"></div>
                     <span>الإعدادات</span>
                 </div>
+                <div class="nav-item" onclick="navigate('competitions', this)">
+                    <div class="nav-icon" data-icon="award" data-icon-size="20"></div>
+                    <span>المسابقات</span>
+                </div>
             </div>
 
             <!-- صفحات إدارية (تسجيل حضور / إدخال تسميع / نتائج) — للمحفّظ والمشرف فقط -->
@@ -3459,10 +3477,6 @@
                 <div class="nav-item" onclick="navigate('evaluation', this)">
                     <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
                     <span>التقييم التربوي</span>
-                </div>
-                <div class="nav-item" onclick="navigate('competitions', this)">
-                    <div class="nav-icon" data-icon="award" data-icon-size="20"></div>
-                    <span>المسابقات</span>
                 </div>
             </div>
             <div class="nav-item" id="staffMessagesNav" onclick="navigate('messages', this)">
@@ -5307,9 +5321,10 @@
                 </div>
                 <div class="form-group">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
-                        <input type="checkbox" id="circleIsExtra"> حلقة إضافية (صيف/عطلة/رغبة)
+                        <input type="checkbox" id="circleIsExtra" onchange="toggleCircleExtraFields(this.checked)"> حلقة إضافية (صيف/عطلة/رغبة)
                     </label>
                 </div>
+                <div id="circleExtraFields" style="display:none">
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">تاريخ الجلسة (للإضافية)</label>
@@ -5321,6 +5336,7 @@
                             <option value="">— بدون —</option>
                         </select>
                     </div>
+                </div>
                 </div>
             </div>
             <div class="modal-footer">

@@ -17,9 +17,9 @@
     // صفحات إدارية — لا يجوز للطالب/ولي الأمر فتحها (تسبب 403 عند التحميل التلقائي)
     // المصدر الموحّد معرَّف في modals.js (global.NoorStaffOnlyPages)
     const STAFF_ONLY_PAGES = new Set(global.NoorStaffOnlyPages || [
-        'attendance', 'memorization', 'exams',
+        'attendance', 'memorization', 'exams', 'oralExams', 'evaluation',
         'students', 'teachers', 'circles', 'payments',
-        'reports', 'settings', 'users', 'parents'
+        'reports', 'settings', 'users', 'parents', 'expenses', 'competitions'
     ]);
 
     function checkAuth() {
@@ -161,8 +161,29 @@
         } else if (isParent) {
             global.navigate('parentView', document.querySelector('#parentSection .nav-item'));
             if (typeof fetchParentView === 'function') fetchParentView();
+            const bottomHome = document.querySelector('#bottomNav .bottom-nav-item');
+            if (bottomHome) bottomHome.setAttribute('onclick', "navBottom('parentView', this)");
+            const fabHome = document.querySelector('.fab-menu-item[onclick*="dashboard"]');
+            if (fabHome) fabHome.setAttribute('onclick', "navigate('parentView',null);toggleFab()");
         } else {
             global.navigate('dashboard', document.querySelector('.nav-item'));
+        }
+
+        if (isStudent || isParent) applyPortalNavVisibility();
+    }
+
+    async function applyPortalNavVisibility() {
+        try {
+            const cfg = await apiFetch('/pedagogical/portal-config');
+            const show = cfg?.evaluationsVisible !== false;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const onclick = item.getAttribute('onclick') || '';
+                if (onclick.includes("navigate('myEvaluations'")) {
+                    item.style.display = show ? '' : 'none';
+                }
+            });
+        } catch {
+            /* الإعداد غير متاح — اترك الروابط ظاهرة */
         }
     }
 

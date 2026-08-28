@@ -225,6 +225,34 @@ public class PedagogicalController : ControllerBase
     // فترات التقييم
     // ════════════════════════════════════════════════════════
 
+    /// <summary>إعدادات بوابة الطالب/ولي الأمر (قراءة فقط).</summary>
+    [HttpGet("portal-config")]
+    [Authorize(Roles = "Student,Parent")]
+    public async Task<IActionResult> GetPortalConfig()
+    {
+        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
+        return Ok(new
+        {
+            evaluationsVisible = settings?.EvaluationsVisibleToStudentsAndParents ?? true
+        });
+    }
+
+    /// <summary>إعدادات التقييم الشفوي للمحفّظ (قراءة فقط).</summary>
+    [HttpGet("grading-defaults")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GetGradingDefaults()
+    {
+        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
+        return Ok(new
+        {
+            oralMaxOpeningsBeforeFail = settings?.OralMaxOpeningsBeforeFail ?? 3,
+            oralAlertPenalty = settings?.OralAlertPenalty ?? 5,
+            oralOpeningPenalty = settings?.OralOpeningPenalty ?? 15,
+            oralHesitationPenalty = settings?.OralHesitationPenalty ?? 2,
+            defaultMonthlyAthmanTarget = settings?.DefaultMonthlyAthmanTarget ?? 8
+        });
+    }
+
     [HttpGet("periods")]
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetPeriods()

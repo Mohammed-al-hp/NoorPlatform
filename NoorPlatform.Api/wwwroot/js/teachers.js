@@ -282,9 +282,10 @@
             const enrolledIds = new Set((detail.students || []).map(s => s.id));
             const body = `
                 <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px">اختر طلاب الحلقة الإضافية: <strong>${esc(circleName)}</strong></p>
-                <div style="max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:6px">
+                <input type="text" id="extraEnrollSearch" class="form-input" placeholder="بحث باسم الطالب..." style="margin-bottom:10px" oninput="filterExtraEnrollList(this.value)">
+                <div id="extraEnrollList" style="max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:6px">
                     ${(students || []).map(s => `
-                        <label style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--border);border-radius:10px;cursor:pointer">
+                        <label class="extra-enroll-item" data-name="${esc((s.fullName || '').toLowerCase())}" style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--border);border-radius:10px;cursor:pointer">
                             <input type="checkbox" class="extra-enroll-cb" value="${s.id}" ${enrolledIds.has(s.id) ? 'checked' : ''}>
                             <span style="font-size:13px;font-weight:600">${esc(s.fullName)}</span>
                         </label>`).join('') || '<p>لا يوجد طلاب</p>'}
@@ -385,6 +386,7 @@
             });
             const extraChk = document.getElementById('circleIsExtra');
             if (extraChk) extraChk.checked = false;
+            if (typeof toggleCircleExtraFields === 'function') toggleCircleExtraFields(false);
             const parentSel = document.getElementById('circleParentId');
             if (parentSel) parentSel.value = '';
             fetchCircles();
@@ -497,5 +499,21 @@
     global.submitEditCircle = submitEditCircle;
     global.deleteCircle = deleteCircle;
     global.openExtraEnroll = openExtraEnroll;
+
+    function toggleCircleExtraFields(show) {
+        const el = document.getElementById('circleExtraFields');
+        if (el) el.style.display = show ? '' : 'none';
+    }
+
+    function filterExtraEnrollList(q) {
+        const term = (q || '').trim().toLowerCase();
+        document.querySelectorAll('#extraEnrollList .extra-enroll-item').forEach(item => {
+            const name = item.dataset.name || '';
+            item.style.display = !term || name.includes(term) ? '' : 'none';
+        });
+    }
+
+    global.toggleCircleExtraFields = toggleCircleExtraFields;
+    global.filterExtraEnrollList = filterExtraEnrollList;
 
 })(window);

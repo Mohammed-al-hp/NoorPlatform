@@ -25,10 +25,15 @@
         settings: ['الإعدادات', 'إعدادات المنصة والنظام'],
         expenses: ['إدارة المصروفات', 'تسجيل المصروفات والعهد المالية'],
         competitions: ['المسابقات القرآنية', 'نتائج وتراتيب المسابقات'],
+        oralExams: ['الاختبارات الشفوية', 'سرد كامل وتسميع أثمان'],
+        evaluation: ['التقييم التربوي', 'متون · أهداف · فترات · لباس · صلاة'],
+        myPrayer: ['الصلاة اليومية', 'تسجيل صلاتك في المسجد'],
+        myEvaluations: ['تقييمات الفترة', 'التقييم العام المحفوظ من الشيخ'],
+        parentHome: ['متابعة البيت', 'تقييم أسبوعي لممارسة الابن في المنزل'],
     };
 
     // مصدر موحّد — يستخدمه أيضاً auth.js عبر global.NoorStaffOnlyPages
-    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'exams', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents', 'expenses', 'competitions'];
+    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'exams', 'oralExams', 'evaluation', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents', 'expenses', 'competitions'];
     global.NoorStaffOnlyPages = STAFF_ONLY_PAGES;
 
     function navigate(page, el) {

@@ -1,6 +1,6 @@
 // sw.js — Service Worker لمنصة نور (v10)
-const CACHE_NAME = 'noor-v12';
-const STATIC_ASSETS = ['/', '/landing.html', '/index.html', '/manifest.json', '/css/landing.css', '/js/asset-loader.js', '/js/app.js', '/js/utils.js', '/js/api.js', '/js/ui.js', '/js/app-ui-extensions.js', '/js/page-controller.js', '/js/attendance.js', '/js/parents.js', '/js/exams.js', '/js/hifz.js', '/js/students.js', '/js/dashboard.js', '/js/payments.js', '/js/teachers.js', '/js/users.js', '/js/reports.js', '/js/modals.js', '/lib/html2pdf.bundle.min.js'];
+const CACHE_NAME = 'noor-v13';
+const STATIC_ASSETS = ['/', '/landing.html', '/index.html', '/manifest.json', '/css/landing.css', '/js/asset-loader.js', '/js/app.js', '/js/utils.js', '/js/api.js', '/js/ui.js', '/js/app-ui-extensions.js', '/js/page-controller.js', '/js/attendance.js', '/js/parents.js', '/js/exams.js', '/js/hifz.js', '/js/students.js', '/js/dashboard.js', '/js/payments.js', '/js/teachers.js', '/js/users.js', '/js/reports.js', '/js/modals.js', '/js/pedagogical.js', '/lib/html2pdf.bundle.min.js'];
 const FONT_CACHE = 'noor-fonts-v1';
 const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
 self.addEventListener('install', event => {

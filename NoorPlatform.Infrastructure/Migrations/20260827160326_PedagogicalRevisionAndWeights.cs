@@ -15,56 +15,56 @@ namespace NoorPlatform.Infrastructure.Migrations
                 table: "StudentPeriodEvaluations",
                 type: "float",
                 nullable: false,
-                defaultValue: 0.0);
+                defaultValue: 1.0);
 
             migrationBuilder.AddColumn<bool>(
                 name: "EvaluationsVisibleToStudentsAndParents",
                 table: "PlatformSettings",
                 type: "bit",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.AddColumn<double>(
                 name: "WeightAttendance",
                 table: "PlatformSettings",
                 type: "float",
                 nullable: false,
-                defaultValue: 0.0);
+                defaultValue: 1.0);
 
             migrationBuilder.AddColumn<double>(
                 name: "WeightDress",
                 table: "PlatformSettings",
                 type: "float",
                 nullable: false,
-                defaultValue: 0.0);
+                defaultValue: 1.0);
 
             migrationBuilder.AddColumn<double>(
                 name: "WeightHifz",
                 table: "PlatformSettings",
                 type: "float",
                 nullable: false,
-                defaultValue: 0.0);
+                defaultValue: 1.0);
 
             migrationBuilder.AddColumn<double>(
                 name: "WeightMatn",
                 table: "PlatformSettings",
                 type: "float",
                 nullable: false,
-                defaultValue: 0.0);
+                defaultValue: 1.0);
 
             migrationBuilder.AddColumn<double>(
                 name: "WeightProgress",
                 table: "PlatformSettings",
                 type: "float",
                 nullable: false,
-                defaultValue: 0.0);
+                defaultValue: 1.0);
 
             migrationBuilder.AddColumn<double>(
                 name: "WeightRevision",
                 table: "PlatformSettings",
                 type: "float",
                 nullable: false,
-                defaultValue: 0.0);
+                defaultValue: 1.0);
         }
 
         /// <inheritdoc />
