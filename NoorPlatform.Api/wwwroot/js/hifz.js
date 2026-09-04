@@ -369,7 +369,7 @@
             if (typeof global.fetchMemorizationData === 'function') global.fetchMemorizationData();
         } catch (e) {
             if (global.handleApiError) global.handleApiError(e);
-            else global.showToast('' + (e.message || 'حدث خطأ أثناء الحفظ', 'error'));
+            else global.showToast(e.message || 'حدث خطأ أثناء الحفظ', 'error');
         } finally {
             if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }
