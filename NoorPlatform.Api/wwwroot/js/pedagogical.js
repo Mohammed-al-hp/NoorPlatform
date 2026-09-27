@@ -147,10 +147,6 @@
     }
 
     async function fetchPedagogicalPage(tab) {
-        if (tab === 'oral') {
-            await renderOralPage();
-            return;
-        }
         if (tab === 'prayer') {
             await renderStudentPrayerPage();
             return;
@@ -177,187 +173,7 @@
         }
     }
 
-    // ════════════════════════════════════════════════════════
-    // 1. Oral exams
-    // ════════════════════════════════════════════════════════
-
-    async function renderOralPage() {
-        const list = document.getElementById('oralExamsList');
-        const formWrap = document.getElementById('oralExamForm');
-        if (formWrap && !formWrap.dataset.ready) {
-            formWrap.dataset.ready = '1';
-            formWrap.innerHTML = `
-                <div class="chart-card" style="margin-bottom:20px">
-                    <div class="card-header"><h3>تسجيل اختبار شفوي</h3></div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">الطالب *</label>
-                            <select id="oralStudentId" class="form-input"><option value="">— اختر طالباً —</option></select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">النوع *</label>
-                            <select id="oralKind" class="form-input">
-                                <option value="FullRecitation">سرد كامل</option>
-                                <option value="AthmanSampling" selected>تسميع أثمان</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">النطاق / الوصف</label>
-                            <input id="oralScope" class="form-input" type="text" placeholder="مثال: الأثمان 1–5 من البقرة">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">أقصى فتح قبل الرسوب</label>
-                            <input id="oralMaxOpenings" class="form-input" type="number" min="1" value="3">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">التاريخ</label>
-                            <input id="oralDate" class="form-input" type="date" value="${todayYmd()}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">الحلقة (اختياري)</label>
-                            <select id="oralCircleId" class="form-input"><option value="">— اختياري —</option></select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">ملاحظات</label>
-                        <input id="oralNotes" class="form-input" type="text" placeholder="اختياري">
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
-                        <strong>الأسئلة</strong>
-                        <button type="button" class="btn btn-outline" style="font-size:12px;padding:6px 12px" onclick="addOralQuestionRow()">+ إضافة سؤال</button>
-                    </div>
-                    <div id="oralQuestionsRows"></div>
-                    <div style="margin-top:14px">
-                        <button type="button" class="btn btn-primary" onclick="saveOralExam()">${window.Icon ? window.Icon('save', { size: 14 }) : ''} حفظ الاختبار</button>
-                    </div>
-                </div>`;
-            _oralQIndex = 0;
-            addOralQuestionRow();
-            await Promise.all([loadStudentOptions('oralStudentId'), loadCircleOptions('oralCircleId')]);
-            await applyOralDefaultsFromSettings();
-        }
-        if (!list) return;
-        list.innerHTML = '<p style="text-align:center;padding:24px;color:var(--text-muted)">جاري التحميل...</p>';
-        try {
-            const data = await apiFetch('/oral-exams');
-            if (!data?.length) {
-                list.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد جلسات بعد</p>';
-                return;
-            }
-            list.innerHTML = data.map(s => `
-                <div class="chart-card" style="margin-bottom:12px">
-                    <div class="card-header">
-                        <div>
-                            <h3>${escapeHtml(s.studentName || '')}</h3>
-                            <p>${formatDateEnGb(s.date)} · ${escapeHtml(kindLabel(s.kind))} · ${escapeHtml(s.scopeLabel || '')}</p>
-                        </div>
-                        <span class="status-badge status-excellent">${s.overallPercent ?? 0}% — ${escapeHtml(s.overallGrade || '')}</span>
-                    </div>
-                    <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:var(--text-muted)">
-                        <span>أسئلة: ${s.questionsCount ?? 0}</span>
-                        <span>${s.isConsideredMemorized ? 'يُعتبر حافظاً ✓' : 'لم يُعتبر حافظاً'}</span>
-                        ${s.circleName ? `<span>${escapeHtml(s.circleName)}</span>` : ''}
-                    </div>
-                    <div style="margin-top:10px">
-                        <button class="btn btn-delete" style="font-size:12px;padding:6px 12px" onclick="deleteOralExam(${s.id})">${window.Icon ? window.Icon('trash-2', { size: 12 }) : ''} حذف</button>
-                    </div>
-                </div>`).join('');
-        } catch (err) {
-            handleApiError(err, { silent: true });
-            list.innerHTML = '<p style="color:#dc2626;text-align:center;padding:20px">تعذر تحميل الجلسات</p>';
-        }
-    }
-
-    function addOralQuestionRow() {
-        const wrap = document.getElementById('oralQuestionsRows');
-        if (!wrap) return;
-        const i = _oralQIndex++;
-        const row = document.createElement('div');
-        row.className = 'oral-q-row';
-        row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px';
-        row.innerHTML = `
-            <div class="form-group" style="margin:0">
-                <label class="form-label">التسمية</label>
-                <input class="form-input oq-label" type="text" placeholder="سؤال ${i + 1}">
-            </div>
-            <div class="form-group" style="margin:0">
-                <label class="form-label">تردد</label>
-                <input class="form-input oq-hes" type="number" min="0" value="0">
-            </div>
-            <div class="form-group" style="margin:0">
-                <label class="form-label">تنبيه</label>
-                <input class="form-input oq-alert" type="number" min="0" value="0">
-            </div>
-            <div class="form-group" style="margin:0">
-                <label class="form-label">فتح</label>
-                <input class="form-input oq-open" type="number" min="0" value="0">
-            </div>
-            <div class="form-group" style="margin:0">
-                <label class="form-label">درجة %</label>
-                <input class="form-input oq-score" type="number" min="0" max="100" placeholder="تلقائي">
-            </div>
-            <button type="button" class="btn btn-outline" style="padding:8px" onclick="this.closest('.oral-q-row').remove()" title="حذف">×</button>`;
-        wrap.appendChild(row);
-    }
-
-    async function saveOralExam() {
-        const studentId = parseInt(document.getElementById('oralStudentId')?.value, 10);
-        const kind = document.getElementById('oralKind')?.value;
-        if (!studentId || !kind) {
-            showToast('اختر الطالب ونوع الاختبار', 'error');
-            return;
-        }
-        const rows = document.querySelectorAll('#oralQuestionsRows .oral-q-row');
-        const questions = [];
-        rows.forEach(r => {
-            const scoreRaw = r.querySelector('.oq-score')?.value;
-            questions.push({
-                label: r.querySelector('.oq-label')?.value?.trim() || '',
-                hesitationCount: parseInt(r.querySelector('.oq-hes')?.value, 10) || 0,
-                alertCount: parseInt(r.querySelector('.oq-alert')?.value, 10) || 0,
-                openingCount: parseInt(r.querySelector('.oq-open')?.value, 10) || 0,
-                scorePercent: scoreRaw !== '' && scoreRaw != null ? parseFloat(scoreRaw) : null
-            });
-        });
-        if (!questions.length) {
-            showToast('أضف سؤالاً واحداً على الأقل', 'warning');
-            return;
-        }
-        const circleRaw = document.getElementById('oralCircleId')?.value;
-        try {
-            await apiFetch('/oral-exams', 'POST', {
-                studentId,
-                kind,
-                scopeLabel: document.getElementById('oralScope')?.value?.trim() || '',
-                maxOpeningsBeforeFail: parseInt(document.getElementById('oralMaxOpenings')?.value, 10) || 3,
-                date: document.getElementById('oralDate')?.value || null,
-                circleId: circleRaw ? parseInt(circleRaw, 10) : null,
-                notes: document.getElementById('oralNotes')?.value?.trim() || null,
-                questions
-            });
-            showToast('تم تسجيل الاختبار الشفوي', 'success');
-            const form = document.getElementById('oralExamForm');
-            if (form) form.dataset.ready = '';
-            await renderOralPage();
-        } catch (err) {
-            handleApiError(err);
-        }
-    }
-
-    async function deleteOralExam(id) {
-        if (!confirm('حذف جلسة الاختبار الشفوي؟')) return;
-        try {
-            await apiFetch(`/oral-exams/${id}`, 'DELETE');
-            showToast('تم الحذف', 'success');
-            await renderOralPage();
-        } catch (err) {
-            handleApiError(err);
-        }
-    }
+    
 
     // ════════════════════════════════════════════════════════
     // 2. Matn
@@ -1235,9 +1051,6 @@
     // Exports
     global.fetchPedagogicalPage = fetchPedagogicalPage;
     global.showPedagoTab = showPedagoTab;
-    global.addOralQuestionRow = addOralQuestionRow;
-    global.saveOralExam = saveOralExam;
-    global.deleteOralExam = deleteOralExam;
     global.loadMatnList = loadMatnList;
     global.saveMatnRecord = saveMatnRecord;
     global.deleteMatnRecord = deleteMatnRecord;

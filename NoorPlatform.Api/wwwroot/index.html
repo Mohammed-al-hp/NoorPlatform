@@ -1570,14 +1570,13 @@
             font-weight: 700;
             margin-top: 8px;
         }
-
         /* ===== MODAL ===== */
         .modal-overlay {
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
-            z-index: 200;
+            z-index: 1100;
             display: none;
             align-items: center;
             justify-content: center;
@@ -3338,8 +3337,10 @@
                         onclick="handleLogin()">
                     دخول
                 </button>
-                <div class="login-footer" style="font-size:12px">
-                    الحسابات تُنشأ من قبل إدارة المركز فقط. للتسجيل تواصل معنا.
+                <div id="loginError" style="color:var(--danger, #e74c3c); font-size:13px; text-align:center; display:none; margin-bottom:10px;"></div>
+                <div class="login-footer" style="font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>الحسابات تُنشأ من قبل إدارة المركز فقط.</span>
+                    <a href="#" onclick="event.preventDefault(); openForgotPasswordHelp()">نسيت كلمة المرور؟</a>
                 </div>
             </div>
             <div id="registerForm" style="display:none">
@@ -3470,10 +3471,7 @@
                     <div class="nav-icon" data-icon="file-text" data-icon-size="20"></div>
                     <span>الاختبارات</span>
                 </div>
-                <div class="nav-item" onclick="navigate('oralExams', this)">
-                    <div class="nav-icon" data-icon="mic" data-icon-size="20"></div>
-                    <span>الاختبارات الشفوية</span>
-                </div>
+
                 <div class="nav-item" onclick="navigate('evaluation', this)">
                     <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
                     <span>التقييم التربوي</span>
@@ -3950,7 +3948,7 @@
                     </div>
                 </div>
                 <div class="date-nav">
-                    
+
                     <div class="date-nav-dates">
 
 
@@ -4039,18 +4037,6 @@
                 <button class="btn btn-primary" onclick="openModal('addExamModal')"><span data-icon="plus" data-icon-size="14"></span> إنشاء اختبار</button>
             </div>
             <div class="exam-cards" id="examsList"></div>
-        </div>
-
-        <!-- ===== ORAL EXAMS ===== -->
-        <div class="content" id="page-oralExams">
-            <div class="page-header">
-                <div>
-                    <h2>الاختبارات الشفوية</h2>
-                    <p>سرد كامل وتسمية أثمان — تسجيل الجلسات والأسئلة</p>
-                </div>
-            </div>
-            <div id="oralExamForm"></div>
-            <div id="oralExamsList"></div>
         </div>
 
         <!-- ===== PEDAGOGICAL EVALUATION ===== -->
@@ -4531,9 +4517,9 @@
                 </div>
                 <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()"><span data-icon="save" data-icon-size="14"></span> حفظ التغييرات</button>
             </div>
-            
+
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-bottom:40px;">
-                
+
                 <!-- 1. معلومات المركز -->
                 <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
                     <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
@@ -4637,6 +4623,21 @@
                     </div>
                 </div>
 
+                <!-- 3c. إدارة المتون -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                        <span data-icon="book-open" data-icon-size="20"></span> إدارة المتون
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1">
+                            <label class="form-label">اسم متن جديد</label>
+                            <input type="text" id="newMatnName" class="form-input" placeholder="مثال: تحفة الأطفال">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-bottom:16px" onclick="NoorSettings.addMatn()"><span data-icon="plus" data-icon-size="14"></span> إضافة متن</button>
+                    <div id="matnsSettingsList"></div>
+                </div>
+
                 <!-- 4. المظهر -->
                 <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
                     <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
@@ -4734,7 +4735,7 @@
                         <button class="btn btn-outline" style="color:var(--text-muted);border-color:var(--border)" onclick="NoorDashboard.clearCache()"><span data-icon="trash-2" data-icon-size="14"></span> تفريغ الذاكرة المؤقتة (Cache)</button>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </main>
@@ -4826,7 +4827,7 @@
                 <h3><span data-icon="graduation-cap" data-icon-size="18"></span> إضافة طالب جديد</h3>
 
                 <button class="modal-close" onclick="closeModal('addStudentModal')">
-                                <span data-icon="x" data-icon-size="16"></span>
+                    <span data-icon="x" data-icon-size="16"></span>
                 </button>
             </div>
 
@@ -4991,6 +4992,24 @@
                         <input class="form-input" id="hifzEndText" type="text" placeholder="...إلى قوله">
                         <span style="font-size:11px;color:var(--text-muted)">يُملأ تلقائيًا من رواية قالون عند اختيار السورة والآية — يمكن تعديله يدويًا</span>
                     </div>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                            <input type="checkbox" id="hifzIncludeMatn" onchange="document.getElementById('hifzMatnFields').style.display=this.checked?'block':'none'">
+                            تسجيل حفظ متن أيضًا بهذه الجلسة
+                        </label>
+                    </div>
+                    <div id="hifzMatnFields" style="display:none">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">اسم المتن *</label>
+                                <select class="form-input" id="hifzMatnName"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">الجزء / الأبيات</label>
+                                <input class="form-input" id="hifzMatnPortion" type="text" placeholder="مثال: من بيت 1 إلى 10">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div id="hifzRevisionPanel" style="display:none">
                     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -4998,20 +5017,53 @@
                         <button type="button" class="btn btn-outline" data-revision-mode="Questions"><span data-icon="help-circle" data-icon-size="14"></span> نظام الأسئلة</button>
                     </div>
                     <div id="hifzSequentialPanel" class="hifz-revision-panel">
+                        <span id="hifzSeqPositionHint" style="font-size:12px;color:var(--green-dark, #16a34a);display:block;margin-bottom:8px"></span>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">من سورة</label>
                                 <select class="form-input" id="hifzSeqFromSurah"></select>
                             </div>
                             <div class="form-group">
+                                <label class="form-label">من آية</label>
+                                <select class="form-input" id="hifzSeqFromVerse"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">نص بداية الآية</label>
+                            <input class="form-input" id="hifzSeqStartText" type="text" placeholder="اقرأ من قوله تعالى..." readonly>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
                                 <label class="form-label">إلى سورة</label>
                                 <select class="form-input" id="hifzSeqToSurah"></select>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى آية</label>
+                                <select class="form-input" id="hifzSeqToVerse"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">نص نهاية الآية</label>
+                            <input class="form-input" id="hifzSeqEndText" type="text" placeholder="...إلى قوله" readonly>
                         </div>
                         <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">السور التي سيتم تسميعها:</p>
                         <div class="hifz-seq-preview" id="hifzSeqPreview"></div>
                     </div>
                     <div id="hifzQuestionsPanel" class="hifz-revision-panel" style="display:none">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">نوع الاختبار</label>
+                                <input type="hidden" id="hifzOralKind" value="AthmanSampling">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">أقصى فتح قبل الرسوب</label>
+                                <input class="form-input" id="hifzOralMaxOpenings" type="number" min="1" value="3">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">النطاق / الوصف</label>
+                            <input class="form-input" id="hifzOralScope" type="text" placeholder="مثال: الأثمان 1–5 من البقرة">
+                        </div>
                         <div id="hifzQuestionsList"></div>
                         <button type="button" class="btn btn-outline" id="btnAddRevisionQuestion" style="width:100%;margin-top:8px"><span data-icon="plus" data-icon-size="14"></span> إضافة سؤال</button>
                     </div>
@@ -5020,7 +5072,9 @@
                     <label class="form-label">التقييم *</label>
                     <select class="form-input" id="hifzEvaluation">
                         <option value="excellent">ممتاز</option>
+                        <option value="veryGood">جيد جدًا</option>
                         <option value="good">جيد</option>
+                        <option value="weak">ضعيف</option>
                         <option value="review">يحتاج مراجعة</option>
                     </select>
                 </div>
@@ -5176,17 +5230,17 @@
             <div class="modal-body">
                 <div class="form-row">
                     <div class="form-group">
-                        
+
                         <label class="form-label">الاسم الثلاثي *</label>
                         <input id="teacherFullName" class="form-input" type="text" placeholder="عبدالله أحمد السلمي" autocomplete="name">
                     </div>
                     <div class="form-group">
-                        
+
                         <label class="form-label">رقم الهاتف *</label>
                         <input id="teacherPhone" class="form-input" type="tel" placeholder="09xxxxxxxx" inputmode="numeric" maxlength="10" autocomplete="tel">
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">تاريخ الميلاد *</label>
                     <input id="teacherBirthDate" class="form-input" type="date" required>
@@ -5325,18 +5379,18 @@
                     </label>
                 </div>
                 <div id="circleExtraFields" style="display:none">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">تاريخ الجلسة (للإضافية)</label>
-                        <input id="circleSessionDate" class="form-input" type="date">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">تاريخ الجلسة (للإضافية)</label>
+                            <input id="circleSessionDate" class="form-input" type="date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">الحلقة الرسمية الأم</label>
+                            <select id="circleParentId" class="form-input">
+                                <option value="">— بدون —</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">الحلقة الرسمية الأم</label>
-                        <select id="circleParentId" class="form-input">
-                            <option value="">— بدون —</option>
-                        </select>
-                    </div>
-                </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -5513,7 +5567,7 @@
                         <input type="text" id="editTeacherName" class="form-input" placeholder="عبدالله أحمد السلمي">
                     </div>
                     <div class="form-group">
-                        
+
                         <label class="form-label">تاريخ الميلاد</label>
                         <input type="date" id="editTeacherBirthDate" class="form-input">
                     </div>
@@ -5707,12 +5761,36 @@
                     <label>كلمة المرور الجديدة</label>
                     <input type="password" id="newPasswordInput" class="form-control" placeholder="8 أحرف على الأقل">
                 </div>
+                <div class="form-group">
+                    <label>تأكيد كلمة المرور الجديدة</label>
+                    <input type="password" id="confirmNewPasswordInput" class="form-control" placeholder="أعد كتابة كلمة المرور">
+                </div>
+                <div id="changePasswordError" style="color:var(--danger, #e74c3c); font-size:13px; display:none; margin-top:-8px; margin-bottom:8px;"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" onclick="submitChangePassword()" style="width:100%">
                     حفظ
                     ومتابعة
                 </button>
+            </div>
+            <div style="text-align:center; padding: 0 0 16px;">
+                <a href="#" onclick="event.preventDefault(); openForgotPasswordHelp()" style="font-size:13px">نسيت كلمة المرور الحالية؟</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال استرجاع كلمة المرور -->
+    <div class="modal-overlay" id="forgotPasswordModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3><span data-icon="help-circle" data-icon-size="18"></span> استرجاع كلمة المرور</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color:var(--text-muted)">لا يمكن استرجاع كلمة المرور تلقائياً. يرجى التواصل مع مدير المنصة وسيقوم بإعادة تعيينها لك.</p>
+                <p id="forgotPasswordContact" style="font-weight:600; margin-top:12px"></p>
+            </div>
+            <div class="modal-footer" id="forgotPasswordWhatsappBtns" style="display:flex;flex-direction:column;width:100%">
+                <!-- الأزرار تُنشأ ديناميكياً في auth.js -->
             </div>
         </div>
     </div>
@@ -5910,24 +5988,24 @@
 
             const win = window.open('', '_blank');
             win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar">
-                        <head><meta charset="UTF-8"><title>سجل الحضور</title>
-                        <style>
-                            body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
-                            h2 { text-align: center; margin-bottom: 4px; }
-                            p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
-                            table { width: 100%; border-collapse: collapse; }
-                            th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
-                            th { background: #f1f5f9; font-weight: 700; }
-                            @media print { body { padding: 0; } }
-                        <\/style><\/head>
-                        <body>
-                            <h2>سجل الحضور والغياب</h2>
-                            <p>${date}</p>
-                            <table>
-                                <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
-                                <tbody>${rowsHtml}</tbody>
-                            </table>
-                        <\/body><\/html>`);
+                                    <head><meta charset="UTF-8"><title>سجل الحضور</title>
+                                    <style>
+                                        body { font-family: 'Tajawal', Tahoma, sans-serif; padding: 20px; direction: rtl; }
+                                        h2 { text-align: center; margin-bottom: 4px; }
+                                        p  { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
+                                        table { width: 100%; border-collapse: collapse; }
+                                        th, td { border: 1px solid #ccc; padding: 10px 14px; font-size: 13px; text-align: right; }
+                                        th { background: #f1f5f9; font-weight: 700; }
+                                        @media print { body { padding: 0; } }
+                                    <\/style><\/head>
+                                    <body>
+                                        <h2>سجل الحضور والغياب</h2>
+                                        <p>${date}</p>
+                                        <table>
+                                            <thead><tr><th>اسم الطالب</th><th>الحالة</th><th>ملاحظات</th></tr></thead>
+                                            <tbody>${rowsHtml}</tbody>
+                                        </table>
+                                    <\/body><\/html>`);
             win.document.close();
             win.focus();
             setTimeout(() => { win.print(); win.close(); }, 400);
@@ -5976,14 +6054,14 @@
                     const cards = Object.keys(d)
                         .filter(k => k !== 'byLevel' && d[k] !== undefined && d[k] !== null && typeof d[k] !== 'object')
                         .map(k => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:140px;flex:1">
-                                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
-                                        <div style="font-size:22px;font-weight:800">${d[k]}</div>
-                                    </div>`)
+                                                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
+                                                    <div style="font-size:22px;font-weight:800">${d[k]}</div>
+                                                </div>`)
                         .join('');
                     res.innerHTML = `<div style="text-align:right">
-                                    <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
-                                    <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
-                                </div>`;
+                                                <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
+                                                <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
+                                            </div>`;
                 })
                 .catch((err) => {
                     const msg = err?.message || 'تعذر تحميل التقرير';

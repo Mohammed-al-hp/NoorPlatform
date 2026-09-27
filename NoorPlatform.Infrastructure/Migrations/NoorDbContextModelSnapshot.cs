@@ -722,6 +722,33 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.ToTable("LibraryItems");
                 });
 
+            modelBuilder.Entity("NoorPlatform.Core.Entities.Matn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Matn_Name");
+
+                    b.ToTable("Matns");
+                });
+
             modelBuilder.Entity("NoorPlatform.Core.Entities.MatnRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -1070,6 +1097,21 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<double>("OralOpeningPenalty")
+                        .HasColumnType("float");
+
+                    b.Property<double>("ProgressThreshold10")
+                        .HasColumnType("float");
+
+                    b.Property<double>("ProgressThreshold4")
+                        .HasColumnType("float");
+
+                    b.Property<double>("ProgressThreshold6")
+                        .HasColumnType("float");
+
+                    b.Property<double>("ProgressThreshold8")
+                        .HasColumnType("float");
+
+                    b.Property<double>("ProgressThreshold9")
                         .HasColumnType("float");
 
                     b.Property<DateTime>("UpdatedAt")

@@ -159,9 +159,9 @@ public class OralExamsController : ControllerBase
         var maxOpenings = request.MaxOpeningsBeforeFail
             ?? settings?.OralMaxOpeningsBeforeFail
             ?? 3;
-        var hesitationPenalty = settings?.OralHesitationPenalty ?? 2;
-        var alertPenalty = settings?.OralAlertPenalty ?? 5;
-        var openingPenalty = settings?.OralOpeningPenalty ?? 15;
+        var hesitationPenalty = settings?.OralHesitationPenalty ?? 0.5;
+        var alertPenalty = settings?.OralAlertPenalty ?? 1;
+        var openingPenalty = settings?.OralOpeningPenalty ?? 2;
 
         var questionInputs = request.Questions.Select(q => (
             Hesitation: Math.Max(0, q.HesitationCount),

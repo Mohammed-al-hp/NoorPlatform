@@ -26,13 +26,25 @@ public class PlatformSettings
     /// <summary>عدد الفتحات عبر أسئلة الجلسة لاعتبار الطالب غير حافظ.</summary>
     public int OralMaxOpeningsBeforeFail { get; set; } = 3;
     /// <summary>وزن التنبيه في خصم درجة السؤال (نقاط لكل تنبيه).</summary>
-    public double OralAlertPenalty { get; set; } = 5;
+    public double OralAlertPenalty { get; set; } = 1;
     /// <summary>وزن الفتح في خصم درجة السؤال.</summary>
-    public double OralOpeningPenalty { get; set; } = 15;
+    public double OralOpeningPenalty { get; set; } = 2;
     /// <summary>وزن التردد (غالباً خفيف).</summary>
-    public double OralHesitationPenalty { get; set; } = 2;
+    public double OralHesitationPenalty { get; set; } = 0.5;
     /// <summary>الهدف الشهري الافتراضي بالأثمان إن لم يُحدد للطالب.</summary>
     public int DefaultMonthlyAthmanTarget { get; set; } = 8;
+
+    // ─── عتبات تحويل نسبة الإنجاز الشهري إلى درجة من 10 (قابلة للتعديل) ───
+    /// <summary>نسبة الإنجاز اللازمة للحصول على 10/10 (افتراضي 75%).</summary>
+    public double ProgressThreshold10 { get; set; } = 0.75;
+    /// <summary>نسبة الإنجاز اللازمة للحصول على 9/10 (افتراضي 62.5%).</summary>
+    public double ProgressThreshold9 { get; set; } = 0.625;
+    /// <summary>نسبة الإنجاز اللازمة للحصول على 8/10 (افتراضي 50%).</summary>
+    public double ProgressThreshold8 { get; set; } = 0.5;
+    /// <summary>نسبة الإنجاز اللازمة للحصول على 6/10 (افتراضي 37.5%).</summary>
+    public double ProgressThreshold6 { get; set; } = 0.375;
+    /// <summary>نسبة الإنجاز اللازمة للحصول على 4/10 (افتراضي 25%).</summary>
+    public double ProgressThreshold4 { get; set; } = 0.25;
 
     // ─── أوزان أبعاد تقييم الفترة (نسب نسبية؛ تُطبَّع تلقائياً) ───
     public double WeightAttendance { get; set; } = 1;

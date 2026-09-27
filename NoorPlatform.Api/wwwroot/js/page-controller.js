@@ -92,7 +92,16 @@
     // ─── الطلاب (CRUD) ────────────────────────
     async function viewStudentDetails(id) {
         try {
-            const s = await apiFetch(`/students/${id}`);
+            const [s, lastPos] = await Promise.all([
+                apiFetch(`/students/${id}`),
+                apiFetch(`/hifz/last-position/${id}`).catch(() => null)
+            ]);
+            const lastPosHtml = lastPos && lastPos.hasPrevious
+                ? `<div style="text-align:center;padding:10px 14px;background:var(--bg);border-radius:10px;margin-bottom:16px">
+                       <span style="font-size:12px;color:var(--text-muted)">آخر سورة جديدة وصل إليها</span>
+                       <div style="font-weight:800;font-size:16px;color:var(--green-dark,#16a34a);margin-top:2px">${escapeHtml(lastPos.lastSurahName || lastPos.surahName || '—')}</div>
+                   </div>`
+                : '';
             const hifzHtml = s.recentHifz && s.recentHifz.length > 0
                 ? s.recentHifz.map(h => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
                     <span>${escapeHtml(h.surahName)} (${escapeHtml(h.verses)})</span><span class="status-badge status-excellent">${escapeHtml(h.evaluation)}</span>
@@ -105,11 +114,12 @@
                     <h3>${escapeHtml(s.fullName)}</h3>
                     <p style="color:var(--text-muted)">${escapeHtml(s.email || '')} | ${escapeHtml(s.circleName || '')}</p>
                 </div>
-                <div class="student-card-stats" style="margin-bottom:16px">
+                <                <div class="student-card-stats" style="margin-bottom:16px">
                     <div class="mini-stat"><label>الحفظ</label><p>${s.progress ?? 0}%</p></div>
                     <div class="mini-stat"><label>الحضور</label><p>${s.attendance ?? 0}%</p></div>
                     <div class="mini-stat"><label>المستوى</label><p>${escapeHtml(s.level || '—')}</p></div>
                 </div>
+                ${lastPosHtml}
                 <h4 style="margin-bottom:8px">آخر سجلات التسميع</h4>
                 ${hifzHtml}`;
             if (setModalBody('teacherProfileBody', html, (window.Icon ? window.Icon('user', { size: 16 }) : '') + ' بيانات الطالب')) {

@@ -165,6 +165,7 @@ public class PedagogicalController : ControllerBase
             return NotFound(new { message = "الطالب غير موجود" });
 
         var userId = AuthorizationHelpers.GetUserId(User);
+        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
         var existing = await _context.StudentMonthlyTargets
             .FirstOrDefaultAsync(t =>
                 t.StudentId == request.StudentId &&
@@ -181,7 +182,13 @@ public class PedagogicalController : ControllerBase
                 Month = request.Month,
                 TargetAthmanCount = request.TargetAthmanCount,
                 AchievedAthmanCount = achieved,
-                ProgressScoreOutOf10 = PedagogicalGrading.ProgressScoreOutOf10(achieved, request.TargetAthmanCount),
+                ProgressScoreOutOf10 = PedagogicalGrading.ProgressScoreOutOf10(
+                achieved, request.TargetAthmanCount,
+                settings?.ProgressThreshold10 ?? 0.75,
+                settings?.ProgressThreshold9 ?? 0.625,
+                settings?.ProgressThreshold8 ?? 0.5,
+                settings?.ProgressThreshold6 ?? 0.375,
+                settings?.ProgressThreshold4 ?? 0.25),
                 IsSpecialMode = request.IsSpecialMode ?? false,
                 SpecialModeNote = request.SpecialModeNote,
                 Notes = request.Notes,
@@ -197,7 +204,12 @@ public class PedagogicalController : ControllerBase
                 existing.AchievedAthmanCount = request.AchievedAthmanCount.Value;
 
             existing.ProgressScoreOutOf10 = PedagogicalGrading.ProgressScoreOutOf10(
-                existing.AchievedAthmanCount, existing.TargetAthmanCount);
+     existing.AchievedAthmanCount, existing.TargetAthmanCount,
+     settings?.ProgressThreshold10 ?? 0.75,
+     settings?.ProgressThreshold9 ?? 0.625,
+     settings?.ProgressThreshold8 ?? 0.5,
+     settings?.ProgressThreshold6 ?? 0.375,
+     settings?.ProgressThreshold4 ?? 0.25);
 
             if (request.IsSpecialMode.HasValue)
                 existing.IsSpecialMode = request.IsSpecialMode.Value;

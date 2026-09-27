@@ -292,9 +292,11 @@
 
             // تحميل التفضيلات المحلية (localStorage)
             loadLocalPreferences();
-            
             // تحميل معلومات النظام
             fetchSystemInfo();
+
+            // تحميل قائمة المتون المُدارة
+            loadMatnsSettingsList();
 
         } catch (e) {
             console.error('Settings fetch error:', e);
@@ -383,6 +385,56 @@
             if (global.setBtnLoading) global.setBtnLoading(btn, false, icon('save', { size: 16 }) + ' حفظ التغييرات');
         }
     }
+
+    async function loadMatnsSettingsList() {
+        const list = document.getElementById('matnsSettingsList');
+        if (!list) return;
+        list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:12px">جاري التحميل...</p>';
+        try {
+            const matns = await apiFetch('/matns?includeInactive=true');
+            if (!matns?.length) {
+                list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:12px">لا توجد متون مضافة بعد</p>';
+                return;
+            }
+            list.innerHTML = matns.map(m => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:8px;margin-bottom:8px">
+                <span style="font-weight:600;${m.isActive ? '' : 'color:var(--text-muted);text-decoration:line-through'}">${escapeHtml(m.name)}</span>
+                <button class="btn btn-outline" style="font-size:12px;padding:4px 10px" onclick="NoorSettings.toggleMatn(${m.id})">
+                    ${m.isActive ? 'تعطيل' : 'تفعيل'}
+                </button>
+            </div>`).join('');
+        } catch (e) {
+            list.innerHTML = '<p style="color:#dc2626;text-align:center;padding:12px">تعذر تحميل المتون</p>';
+        }
+    }
+
+    async function addMatn() {
+        const input = document.getElementById('newMatnName');
+        const name = input?.value?.trim();
+        if (!name) {
+            app().ui.showToast('اسم المتن مطلوب', 'error');
+            return;
+        }
+        try {
+            await apiFetch('/matns', 'POST', { name });
+            app().ui.showToast('تم إضافة المتن', 'success');
+            input.value = '';
+            await loadMatnsSettingsList();
+        } catch (e) {
+            app().api.handleApiError(e);
+        }
+    }
+
+    async function toggleMatn(id) {
+        try {
+            await apiFetch(`/matns/${id}/toggle`, 'PUT');
+            await loadMatnsSettingsList();
+        } catch (e) {
+            app().api.handleApiError(e);
+        }
+    }
+
+    global.NoorSettings = { addMatn, toggleMatn, loadMatnsSettingsList };
 
     async function changePassword() {
         const currentPass = document.getElementById('settingsCurrentPass')?.value;

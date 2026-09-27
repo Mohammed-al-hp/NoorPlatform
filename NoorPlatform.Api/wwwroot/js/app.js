@@ -22,6 +22,11 @@
 
     global.NoorApp = app;
 
+    // ─── أرقام التواصل مع مدير المنصة (تُستخدم عند "نسيت كلمة المرور") ───
+    global.NoorPlatformConfig = {
+        adminContactPhones: ['0912984190', '0911111111']
+    };
+
     // ─── إصلاح: إدارة بيئة الإنتاج والطباعة الآمنة (Security Cleanup) ───
     const isProduction = true; // يمكن ضبطها عبر إعدادات الـ Build أو البيئة
     function log(...args) {

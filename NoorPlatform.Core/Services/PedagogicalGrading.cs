@@ -60,15 +60,18 @@ public static class PedagogicalGrading
     /// تحويل إنجاز الأثمان مقابل الهدف إلى درجة من 10.
     /// مثال المشرف: 7–8 من 8 → 10، 6/8 → 10، 5/8 → 8 … قابل للتعديل.
     /// </summary>
-    public static double ProgressScoreOutOf10(int achieved, int target)
+    public static double ProgressScoreOutOf10(
+    int achieved, int target,
+    double threshold10 = 0.75, double threshold9 = 0.625, double threshold8 = 0.5,
+    double threshold6 = 0.375, double threshold4 = 0.25)
     {
         if (target <= 0) return achieved > 0 ? 10 : 0;
         var ratio = (double)achieved / target;
-        if (ratio >= 0.75) return 10;
-        if (ratio >= 0.625) return 9;
-        if (ratio >= 0.5) return 8;
-        if (ratio >= 0.375) return 6;
-        if (ratio >= 0.25) return 4;
+        if (ratio >= threshold10) return 10;
+        if (ratio >= threshold9) return 9;
+        if (ratio >= threshold8) return 8;
+        if (ratio >= threshold6) return 6;
+        if (ratio >= threshold4) return 4;
         if (ratio > 0) return 2;
         return 0;
     }

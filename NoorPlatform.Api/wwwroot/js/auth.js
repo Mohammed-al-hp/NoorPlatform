@@ -17,7 +17,7 @@
     // صفحات إدارية — لا يجوز للطالب/ولي الأمر فتحها (تسبب 403 عند التحميل التلقائي)
     // المصدر الموحّد معرَّف في modals.js (global.NoorStaffOnlyPages)
     const STAFF_ONLY_PAGES = new Set(global.NoorStaffOnlyPages || [
-        'attendance', 'memorization', 'exams', 'oralExams', 'evaluation',
+        'attendance', 'memorization', 'exams', 'evaluation',
         'students', 'teachers', 'circles', 'payments',
         'reports', 'settings', 'users', 'parents', 'expenses', 'competitions'
     ]);
@@ -216,11 +216,12 @@
             registerForm.style.display = 'none';
         }
     }
-
     async function handleLogin() {
         const phoneInput = document.getElementById('loginPhone');
         const passInput = document.getElementById('loginPassword');
         ui().clearValidation(document.getElementById('loginForm'));
+        const loginErrorBox = document.getElementById('loginError');
+        if (loginErrorBox) { loginErrorBox.style.display = 'none'; loginErrorBox.textContent = ''; }
         const isValid = ui().validateForm([
             { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الهاتف', patternLibyan: true },
             { id: 'loginPassword', required: true, requiredMsg: 'يرجى إدخال كلمة المرور', minLength: 6, minLengthMsg: 'كلمة المرور 6 أحرف على الأقل' }
@@ -271,7 +272,12 @@
                 checkAuth();
             }
         } catch (err) {
-            handleApiError(err, { skipLogout: true });
+            const loginErrorBox2 = document.getElementById('loginError');
+            if (loginErrorBox2) {
+                loginErrorBox2.textContent = err.message || 'بيانات الدخول غير صحيحة';
+                loginErrorBox2.style.display = 'block';
+            }
+            handleApiError(err, { skipLogout: true, silent: true });
         } finally {
             ui().btnLoading(loginBtn, false);
         }
@@ -280,18 +286,51 @@
     async function submitChangePassword() {
         const current = document.getElementById('currentPasswordInput')?.value;
         const newPass = document.getElementById('newPasswordInput')?.value;
+        const confirmPass = document.getElementById('confirmNewPasswordInput')?.value;
+        const errorBox = document.getElementById('changePasswordError');
+        const showErr = (msg) => {
+            if (errorBox) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
+            else ui().showToast(msg, 'warning');
+        };
+        if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
+
         if (!current || !newPass || newPass.length < 8) {
-            ui().showToast('كلمة المرور الجديدة 8 أحرف على الأقل', 'warning');
+            showErr('كلمة المرور الجديدة 8 أحرف على الأقل');
             return;
         }
+        if (newPass !== confirmPass) {
+            showErr('كلمة المرور الجديدة وتأكيدها غير متطابقين');
+            return;
+        }
+
         try {
             await apiFetch('/auth/change-password', 'POST', { currentPassword: current, newPassword: newPass });
             ui().closeModal('changePasswordModal');
             ui().showToast('تم تغيير كلمة المرور', 'success');
             checkAuth();
         } catch (e) {
-            handleApiError(e, { skipLogout: true });
+            showErr(e.message || 'حدث خطأ أثناء تغيير كلمة المرور');
         }
+    }
+
+    function openForgotPasswordHelp() {
+        const contactEl = document.getElementById('forgotPasswordContact');
+        const btnsWrap = document.getElementById('forgotPasswordWhatsappBtns');
+        const phones = (global.NoorPlatformConfig && global.NoorPlatformConfig.adminContactPhones) || [];
+
+        if (contactEl) {
+            contactEl.textContent = phones.length
+                ? 'يمكنك التواصل عبر واتساب مع أحد المسؤولين:'
+                : 'يرجى التواصل مع مدير المنصة مباشرة.';
+        }
+        if (btnsWrap) {
+            btnsWrap.innerHTML = phones.map((phone, idx) => {
+                const digits = phone.replace(/[^0-9]/g, '').replace(/^0/, '218');
+                const label = phones.length > 1 ? `تواصل عبر واتساب (${idx + 1})` : 'تواصل عبر واتساب';
+                return `<button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="window.open('https://wa.me/${digits}','_blank')">${label}</button>`;
+            }).join('');
+        }
+        ui().openModal('forgotPasswordModal');
     }
 
     function logout() {
@@ -312,7 +351,8 @@
         handleLogin,
         submitChangePassword,
         logout,
-        handleRegister
+        handleRegister,
+        openForgotPasswordHelp
     };
 
     app().auth = auth;
@@ -324,4 +364,5 @@
     global.toggleAuthMode = toggleAuthMode;
     global.handleRegister = handleRegister;
     global.updateUserInfo = updateUserInfo;
+    global.openForgotPasswordHelp = openForgotPasswordHelp;
 })(window);

@@ -59,7 +59,7 @@ public class HifzController : ControllerBase
     /// </summary>
     [HttpGet("last-position/{studentId}")]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> GetLastPosition(int studentId)
+    public async Task<IActionResult> GetLastPosition(int studentId, [FromQuery] string mode = "Memorization")
     {
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
             return Forbid();
@@ -68,11 +68,26 @@ public class HifzController : ControllerBase
         if (!studentExists)
             return NotFound(new { message = "الطالب غير موجود" });
 
+        var isSequentialRevision = mode.Equals("Sequential", StringComparison.OrdinalIgnoreCase);
+
         var lastRecord = await _context.HifzRecords.AsNoTracking()
-            .Where(r => r.StudentId == studentId && r.Type == RecordType.Memorization)
+            .Where(r => r.StudentId == studentId &&
+                        (isSequentialRevision
+                            ? (r.Type == RecordType.Revision && r.RevisionMode == "Sequential")
+                            : r.Type == RecordType.Memorization))
             .OrderByDescending(r => r.Date)
             .ThenByDescending(r => r.Id)
             .FirstOrDefaultAsync();
+
+        // للمراجعة التسلسلية: لو ما فيه سجل مراجعة سابق، نبدأ من آخر موضع حفظ جديد
+        if (lastRecord == null && isSequentialRevision)
+        {
+            lastRecord = await _context.HifzRecords.AsNoTracking()
+                .Where(r => r.StudentId == studentId && r.Type == RecordType.Memorization)
+                .OrderByDescending(r => r.Date)
+                .ThenByDescending(r => r.Id)
+                .FirstOrDefaultAsync();
+        }
 
         if (lastRecord == null)
         {

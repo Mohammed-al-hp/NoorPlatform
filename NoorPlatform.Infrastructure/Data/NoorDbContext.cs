@@ -32,6 +32,7 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<OralExamSession> OralExamSessions => Set<OralExamSession>();
     public DbSet<OralExamQuestion> OralExamQuestions => Set<OralExamQuestion>();
     public DbSet<MatnRecord> MatnRecords => Set<MatnRecord>();
+    public DbSet<Matn> Matns => Set<Matn>();
     public DbSet<StudentMonthlyTarget> StudentMonthlyTargets => Set<StudentMonthlyTarget>();
     public DbSet<EvaluationPeriod> EvaluationPeriods => Set<EvaluationPeriod>();
     public DbSet<StudentPeriodEvaluation> StudentPeriodEvaluations => Set<StudentPeriodEvaluation>();
@@ -363,6 +364,12 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .Property(m => m.Type)
             .HasConversion<string>()
             .HasMaxLength(20);
+
+
+        modelBuilder.Entity<Matn>()
+            .HasIndex(m => m.Name)
+            .IsUnique()
+            .HasDatabaseName("IX_Matn_Name");
 
         modelBuilder.Entity<StudentMonthlyTarget>()
             .HasOne(t => t.Student)
