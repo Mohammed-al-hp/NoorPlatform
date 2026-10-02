@@ -60,10 +60,10 @@ public class StudentsController : ControllerBase
             s.teacherName,
             s.Level,
             s.attendance,
-            progress = Math.Min(100, (int)Math.Round(
+            progress = Math.Min(100.0, Math.Round(
                 (double)s.HifzRecordsList
                     .Where(r => r.Type == RecordType.Memorization)
-                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses)) / 6236.0 * 100))
+                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses)) / 6236.0 * 100, 1))
         });
 
         return Ok(result);

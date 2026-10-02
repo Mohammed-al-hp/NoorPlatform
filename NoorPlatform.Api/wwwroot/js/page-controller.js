@@ -65,7 +65,6 @@
         if (page === 'memorization' && typeof fetchMemorizationData === 'function') fetchMemorizationData();
         if (page === 'library' && typeof fetchLibraryItems === 'function') fetchLibraryItems();
         if (page === 'exams' && typeof fetchExams === 'function') fetchExams();
-        if (page === 'oralExams' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('oral');
         if (page === 'evaluation' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('matn');
         if (page === 'myPrayer' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('prayer');
         if (page === 'parentHome' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('parentHome');
@@ -88,44 +87,93 @@
             if (typeof navigate === 'function') navigate(e.state.page, navEl);
         }
     });
-
     // ─── الطلاب (CRUD) ────────────────────────
     async function viewStudentDetails(id) {
         try {
-            const [s, lastPos] = await Promise.all([
+            const [s, lastPos, oralSessions] = await Promise.all([
                 apiFetch(`/students/${id}`),
-                apiFetch(`/hifz/last-position/${id}`).catch(() => null)
+                apiFetch(`/hifz/last-position/${id}`).catch(() => null),
+                apiFetch(`/oral-exams/student/${id}`).catch(() => [])
             ]);
             const lastPosHtml = lastPos && lastPos.hasPrevious
                 ? `<div style="text-align:center;padding:10px 14px;background:var(--bg);border-radius:10px;margin-bottom:16px">
-                       <span style="font-size:12px;color:var(--text-muted)">آخر سورة جديدة وصل إليها</span>
-                       <div style="font-weight:800;font-size:16px;color:var(--green-dark,#16a34a);margin-top:2px">${escapeHtml(lastPos.lastSurahName || lastPos.surahName || '—')}</div>
-                   </div>`
+                   <span style="font-size:12px;color:var(--text-muted)">آخر سورة جديدة وصل إليها</span>
+                   <div style="font-weight:800;font-size:16px;color:var(--green-dark,#16a34a);margin-top:2px">${escapeHtml(lastPos.lastSurahName || lastPos.surahName || '—')}</div>
+               </div>`
                 : '';
             const hifzHtml = s.recentHifz && s.recentHifz.length > 0
                 ? s.recentHifz.map(h => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-                    <span>${escapeHtml(h.surahName)} (${escapeHtml(h.verses)})</span><span class="status-badge status-excellent">${escapeHtml(h.evaluation)}</span>
-                   </div>`).join('')
+                <span>${escapeHtml(h.surahName)} (${escapeHtml(h.verses)})</span><span class="status-badge status-excellent">${escapeHtml(h.evaluation)}</span>
+               </div>`).join('')
                 : '<p style="color:var(--text-muted)">لا توجد سجلات تسميع</p>';
 
+            // آخر 8 جلسات أسئلة شفوية، بترتيب زمني تصاعدي للرسم (الأقدم أولاً)
+            const sessions = (oralSessions || [])
+                .slice(0, 8)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const progressChartHtml = sessions.length >= 2
+                ? `<h4 style="margin-bottom:8px">تطور الأداء في اختبارات الأسئلة</h4>
+               <div style="margin-bottom:16px"><canvas id="studentProgressChart" height="90"></canvas></div>`
+                : '';
+
+            const progressListHtml = sessions.length > 0
+                ? `<h4 style="margin-bottom:8px">${sessions.length >= 2 ? '' : 'اختبارات الأسئلة'}</h4>
+                              ${sessions.slice().reverse().map(sess => `
+                   <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+                       <span>${escapeHtml(formatDateEnGb ? formatDateEnGb(sess.date) : sess.date)}</span>
+                       <span class="status-badge ${sess.isConsideredMemorized ? 'status-excellent' : ''}" style="${sess.isConsideredMemorized ? '' : 'background:#fee2e2;color:#dc2626'}">${sess.overallPercent}% — ${escapeHtml(sess.overallGrade || '')}</span>
+                   </div>`).join('')}`
+                : '';
+
             const html = `
-                <div style="text-align:center;margin-bottom:20px">
-                    <div class="student-avatar-lg" style="background:var(--gradient);width:64px;height:64px;font-size:24px;margin:0 auto 10px">${escapeHtml((s.fullName || '').slice(0, 2))}</div>
-                    <h3>${escapeHtml(s.fullName)}</h3>
-                    <p style="color:var(--text-muted)">${escapeHtml(s.email || '')} | ${escapeHtml(s.circleName || '')}</p>
-                </div>
-                <                <div class="student-card-stats" style="margin-bottom:16px">
-                    <div class="mini-stat"><label>الحفظ</label><p>${s.progress ?? 0}%</p></div>
-                    <div class="mini-stat"><label>الحضور</label><p>${s.attendance ?? 0}%</p></div>
-                    <div class="mini-stat"><label>المستوى</label><p>${escapeHtml(s.level || '—')}</p></div>
-                </div>
-                ${lastPosHtml}
-                <h4 style="margin-bottom:8px">آخر سجلات التسميع</h4>
-                ${hifzHtml}`;
+            <div style="text-align:center;margin-bottom:20px">
+                <div class="student-avatar-lg" style="background:var(--gradient);width:64px;height:64px;font-size:24px;margin:0 auto 10px">${escapeHtml((s.fullName || '').slice(0, 2))}</div>
+                <h3>${escapeHtml(s.fullName)}</h3>
+                <p style="color:var(--text-muted)">${escapeHtml(s.email || '')} | ${escapeHtml(s.circleName || '')}</p>
+            </div>
+                        <div class="student-card-stats" style="margin-bottom:16px">
+                <div class="mini-stat"><label>الحفظ</label><p>${s.progress ?? 0}%</p></div>
+                <div class="mini-stat"><label>الحضور</label><p>${s.attendance ?? 0}%</p></div>
+                <div class="mini-stat"><label>المستوى</label><p>${escapeHtml(s.level || '—')}</p></div>
+            </div>
+            ${lastPosHtml}
+            ${progressChartHtml}
+            ${progressListHtml}
+            <h4 style="margin-bottom:8px;margin-top:16px">آخر سجلات التسميع</h4>
+            ${hifzHtml}`;
             if (setModalBody('teacherProfileBody', html, (window.Icon ? window.Icon('user', { size: 16 }) : '') + ' بيانات الطالب')) {
                 openModal('teacherProfileModal');
+                if (sessions.length >= 2) renderStudentProgressChart(sessions);
             }
         } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    function renderStudentProgressChart(sessions) {
+        const canvas = document.getElementById('studentProgressChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sessions.map(s => formatDateEnGb ? formatDateEnGb(s.date) : s.date),
+                datasets: [{
+                    label: 'نسبة الأداء',
+                    data: sessions.map(s => s.overallPercent),
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22,163,74,0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: sessions.map(s => s.isConsideredMemorized ? '#16a34a' : '#dc2626')
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { min: 0, max: 100, ticks: { stepSize: 25 } } }
+            }
+        });
     }
 
     async function editStudent(id) {

@@ -9,6 +9,8 @@
     let revisionSubMode = 'Sequential';
     let questionCounter = 0;
 
+    let _oralMaxOpenings = 1;
+
     function initHifzModal() {
         const modal = document.getElementById('addMemModal');
         if (!modal || modal.dataset.hifzInit === '1') return;
@@ -16,8 +18,20 @@
 
         populateCircleSelect();
         populateMatnSelect();
+        loadOralMaxOpenings();
         bindHifzModalEvents();
         resetHifzForm();
+    }
+
+    async function loadOralMaxOpenings() {
+        try {
+            const d = await global.apiFetch('/pedagogical/grading-defaults');
+            _oralMaxOpenings = d?.oralMaxOpeningsBeforeFail ?? 1;
+            const field = document.getElementById('hifzOralMaxOpenings');
+            if (field) field.value = _oralMaxOpenings;
+        } catch (e) {
+            _oralMaxOpenings = 1;
+        }
     }
 
     async function populateMatnSelect() {
@@ -57,6 +71,20 @@
 
         const addQ = document.getElementById('btnAddRevisionQuestion');
         if (addQ) addQ.addEventListener('click', addRevisionQuestion);
+        const oralQuestionsList = document.getElementById('hifzQuestionsList');
+        if (oralQuestionsList) {
+            oralQuestionsList.addEventListener('input', function (e) {
+                if (e.target.classList.contains('hifz-q-open')) {
+                    checkQuestionCancelled(e.target.closest('.hifz-question-row'));
+                }
+            });
+        }
+        const maxOpeningsField = document.getElementById('hifzOralMaxOpenings');
+        if (maxOpeningsField) {
+            maxOpeningsField.addEventListener('input', function () {
+                document.querySelectorAll('#hifzQuestionsList .hifz-question-row').forEach(checkQuestionCancelled);
+            });
+        }
 
         const fromS = document.getElementById('hifzSeqFromSurah');
         const toS = document.getElementById('hifzSeqToSurah');
@@ -391,8 +419,32 @@
             </div>`;
         container.appendChild(row);
         row.querySelector('[data-remove-q]').addEventListener('click', () => row.remove());
+        checkQuestionCancelled(row);
     }
 
+    function checkQuestionCancelled(row) {
+        if (!row) return;
+        const openInput = row.querySelector('.hifz-q-open');
+        const maxAllowed = parseInt(document.getElementById('hifzOralMaxOpenings')?.value, 10) || _oralMaxOpenings;
+        const openings = parseInt(openInput?.value, 10) || 0;
+        const cancelled = openings > maxAllowed;
+
+        let badge = row.querySelector('.hifz-q-cancelled-badge');
+        if (cancelled) {
+            row.style.background = 'rgba(220,38,38,0.06)';
+            row.style.borderRadius = '8px';
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'hifz-q-cancelled-badge full';
+                badge.style.cssText = 'grid-column:1/-1;color:#dc2626;font-size:12px;font-weight:700;padding:4px 0';
+                badge.textContent = 'هذا السؤال مُلغى — تجاوز الحد المسموح من الفتحات';
+                row.appendChild(badge);
+            }
+        } else {
+            row.style.background = '';
+            if (badge) badge.remove();
+        }
+    }
     function updateSequentialPreview() {
         const preview = document.getElementById('hifzSeqPreview');
         const from = document.getElementById('hifzSeqFromSurah')?.value;

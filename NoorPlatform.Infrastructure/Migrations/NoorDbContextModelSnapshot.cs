@@ -855,6 +855,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsPassed")
                         .HasColumnType("bit");
 

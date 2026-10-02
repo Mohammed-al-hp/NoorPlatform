@@ -6,12 +6,12 @@ namespace NoorPlatform.Core.Services;
 public static class PedagogicalGrading
 {
     public static double ScoreQuestion(
-        int hesitation,
-        int alerts,
-        int openings,
-        double hesitationPenalty = 2,
-        double alertPenalty = 5,
-        double openingPenalty = 15)
+     int hesitation,
+     int alerts,
+     int openings,
+     double hesitationPenalty = 0.5,
+     double alertPenalty = 1,
+     double openingPenalty = 2)
     {
         var score = 100.0
             - Math.Max(0, hesitation) * hesitationPenalty
@@ -29,31 +29,42 @@ public static class PedagogicalGrading
         _ => "ضعيف"
     };
 
-    public static (double OverallPercent, string Grade, bool IsMemorized, int TotalOpenings) AggregateSession(
+    public static (double OverallPercent, string Grade, bool IsMemorized, int TotalOpenings, string FailReason) AggregateSession(
         IEnumerable<(int Hesitation, int Alerts, int Openings, double? ManualScore)> questions,
-        int maxOpeningsBeforeFail = 3,
-        double hesitationPenalty = 2,
-        double alertPenalty = 5,
-        double openingPenalty = 15)
+        int maxOpeningsPerQuestion = 1,
+        double hesitationPenalty = 0.5,
+        double alertPenalty = 1,
+        double openingPenalty = 2,
+        double passThreshold = 50)
     {
         var list = questions.ToList();
         if (list.Count == 0)
-            return (0, "ضعيف", false, 0);
+            return (0, "ضعيف", false, 0, "لا توجد أسئلة");
 
         var scored = list.Select(q =>
         {
-            var pct = q.ManualScore ?? ScoreQuestion(q.Hesitation, q.Alerts, q.Openings,
-                hesitationPenalty, alertPenalty, openingPenalty);
-            return (pct, openings: q.Openings);
+            var openings = Math.Max(0, q.Openings);
+            var cancelled = openings > maxOpeningsPerQuestion;
+            // السؤال الملغي درجته صفر
+            var pct = cancelled
+                ? 0.0
+                : q.ManualScore ?? ScoreQuestion(q.Hesitation, q.Alerts, q.Openings,
+                    hesitationPenalty, alertPenalty, openingPenalty);
+            return (pct, openings, cancelled);
         }).ToList();
 
-        var overall = Math.Round(scored.Average(s => s.pct), 1);
         var totalOpenings = scored.Sum(s => s.openings);
-        var isMemorized = totalOpenings < maxOpeningsBeforeFail && overall >= 50;
-        if (!isMemorized && overall > 49)
-            overall = Math.Min(overall, 49);
+        var cancelledCount = scored.Count(s => s.cancelled);
+        var overall = Math.Round(scored.Average(s => s.pct), 1);
 
-        return (overall, ImpressionFromPercent(overall), isMemorized, totalOpenings);
+        string failReason = "";
+        if (cancelledCount > 0)
+            failReason = $"أُلغي {cancelledCount} سؤال بسبب تجاوز الفتحات المسموحة";
+        else if (overall < passThreshold)
+            failReason = "الدرجة أقل من حد النجاح";
+
+        var isMemorized = failReason.Length == 0;
+        return (overall, ImpressionFromPercent(overall), isMemorized, totalOpenings, failReason);
     }
 
     /// <summary>
@@ -61,11 +72,15 @@ public static class PedagogicalGrading
     /// مثال المشرف: 7–8 من 8 → 10، 6/8 → 10، 5/8 → 8 … قابل للتعديل.
     /// </summary>
     public static double ProgressScoreOutOf10(
-    int achieved, int target,
-    double threshold10 = 0.75, double threshold9 = 0.625, double threshold8 = 0.5,
-    double threshold6 = 0.375, double threshold4 = 0.25)
+int achieved, int target,
+double threshold10 = 0.75, double threshold9 = 0.625, double threshold8 = 0.5,
+double threshold6 = 0.375, double threshold4 = 0.25)
     {
         if (target <= 0) return achieved > 0 ? 10 : 0;
+        if (threshold10 <= 0 || threshold9 <= 0 || threshold8 <= 0 || threshold6 <= 0 || threshold4 <= 0)
+        {
+            threshold10 = 0.75; threshold9 = 0.625; threshold8 = 0.5; threshold6 = 0.375; threshold4 = 0.25;
+        }
         var ratio = (double)achieved / target;
         if (ratio >= threshold10) return 10;
         if (ratio >= threshold9) return 9;

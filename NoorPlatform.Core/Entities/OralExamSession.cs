@@ -52,4 +52,6 @@ public class OralExamQuestion
     public double ScorePercent { get; set; }
     public string Impression { get; set; } = string.Empty;
     public bool IsPassed { get; set; } = true;
+    /// <summary>تجاوز عدد الفتحات المسموح لهذا السؤال، فأُلغي واحتُسب بدرجة صفر.</summary>
+    public bool IsCancelled { get; set; }
 }

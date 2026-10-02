@@ -79,15 +79,6 @@ public class HifzController : ControllerBase
             .ThenByDescending(r => r.Id)
             .FirstOrDefaultAsync();
 
-        // للمراجعة التسلسلية: لو ما فيه سجل مراجعة سابق، نبدأ من آخر موضع حفظ جديد
-        if (lastRecord == null && isSequentialRevision)
-        {
-            lastRecord = await _context.HifzRecords.AsNoTracking()
-                .Where(r => r.StudentId == studentId && r.Type == RecordType.Memorization)
-                .OrderByDescending(r => r.Date)
-                .ThenByDescending(r => r.Id)
-                .FirstOrDefaultAsync();
-        }
 
         if (lastRecord == null)
         {
@@ -107,7 +98,8 @@ public class HifzController : ControllerBase
 
         // استخراج آخر رقم آية من نص Verses (مثال: "17-30" → 30، أو "20" → 20)
         var lastVerseNumber = ExtractLastVerseNumber(lastRecord.Verses);
-        var (suggestedSurah, nextVerse) = GetSuggestedStart(effectiveSurah, lastVerseNumber);
+        // الحفظ الجديد يتحرك نحو أول المصحف (الفاتحة)، والمراجعة التسلسلية نحو آخره (الناس)
+        var (suggestedSurah, nextVerse) = GetSuggestedStart(effectiveSurah, lastVerseNumber, moveForward: isSequentialRevision);
 
         return Ok(new
         {
@@ -151,7 +143,7 @@ public class HifzController : ControllerBase
     /// يحسب موضع البداية المقترح للجلسة القادمة: لو آخر آية مسجلة هي آخر آية بالسورة،
     /// ينتقل تلقائيًا لأول آية بالسورة التالية. غير ذلك يرجّع نفس السورة والآية + 1.
     /// </summary>
-    private static (string SurahName, int NextVerse) GetSuggestedStart(string currentSurah, int lastVerse)
+    private static (string SurahName, int NextVerse) GetSuggestedStart(string currentSurah, int lastVerse, bool moveForward = true)
     {
         var idx = Array.FindIndex(SurahsData, s => s.Name == currentSurah);
         if (idx < 0)
@@ -161,10 +153,13 @@ public class HifzController : ControllerBase
 
         if (lastVerse >= totalVerses)
         {
-            if (idx + 1 < SurahsData.Length)
-                return (SurahsData[idx + 1].Name, 1); // أول آية بالسورة التالية
+            var nextIdx = moveForward ? idx + 1 : idx - 1;
 
-            return (currentSurah, lastVerse); // سورة الناس — آخر سورة بالمصحف، لا يوجد بعدها شيء
+            if (nextIdx >= 0 && nextIdx < SurahsData.Length)
+                return (SurahsData[nextIdx].Name, 1); // أول آية بالسورة التالية بنفس اتجاه الوضع
+
+            // لا يوجد بعدها شيء في هذا الاتجاه (الناس للأمام، أو الفاتحة للخلف)
+            return (currentSurah, lastVerse);
         }
 
         return (currentSurah, lastVerse + 1);

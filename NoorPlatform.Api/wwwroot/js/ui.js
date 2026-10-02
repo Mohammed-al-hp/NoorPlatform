@@ -81,7 +81,7 @@
         body.innerHTML = html;
         if (modalTitle) {
             const titleEl = document.getElementById('profileModalTitle');
-            if (titleEl) titleEl.textContent = modalTitle;
+            if (titleEl) titleEl.innerHTML = modalTitle;
         }
         return true;
     }

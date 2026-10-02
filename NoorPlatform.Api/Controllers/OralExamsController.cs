@@ -158,7 +158,7 @@ public class OralExamsController : ControllerBase
         var settings = await _context.PlatformSettings.AsNoTracking().OrderBy(s => s.Id).FirstOrDefaultAsync();
         var maxOpenings = request.MaxOpeningsBeforeFail
             ?? settings?.OralMaxOpeningsBeforeFail
-            ?? 3;
+                        ?? 1;
         var hesitationPenalty = settings?.OralHesitationPenalty ?? 0.5;
         var alertPenalty = settings?.OralAlertPenalty ?? 1;
         var openingPenalty = settings?.OralOpeningPenalty ?? 2;
@@ -169,13 +169,12 @@ public class OralExamsController : ControllerBase
             Openings: Math.Max(0, q.OpeningCount),
             ManualScore: q.ScorePercent
         )).ToList();
-
-        var (overallPercent, overallGrade, isMemorized, _) = PedagogicalGrading.AggregateSession(
-            questionInputs,
-            maxOpenings,
-            hesitationPenalty,
-            alertPenalty,
-            openingPenalty);
+        var (overallPercent, overallGrade, isMemorized, _, failReason) = PedagogicalGrading.AggregateSession(
+    questionInputs,
+    maxOpenings,
+    hesitationPenalty,
+    alertPenalty,
+    openingPenalty);
 
         var userId = AuthorizationHelpers.GetUserId(User);
         if (userId == null)
@@ -200,10 +199,13 @@ public class OralExamsController : ControllerBase
         var order = 0;
         foreach (var q in request.Questions)
         {
-            var score = q.ScorePercent
-                ?? PedagogicalGrading.ScoreQuestion(
-                    q.HesitationCount, q.AlertCount, q.OpeningCount,
-                    hesitationPenalty, alertPenalty, openingPenalty);
+            var cancelled = q.OpeningCount > maxOpenings;
+            var score = cancelled
+                ? 0.0
+                : q.ScorePercent
+                    ?? PedagogicalGrading.ScoreQuestion(
+                        q.HesitationCount, q.AlertCount, q.OpeningCount,
+                        hesitationPenalty, alertPenalty, openingPenalty);
 
             var impression = string.IsNullOrWhiteSpace(q.Impression)
                 ? PedagogicalGrading.ImpressionFromPercent(score)
@@ -218,7 +220,8 @@ public class OralExamsController : ControllerBase
                 OpeningCount = Math.Max(0, q.OpeningCount),
                 ScorePercent = Math.Round(score, 1),
                 Impression = impression,
-                IsPassed = score >= 50
+                IsPassed = !cancelled && score >= 50,
+                IsCancelled = cancelled
             });
         }
 
@@ -231,7 +234,8 @@ public class OralExamsController : ControllerBase
             sessionId = session.Id,
             session.OverallPercent,
             session.OverallGrade,
-            session.IsConsideredMemorized
+            session.IsConsideredMemorized,
+            failReason
         });
     }
 
@@ -290,18 +294,19 @@ public class OralExamsController : ControllerBase
         s.CreatedAt,
         Questions = s.Questions
             .OrderBy(q => q.OrderIndex)
-            .Select(q => new
-            {
-                q.Id,
-                q.OrderIndex,
-                q.Label,
-                q.HesitationCount,
-                q.AlertCount,
-                q.OpeningCount,
-                q.ScorePercent,
-                q.Impression,
-                q.IsPassed
-            })
+                        .Select(q => new
+                        {
+                            q.Id,
+                            q.OrderIndex,
+                            q.Label,
+                            q.HesitationCount,
+                            q.AlertCount,
+                            q.OpeningCount,
+                            q.ScorePercent,
+                            q.Impression,
+                            q.IsPassed,
+                            q.IsCancelled
+                        })
     };
 }
 

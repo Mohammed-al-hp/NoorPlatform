@@ -40,6 +40,11 @@ public class SettingsController : ControllerBase
                 oralOpeningPenalty = 15.0,
                 oralHesitationPenalty = 2.0,
                 defaultMonthlyAthmanTarget = 8,
+                progressThreshold10 = 0.75,
+                progressThreshold9 = 0.625,
+                progressThreshold8 = 0.5,
+                progressThreshold6 = 0.375,
+                progressThreshold4 = 0.25,
                 weightAttendance = 1.0,
                 weightHifz = 1.0,
                 weightRevision = 1.0,
@@ -65,6 +70,11 @@ public class SettingsController : ControllerBase
             settings.OralOpeningPenalty,
             settings.OralHesitationPenalty,
             settings.DefaultMonthlyAthmanTarget,
+            settings.ProgressThreshold10,
+            settings.ProgressThreshold9,
+            settings.ProgressThreshold8,
+            settings.ProgressThreshold6,
+            settings.ProgressThreshold4,
             settings.WeightAttendance,
             settings.WeightHifz,
             settings.WeightRevision,
@@ -107,6 +117,16 @@ public class SettingsController : ControllerBase
             settings.OralHesitationPenalty = request.OralHesitationPenalty.Value;
         if (request.DefaultMonthlyAthmanTarget.HasValue)
             settings.DefaultMonthlyAthmanTarget = request.DefaultMonthlyAthmanTarget.Value;
+        if (request.ProgressThreshold10.HasValue)
+            settings.ProgressThreshold10 = request.ProgressThreshold10.Value;
+        if (request.ProgressThreshold9.HasValue)
+            settings.ProgressThreshold9 = request.ProgressThreshold9.Value;
+        if (request.ProgressThreshold8.HasValue)
+            settings.ProgressThreshold8 = request.ProgressThreshold8.Value;
+        if (request.ProgressThreshold6.HasValue)
+            settings.ProgressThreshold6 = request.ProgressThreshold6.Value;
+        if (request.ProgressThreshold4.HasValue)
+            settings.ProgressThreshold4 = request.ProgressThreshold4.Value;
         if (request.WeightAttendance.HasValue)
             settings.WeightAttendance = request.WeightAttendance.Value;
         if (request.WeightHifz.HasValue)
@@ -176,6 +196,11 @@ public class UpdateSettingsRequest
     public double? OralOpeningPenalty { get; set; }
     public double? OralHesitationPenalty { get; set; }
     public int? DefaultMonthlyAthmanTarget { get; set; }
+    public double? ProgressThreshold10 { get; set; }
+    public double? ProgressThreshold9 { get; set; }
+    public double? ProgressThreshold8 { get; set; }
+    public double? ProgressThreshold6 { get; set; }
+    public double? ProgressThreshold4 { get; set; }
     public double? WeightAttendance { get; set; }
     public double? WeightHifz { get; set; }
     public double? WeightRevision { get; set; }

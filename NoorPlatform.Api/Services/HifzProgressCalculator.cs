@@ -13,7 +13,7 @@ public static class HifzProgressCalculator
     /// <summary>
     /// حساب نسبة تقدم الحفظ الحقيقية بناءً على سجلات التسميع.
     /// </summary>
-    public static int Calculate(IEnumerable<HifzRecord> records)
+    public static double Calculate(IEnumerable<HifzRecord> records)
     {
         var totalVerses = records
             .Where(r => r.Type == RecordType.Memorization)
@@ -21,6 +21,6 @@ public static class HifzProgressCalculator
                         ? r.VerseCount
                         : HifzRecord.ParseVerseCount(r.Verses));
 
-        return Math.Min((int)Math.Round((double)totalVerses / TotalQuranVerses * 100), 100);
+        return Math.Min(Math.Round((double)totalVerses / TotalQuranVerses * 100, 1), 100.0);
     }
 }
