@@ -28,10 +28,11 @@ public class PaymentsController : ControllerBase
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 5, 100);
 
-        var query = _context.Payments.AsQueryable();
+        var query = _context.Payments.IgnoreQueryFilters().AsQueryable();
 
         var total = await query.CountAsync();
         var items = await query
+            .IgnoreQueryFilters()
             .Include(p => p.Student).ThenInclude(s => s.User)
             .OrderByDescending(p => p.DueDate)
             .Skip((page - 1) * pageSize)
@@ -61,6 +62,7 @@ public class PaymentsController : ControllerBase
         if (parent == null) return NotFound(new { message = "لم يُعثر على بيانات ولي الأمر" });
 
         var payments = await _context.Payments
+            .IgnoreQueryFilters()
             .Include(p => p.Student).ThenInclude(s => s.User)
             .Where(p => p.ParentId == parent.Id)
             .Select(p => new
@@ -122,20 +124,17 @@ public class PaymentsController : ControllerBase
         });
     }
 
-    // لولي الأمر: دفع الفاتورة (محاكاة)
+    // للمشرف: تأكيد استلام المبلغ نقداً
     [HttpPost("{id}/pay")]
-    [Authorize(Roles = "Parent")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> PayInvoice(int id)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var parent = await _context.Parents.FirstOrDefaultAsync(p => p.UserId == userId);
-        if (parent == null) return Unauthorized();
-
-        var payment = await _context.Payments.FirstOrDefaultAsync(p => p.Id == id && p.ParentId == parent.Id);
+        var payment = await _context.Payments.FirstOrDefaultAsync(p => p.Id == id);
         if (payment == null) return NotFound(new { message = "الفاتورة غير موجودة" });
 
         if (payment.Status == PaymentStatus.Paid)
-            return BadRequest("الفاتورة مدفوعة مسبقاً");
+            return BadRequest(new { message = "الفاتورة مدفوعة مسبقاً" });
 
         payment.Status = PaymentStatus.Paid;
         payment.PaidDate = DateTime.UtcNow;
@@ -144,9 +143,9 @@ public class PaymentsController : ControllerBase
         var activity = new ActivityFeed
         {
             UserId = userId,
-            UserName = User.FindFirstValue(ClaimTypes.Name) ?? "ولي الأمر",
+            UserName = User.FindFirstValue(ClaimTypes.Name) ?? "المشرف",
             ActivityType = "Payment",
-            Description = $"تم سداد فاتورة بقيمة {payment.Amount} د.ل للطالب.",
+            Description = $"تم سداد فاتورة  بقيمة {payment.Amount} د.ل (استلام نقدي).",
             CreatedAt = DateTime.UtcNow,
             Icon = "💳",
             Color = "text-blue-500"

@@ -43,6 +43,7 @@ public class ExpensesController : ControllerBase
             .Select(e => new
             {
                 e.Id,
+                e.Title,
                 e.Amount,
                 e.Description,
                 e.Date,
@@ -90,6 +91,7 @@ public class ExpensesController : ControllerBase
         public string Description { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public string Category { get; set; } = "Other";
+        public string Title { get; set; } = string.Empty;
     }
 
     // ─── إنشاء مصروف جديد ───
@@ -108,6 +110,7 @@ public class ExpensesController : ControllerBase
         var expense = new Expense
         {
             Amount = dto.Amount,
+            Title = dto.Title,
             Description = dto.Description,
             Date = dto.Date,
             Category = category,
@@ -166,6 +169,7 @@ public class ExpensesController : ControllerBase
             return BadRequest(new { message = "فئة المصروف غير صحيحة" });
 
         expense.Amount = dto.Amount;
+        expense.Title = dto.Title;
         expense.Description = dto.Description;
         expense.Date = dto.Date;
         expense.Category = category;

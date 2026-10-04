@@ -65,7 +65,7 @@
         const st = getState();
         const parts = value.split('-').map(Number);
         st.date = new Date(parts[0], parts[1] - 1, parts[2]);
-        getPending().clear?.();
+        if (getState().pendingNotes) Object.keys(getState().pendingNotes).forEach(k => delete getState().pendingNotes[k]);
         Object.keys(getPending()).forEach(k => delete getPending()[k]);
         setPendingDirty(false);
         initAttendanceDateDisplay();
@@ -242,6 +242,7 @@
             app().ui.showToast('لا توجد تغييرات للحفظ', 'info');
             return;
         }
+        if (!confirm('سيتم حفظ ' + studentIds.size + ' سجل (من لم تغيّر حالته سيُسجَّل حاضراً). هل تريد المتابعة؟')) return;
         const dateStr = ymd(getState().date);
         const btn = document.getElementById('btnSaveAttendance');
         try {

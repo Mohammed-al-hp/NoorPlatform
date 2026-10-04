@@ -198,7 +198,7 @@
             }
             openModal('editStudentModal');
         } catch (err) {
-            showToast('' + (err.message || 'تعذر تحميل بيانات الطالب', 'error'));
+            showToast(err.message || 'تعذر تحميل بيانات الطالب', 'error');
         }
     }
 
@@ -267,9 +267,18 @@
             closeModal('addStudentModal');
             showToast('تم إضافة الطالب بنجاح', 'success');
             if (data.credentials) showAccountCredentialsModal(data.credentials, parentPhone);
+            const pc = data.parentCredentials;
+            const credBody = document.getElementById('accountCredentialsBody');
+            if (pc && credBody) {
+                credBody.insertAdjacentHTML('beforeend',
+                    `<hr style="margin:12px 0">
+         <p><strong>حساب ولي الأمر الجديد:</strong> ${escapeHtml(pc.fullName)}</p>
+         <p><strong>رقم الهاتف:</strong> <code>${escapeHtml(pc.displayPhone)}</code></p>
+         <p><strong>كلمة المرور المؤقتة:</strong> <code>${escapeHtml(pc.tempPassword)}</code></p>`);
+            }
             if (typeof fetchStudents === 'function') fetchStudents();
         } catch (error) {
-            showToast('' + (error.message || 'تعذر الاتصال بالخادم', 'error'));
+            showToast(error.message || 'تعذر الاتصال بالخادم', 'error');
         }
     }
 
@@ -343,7 +352,7 @@
             showToast('تم نشر الإعلان بنجاح', 'success');
             global.NoorDashboard?.fetchAnnouncements?.();
         } catch (err) {
-            showToast('' + (err.message || 'حدث خطأ أثناء النشر', 'error'));
+            showToast(err.message || 'حدث خطأ أثناء النشر', 'error');
         } finally {
             if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }
@@ -369,7 +378,7 @@
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                   <span class="status-badge ${r.evaluation === 'ممتاز' ? 'status-excellent' : 'status-good'}">${escapeHtml(r.evaluation)}</span>
-                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981" onclick="sendHifzPraise(${r.studentId}, '${escapeHtml(r.surahName).replace(/'/g, "\\'")}', '${escapeHtml(r.verses).replace(/'/g, "\\'")}', '${escapeHtml(r.evaluation).replace(/'/g, "\\'")}')" title="إرسال رسالة مديح لولي الأمر عبر واتساب">${window.Icon ? window.Icon('message-circle', { size: 12 }) : ''} مديح</button>
+                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981" onclick="sendHifzPraise(${r.studentId}, ${jsArg(r.surahName)}, ${jsArg(r.verses)}, ${jsArg(r.evaluation)})" title="إرسال رسالة مديح لولي الأمر عبر واتساب">${window.Icon ? window.Icon('message-circle', { size: 12 }) : ''} مديح</button>
                   <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#ef4444;border-color:#ef4444" onclick="deleteHifzRecord(${r.id})" title="حذف السجل">${window.Icon ? window.Icon('trash-2', { size: 12 }) : ''}</button>
               </div>
             </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px">لا توجد جلسات بعد</p>';
@@ -521,7 +530,7 @@
             downBtn.href = blobUrl;
             downBtn.download = (title || 'document').replace(/[^\w\u0600-\u06FF\s.-]/g, '') + '.pdf';
         } catch (err) {
-            showToast('' + (err.message || 'فشل عرض الملف', 'error'));
+            showToast(err.message || 'فشل عرض الملف', 'error');
             closePdfViewerModal();
         }
     }

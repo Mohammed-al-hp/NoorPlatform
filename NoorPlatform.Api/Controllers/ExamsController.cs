@@ -29,7 +29,7 @@ public class ExamsController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetAll()
     {
-        var query = _context.Exams.Include(e => e.Results).AsQueryable();
+        var query = _context.Exams.IgnoreQueryFilters().Include(e => e.Results).AsQueryable();
 
         // ─── إصلاح: تقييد المحفّظ برؤية نتائج طلاب حلقته فقط ضمن كل اختبار ───
         var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
@@ -72,7 +72,8 @@ public class ExamsController : ControllerBase
         var exam = await _context.Exams
             .Include(e => e.Results).ThenInclude(r => r.Student).ThenInclude(s => s.User)
             .Include(e => e.Results).ThenInclude(r => r.Student.Circle).ThenInclude(c => c!.Teacher)
-            .FirstOrDefaultAsync(e => e.Id == id);
+            .IgnoreQueryFilters()
+.FirstOrDefaultAsync(e => e.Id == id);
 
         if (exam == null)
             return NotFound(new { message = "الاختبار غير موجود" });
@@ -161,23 +162,16 @@ public class ExamsController : ControllerBase
             return BadRequest(new { message = $"الطلاب التالية أرقامهم غير موجودة: {string.Join(", ", missingIds)}" });
 
         // ─── إصلاح عالي: فحص ملكية المحفظ (Ownership) - المحفظ لا يرصد درجات لطلاب خارج حلقاته ───
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var currentRole = User.FindFirstValue(ClaimTypes.Role);
 
-        if (currentRole == "Teacher")
+
+        if (User.IsInRole("Teacher") && !User.IsInRole("Admin"))
         {
-            // جلب أرقام طلاب حلقات هذا المحفظ
-            var teacherStudentIds = await _context.Teachers
-                .Where(t => t.UserId == int.Parse(currentUserId!))
-                .SelectMany(t => t.Circles)
-                .SelectMany(c => c.Students)
-                .Select(s => s.Id)
-                .ToListAsync();
-
-            var teacherStudentIdsSet = teacherStudentIds.ToHashSet();
-            var unauthorizedIds = requestedStudentIds.Where(sid => !teacherStudentIdsSet.Contains(sid)).ToList();
+            var unauthorizedIds = new List<int>();
+            foreach (var sid in requestedStudentIds)
+                if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, sid))
+                    unauthorizedIds.Add(sid);
             if (unauthorizedIds.Any())
-                return StatusCode(403, new { message = $"لا يمكنك رصد درجات لطلاب خارج حلقاتك. الطلاب: {string.Join(", ", unauthorizedIds)}" });
+                return StatusCode(403, new { message = "لا يمكنك رصد درجات لطلاب خارج حلقاتك" });
         }
 
         // ─── إصلاح حرج 2: منع تكرار النتيجة لنفس الطالب في نفس الاختبار ───
@@ -204,9 +198,9 @@ public class ExamsController : ControllerBase
         }).ToList();
 
         _context.ExamResults.AddRange(examResults);
-        
+
         // Gamification & ActivityFeed
-        var userId = int.Parse(currentUserId!);
+        var userId = AuthorizationHelpers.GetUserId(User) ?? 0;
         var userName = User.Identity?.Name ?? "User";
 
         foreach (var r in examResults)

@@ -41,7 +41,7 @@
 
             showToast('تم تصدير التقرير بنجاح', 'success');
         } catch (err) {
-            showToast('' + (err.message || 'فشل تصدير PDF', 'error'));
+            showToast(err.message || 'فشل تصدير PDF', 'error');
         } finally {
             hideLoading();
         }
@@ -74,7 +74,7 @@
 
             showToast('تم تصدير الشهادة بنجاح', 'success');
         } catch (err) {
-            showToast('' + (err.message || 'فشل تصدير الشهادة', 'error'));
+            showToast(err.message || 'فشل تصدير الشهادة', 'error');
         } finally {
             hideLoading();
         }
@@ -97,7 +97,7 @@
             }
             showToast('تم منح وسام التميز بنجاح', 'success');
         } catch (err) {
-            showToast('' + (err.message || 'فشل منح الوسام', 'error'));
+            showToast(err.message || 'فشل منح الوسام', 'error');
         } finally {
             hideLoading();
         }
@@ -139,11 +139,11 @@
             tableHtml += `
                 <tr>
                     <td>${s.id}</td>
-                    <td>${s.fullName || ''}</td>
-                    <td style="mso-number-format:'\@';">${s.parentPhone || ''}</td>
-                    <td>${s.circleName || 'بدون حلقة'}</td>
-                    <td>${s.teacherName || '—'}</td>
-                    <td>${s.level || ''}</td>
+                    <td>${escapeHtml(s.fullName || '')}</td>
+<td style="mso-number-format:'\@';">${escapeHtml(s.parentPhone || '')}</td>
+<td>${escapeHtml(s.circleName || 'بدون حلقة')}</td>
+<td>${escapeHtml(s.teacherName || '—')}</td>
+<td>${escapeHtml(s.level || '')}</td>
                 </tr>
             `;
         });

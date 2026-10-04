@@ -52,7 +52,8 @@ public class CompetitionsController : ControllerBase
             .Include(c => c.Results)
                 .ThenInclude(r => r.Student)
                     .ThenInclude(s => s.User)
-            .FirstOrDefaultAsync(c => c.Id == id);
+          .IgnoreQueryFilters()
+.FirstOrDefaultAsync(c => c.Id == id);
 
         if (competition == null)
             return NotFound(new { message = "المسابقة غير موجودة" });
@@ -184,6 +185,8 @@ public class CompetitionsController : ControllerBase
             .FirstOrDefaultAsync(s => s.Id == dto.StudentId);
         if (student == null)
             return NotFound(new { message = "الطالب غير موجود" });
+        if (!await NoorPlatform.Api.Security.AuthorizationHelpers.CanAccessStudentAsync(_context, User, dto.StudentId))
+            return Forbid();
 
         // التحقق من عدم التكرار
         var exists = await _context.CompetitionResults
@@ -231,6 +234,8 @@ public class CompetitionsController : ControllerBase
         var added = 0;
         foreach (var dto in dtos)
         {
+            if (!await _context.Students.AnyAsync(s => s.Id == dto.StudentId)) continue;
+            if (!await NoorPlatform.Api.Security.AuthorizationHelpers.CanAccessStudentAsync(_context, User, dto.StudentId)) continue;
             var exists = await _context.CompetitionResults
                 .AnyAsync(r => r.CompetitionId == competitionId && r.StudentId == dto.StudentId);
             if (exists) continue;
@@ -268,8 +273,9 @@ public class CompetitionsController : ControllerBase
             return NotFound(new { message = "المسابقة غير موجودة" });
 
         var results = await _context.CompetitionResults
-            .Where(r => r.CompetitionId == competitionId)
-            .Include(r => r.Student)
+            .IgnoreQueryFilters()
+.Where(r => r.CompetitionId == competitionId)
+.Include(r => r.Student)
                 .ThenInclude(s => s.User)
             .Include(r => r.Student)
                 .ThenInclude(s => s.Circle)

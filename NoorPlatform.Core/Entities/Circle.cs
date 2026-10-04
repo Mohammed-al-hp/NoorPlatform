@@ -8,7 +8,7 @@ public class Circle
     public Teacher? Teacher { get; set; }
     public string Time { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
-    public string Icon { get; set; } = "✨";
+    public string Icon { get; set; } = "circle-dot";
 
     /// <summary>حلقة إضافية (صيف، عطلة، رغبة الشيخ) وليست الحلقة الرسمية الثابتة.</summary>
     public bool IsExtra { get; set; }

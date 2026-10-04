@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
 using System.Security.Claims;
+
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -82,6 +84,10 @@ public class TeachersController : ControllerBase
         if (teacher == null)
             return NotFound(new { message = "المحفظ غير موجود" });
 
+        if (User.IsInRole("Teacher") && !User.IsInRole("Admin") &&
+            teacher.UserId != AuthorizationHelpers.GetUserId(User))
+            return Forbid();
+
         return Ok(new
         {
             teacher.Id,
@@ -102,6 +108,7 @@ public class TeachersController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone))
             return BadRequest(new { message = "الاسم الثلاثي ورقم الهاتف مطلوبان" });
 
+        await using var tx = await _context.Database.BeginTransactionAsync();
         var (user, tempPassword, err) = await _accounts.CreateUserAsync(
             request.Phone, request.FullName, UserRole.Teacher);
 
@@ -118,6 +125,7 @@ public class TeachersController : ControllerBase
 
         _context.Teachers.Add(teacher);
         await _context.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return Ok(new
         {

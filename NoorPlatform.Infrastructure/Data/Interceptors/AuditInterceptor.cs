@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -36,36 +36,41 @@ namespace NoorPlatform.Infrastructure.Data.Interceptors
 
         public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
         {
-            UpdateTemporaryEntityIds();
+            if (UpdateTemporaryEntityIds(eventData.Context))
+                eventData.Context!.SaveChanges();
             return base.SavedChanges(eventData, result);
         }
 
-        public override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
+        public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
         {
-            UpdateTemporaryEntityIds();
-            return base.SavedChangesAsync(eventData, result, cancellationToken);
+            if (UpdateTemporaryEntityIds(eventData.Context))
+                await eventData.Context!.SaveChangesAsync(cancellationToken);
+            return await base.SavedChangesAsync(eventData, result, cancellationToken);
         }
 
-        private void UpdateTemporaryEntityIds()
+        private bool UpdateTemporaryEntityIds(DbContext? context)
         {
-            foreach (var auditEntry in _pendingAuditEntries)
-            {
-                if (auditEntry.TemporaryProperties.Count == 0) continue;
+            if (context == null || !_pending.TryGetValue(context, out var pending) || pending.Count == 0)
+                return false;
 
+            var entries = pending.ToList();
+            pending.Clear(); // قبل الحفظ الثاني لمنع التكرار
+
+            foreach (var auditEntry in entries)
                 foreach (var prop in auditEntry.TemporaryProperties)
-                {
                     if (prop.Metadata.IsPrimaryKey())
                         auditEntry.AuditLogEntity.EntityId = prop.CurrentValue?.ToString() ?? string.Empty;
-                }
-            }
-            _pendingAuditEntries.Clear();
+            return true;
         }
-        private readonly List<AuditEntry> _pendingAuditEntries = new();
+
+        // حالة منفصلة لكل DbContext (لكل طلب) بدل قائمة مشتركة
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<DbContext, List<AuditEntry>> _pending = new();
 
         private void ProcessAuditLogs(DbContext? context)
         {
             if (context == null) return;
-            _pendingAuditEntries.Clear();
+            var pending = _pending.GetOrCreateValue(context);
+            pending.Clear();
 
             var httpContext = _httpContextAccessor.HttpContext;
             var userId = httpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "System";
@@ -137,7 +142,7 @@ namespace NoorPlatform.Infrastructure.Data.Interceptors
                 auditEntry.AuditLogEntity = log;
                 context.Set<AuditLog>().Add(log);
                 if (auditEntry.TemporaryProperties.Count > 0)
-                    _pendingAuditEntries.Add(auditEntry);
+                    pending.Add(auditEntry);
             }
         }
     }

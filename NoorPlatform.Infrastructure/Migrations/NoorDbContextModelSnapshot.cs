@@ -603,6 +603,10 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<int?>("RecordedByUserId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Date")

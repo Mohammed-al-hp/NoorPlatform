@@ -270,6 +270,11 @@
                 'settingsOralAlert': data.oralAlertPenalty,
                 'settingsOralOpening': data.oralOpeningPenalty,
                 'settingsDefaultAthman': data.defaultMonthlyAthmanTarget,
+                'settingsPT10': data.progressThreshold10,
+                'settingsPT9': data.progressThreshold9,
+                'settingsPT8': data.progressThreshold8,
+                'settingsPT6': data.progressThreshold6,
+                'settingsPT4': data.progressThreshold4,
                 'settingsWAtt': data.weightAttendance,
                 'settingsWHifz': data.weightHifz,
                 'settingsWRev': data.weightRevision,
@@ -455,7 +460,8 @@
         }
 
         try {
-            await apiFetch('/auth/change-password', 'POST', { currentPassword: currentPass, newPassword: newPass });
+            const cpRes = await apiFetch('/auth/change-password', 'POST', { currentPassword: currentPass, newPassword: newPass });
+            if (cpRes?.token) app().saveSession(cpRes.token, app().state.user);
             app().ui.showToast('تم تغيير كلمة المرور بنجاح', 'success');
             document.getElementById('settingsCurrentPass').value = '';
             document.getElementById('settingsNewPass').value = '';

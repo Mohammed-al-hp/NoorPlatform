@@ -150,13 +150,14 @@ public class WaitingListController : ControllerBase
             return BadRequest(new { message = "لا يمكن تحويل سجل مكتمل أو مرفوض" });
 
         // ─── إصلاح عالي: التحقق لمنع إنشاء حساب لطالب موجود مسبقاً ───
-        if (await _context.Students.AnyAsync(s => s.User.UserName == entry.Phone))
+        if (await _context.Students.AnyAsync(s => s.User.UserName == AccountProvisioningService.NormalizePhone(entry.Phone)))
             return BadRequest(new { message = "هذا الطالب مسجل بالفعل مسبقاً كطالب" });
 
         var circle = await _context.Circles.FindAsync(request.CircleId);
         if (circle == null)
             return BadRequest(new { message = "الحلقة غير موجودة" });
 
+        await using var tx = await _context.Database.BeginTransactionAsync();
         var (studentUser, tempPassword, err) = await _accounts.CreateUserAsync(
             entry.Phone, entry.FullName, UserRole.Student);
 
@@ -164,12 +165,14 @@ public class WaitingListController : ControllerBase
             return BadRequest(new { message = err });
 
         Parent? parent = null;
+        string? parentTempPassword = null;
         if (!string.IsNullOrWhiteSpace(entry.ParentPhone))
         {
-            var (p, _, pErr) = await _accounts.EnsureParentAsync(entry.ParentName, entry.ParentPhone);
+            var (p, pPass, pErr) = await _accounts.EnsureParentAsync(entry.ParentName, entry.ParentPhone);
             if (pErr != null)
                 return BadRequest(new { message = pErr });
             parent = p;
+            parentTempPassword = pPass;
         }
 
         var student = new Student
@@ -177,7 +180,7 @@ public class WaitingListController : ControllerBase
             UserId = studentUser.Id,
             Level = entry.RequestedLevel,
             CircleId = request.CircleId,
-            ParentId = parent?.Id,
+            Parent = parent,
             ParentPhone = entry.ParentPhone
         };
         _context.Students.Add(student);
@@ -197,11 +200,19 @@ public class WaitingListController : ControllerBase
         });
 
         await _context.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return Ok(new
         {
             message = "تم تحويل الطالب وإنشاء الحساب بنجاح",
             studentId = student.Id,
+            parentCredentials = (parentTempPassword == null || parent == null) ? null : new AccountCredentialsDto(
+    parent.User.FullName,
+    parent.User.UserName!,
+    AccountProvisioningService.ToDisplayPhone(parent.User.UserName!),
+    parentTempPassword,
+    UserRole.Parent.ToString(),
+    true),
             credentials = new AccountCredentialsDto(
                 entry.FullName,
                 studentUser.UserName!,

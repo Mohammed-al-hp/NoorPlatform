@@ -168,6 +168,7 @@ public class StudentsController : ControllerBase
             ? request.ParentPhone
             : request.Phone;
 
+        await using var tx = await _context.Database.BeginTransactionAsync();
         var (user, tempPassword, err) = await _accounts.CreateUserAsync(
             loginPhone, request.FullName.Trim(), UserRole.Student);
 
@@ -175,18 +176,20 @@ public class StudentsController : ControllerBase
             return BadRequest(new { message = err });
 
         Parent? parent = null;
+        string? parentTempPassword = null;
         if (linkingExistingParent)
         {
             parent = await _context.Parents.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == request.ParentId!.Value);
         }
         else if (!string.IsNullOrWhiteSpace(request.ParentPhone))
         {
-            var (p, _, pErr) = await _accounts.EnsureParentAsync(
+            var (p, pPass, pErr) = await _accounts.EnsureParentAsync(
                 request.GuardianName,
                 request.ParentPhone);
             if (pErr != null)
                 return BadRequest(new { message = pErr });
             parent = p;
+            parentTempPassword = pPass;
         }
 
         GuardianRelationship? relationship = null;
@@ -200,6 +203,7 @@ public class StudentsController : ControllerBase
         var student = new Student
         {
             UserId = user.Id,
+            
             Level = request.Level ?? "مبتدئ",
             CircleId = request.CircleId,
             ParentPhone = linkingExistingParent ? (parent?.Phone ?? string.Empty) : AccountProvisioningService.NormalizePhone(request.ParentPhone),
@@ -235,12 +239,20 @@ public class StudentsController : ControllerBase
         });
 
         await _context.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return Ok(new
         {
             message = "تم إضافة الطالب بنجاح",
             studentId = student.Id,
             userId = user.Id,
+            parentCredentials = (parentTempPassword == null || parent == null) ? null : new AccountCredentialsDto(
+    parent.User.FullName,
+    parent.User.UserName!,
+    AccountProvisioningService.ToDisplayPhone(parent.User.UserName!),
+    parentTempPassword,
+    UserRole.Parent.ToString(),
+    true),
             credentials = new AccountCredentialsDto(
                 request.FullName,
                 user.UserName!,
@@ -302,7 +314,7 @@ public class StudentsController : ControllerBase
             var (p, _, pErr) = await _accounts.EnsureParentAsync(request.ParentName.Trim(), request.ParentPhone!);
             if (pErr != null)
                 return BadRequest(new { message = pErr });
-            student.ParentId = p?.Id;
+            student.Parent = p;
         }
 
         await _context.SaveChangesAsync();
@@ -344,7 +356,8 @@ public class StudentsController : ControllerBase
             return NotFound(new { message = "الطالب غير موجود" });
 
         student.IsDeleted = true;
-        
+        student.User.IsActive = false;
+
         _context.ActivityFeeds.Add(new ActivityFeed {
             UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
             UserName = User.Identity?.Name ?? "Admin",
@@ -395,6 +408,7 @@ public class StudentsController : ControllerBase
             return NotFound(new { message = "الطالب غير موجود في الأرشيف" });
 
         student.IsDeleted = false;
+        student.User.IsActive = true;
 
         _context.ActivityFeeds.Add(new ActivityFeed {
             UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),

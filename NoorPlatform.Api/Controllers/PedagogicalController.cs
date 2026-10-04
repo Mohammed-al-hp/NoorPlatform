@@ -269,9 +269,15 @@ public class PedagogicalController : ControllerBase
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> GetPeriods()
     {
-        var periods = await _context.EvaluationPeriods
-            .AsNoTracking()
-            .OrderByDescending(p => p.StartDate)
+        var periodsQuery = _context.EvaluationPeriods.AsNoTracking().AsQueryable();
+        if (User.IsInRole("Teacher") && !User.IsInRole("Admin"))
+        {
+            var teacherUserId = NoorPlatform.Api.Security.AuthorizationHelpers.GetUserId(User);
+            periodsQuery = periodsQuery.Where(p => p.CircleId == null ||
+                (p.Circle != null && p.Circle.Teacher != null && p.Circle.Teacher.UserId == teacherUserId));
+        }
+        var periods = await periodsQuery
+                    .OrderByDescending(p => p.StartDate)
             .Select(p => new
             {
                 p.Id,

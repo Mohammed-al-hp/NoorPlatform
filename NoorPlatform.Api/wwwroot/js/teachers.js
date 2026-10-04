@@ -82,7 +82,7 @@
             <div style="display:flex;gap:8px;margin-top:4px">
                 <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="viewTeacher(${t.id})">${window.Icon ? window.Icon('eye', {size:12}) : ''} عرض</button>
                 <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="editTeacher(${t.id})">${window.Icon ? window.Icon('edit', {size:12}) : ''} تعديل</button>
-                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteTeacher(${t.id}, '${esc(t.fullName)}')">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف</button>
+                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteTeacher(${t.id}, ${jsArg(t.fullName)})">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف</button>
             </div>
         </div>`;
     }
@@ -248,7 +248,7 @@
         return `
         <div class="student-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;gap:14px">
-                <div style="width:52px;height:52px;border-radius:14px;background:var(--gradient);display:flex;align-items:center;justify-content:center;flex-shrink:0">${c.icon || (window.Icon ? window.Icon('circle-dot', {size:24}) : '')}</div>
+                <div style="width:52px;height:52px;border-radius:14px;background:var(--gradient);display:flex;align-items:center;justify-content:center;flex-shrink:0">${window.Icon ? window.Icon((window.NoorIcons?.PATHS?.[c.icon] ? c.icon : 'circle-dot'), { size: 24 }) : ''}</div>
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:800;font-size:15px">${extraBadge}${esc(c.name)}</div>
                     <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${window.Icon ? window.Icon('user-check', {size:12}) : ''} ${esc(c.teacherName || 'لم يحدد')}</div>
@@ -266,9 +266,9 @@
             </div>
             ${c.location ? `<div style="font-size:12px;color:var(--text-muted)">${window.Icon ? window.Icon('map-pin', {size:12}) : ''} ${esc(c.location)}</div>` : ''}
             <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
-                ${c.isExtra ? `<button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px" onclick="openExtraEnroll(${c.id}, '${esc(c.name).replace(/'/g, "\\'")}')">${window.Icon ? window.Icon('user-plus', {size:12}) : ''} تسجيل طلاب</button>` : ''}
+                ${c.isExtra ? `<button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px" onclick="openExtraEnroll(${c.id}, ${jsArg(c.name)})">${window.Icon ? window.Icon('user-plus', {size:12}) : ''} تسجيل طلاب</button>` : ''}
                 <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px" onclick="editCircle(${c.id})">${window.Icon ? window.Icon('edit', {size:12}) : ''} تعديل</button>
-                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteCircle(${c.id}, '${esc(c.name)}')">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف</button>
+                <button class="btn btn-outline" style="flex:1;font-size:12px;padding:7px;color:#ef4444;border-color:#ef4444" onclick="deleteCircle(${c.id}, ${jsArg(c.name)})">${window.Icon ? window.Icon('trash-2', {size:12}) : ''} حذف</button>
             </div>
         </div>`;
     }
@@ -474,14 +474,15 @@
     }
 
     function getCircleTimeValue(prefix) {
-        const prayerPanel = document.getElementById(`${prefix === 'add' ? 'add' : 'edit'}CirclePrayerPanel`);
+        const p = prefix === 'edit' ? 'edit' : '';
+        const id = n => p ? p + n : n.charAt(0).toLowerCase() + n.slice(1);
+        const prayerPanel = document.getElementById(prefix === 'edit' ? 'editCirclePrayerPanel' : 'addCirclePrayerPanel');
         const isHidden = prayerPanel && prayerPanel.style.display === 'none';
         if (!isHidden) {
-            const sel = document.getElementById(`${prefix === 'add' ? '' : 'edit'}CircleTimeSelect`);
-            return sel ? sel.value : '';
+            return document.getElementById(id('CircleTimeSelect'))?.value || '';
         }
-        const from = document.getElementById(`${prefix === 'add' ? '' : 'edit'}CircleTimeFrom`)?.value;
-        const to = document.getElementById(`${prefix === 'add' ? '' : 'edit'}CircleTimeTo`)?.value;
+        const from = document.getElementById(id('CircleTimeFrom'))?.value;
+        const to = document.getElementById(id('CircleTimeTo'))?.value;
         return from && to ? `${from} - ${to}` : (from || '');
     }
 

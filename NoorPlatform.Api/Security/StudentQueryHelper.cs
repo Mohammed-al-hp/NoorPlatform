@@ -16,17 +16,15 @@ public static class StudentQueryHelper
             return query;
 
         if (!user.IsInRole("Teacher"))
-            return query;
+            return query.Where(_ => false);
 
         var userId = GetUserId(user);
         if (userId == null)
             return query.Where(_ => false);
 
-        var circleIds = context.Circles
-            .Where(c => c.Teacher != null && c.Teacher.UserId == userId.Value)
-            .Select(c => c.Id);
-
-        return query.Where(s => s.CircleId != null && circleIds.Contains(s.CircleId.Value));
+        return query.Where(s =>
+            (s.Circle != null && s.Circle.Teacher != null && s.Circle.Teacher.UserId == userId.Value) ||
+            s.ExtraEnrollments.Any(e => e.Circle.Teacher != null && e.Circle.Teacher.UserId == userId.Value));
     }
 
     private static int? GetUserId(ClaimsPrincipal user)

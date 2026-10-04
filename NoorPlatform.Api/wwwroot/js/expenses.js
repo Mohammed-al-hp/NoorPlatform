@@ -27,7 +27,7 @@
                 }
 
                 // Get list of expenses
-                const data = await apiFetch('/expenses?pageNumber=1&pageSize=100');
+                const data = await apiFetch('/expenses?page=1&pageSize=100');
                 this.renderExpenses(data.items || data);
             } catch (err) {
                 console.error(err);
@@ -111,7 +111,7 @@
                 await apiFetch('/expenses', 'POST', {
                     title: title,
                     amount: amount,
-                    category: parseInt(category, 10) || 4,
+                    category: ['Salary', 'Trust', 'Maintenance', 'Reward', 'Other'][parseInt(category, 10)] || 'Other',
                     date: date,
                     description: notes
                 });

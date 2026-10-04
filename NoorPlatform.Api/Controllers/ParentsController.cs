@@ -112,6 +112,7 @@ public class ParentsController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+        await using var tx = await _context.Database.BeginTransactionAsync();
         var (parent, tempPassword, err) = await _accounts.EnsureParentAsync(request.FullName, request.Phone);
         if (err != null)
             return BadRequest(new { message = err });
@@ -144,6 +145,7 @@ public class ParentsController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return Ok(new
         {

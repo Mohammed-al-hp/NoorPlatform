@@ -55,7 +55,7 @@
                         ${window.Icon ? window.Icon('message-circle', {size:14}) : ''} <strong>آخر ملاحظة:</strong> ${escapeHtml(c.lastNote)}
                        </div>`
                     : ''}
-                    <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px" onclick="NoorMessages.openChildDetails(${c.id}, '${escapeHtml(c.fullName).replace(/'/g, "\\'")}')">
+                    <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px" onclick="NoorMessages.openChildDetails(${c.id}, ${jsArg(c.fullName)})">
                         ${window.Icon ? window.Icon('clipboard-list', {size:14}) : ''} عرض التفاصيل الكاملة
                     </button>
                 </div>
@@ -235,6 +235,7 @@
         if (!tbody) return;
         try {
             const records = await apiFetch(`/hifz/student/${studentId}`);
+            renderQuranMap(records);
             if (!records.length) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد سجلات تسميع بعد</td></tr>';
                 return;
@@ -351,7 +352,7 @@
             if (r.type === 'Memorization' || r.type === 0) {
                 const key = r.surahName;
                 if (!memorizedSurahs[key]) memorizedSurahs[key] = 0;
-                memorizedSurahs[key] += r.verseCount || HifzRecord_ParseVerseCount(r.verses || '');
+                memorizedSurahs[key] += r.verseCount || global.NoorUtils.parseVerseCount(r.verses || '');
             }
         });
 
@@ -364,7 +365,7 @@
             const title = pct > 0 ? `${s.name}: ${memorized}/${s.v} آية (${pct}%)` : `${s.name}: لم يُحفظ`;
             return `
   <div class="surah-cell ${cls}" title="${title}">
-    <span class="surah-icon">${icon}</span>
+   <span class="surah-icon">${cellIcon}</span>
     <span>${s.name}</span>
     <span class="surah-num">${s.n}</span>
     ${pct > 0 ? `<span style="font-size:9px">${pct}%</span>` : ''}
@@ -372,16 +373,7 @@
         }).join('');
     }
 
-    function HifzRecord_ParseVerseCount(verses) {
-        if (!verses) return 0;
-        const parts = verses.split('-');
-        if (parts.length === 2) {
-            const from = parseInt(parts[0]), to = parseInt(parts[1]);
-            if (!isNaN(from) && !isNaN(to) && to >= from) return to - from + 1;
-        }
-        const single = parseInt(verses);
-        return isNaN(single) ? 0 : single;
-    }
+    
 
     function openMemModalForStudent(studentId, studentName) {
         openModal('addMemModal');
@@ -541,22 +533,7 @@
         });
     }
 
-    // QA Hooks & Misc
-    function markAllPresent() {
-        if (global.NoorAttendance?.markAllPresentLocal) {
-            global.NoorAttendance.markAllPresentLocal();
-            return;
-        }
-        showToast('افتح صفحة الحضور أولاً', 'warning');
-    }
-
-    function saveAttendance() {
-        if (global.NoorAttendance?.savePendingAttendance) {
-            global.NoorAttendance.savePendingAttendance();
-            return;
-        }
-        showToast('افتح صفحة الحضور أولاً', 'warning');
-    }
+   
 
     // Search & Center Summary Hooks
     function searchAttendanceReports() {
@@ -680,7 +657,6 @@
     global.fetchStudentAttendance = fetchStudentAttendance;
     global.sendAbsenceWhatsApp = sendAbsenceWhatsApp;
     global.renderQuranMap = renderQuranMap;
-    global.HifzRecord_ParseVerseCount = HifzRecord_ParseVerseCount;
     global.openMemModalForStudent = openMemModalForStudent;
     global.confirmDelete = confirmDelete;
     global.executeDelete = executeDelete;
@@ -689,8 +665,6 @@
     global.updateTopbarAvatar = updateTopbarAvatar;
     global.installPWA = installPWA;
     global.toggleDarkMode = toggleDarkMode;
-    global.markAllPresent = markAllPresent;
-    global.saveAttendance = saveAttendance;
     global.searchAttendanceReports = searchAttendanceReports;
     global.filterAttendanceRows = filterAttendanceRows;
     global.clearAttendanceSearch = clearAttendanceSearch;

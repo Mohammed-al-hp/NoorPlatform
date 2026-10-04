@@ -172,7 +172,7 @@
             global.closeModal('parentFormModal');
             fetchParents();
         } catch (e) {
-            global.showToast('' + (e.message || 'فشل الحفظ', 'error'));
+            global.showToast(e.message || 'فشل الحفظ', 'error');
         } finally {
             global.setBtnLoading(btn, false);
         }

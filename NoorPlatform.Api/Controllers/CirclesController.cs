@@ -136,7 +136,7 @@ public class CirclesController : ControllerBase
             Name = request.Name.Trim(),
             Time = request.Time?.Trim() ?? string.Empty,
             Location = request.Location?.Trim() ?? string.Empty,
-            Icon = request.Icon ?? (request.IsExtra ? "➕" : "⭕"),
+            Icon = request.Icon ?? (request.IsExtra ? "user-plus" : "circle-dot"),
             TeacherId = teacherId,
             IsExtra = request.IsExtra,
             SessionDate = request.SessionDate,

@@ -204,18 +204,7 @@
         if (topAv && window.Icon) topAv.innerHTML = window.Icon('user', { size: 18 });
     }
 
-    function toggleAuthMode(mode) {
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        if (!loginForm || !registerForm) return;
-        if (mode === 'register') {
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'block';
-        } else {
-            loginForm.style.display = 'block';
-            registerForm.style.display = 'none';
-        }
-    }
+    
     async function handleLogin() {
         const phoneInput = document.getElementById('loginPhone');
         const passInput = document.getElementById('loginPassword');
@@ -304,7 +293,8 @@
         }
 
         try {
-            await apiFetch('/auth/change-password', 'POST', { currentPassword: current, newPassword: newPass });
+            const cpRes = await apiFetch('/auth/change-password', 'POST', { currentPassword: current, newPassword: newPass });
+            if (cpRes?.token) app().saveSession(cpRes.token, app().state.user);
             ui().closeModal('changePasswordModal');
             ui().showToast('تم تغيير كلمة المرور', 'success');
             checkAuth();
@@ -338,20 +328,14 @@
         location.reload();
     }
 
-    async function handleRegister() {
-        ui().showToast('التسجيل الذاتي غير متاح', 'error');
-        toggleAuthMode('login');
-    }
 
     const auth = {
         checkAuth,
         applyRoleUI,
         updateUserInfo,
-        toggleAuthMode,
         handleLogin,
         submitChangePassword,
         logout,
-        handleRegister,
         openForgotPasswordHelp
     };
 
@@ -361,8 +345,6 @@
     global.handleLogin = handleLogin;
     global.submitChangePassword = submitChangePassword;
     global.logout = logout;
-    global.toggleAuthMode = toggleAuthMode;
-    global.handleRegister = handleRegister;
     global.updateUserInfo = updateUserInfo;
     global.openForgotPasswordHelp = openForgotPasswordHelp;
 })(window);

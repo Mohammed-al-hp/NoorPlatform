@@ -58,7 +58,7 @@ public class NotificationsController : ControllerBase
         var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var isTeacher = User.IsInRole("Teacher");
 
-        if (isTeacher && student.Circle?.Teacher?.UserId != currentUserId)
+        if (!await NoorPlatform.Api.Security.AuthorizationHelpers.CanAccessStudentAsync(_context, User, student.Id))
             return Forbid();
 
         var parentPhone = student.ParentPhone ?? student.Parent?.Phone;

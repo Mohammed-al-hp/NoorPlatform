@@ -48,7 +48,7 @@
         grid.innerHTML = data.map((s, i) => {
             const initials = esc((s.fullName || '').slice(0, 2));
             const grad = gradients[i % gradients.length];
-            const safeName = (s.fullName || '').replace(/'/g, "\\'");
+            const safeName = jsArg(s.fullName || '');
             return `<div class="student-card" style="animation-delay:${i * 0.04}s">
               <div class="student-card-top">
                 <div class="student-avatar-lg" style="background:${grad}">${initials}</div>
@@ -67,11 +67,11 @@
                 <span class="progress-pct">${s.progress}%</span>
               </div>
               <div class="student-card-actions">
-                ${st().archive ? `<button class="btn btn-primary" onclick="NoorStudents.restoreStudent(${s.id},'${safeName}')" style="flex:1">${icon('refresh-cw', { size: 14 })} استعادة</button>` : `
+                ${st().archive ? `<button class="btn btn-primary" onclick="NoorStudents.restoreStudent(${s.id},${safeName})" style="flex:1">${icon('refresh-cw', { size: 14 })} استعادة</button>` : `
                   <button class="btn btn-view" onclick="viewStudentDetails(${s.id})">${icon('eye', { size: 14 })} عرض</button>
                   <button class="btn btn-edit" onclick="editStudent(${s.id})">${icon('edit', { size: 14 })}</button>
                   <button class="btn-pdf" onclick="exportStudentPDF(${s.id})">${icon('file-text', { size: 14 })} PDF</button>
-                  <button class="btn btn-delete" onclick="NoorStudents.deleteStudent(${s.id},'${safeName}')">${icon('archive', { size: 14 })} أرشفة</button>`}
+                  <button class="btn btn-delete" onclick="NoorStudents.deleteStudent(${s.id},${safeName})">${icon('archive', { size: 14 })} أرشفة</button>`}
               </div>
             </div>`;
         }).join('');
@@ -319,6 +319,15 @@
             app().ui.showToast(res.message || 'تم التحويل', 'success');
             if (res.credentials && typeof showAccountCredentialsModal === 'function') {
                 showAccountCredentialsModal(res.credentials, res.credentials.displayPhone);
+            }
+            const pc = res.parentCredentials;
+            const credBody = document.getElementById('accountCredentialsBody');
+            if (pc && credBody) {
+                credBody.insertAdjacentHTML('beforeend',
+                    `<hr style="margin:12px 0">
+         <p><strong>حساب ولي الأمر الجديد:</strong> ${esc(pc.fullName)}</p>
+         <p><strong>رقم الهاتف:</strong> <code>${esc(pc.displayPhone)}</code></p>
+         <p><strong>كلمة المرور المؤقتة:</strong> <code>${esc(pc.tempPassword)}</code></p>`);
             }
             st().waitingMode = false;
             setStudentFilter('all', document.querySelector('.filter-chip'));

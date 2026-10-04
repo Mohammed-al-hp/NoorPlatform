@@ -202,6 +202,7 @@
     };
 
     global.escapeHtml = escapeHtml;
+    global.jsArg = s => escapeHtml(JSON.stringify(String(s ?? '')));
     global.debounce = debounce;
     global.formatLocalDateYmd = formatLocalDateYmd;
     global.formatDateEnGb = formatDateEnGb;

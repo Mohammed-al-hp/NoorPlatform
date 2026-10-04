@@ -32,6 +32,7 @@ public class AuthController : ControllerBase
 
     // POST /api/auth/login — رقم الهاتف + كلمة المرور
     [HttpPost("login")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (!ModelState.IsValid)
@@ -48,24 +49,15 @@ public class AuthController : ControllerBase
                 candidates.Add(match);
         }
 
-        User? user = null;
-        foreach (var candidate in candidates)
-        {
-            if (!candidate.IsActive) continue;
-            var check = await _signInManager.CheckPasswordSignInAsync(candidate, request.Password, lockoutOnFailure: false);
-            if (check.Succeeded)
-            {
-                user = candidate;
-                break;
-            }
-        }
-
+        var user = candidates.FirstOrDefault(c => c.IsActive);
         if (user == null)
-        {
-            if (candidates.Count > 0)
-                await _signInManager.CheckPasswordSignInAsync(candidates[0], request.Password, lockoutOnFailure: true);
             return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
-        }
+
+        var check = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+        if (check.IsLockedOut)
+            return StatusCode(429, new { message = "تم قفل الحساب مؤقتاً بسبب محاولات خاطئة. حاول بعد 15 دقيقة." });
+        if (!check.Succeeded)
+            return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
 
         user.LastLoginAt = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
@@ -117,7 +109,7 @@ public class AuthController : ControllerBase
         user.MustChangePassword = false;
         await _userManager.UpdateAsync(user);
 
-        return Ok(new { message = "تم تغيير كلمة المرور بنجاح" });
+        return Ok(new { message = "تم تغيير كلمة المرور بنجاح", token = GenerateJwtToken(user) });
     }
 
     // التسجيل الذاتي معطّل — الحسابات تُنشأ من الإدارة فقط
@@ -149,7 +141,8 @@ public class AuthController : ControllerBase
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email ?? ""),
                 new Claim(ClaimTypes.Name, user.FullName),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new Claim(ClaimTypes.Role, user.Role.ToString()) ,        
+                new Claim("stamp", user.SecurityStamp ?? "")
             }),
             Issuer = issuer,
             Audience = audience,
@@ -179,6 +172,6 @@ public class ChangePasswordRequest
     [Required]
     public string CurrentPassword { get; set; } = string.Empty;
 
-    [Required, MinLength(6)]
+    [Required, MinLength(8)]
     public string NewPassword { get; set; } = string.Empty;
 }

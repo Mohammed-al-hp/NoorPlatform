@@ -369,8 +369,8 @@ public class AttendanceController : ControllerBase
         var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
         var existing = await _context.Attendances
-            .Where(a =>
-                a.Date.Date == targetDate.Date &&
+                        .Where(a =>
+                a.Date >= targetDate && a.Date < targetDate.AddDays(1) &&
                 studentIds.Contains(a.StudentId) &&
                 a.CircleId == circleId)
             .ToListAsync();

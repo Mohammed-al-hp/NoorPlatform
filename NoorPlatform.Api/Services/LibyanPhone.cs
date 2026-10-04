@@ -79,27 +79,16 @@ public static class LibyanPhone
         return keys.ToList();
     }
 
-    // ─── تحسين أداء (Low): تقليل إرهاق الـ GC عبر string.Create بدلاً من تخصيص مصفوفات جديدة ───
     private static string DigitsOnly(string value)
     {
         if (string.IsNullOrEmpty(value)) return string.Empty;
-        
-        int digitCount = 0;
-        foreach (char c in value)
+        var sb = new System.Text.StringBuilder(value.Length);
+        foreach (var c in value)
         {
-            if (char.IsDigit(c)) digitCount++;
+            if (c >= '0' && c <= '9') sb.Append(c);
+            else if (c >= '\u0660' && c <= '\u0669') sb.Append((char)('0' + (c - '\u0660')));
+            else if (c >= '\u06F0' && c <= '\u06F9') sb.Append((char)('0' + (c - '\u06F0')));
         }
-            
-        if (digitCount == 0) return string.Empty;
-        if (digitCount == value.Length) return value;
-        
-        return string.Create(digitCount, value, (span, state) =>
-        {
-            int index = 0;
-            foreach (char c in state)
-            {
-                if (char.IsDigit(c)) span[index++] = c;
-            }
-        });
+        return sb.ToString();
     }
 }

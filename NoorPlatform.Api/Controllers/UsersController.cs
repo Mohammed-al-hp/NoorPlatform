@@ -140,6 +140,9 @@ public class UsersController : ControllerBase
             await _userManager.AddToRoleAsync(user, newRole.ToString());
         }
 
+        if (request.IsActive == false && user.IsActive && user.Role == UserRole.Admin &&
+    await _context.Users.CountAsync(u => u.Role == UserRole.Admin && u.IsActive) <= 1)
+            return BadRequest(new { message = "لا يمكن تعطيل آخر مشرف نشط" });
         if (request.IsActive.HasValue)
         {
             user.IsActive = request.IsActive.Value;
@@ -165,6 +168,9 @@ public class UsersController : ControllerBase
         if (user == null)
             return NotFound(new { message = "المستخدم غير موجود" });
 
+        if (user.IsActive && user.Role == UserRole.Admin &&
+    await _context.Users.CountAsync(u => u.Role == UserRole.Admin && u.IsActive) <= 1)
+            return BadRequest(new { message = "لا يمكن تعطيل آخر مشرف نشط" });
         user.IsActive = !user.IsActive;
 
         // إصلاح: إبطال JWT tokens النشطة فوراً عند تعطيل الحساب

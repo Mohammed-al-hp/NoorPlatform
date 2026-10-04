@@ -120,28 +120,17 @@ public class DashboardController : ControllerBase
             return (recent, weeklyVerses);
         });
 
-        var financialsTask = Task.Run(async () =>
-        {
-            using var scope = scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
-            var q = db.Payments.AsNoTracking();
-            if (isTeacher && !isAdmin) q = q.Where(p => p.Student!.Circle!.Teacher!.UserId == userId);
-
-            var rev = await q.Where(p => p.Status == PaymentStatus.Paid && p.PaidDate >= startOfMonth).SumAsync(p => p.Amount);
-            var due = await q.Where(p => p.Status != PaymentStatus.Paid && p.DueDate < today).SumAsync(p => p.Amount);
-            
-            return (rev, due);
-        });
+       
 
         // انتظار جميع المهام بشكل متوازٍ
-        await Task.WhenAll(studentsTask, teachersTask, circlesTask, attendancesTask, hifzTask, financialsTask);
+        await Task.WhenAll(studentsTask, teachersTask, circlesTask, attendancesTask, hifzTask);
 
         var totalStudents = studentsTask.Result;
         var totalTeachers = teachersTask.Result;
         var totalCircles = circlesTask.Result;
         var (presentToday, totalToday, weeklyRaw) = attendancesTask.Result;
         var (recentHifz, weeklyVerses) = hifzTask.Result;
-        var (monthlyRevenue, totalOverdue) = financialsTask.Result;
+       
 
         var attendancePercent = totalToday > 0 ? (int)Math.Round((double)presentToday / totalToday * 100) : 0;
 
@@ -205,7 +194,6 @@ public class DashboardController : ControllerBase
             weeklyAttendance,
             levelDistribution,
             recentHifz,
-            financials = new { monthlyRevenue, totalOverdue },
             hifzVelocity,
             bestCircle
         });
@@ -222,8 +210,8 @@ public class DashboardController : ControllerBase
         var student = await _context.Students.AsNoTracking()
             .Include(s => s.User)
             .Include(s => s.Circle!).ThenInclude(c => c.Teacher!).ThenInclude(t => t.User)
-            .Include(s => s.HifzRecords.OrderByDescending(h => h.Date).Take(10))
-            .Include(s => s.Attendances.OrderByDescending(a => a.Date).Take(10))
+            .Include(s => s.HifzRecords)
+.Include(s => s.Attendances)
             .Include(s => s.ExamResults.OrderByDescending(e => e.Id).Take(10))
             .FirstOrDefaultAsync(s => s.UserId == userId);
 
@@ -338,8 +326,8 @@ public class DashboardController : ControllerBase
 
         var parent = await _context.Parents.AsNoTracking()
             .Include(p => p.Children).ThenInclude(c => c.User)
-            .Include(p => p.Children).ThenInclude(c => c.HifzRecords.OrderByDescending(h => h.Date).Take(10))
-            .Include(p => p.Children).ThenInclude(c => c.Attendances.OrderByDescending(a => a.Date).Take(10))
+            .Include(p => p.Children).ThenInclude(c => c.HifzRecords)
+.Include(p => p.Children).ThenInclude(c => c.Attendances)
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (parent == null)
@@ -362,7 +350,7 @@ public class DashboardController : ControllerBase
         });
 
         // جلب الفواتير المتأخرة وغير المدفوعة
-        var overduePayments = await _context.Payments.AsNoTracking()
+        var overduePayments = await _context.Payments.AsNoTracking().IgnoreQueryFilters()
             .Include(p => p.Student).ThenInclude(s => s.User)
             .Where(p => p.ParentId == parent.Id && p.Status != PaymentStatus.Paid)
             .Select(p => new
@@ -383,7 +371,7 @@ public class DashboardController : ControllerBase
             children = childrenData,
             alerts = overduePayments.Where(p => p.isOverdue).Select(p => new
             {
-                message = $"⚠️ فاتورة متأخرة: {p.Description} للطالب {p.studentName} بمبلغ {p.Amount} ريال",
+                message = $"فاتورة متأخرة: {p.Description} للطالب {p.studentName} بمبلغ {p.Amount} د.ل",
                 p.Id,
                 p.Amount
             })

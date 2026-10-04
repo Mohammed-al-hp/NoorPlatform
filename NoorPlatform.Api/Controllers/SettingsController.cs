@@ -36,9 +36,9 @@ public class SettingsController : ControllerBase
                 defaultMonthlyFee = 0m,
                 currency = "د.ل",
                 oralMaxOpeningsBeforeFail = 3,
-                oralAlertPenalty = 5.0,
-                oralOpeningPenalty = 15.0,
-                oralHesitationPenalty = 2.0,
+                oralAlertPenalty = 1.0,
+                oralOpeningPenalty = 2.0,
+                oralHesitationPenalty = 0.5,
                 defaultMonthlyAthmanTarget = 8,
                 progressThreshold10 = 0.75,
                 progressThreshold9 = 0.625,
@@ -53,6 +53,15 @@ public class SettingsController : ControllerBase
                 weightDress = 1.0,
                 evaluationsVisibleToStudentsAndParents = true
             });
+        }
+        if (settings.ProgressThreshold10 <= 0)
+        {
+            settings.ProgressThreshold10 = 0.75;
+            settings.ProgressThreshold9 = 0.625;
+            settings.ProgressThreshold8 = 0.5;
+            settings.ProgressThreshold6 = 0.375;
+            settings.ProgressThreshold4 = 0.25;
+            await _context.SaveChangesAsync();
         }
         return Ok(new
         {

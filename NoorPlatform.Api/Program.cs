@@ -1,3 +1,5 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -63,6 +65,13 @@ if (!builder.Environment.IsEnvironment("Testing"))
     });
 }
 
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = 429;
+    o.AddPolicy("login", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+});
 // Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<NoorDbContext>();
@@ -71,7 +80,7 @@ builder.Services.AddHealthChecks()
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 {
     options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
+    options.Password.RequiredLength = 8;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
     options.Password.RequireLowercase = false;
@@ -114,6 +123,15 @@ builder.Services.AddAuthentication(x =>
     };
     x.Events = new JwtBearerEvents
     {
+        OnTokenValidated = async context =>
+        {
+            var um = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
+            var id = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var stamp = context.Principal?.FindFirst("stamp")?.Value;
+            var user = id == null ? null : await um.FindByIdAsync(id);
+            if (user == null || !user.IsActive || user.SecurityStamp != stamp)
+                context.Fail("invalid");
+        },
         OnAuthenticationFailed = context =>
         {
             if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
@@ -138,7 +156,8 @@ builder.Services.AddCors(options =>
         b.SetIsOriginAllowed(_ => true).AllowAnyMethod().AllowAnyHeader());
 
     options.AddPolicy("Production", b =>
-        b.SetIsOriginAllowed(_ => true).AllowAnyMethod().AllowAnyHeader());
+    b.WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? Array.Empty<string>())
+     .AllowAnyMethod().AllowAnyHeader());
 });
 
 // ─── HttpClient لخدمة واتساب ───
@@ -223,6 +242,7 @@ app.UseCors(corsPolicy);
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<BlockLibraryUploadsMiddleware>();
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

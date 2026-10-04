@@ -7,7 +7,7 @@
     const NoorCompetitions = {
         fetchCompetitions: async function () {
             try {
-                const data = await apiFetch('/competitions?pageNumber=1&pageSize=100');
+                const data = await apiFetch('/competitions');
                 this.renderCompetitions(data.items || data);
             } catch (err) {
                 console.error(err);
@@ -25,25 +25,17 @@
             }
 
             container.innerHTML = competitions.map(comp => {
-                const isActive = new Date(comp.endDate) >= new Date() && new Date(comp.startDate) <= new Date();
-                const isUpcoming = new Date(comp.startDate) > new Date();
+                const d = new Date(comp.date);
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const isActive = d.toDateString() === today.toDateString();
+                const isUpcoming = d > today;
                 
                 let statusBadge = isActive ? '<span class="status-badge status-excellent">جارية الآن</span>' : 
                                  isUpcoming ? '<span class="status-badge status-good">قادمة</span>' : 
                                  '<span class="status-badge status-absent">منتهية</span>';
 
-                let levelText = 'عام';
-                switch(comp.level) {
-                    case 'Internal': 
-                    case 0: levelText = 'داخلية'; break;
-                    case 'Local': 
-                    case 1: levelText = 'محلية'; break;
-                    case 'National': 
-                    case 2: levelText = 'وطنية'; break;
-                    case 'International': 
-                    case 3: levelText = 'دولية'; break;
-                    default: if (typeof comp.level === 'string') levelText = comp.level;
-                }
+                const levelNames = { Internal: 'داخلية', Regional: 'إقليمية', National: 'وطنية' };
+                const levelText = levelNames[comp.level] || comp.level || 'عام';
 
                 return `
                 <div class="stat-card" style="flex-direction:column;align-items:stretch;gap:12px;padding:20px;border-radius:16px;">
@@ -54,21 +46,15 @@
                         ${statusBadge}
                     </div>
                     <div style="margin-top:10px;">
-                        <h3 style="font-size:18px;font-weight:800;margin-bottom:4px">${escapeHtml(comp.name)}</h3>
+                        <h3 style="font-size:18px;font-weight:800;margin-bottom:4px">${escapeHtml(comp.title) }</h3>
                         <p style="font-size:12px;color:var(--text-muted)">مستوى: ${escapeHtml(levelText)}</p>
                     </div>
-                    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text);background:var(--bg);padding:10px;border-radius:8px;">
-                        <div>
-                            <div style="color:var(--text-muted);margin-bottom:2px;font-size:10px">تاريخ البدء</div>
-                            <div style="font-weight:700">${formatDateEnGb(comp.startDate)}</div>
-                        </div>
-                        <div style="text-align:left">
-                            <div style="color:var(--text-muted);margin-bottom:2px;font-size:10px">تاريخ الانتهاء</div>
-                            <div style="font-weight:700">${formatDateEnGb(comp.endDate)}</div>
-                        </div>
+                                        <div style="font-size:12px;background:var(--bg);padding:10px;border-radius:8px;display:flex;justify-content:space-between">
+                        <span>${formatDateEnGb(comp.date)}</span>
+                        <span>${comp.participantsCount} مشارك</span>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:auto;padding-top:10px;">
-                        <button class="btn btn-primary" style="flex:1;padding:8px;font-size:13px;" onclick="NoorCompetitions.showLeaderboard(${comp.id}, '${escapeHtml(comp.name).replace(/'/g, "\\'")}')">
+                        <button class="btn btn-primary" style="flex:1;padding:8px;font-size:13px;" onclick="NoorCompetitions.showLeaderboard(${comp.id}, ${jsArg(comp.title || comp.name)})">
                             ${window.Icon ? window.Icon('bar-chart-2', { size: 14 }) : ''} التراتيب
                         </button>
                         ${global.USER?.role === 'Admin' ? 
@@ -84,7 +70,6 @@
             document.getElementById('addCompForm').reset();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('compStartDate').value = today;
-            document.getElementById('compEndDate').value = today;
             openModal('addCompetitionModal');
         },
 
@@ -92,12 +77,11 @@
             e.preventDefault();
             const name = document.getElementById('compName').value.trim();
             const startDate = document.getElementById('compStartDate').value;
-            const endDate = document.getElementById('compEndDate').value;
             const level = document.getElementById('compLevel').value;
             const description = document.getElementById('compDesc').value.trim();
             const btn = document.querySelector('#addCompetitionModal .btn-primary');
 
-            if (!name || !startDate || !endDate) {
+            if (!name || !startDate) {
                 showToast('يرجى تعبئة اسم المسابقة وتواريخها', 'warning');
                 return;
             }
@@ -106,11 +90,10 @@
                 if (global.setBtnLoading) global.setBtnLoading(btn, true);
                 
                 await apiFetch('/competitions', 'POST', {
-                    name: name,
-                    description: description || null,
-                    startDate: startDate,
-                    endDate: endDate,
-                    level: parseInt(level, 10)
+                    title: name,
+                    description: description || '',
+                    date: startDate,
+                    level: level
                 });
                 
                 closeModal('addCompetitionModal');
@@ -137,7 +120,8 @@
 
         showLeaderboard: async function (id, name) {
             try {
-                const results = await apiFetch(`/competitions/${id}/leaderboard`);
+                const lb = await apiFetch(`/competitions/${id}/leaderboard`);
+                const results = lb.leaderboard || [];
                 
                 let html = '';
                 if (!results || results.length === 0) {
@@ -150,7 +134,7 @@
                                 <tr>
                                     <th>الترتيب</th>
                                     <th>الطالب</th>
-                                    <th>المحفظ</th>
+                                    <th>الحلقة</th>
                                     <th>الدرجة</th>
                                 </tr>
                             </thead>
@@ -160,23 +144,23 @@
                                     let rowStyle = '';
                                     
                                     if (index === 0) {
-                                        rankTrophy = '<span style="color:#fbbf24;font-size:18px">🏆</span>';
+                                        rankTrophy = '1';
                                         rowStyle = 'background:rgba(251, 191, 36, 0.05);';
                                     } else if (index === 1) {
-                                        rankTrophy = '<span style="color:#94a3b8;font-size:18px">🥈</span>';
+                                        rankTrophy = '2';
                                     } else if (index === 2) {
-                                        rankTrophy = '<span style="color:#b45309;font-size:18px">🥉</span>';
+                                        rankTrophy = '3';
                                     }
 
                                     return `
                                     <tr style="${rowStyle}">
                                         <td>
                                             <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;">
-                                                ${index + 1} ${rankTrophy}
+                                                ${index + 1}
                                             </div>
                                         </td>
                                         <td><strong>${escapeHtml(r.studentName)}</strong></td>
-                                        <td>${escapeHtml(r.teacherName || '—')}</td>
+                                        <td>${escapeHtml(r.circleName || '—') }</td>
                                         <td>
                                             <span class="status-badge status-excellent" style="font-size:14px;padding:4px 12px">${r.totalScore.toFixed(2)}</span>
                                         </td>

@@ -489,7 +489,7 @@
                 return;
             }
             list.innerHTML = data.map(p => `
-                <div class="chart-card" style="margin-bottom:10px;padding:14px;cursor:pointer" onclick="openPeriodEvaluations(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}')">
+                <div class="chart-card" style="margin-bottom:10px;padding:14px;cursor:pointer" onclick="openPeriodEvaluations(${p.id}, ${jsArg(p.name)})">
                     <div style="display:flex;justify-content:space-between">
                         <div>
                             <strong>${escapeHtml(p.name)}</strong>

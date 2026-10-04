@@ -26,11 +26,11 @@
             </div>
             <p style="font-size:13px;color:var(--text-muted);margin-top:8px">${escapeHtml(e.description || '')}</p>
             <div style="margin-top:14px;display:flex;gap:8px">
-                <button class="btn btn-primary" style="font-size:12px;padding:8px 14px" onclick="openExamResults(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
+                <button class="btn btn-primary" style="font-size:12px;padding:8px 14px" onclick="openExamResults(${e.id}, ${jsArg(e.title)})">
                 ${window.Icon ? window.Icon('bar-chart', {size:14}) : ''} إدخال نتائج الطلاب
                 </button>
                 ${global.USER?.role === 'Admin' ? `
-                <button class="btn btn-delete" style="font-size:12px;padding:8px 14px" onclick="deleteExam(${e.id}, '${escapeHtml(e.title).replace(/'/g, "\\'")}')">
+                <button class="btn btn-delete" style="font-size:12px;padding:8px 14px" onclick="deleteExam(${e.id}, ${jsArg(e.title)})">
                 ${window.Icon ? window.Icon('trash-2', {size:14}) : ''} حذف
                 </button>` : ''}
             </div>

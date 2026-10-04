@@ -42,10 +42,18 @@
                 const body = document.createElement('div');
                 body.className = 'card-body';
                 body.innerHTML = `
-                    <p><strong>المبلغ:</strong> ${escapeHtml(String(p.amount))} ريال</p>
+                    <p><strong>المبلغ:</strong> ${escapeHtml(String(p.amount))} د.ل</p>
                     <p><strong>البيان:</strong> ${escapeHtml(p.description)}</p>
                     <p><strong>الاستحقاق:</strong> ${formatDateEnGb(p.dueDate)}</p>`;
 
+                if (p.status !== 'Paid') {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-primary';
+                    btn.style.cssText = 'margin-top:10px;width:100%;justify-content:center';
+                    btn.textContent = 'تأكيد استلام المبلغ';
+                    btn.setAttribute('onclick', 'confirmReceived(' + Number(p.id) + ')');
+                    body.appendChild(btn);
+                }
                 card.appendChild(header);
                 card.appendChild(body);
                 return card.outerHTML;
@@ -118,22 +126,11 @@
                 const body = document.createElement('div');
                 body.className = 'card-body';
                 body.innerHTML = `
-                    <p><strong>المبلغ:</strong> ${escapeHtml(String(p.amount))} ريال</p>
+                    <p><strong>المبلغ:</strong> ${escapeHtml(String(p.amount))} د.ل</p>
                     <p><strong>البيان:</strong> ${escapeHtml(p.description)}</p>
                     <p><strong>الاستحقاق:</strong> ${formatDateEnGb(p.dueDate)}</p>`;
 
-                if (p.status !== 'Paid') {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn btn-primary';
-                    btn.style.cssText = 'margin-top:10px; width:100%; justify-content:center';
-                    btn.innerHTML = (window.Icon ? window.Icon('credit-card', {size:14}) : '') + ' سداد الآن (تجريبي)';
-                    btn.title = 'هذا سداد تجريبي لأغراض العرض فقط — لا يوجد بوابة دفع فعلية بعد';
-                    btn.addEventListener('click', function () {
-                        if (!confirm('هذا سداد تجريبي فقط ولا يحوّل أي مبلغ فعلياً. سيتم تعليم الفاتورة كمدفوعة في النظام مباشرة.\n\nهل تريد المتابعة؟')) return;
-                        payInvoice(p.id, this);
-                    });
-                    body.appendChild(btn);
-                }
+                
 
                 card.appendChild(header);
                 card.appendChild(body);
@@ -221,6 +218,16 @@
         }
     }
 
+    function confirmReceived(id) {
+        global.confirmDelete('تأكيد استلام مبلغ هذه الفاتورة نقداً؟', async () => {
+            try {
+                await apiFetch(`/payments/${id}/pay`, 'POST');
+                showToast('تم تسجيل الدفع', 'success');
+                fetchPayments();
+            } catch (err) { showToast(err.message, 'error'); }
+        });
+    }
+    global.confirmReceived = confirmReceived;
     global.fetchPayments = fetchPayments;
     global.fetchParentFees = fetchParentFees;
     global.showNewInvoiceModal = showNewInvoiceModal;

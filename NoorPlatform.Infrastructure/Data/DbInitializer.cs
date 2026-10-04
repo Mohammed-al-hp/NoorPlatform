@@ -27,12 +27,31 @@ public static class DbInitializer
                 await userManager.AddToRoleAsync(user, roleName);
         }
 
-        if (!isProduction)
+        if (!isProduction && Environment.GetEnvironmentVariable("NOOR_SEED_TEST") == "1")
         {
             await EnsureTestLoginAccountsAsync(userManager, roleManager);
         }
 
         if (context.Users.Any()) return;
+
+        if (isProduction)
+        {
+            var pwd = Environment.GetEnvironmentVariable("NOOR_ADMIN_PASSWORD");
+            if (string.IsNullOrWhiteSpace(pwd)) return;
+            var prodAdmin = new User
+            {
+                UserName = Environment.GetEnvironmentVariable("NOOR_ADMIN_PHONE") ?? "218900000000",
+                PhoneNumber = Environment.GetEnvironmentVariable("NOOR_ADMIN_PHONE") ?? "218900000000",
+                FullName = "المشرف العام",
+                Role = UserRole.Admin,
+                EmailConfirmed = true,
+                MustChangePassword = true,
+                IsActive = true
+            };
+            var r = await userManager.CreateAsync(prodAdmin, pwd);
+            if (r.Succeeded) await userManager.AddToRoleAsync(prodAdmin, "Admin");
+            return;
+        }
 
         var adminUser = new User
         {
