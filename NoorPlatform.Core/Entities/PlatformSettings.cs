@@ -24,7 +24,7 @@ public class PlatformSettings
 
     // ─── إعدادات التقييم التربوي (ملاحظات المشرف) ───
     /// <summary>عدد الفتحات عبر أسئلة الجلسة لاعتبار الطالب غير حافظ.</summary>
-    public int OralMaxOpeningsBeforeFail { get; set; } = 3;
+    public int OralMaxOpeningsBeforeFail { get; set; } = 1;
     /// <summary>وزن التنبيه في خصم درجة السؤال (نقاط لكل تنبيه).</summary>
     public double OralAlertPenalty { get; set; } = 1;
     /// <summary>وزن الفتح في خصم درجة السؤال.</summary>

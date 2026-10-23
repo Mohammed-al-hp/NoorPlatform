@@ -353,7 +353,7 @@
 
         // استعادة تعبئة تاريخ التسجيل التلقائي عند جلب الحلقات
         const reg = document.getElementById('registrationDate');
-        if (reg && !reg.value) reg.value = new Date().toISOString().slice(0, 10);
+        if (reg && !reg.value) reg.value = NoorUtils.formatLocalDateYmd(new Date());
     }
 
     async function saveCircle() {

@@ -184,7 +184,7 @@ public class OralExamsController : ControllerBase
         {
             StudentId = request.StudentId,
             CircleId = request.CircleId,
-            Date = request.Date?.Date ?? DateTime.UtcNow.Date,
+            Date = request.Date?.Date ?? LibyaTime.Today,
             Kind = kind,
             ScopeLabel = request.ScopeLabel?.Trim() ?? string.Empty,
             Notes = request.Notes,

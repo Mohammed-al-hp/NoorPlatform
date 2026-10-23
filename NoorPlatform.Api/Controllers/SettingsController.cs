@@ -35,7 +35,7 @@ public class SettingsController : ControllerBase
                 workEndTime = "12:00",
                 defaultMonthlyFee = 0m,
                 currency = "د.ل",
-                oralMaxOpeningsBeforeFail = 3,
+                oralMaxOpeningsBeforeFail = 1,
                 oralAlertPenalty = 1.0,
                 oralOpeningPenalty = 2.0,
                 oralHesitationPenalty = 0.5,

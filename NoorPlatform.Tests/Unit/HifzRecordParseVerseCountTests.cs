@@ -29,9 +29,9 @@ public class HifzRecordParseVerseCountTests
     }
 
     [Theory]
-    [InlineData("20", 20)]
+    [InlineData("20", 1)]
     [InlineData("1", 1)]
-    [InlineData("286", 286)]
+    [InlineData("286", 1)]
     public void ParseVerseCount_SingleNumber_ReturnsThatNumber(string input, int expected)
     {
         HifzRecord.ParseVerseCount(input).Should().Be(expected);

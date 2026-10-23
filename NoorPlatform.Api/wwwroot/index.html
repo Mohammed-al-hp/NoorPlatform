@@ -56,7 +56,7 @@
             <form id="loginForm" onsubmit="event.preventDefault(); handleLogin()">
                 <div class="form-group">
                     <label>رقم الهاتف</label>
-                    <input type="tel" id="loginPhone" class="form-control" placeholder="09xxxxxxxx"
+                    <input type="text" id="loginPhone" class="form-control" placeholder="09xxxxxxxx"
                            autocomplete="username">
                 </div>
                 <div class="form-group">
@@ -235,7 +235,7 @@
             </div>
             <div class="search-box">
                 <span class="search-icon" data-icon="search" data-icon-size="16"></span>
-                <input type="text" id="globalSearchInput" placeholder="بحث سريع عن طالب، حلقة، محفظ..."
+                <input type="text" id="globalSearchInput" name="globalSearch" autocomplete="off" placeholder="بحث سريع عن طالب، حلقة، محفظ..."
                        onkeyup="handleGlobalSearch()">
             </div>
         </nav>
@@ -1290,7 +1290,7 @@
                     </h3>
                     <div class="form-group">
                         <label class="form-label">حد الفتحات لاعتبار غير حافظ</label>
-                        <input type="number" id="settingsOralMaxOpenings" class="form-input" min="1" value="3">
+                        <input type="number" id="settingsOralMaxOpenings" class="form-input" min="1"value="1">
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
                         <div class="form-group">
@@ -1400,15 +1400,17 @@
                     <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:var(--blue)">
                         <span data-icon="lock" data-icon-size="20"></span> الأمان
                     </h3>
-                    <div class="form-group">
-                        <label class="form-label">كلمة المرور الحالية</label>
-                        <input type="password" id="settingsCurrentPass" class="form-input" placeholder="••••••••">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">كلمة المرور الجديدة</label>
-                        <input type="password" id="settingsNewPass" class="form-input" placeholder="••••••••">
-                    </div>
-                    <button class="btn btn-outline" style="width:100%" onclick="NoorDashboard.changePassword()">تحديث كلمة المرور</button>
+                    <form onsubmit="return false" autocomplete="off">
+                        <div class="form-group">
+                            <label class="form-label">كلمة المرور الحالية</label>
+                            <input type="password" id="settingsCurrentPass" autocomplete="current-password" class="form-input" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">كلمة المرور الجديدة</label>
+                            <input type="password" id="settingsNewPass" autocomplete="new-password" class="form-input" placeholder="••••••••">
+                        </div>
+                    </form>
+                        <button class="btn btn-outline" style="width:100%" onclick="NoorDashboard.changePassword()">تحديث كلمة المرور</button>
                 </div>
 
                 <!-- 7. معلومات النظام -->
@@ -2464,19 +2466,21 @@
                 </div>
                 <div class="modal-body">
                     <p style="color:var(--text-muted);margin-bottom:16px">يجب تغيير كلمة المرور المؤقتة قبل المتابعة.</p>
-                    <div class="form-group">
-                        <label>كلمة المرور الحالية</label>
-                        <input type="password" id="currentPasswordInput" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>كلمة المرور الجديدة</label>
-                        <input type="password" id="newPasswordInput" class="form-control" placeholder="8 أحرف على الأقل">
-                    </div>
-                    <div class="form-group">
-                        <label>تأكيد كلمة المرور الجديدة</label>
-                        <input type="password" id="confirmNewPasswordInput" class="form-control" placeholder="أعد كتابة كلمة المرور">
-                    </div>
-                    <div id="changePasswordError" style="color:var(--danger, #e74c3c); font-size:13px; display:none; margin-top:-8px; margin-bottom:8px;"></div>
+                    <form onsubmit="return false" autocomplete="off">
+                        <div class="form-group">
+                            <label>كلمة المرور الحالية</label>
+                            <input type="password" id="currentPasswordInput" autocomplete="current-password" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>كلمة المرور الجديدة</label>
+                            <input type="password" id="newPasswordInput" autocomplete="new-password" class="form-control" placeholder="8 أحرف على الأقل">
+                        </div>
+                        <div class="form-group">
+                            <label>تأكيد كلمة المرور الجديدة</label>
+                            <input type="password" id="confirmNewPasswordInput" autocomplete="new-password" class="form-control" placeholder="أعد كتابة كلمة المرور">
+                        </div>
+                    </form>
+                        <div id="changePasswordError" style="color:var(--danger, #e74c3c); font-size:13px; display:none; margin-top:-8px; margin-bottom:8px;"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" onclick="submitChangePassword()" style="width:100%">

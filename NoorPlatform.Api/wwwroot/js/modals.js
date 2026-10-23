@@ -38,7 +38,7 @@
         const role = global.NoorApp?.state?.user?.role;
         const isStaff = role === 'Admin' || role === 'Teacher';
         // منع فتح صفحات الإدارة للطالب/ولي الأمر — يمنع استدعاءات API التلقائية و403
-        if (!isStaff && STAFF_ONLY_PAGES.includes(page)) {
+        if (!isStaff && (STAFF_ONLY_PAGES.includes(page) || page === 'dashboard')) {
             page = role === 'Parent' ? 'parentView' : 'studentView';
             el = document.querySelector(role === 'Parent'
                 ? '#parentSection .nav-item'

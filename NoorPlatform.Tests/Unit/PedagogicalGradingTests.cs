@@ -45,14 +45,20 @@ public class PedagogicalGradingTests
     }
 
     [Fact]
-    public void AggregateSession_TooManyOpenings_CancelsQuestionAndFails()
+    public void AggregateSession_TooManyOpenings_CancelsQuestionAndExcludesIt()
     {
         var qs = new (int, int, int, double?)[] { (0, 0, 2, null), (0, 0, 0, null) };
         var r = PedagogicalGrading.AggregateSession(qs, maxOpeningsPerQuestion: 1);
-        r.IsMemorized.Should().BeFalse();
-        r.FailReason.Should().Contain("أُلغي");
         r.TotalOpenings.Should().Be(2);
-        r.OverallPercent.Should().Be(50); // (0 + 100) / 2
+        r.OverallPercent.Should().Be(100); // السؤال الملغى لا يدخل في المتوسط
+        r.IsMemorized.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AggregateSession_AllCancelled_Fails()
+    {
+        var qs = new (int, int, int, double?)[] { (0, 0, 2, null), (0, 0, 3, null) };
+        PedagogicalGrading.AggregateSession(qs, maxOpeningsPerQuestion: 1).IsMemorized.Should().BeFalse();
     }
 
     [Fact]

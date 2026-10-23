@@ -79,6 +79,7 @@
         if (page === 'settings' && global.NoorDashboard) global.NoorDashboard.fetchSettings();
         if (page === 'expenses' && global.NoorExpenses) global.NoorExpenses.fetchExpenses();
         if (page === 'competitions' && global.NoorCompetitions) global.NoorCompetitions.fetchCompetitions();
+        if (page === 'announcements' && global.NoorDashboard) global.NoorDashboard.fetchAnnouncements();
     };
 
     window.addEventListener('popstate', function (e) {

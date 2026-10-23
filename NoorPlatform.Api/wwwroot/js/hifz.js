@@ -602,7 +602,7 @@
 
     async function saveOralExamFromHifzModal(studentId, notes) {
         const kind = document.getElementById('hifzOralKind')?.value || 'AthmanSampling';
-        const maxOpenings = parseInt(document.getElementById('hifzOralMaxOpenings')?.value, 10) || 3;
+        const maxOpenings = parseInt(document.getElementById('hifzOralMaxOpenings')?.value, 10) || 1;
         const scopeLabel = document.getElementById('hifzOralScope')?.value?.trim() || '';
         const circleId = parseInt(document.getElementById('hifzCircleSelect')?.value, 10) || null;
 

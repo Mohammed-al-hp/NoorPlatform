@@ -74,7 +74,7 @@ public class PedagogicalController : ControllerBase
         var record = new MatnRecord
         {
             StudentId = request.StudentId,
-            Date = request.Date?.Date ?? DateTime.UtcNow.Date,
+            Date = request.Date?.Date ?? LibyaTime.Today,
             MatnName = request.MatnName?.Trim() ?? string.Empty,
             Portion = request.Portion?.Trim() ?? string.Empty,
             Type = type,
@@ -550,12 +550,7 @@ public class PedagogicalController : ControllerBase
         var attendanceRecords = await _context.Attendances.AsNoTracking()
             .Where(a => a.StudentId == studentId && a.Date >= start && a.Date < endExclusive)
             .ToListAsync();
-        var attendanceScore = attendanceRecords.Count == 0
-            ? 0.0
-            : Math.Round(
-                attendanceRecords.Count(a =>
-                    a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late)
-                / (double)attendanceRecords.Count * 100, 1);
+        var attendanceScore = AttendanceScore.Percent(attendanceRecords.Select(a => a.Status));
 
         // Hifz: متوسط الاختبارات الشفوية + سجلات الحفظ اليومي (Memorization)
         var oralPercents = await _context.OralExamSessions.AsNoTracking()

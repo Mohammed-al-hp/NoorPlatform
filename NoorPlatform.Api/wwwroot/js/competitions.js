@@ -68,7 +68,7 @@
 
         openAddModal: function () {
             document.getElementById('addCompForm').reset();
-            const today = new Date().toISOString().split('T')[0];
+            const today = NoorUtils.formatLocalDateYmd(new Date());
             document.getElementById('compStartDate').value = today;
             openModal('addCompetitionModal');
         },

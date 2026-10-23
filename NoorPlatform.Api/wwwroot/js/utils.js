@@ -159,7 +159,7 @@
             if (!isNaN(from) && !isNaN(to) && to >= from) return to - from + 1;
         }
         const single = parseInt(verses, 10);
-        return isNaN(single) ? 0 : single;
+        return isNaN(single) || single <= 0 ? 0 : 1;
     }
 
     const utilsApi = {

@@ -60,6 +60,8 @@ public static class LibyanPhone
     {
         var keys = new HashSet<string>(StringComparer.Ordinal);
         if (string.IsNullOrWhiteSpace(phone)) return Array.Empty<string>();
+        var raw = phone.Trim().ToLowerInvariant();
+        if (System.Text.RegularExpressions.Regex.IsMatch(raw, @"^st\d{6}$")) return new[] { raw };
 
         var digits = DigitsOnly(phone);
         if (digits.Length == 0) return Array.Empty<string>();

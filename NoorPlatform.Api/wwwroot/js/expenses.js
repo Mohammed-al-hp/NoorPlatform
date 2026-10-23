@@ -87,7 +87,11 @@
 
         openAddModal: function () {
             document.getElementById('addExpenseForm').reset();
-            document.getElementById('expDate').valueAsDate = new Date();
+            {
+                const d = document.getElementById('expDate');
+                const today = NoorUtils.formatLocalDateYmd(new Date());
+                if (d._flatpickr) d._flatpickr.setDate(today, true); else d.value = today;
+            }
             openModal('addExpenseModal');
         },
 

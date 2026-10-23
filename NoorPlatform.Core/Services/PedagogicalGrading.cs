@@ -55,12 +55,13 @@ public static class PedagogicalGrading
 
         var totalOpenings = scored.Sum(s => s.openings);
         var cancelledCount = scored.Count(s => s.cancelled);
-        var overall = Math.Round(scored.Average(s => s.pct), 1);
+        var counted = scored.Where(s => !s.cancelled).ToList();
+        if (counted.Count == 0)
+            return (0, "ضعيف", false, totalOpenings, "أُلغيت جميع الأسئلة بسبب تجاوز الفتحات المسموحة");
+        var overall = Math.Round(counted.Average(s => s.pct), 1);
 
         string failReason = "";
-        if (cancelledCount > 0)
-            failReason = $"أُلغي {cancelledCount} سؤال بسبب تجاوز الفتحات المسموحة";
-        else if (overall < passThreshold)
+        if (overall < passThreshold)
             failReason = "الدرجة أقل من حد النجاح";
 
         var isMemorized = failReason.Length == 0;
@@ -108,6 +109,7 @@ double threshold6 = 0.375, double threshold4 = 0.25)
             return null;
 
         var e = evaluation.Trim();
+        if (e.Contains("يحتاج مراجعة", StringComparison.Ordinal) || e.Contains("غير حافظ", StringComparison.Ordinal)) return 0;
         if (e.Contains("ممتاز", StringComparison.Ordinal)) return 100;
         if (e.Contains("جيد جدا", StringComparison.Ordinal) || e.Contains("جيد جدًا", StringComparison.Ordinal))
             return 85;

@@ -78,6 +78,12 @@
         const libraryAdminActions = document.getElementById('libraryAdminActions');
         const trackingNavSection = document.getElementById('trackingNavSection');
         const isStaff = isAdmin || isTeacher;
+        const searchBox = document.querySelector('.sidebar .search-box');
+        if (searchBox) searchBox.style.display = isStaff ? '' : 'none';
+        // الطالب وولي الأمر: قراءة الإعلانات فقط + بلا لوحة التحكم
+        document.querySelectorAll('[onclick*="addAnnModal"]').forEach(b => { b.style.display = isStaff ? '' : 'none'; });
+        document.querySelectorAll('[onclick*="navigate(\'dashboard\'"], [onclick*="navBottom(\'dashboard\'"]').forEach(b => { if (!isStaff) b.style.display = 'none'; });
+
 
         // صفحات المتابعة الإدارية (حضور / تسميع / اختبارات) — للمحفّظ والمشرف فقط
         if (trackingNavSection) trackingNavSection.style.display = isStaff ? 'block' : 'none';
@@ -152,7 +158,6 @@
             // الرئيسية للطالب = صفحة التحفيز (studentView)
             const homeNav = document.querySelector('#studentSection .nav-item');
             global.navigate('studentView', homeNav);
-            if (typeof fetchStudentView === 'function') fetchStudentView();
             // توجيه أزرار «الرئيسية» لصفحة الطالب
             const bottomHome = document.querySelector('#bottomNav .bottom-nav-item');
             if (bottomHome) bottomHome.setAttribute('onclick', "navBottom('studentView', this)");
@@ -160,7 +165,6 @@
             if (fabHome) fabHome.setAttribute('onclick', "navigate('studentView',null);toggleFab()");
         } else if (isParent) {
             global.navigate('parentView', document.querySelector('#parentSection .nav-item'));
-            if (typeof fetchParentView === 'function') fetchParentView();
             const bottomHome = document.querySelector('#bottomNav .bottom-nav-item');
             if (bottomHome) bottomHome.setAttribute('onclick', "navBottom('parentView', this)");
             const fabHome = document.querySelector('.fab-menu-item[onclick*="dashboard"]');
@@ -212,7 +216,7 @@
         const loginErrorBox = document.getElementById('loginError');
         if (loginErrorBox) { loginErrorBox.style.display = 'none'; loginErrorBox.textContent = ''; }
         const isValid = ui().validateForm([
-            { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الهاتف', patternLibyan: true },
+            { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الهاتف', pattern: /^(st\d{6}|[0-9٠-٩+\s]{9,15})$/i, patternMsg: 'أدخل رقم الهاتف أو اسم الدخول (مثل st123456)' },
             { id: 'loginPassword', required: true, requiredMsg: 'يرجى إدخال كلمة المرور', minLength: 6, minLengthMsg: 'كلمة المرور 6 أحرف على الأقل' }
         ]);
         if (!isValid) return;

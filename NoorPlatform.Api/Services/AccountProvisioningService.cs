@@ -50,14 +50,23 @@ public class AccountProvisioningService
 
     public static string ToDisplayPhone(string normalized) => LibyanPhone.ToDisplay(normalized);
 
+    public async Task<string> GenerateStudentUsernameAsync()
+    {
+        while (true)
+        {
+            var name = "st" + System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999);
+            if (await _userManager.FindByNameAsync(name) == null) return name;
+        }
+    }
     public async Task<(User User, string TempPassword, string? Error)> CreateUserAsync(
         string phone,
         string fullName,
         UserRole role,
-        string? emailOverride = null)
+       string? emailOverride = null,
+        string? usernameOverride = null)
     {
-        var normalized = NormalizePhone(phone);
-        if (!LibyanPhone.IsValid(phone))
+        var normalized = usernameOverride ?? NormalizePhone(phone);
+        if (usernameOverride == null && !LibyanPhone.IsValid(phone))
             return (null!, string.Empty, "رقم الهاتف غير صالح. يجب أن يبدأ بـ 09 ويتكون من 10 أرقام");
 
         if (await _userManager.FindByNameAsync(normalized) != null)
@@ -71,7 +80,7 @@ public class AccountProvisioningService
         {
             UserName = normalized,
             Email = email,
-            PhoneNumber = normalized,
+            PhoneNumber = usernameOverride == null ? normalized : null,
             FullName = fullName.Trim(),
             Role = role,
             EmailConfirmed = true,

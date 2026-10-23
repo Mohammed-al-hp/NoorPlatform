@@ -1,14 +1,15 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Api.Security;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
+using NoorPlatform.Core.Services;
 using NoorPlatform.Infrastructure.Data;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Security.Claims;
 using System.Text;
 
 namespace NoorPlatform.Api.Controllers;
@@ -124,9 +125,7 @@ public class ReportsController : ControllerBase
         var monthAttendances = student.Attendances.ToList();
         var monthHifz = student.HifzRecords.ToList();
 
-        var attendanceRate = monthAttendances.Any()
-            ? (int)Math.Round((double)monthAttendances.Count(a => a.Status == AttendanceStatus.Present) / monthAttendances.Count * 100)
-            : 0;
+        var attendanceRate = (int)Math.Round(AttendanceScore.Percent(monthAttendances.Select(a => a.Status)));
 
         var totalVerses = monthHifz
             .Where(r => r.Type == RecordType.Memorization)

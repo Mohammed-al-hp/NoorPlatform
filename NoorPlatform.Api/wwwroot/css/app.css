@@ -3267,3 +3267,9 @@ body.dark-mode .bottom-nav {
 .date-nav {
     background: var(--card);
 }
+.sidebar input {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}

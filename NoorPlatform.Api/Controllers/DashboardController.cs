@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Api.Security;
-using NoorPlatform.Infrastructure.Data;
-using NoorPlatform.Core.Entities;
-using System.Security.Claims;
 using NoorPlatform.Api.Services;
+using NoorPlatform.Core.Entities;
+using NoorPlatform.Core.Services;
+using NoorPlatform.Infrastructure.Data;
+using System.Security.Claims;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -33,7 +34,7 @@ public class DashboardController : ControllerBase
         var isAdmin = User.IsInRole("Admin");
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var today = DateTime.UtcNow.Date;
+        var today = LibyaTime.Today;
         var weekStart = today.AddDays(-6);
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
 
@@ -76,8 +77,11 @@ public class DashboardController : ControllerBase
             var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
             var q = db.Attendances.AsNoTracking();
             if (isTeacher && !User.IsInRole("Admin")) q = q.Where(a => a.Student!.Circle!.Teacher!.UserId == userId);
-            
-            var presentToday = await q.CountAsync(a => a.Date.Date == today && a.Status == AttendanceStatus.Present);
+
+            var presentToday = await q.Where(a => a.Date.Date == today).SumAsync(a =>
+     a.Status == AttendanceStatus.Present ? 1.0 :
+     a.Status == AttendanceStatus.Late ? AttendanceScore.LateWeight :
+     a.Status == AttendanceStatus.ExcusedAbsence ? AttendanceScore.ExcusedWeight : 0.0);
             var totalToday = await q.CountAsync(a => a.Date.Date == today);
             
             var rawAttendances = await q.Where(a => a.Date >= weekStart).Select(a => new { a.Date, a.Status }).ToListAsync();
@@ -218,10 +222,7 @@ public class DashboardController : ControllerBase
         if (student == null)
             return NotFound(new { message = "لم يُعثر على بيانات الطالب" });
 
-        var attendancePercent = student.Attendances.Any()
-            ? (double)student.Attendances.Count(a => a.Status == AttendanceStatus.Present)
-              / student.Attendances.Count * 100
-            : 0;
+        var attendancePercent = AttendanceScore.Percent(student.Attendances.Select(a => a.Status));
 
         var hifzProgress = HifzProgressCalculator.Calculate(student.HifzRecords);
 
@@ -338,10 +339,7 @@ public class DashboardController : ControllerBase
             c.Id,
             fullName = c.User.FullName,
             progress = HifzProgressCalculator.Calculate(c.HifzRecords),
-            attendance = c.Attendances.Any()
-                            ? Math.Round((double)c.Attendances.Count(a => a.Status == AttendanceStatus.Present)
-                              / c.Attendances.Count * 100, 1)
-                            : 0.0,
+            attendance = AttendanceScore.Percent(c.Attendances.Select(a => a.Status)),
             points = c.Points,
             badges = c.Badges,
             lastNote = c.HifzRecords
@@ -440,7 +438,10 @@ public class DashboardController : ControllerBase
                 points = s.Points,
                 badges = s.Badges,
                 attendanceRate = s.Attendances.Any()
-                    ? Math.Round((double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present) / s.Attendances.Count * 100, 1)
+                    ? Math.Round((s.Attendances.Count(a => a.Status == AttendanceStatus.Present)
+    + AttendanceScore.LateWeight * s.Attendances.Count(a => a.Status == AttendanceStatus.Late)
+    + AttendanceScore.ExcusedWeight * s.Attendances.Count(a => a.Status == AttendanceStatus.ExcusedAbsence))
+    / (double)s.Attendances.Count * 100, 1)
                     : 0.0,
                 HifzRecordsList = s.HifzRecords.Select(r => new { r.Type, r.VerseCount, r.Verses })
             })

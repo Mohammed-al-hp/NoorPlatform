@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Api.Security;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
+using NoorPlatform.Core.Services;
 using NoorPlatform.Infrastructure.Data;
+using System.Security.Claims;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -43,8 +44,10 @@ public class StudentsController : ControllerBase
             s.Level,
             attendance = s.Attendances.Any()
                 ? (int)Math.Round(
-                    (double)s.Attendances.Count(a => a.Status == AttendanceStatus.Present)
-                    / s.Attendances.Count * 100)
+    (s.Attendances.Count(a => a.Status == AttendanceStatus.Present)
+     + AttendanceScore.LateWeight * s.Attendances.Count(a => a.Status == AttendanceStatus.Late)
+     + AttendanceScore.ExcusedWeight * s.Attendances.Count(a => a.Status == AttendanceStatus.ExcusedAbsence))
+    / (double)s.Attendances.Count * 100)
                 : 0,
             HifzRecordsList = s.HifzRecords.Select(r => new { r.Type, r.VerseCount, r.Verses })
         }).ToListAsync();
@@ -114,9 +117,7 @@ public class StudentsController : ControllerBase
             studentPhone = student.StudentPhone,
             residence = student.Residence,
             attendance = student.Attendances.Any()
-                ? (int)Math.Round(
-                    (double)student.Attendances.Count(a => a.Status == AttendanceStatus.Present)
-                    / student.Attendances.Count * 100)
+               ? (int)Math.Round(AttendanceScore.Percent(student.Attendances.Select(a => a.Status)))
                 : 0,
             progress = HifzProgressCalculator.Calculate(student.HifzRecords),
             recentHifz = student.HifzRecords
@@ -169,8 +170,10 @@ public class StudentsController : ControllerBase
             : request.Phone;
 
         await using var tx = await _context.Database.BeginTransactionAsync();
-        var (user, tempPassword, err) = await _accounts.CreateUserAsync(
-            loginPhone, request.FullName.Trim(), UserRole.Student);
+        var (user, tempPassword, err) = string.IsNullOrWhiteSpace(request.Phone)
+    ? await _accounts.CreateUserAsync("", request.FullName.Trim(), UserRole.Student,
+        null, await _accounts.GenerateStudentUsernameAsync())
+    : await _accounts.CreateUserAsync(request.Phone, request.FullName.Trim(), UserRole.Student);
 
         if (err != null)
             return BadRequest(new { message = err });
@@ -210,7 +213,7 @@ public class StudentsController : ControllerBase
             GuardianName = linkingExistingParent ? (parent?.User?.FullName ?? string.Empty) : request.GuardianName.Trim(),
             GuardianRelationship = relationship,
             DateOfBirth = request.DateOfBirth,
-            RegistrationDate = request.RegistrationDate ?? DateTime.UtcNow.Date,
+            RegistrationDate = request.RegistrationDate ?? LibyaTime.Today,
             StudentPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : AccountProvisioningService.NormalizePhone(request.Phone),
             Residence = string.IsNullOrWhiteSpace(request.Residence) ? null : request.Residence.Trim()
         };

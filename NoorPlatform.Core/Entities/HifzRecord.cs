@@ -46,7 +46,7 @@ public class HifzRecord
 
         // رقم مفرد مثل "20"
         if (int.TryParse(verses.Trim(), out var single) && single > 0)
-            return single;
+            return 1; // رقم مفرد = آية واحدة بهذا الرقم
 
         // نص مثل "كاملة" — نُقدّر 0 ويُرك للمحفظ
         return 0;

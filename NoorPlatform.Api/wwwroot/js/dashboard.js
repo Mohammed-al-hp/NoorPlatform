@@ -173,6 +173,7 @@
             const subtitle = document.getElementById('announcementsSubtitle');
             if (subtitle) subtitle.textContent = data.length + ' إعلان' + (data.length !== 1 ? 'ات' : '');
 
+            if (!data.length) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد إعلانات حالياً</div>'; return; }
             list.innerHTML = data.map(a => `
             <div class="ann-card" data-title="${esc(a.title)}">
               <div class="ann-indicator" style="background:${esc(a.color)}"></div>
@@ -454,7 +455,7 @@
             app().ui.showToast('الرجاء إدخال كلمة المرور الحالية والجديدة', 'warning');
             return;
         }
-        if (newPass.length < 6) {
+        if (newPass.length < 8) {
             app().ui.showToast('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل', 'warning');
             return;
         }

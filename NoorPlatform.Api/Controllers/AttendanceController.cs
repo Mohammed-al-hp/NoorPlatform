@@ -1,14 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Api.Security;
 using NoorPlatform.Core.Entities;
+using NoorPlatform.Core.Services;
 using NoorPlatform.Infrastructure.Data;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -119,7 +120,7 @@ public class AttendanceController : ControllerBase
         if (days.HasValue)
         {
             var clamped = Math.Clamp(days.Value, 1, 3650);
-            var since = DateTime.UtcNow.Date.AddDays(-clamped);
+            var since = LibyaTime.Today.AddDays(-clamped);
             query = query.Where(a => a.Date >= since);
         }
 
@@ -141,7 +142,7 @@ public class AttendanceController : ControllerBase
         var unexcused = records.Count(r => r.status == nameof(AttendanceStatus.UnexcusedAbsence));
         var total = records.Count;
         var attendanceRate = total > 0
-            ? Math.Round((double)(present + late) / total * 100, 1)
+           ? Math.Round((present + AttendanceScore.LateWeight * late + AttendanceScore.ExcusedWeight * excused) / total * 100, 1)
             : 0.0;
 
         return Ok(new

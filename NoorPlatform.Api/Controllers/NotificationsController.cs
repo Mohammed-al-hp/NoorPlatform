@@ -1,11 +1,12 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
+using NoorPlatform.Core.Services;
 using NoorPlatform.Infrastructure.Data;
+using System.Security.Claims;
 
 namespace NoorPlatform.Api.Controllers;
 
@@ -67,7 +68,7 @@ public class NotificationsController : ControllerBase
 
         var teacherName = student.Circle?.Teacher?.User?.FullName ?? "المحفظ";
         var circleName  = student.Circle?.Name ?? "الحلقة";
-        var date        = request.Date?.ToString("yyyy/MM/dd") ?? DateTime.Now.ToString("yyyy/MM/dd");
+        var date        = request.Date?.ToString("yyyy/MM/dd") ?? LibyaTime.Today.ToString("yyyy/MM/dd");
 
         var message = $"""
             📚 *منصة نور لتحفيظ القرآن*
@@ -115,7 +116,7 @@ public class NotificationsController : ControllerBase
                 return Forbid();
         }
 
-        var today = DateTime.UtcNow.Date;
+        var today = LibyaTime.Today;
 
         // جلب جميع الغائبين اليوم في الحلقة المحددة
         var absentStudents = await _context.Students
