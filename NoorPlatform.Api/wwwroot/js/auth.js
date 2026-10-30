@@ -17,9 +17,9 @@
     // صفحات إدارية — لا يجوز للطالب/ولي الأمر فتحها (تسبب 403 عند التحميل التلقائي)
     // المصدر الموحّد معرَّف في modals.js (global.NoorStaffOnlyPages)
     const STAFF_ONLY_PAGES = new Set(global.NoorStaffOnlyPages || [
-        'attendance', 'memorization', 'exams', 'evaluation',
+        'attendance', 'memorization', 'evaluation',
         'students', 'teachers', 'circles', 'payments',
-        'reports', 'settings', 'users', 'parents', 'expenses', 'competitions'
+        'reports', 'settings', 'users', 'parents', 'expenses'
     ]);
 
     function checkAuth() {

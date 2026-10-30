@@ -116,7 +116,6 @@ public class ReportsController : ControllerBase
             .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t!.User)
             .Include(s => s.Attendances.Where(a => a.Date.Month == targetMonth && a.Date.Year == targetYear))
             .Include(s => s.HifzRecords.Where(r => r.Date.Month == targetMonth && r.Date.Year == targetYear))
-            .Include(s => s.ExamResults).ThenInclude(e => e.Exam)
             .FirstOrDefaultAsync(s => s.Id == studentId);
 
         if (student == null)

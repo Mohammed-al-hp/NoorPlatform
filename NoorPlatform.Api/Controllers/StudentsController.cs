@@ -38,6 +38,9 @@ public class StudentsController : ControllerBase
             fullName = s.User.FullName,
             s.User.Email,
             s.ParentPhone,
+            s.GuardianName,
+            s.ParentId,
+            parentName = s.Parent != null && s.Parent.User != null ? s.Parent.User.FullName : s.GuardianName,
             s.CircleId,
             circleName = s.Circle != null ? s.Circle.Name : "بدون حلقة",
             teacherName = s.Circle != null && s.Circle.Teacher != null && s.Circle.Teacher.User != null ? s.Circle.Teacher.User.FullName : "—",
@@ -58,6 +61,9 @@ public class StudentsController : ControllerBase
             s.fullName,
             s.Email,
             s.ParentPhone,
+            s.GuardianName,
+            s.ParentId,
+            s.parentName,
             s.CircleId,
             s.circleName,
             s.teacherName,
@@ -93,7 +99,6 @@ public class StudentsController : ControllerBase
             .Include(s => s.Parent).ThenInclude(p => p!.User)
             .Include(s => s.Attendances)
             .Include(s => s.HifzRecords)
-            .Include(s => s.ExamResults)
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)

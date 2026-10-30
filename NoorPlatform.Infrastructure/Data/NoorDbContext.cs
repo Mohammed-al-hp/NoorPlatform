@@ -15,14 +15,10 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<Circle> Circles => Set<Circle>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<HifzRecord> HifzRecords => Set<HifzRecord>();
-    public DbSet<Exam> Exams => Set<Exam>();
-    public DbSet<ExamResult> ExamResults => Set<ExamResult>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<ActivityFeed> ActivityFeeds => Set<ActivityFeed>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Expense> Expenses => Set<Expense>();
-    public DbSet<Competition> Competitions => Set<Competition>();
-    public DbSet<CompetitionResult> CompetitionResults => Set<CompetitionResult>();
     public DbSet<LibraryItem> LibraryItems => Set<LibraryItem>();
     public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -57,10 +53,6 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasIndex(s => s.ParentId)
             .HasDatabaseName("IX_Student_ParentId");
 
-        modelBuilder.Entity<ExamResult>()
-            .HasIndex(e => e.ExamId)
-            .HasDatabaseName("IX_ExamResult_ExamId");
-
         modelBuilder.Entity<Attendance>()
             .HasIndex(a => a.Date)
             .HasDatabaseName("IX_Attendance_Date");
@@ -86,11 +78,6 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .Property(e => e.Category)
             .HasConversion<string>()
             .HasMaxLength(30);
-
-        modelBuilder.Entity<Competition>()
-            .Property(c => c.Level)
-            .HasConversion<string>()
-            .HasMaxLength(20);
 
         modelBuilder.Entity<AuditLog>()
             .Property(a => a.Action)
@@ -161,30 +148,6 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .WithMany(s => s.Attendances)
             .HasForeignKey(a => a.StudentId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<ExamResult>()
-            .HasOne(er => er.Exam)
-            .WithMany(e => e.Results)
-            .HasForeignKey(er => er.ExamId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<ExamResult>()
-            .HasOne(er => er.Student)
-            .WithMany(s => s.ExamResults)
-            .HasForeignKey(er => er.StudentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<CompetitionResult>()
-            .HasOne(cr => cr.Competition)
-            .WithMany(c => c.Results)
-            .HasForeignKey(cr => cr.CompetitionId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<CompetitionResult>()
-            .HasOne(cr => cr.Student)
-            .WithMany()
-            .HasForeignKey(cr => cr.StudentId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Expense>()
             .HasOne(e => e.RecordedByUser)
@@ -290,10 +253,6 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         modelBuilder.Entity<Expense>()
             .HasIndex(e => e.Date)
             .HasDatabaseName("IX_Expense_Date");
-
-        modelBuilder.Entity<CompetitionResult>()
-            .HasIndex(cr => cr.CompetitionId)
-            .HasDatabaseName("IX_CompetitionResult_CompetitionId");
 
         // ─── حلقات إضافية + تسجيل الطلاب ───
         modelBuilder.Entity<Circle>()

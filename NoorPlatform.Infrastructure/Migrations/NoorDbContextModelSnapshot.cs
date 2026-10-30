@@ -383,72 +383,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.ToTable("CircleEnrollments");
                 });
 
-            modelBuilder.Entity("NoorPlatform.Core.Entities.Competition", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Level")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Competitions");
-                });
-
-            modelBuilder.Entity("NoorPlatform.Core.Entities.CompetitionResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CompetitionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Feedback")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("HifzScore")
-                        .HasColumnType("float");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<double>("TafseerScore")
-                        .HasColumnType("float");
-
-                    b.Property<double>("TajweedScore")
-                        .HasColumnType("float");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompetitionId")
-                        .HasDatabaseName("IX_CompetitionResult_CompetitionId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("CompetitionResults");
-                });
-
             modelBuilder.Entity("NoorPlatform.Core.Entities.DressRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -516,64 +450,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.HasIndex("CircleId");
 
                     b.ToTable("EvaluationPeriods");
-                });
-
-            modelBuilder.Entity("NoorPlatform.Core.Entities.Exam", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Exams");
-                });
-
-            modelBuilder.Entity("NoorPlatform.Core.Entities.ExamResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ExamId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Feedback")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("MaxScore")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Score")
-                        .HasColumnType("float");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamId")
-                        .HasDatabaseName("IX_ExamResult_ExamId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("ExamResults");
                 });
 
             modelBuilder.Entity("NoorPlatform.Core.Entities.Expense", b =>
@@ -1701,25 +1577,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("NoorPlatform.Core.Entities.CompetitionResult", b =>
-                {
-                    b.HasOne("NoorPlatform.Core.Entities.Competition", "Competition")
-                        .WithMany("Results")
-                        .HasForeignKey("CompetitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NoorPlatform.Core.Entities.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Competition");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("NoorPlatform.Core.Entities.DressRecord", b =>
                 {
                     b.HasOne("NoorPlatform.Core.Entities.Student", "Student")
@@ -1739,25 +1596,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Circle");
-                });
-
-            modelBuilder.Entity("NoorPlatform.Core.Entities.ExamResult", b =>
-                {
-                    b.HasOne("NoorPlatform.Core.Entities.Exam", "Exam")
-                        .WithMany("Results")
-                        .HasForeignKey("ExamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NoorPlatform.Core.Entities.Student", "Student")
-                        .WithMany("ExamResults")
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Exam");
-
-                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("NoorPlatform.Core.Entities.Expense", b =>
@@ -1997,19 +1835,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Navigation("Students");
                 });
 
-            modelBuilder.Entity("NoorPlatform.Core.Entities.Competition", b =>
-                {
-                    b.Navigation("Results");
-                });
-
             modelBuilder.Entity("NoorPlatform.Core.Entities.EvaluationPeriod", b =>
                 {
                     b.Navigation("StudentEvaluations");
-                });
-
-            modelBuilder.Entity("NoorPlatform.Core.Entities.Exam", b =>
-                {
-                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("NoorPlatform.Core.Entities.OralExamSession", b =>
@@ -2027,8 +1855,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Navigation("Attendances");
 
                     b.Navigation("DressRecords");
-
-                    b.Navigation("ExamResults");
 
                     b.Navigation("ExtraEnrollments");
 

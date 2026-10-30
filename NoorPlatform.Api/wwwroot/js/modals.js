@@ -12,7 +12,6 @@
         circles: ['الحلقات الدراسية', 'جداول الحلقات'],
         attendance: ['الحضور والغياب', 'تسجيل يومي'],
         memorization: ['الحفظ والتسميع', 'سجلات التسميع'],
-        exams: ['الاختبارات والتقييمات', 'نتائج الاختبارات'],
         announcements: ['الإعلانات', 'آخر الأخبار'],
         studentView: ['بوابة الطالب', 'متابعة تقدمك'],
         parentView: ['بوابة ولي الأمر', 'متابعة أبنائك'],
@@ -24,7 +23,6 @@
         reports: ['التقارير', 'تقارير الأداء والحضور والحفظ'],
         settings: ['الإعدادات', 'إعدادات المنصة والنظام'],
         expenses: ['إدارة المصروفات', 'تسجيل المصروفات والعهد المالية'],
-        competitions: ['المسابقات القرآنية', 'نتائج وتراتيب المسابقات'],
         evaluation: ['التقييم التربوي', 'متون · أهداف · فترات · لباس · صلاة'],
         myPrayer: ['الصلاة اليومية', 'تسجيل صلاتك في المسجد'],
         myEvaluations: ['تقييمات الفترة', 'التقييم العام المحفوظ من الشيخ'],
@@ -32,7 +30,7 @@
     };
 
     // مصدر موحّد — يستخدمه أيضاً auth.js عبر global.NoorStaffOnlyPages
-    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'exams', 'evaluation', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents', 'expenses', 'competitions'];    global.NoorStaffOnlyPages = STAFF_ONLY_PAGES;
+    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'evaluation', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents', 'expenses'];    global.NoorStaffOnlyPages = STAFF_ONLY_PAGES;
 
     function navigate(page, el) {
         const role = global.NoorApp?.state?.user?.role;
@@ -46,7 +44,7 @@
         }
 
         // ─── إصلاح: صفحات حصرية للأدمن فقط دون المحفّظ ───
-        const ADMIN_ONLY_PAGES = ['users', 'parents', 'teachers', 'circles', 'payments', 'reports', 'settings', 'expenses', 'competitions'];
+        const ADMIN_ONLY_PAGES = ['users', 'parents', 'teachers', 'circles', 'payments', 'reports', 'settings', 'expenses'];
         if (role === 'Teacher' && ADMIN_ONLY_PAGES.includes(page)) {
             page = 'dashboard';
             el = document.querySelector('.nav-item');

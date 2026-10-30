@@ -216,7 +216,6 @@ public class DashboardController : ControllerBase
             .Include(s => s.Circle!).ThenInclude(c => c.Teacher!).ThenInclude(t => t.User)
             .Include(s => s.HifzRecords)
 .Include(s => s.Attendances)
-            .Include(s => s.ExamResults.OrderByDescending(e => e.Id).Take(10))
             .FirstOrDefaultAsync(s => s.UserId == userId);
 
         if (student == null)
@@ -302,10 +301,6 @@ public class DashboardController : ControllerBase
             teacherRating = student.Circle?.Teacher?.AverageRating ?? 0.0,
             circleName = student.Circle?.Name ?? "بدون حلقة",
             badges = student.Badges,
-            recentGrades = student.ExamResults
-                                    .OrderByDescending(r => r.Id)
-                                    .Select(r => new { r.Score, r.MaxScore, r.Feedback })
-                                    .Take(5),
             recentHifz = student.HifzRecords
                                     .OrderByDescending(r => r.Date)
                                     .Select(r => new { Date = r.Date.ToString("yyyy-MM-dd"), r.SurahName, r.Verses, r.Evaluation })

@@ -64,7 +64,6 @@
         }
         if (page === 'memorization' && typeof fetchMemorizationData === 'function') fetchMemorizationData();
         if (page === 'library' && typeof fetchLibraryItems === 'function') fetchLibraryItems();
-        if (page === 'exams' && typeof fetchExams === 'function') fetchExams();
         if (page === 'evaluation' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('matn');
         if (page === 'myPrayer' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('prayer');
         if (page === 'parentHome' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('parentHome');
@@ -78,7 +77,6 @@
         if (page === 'users' && global.USER?.role === 'Admin' && global.NoorUsers) global.NoorUsers.fetchUsers();
         if (page === 'settings' && global.NoorDashboard) global.NoorDashboard.fetchSettings();
         if (page === 'expenses' && global.NoorExpenses) global.NoorExpenses.fetchExpenses();
-        if (page === 'competitions' && global.NoorCompetitions) global.NoorCompetitions.fetchCompetitions();
         if (page === 'announcements' && global.NoorDashboard) global.NoorDashboard.fetchAnnouncements();
     };
 
@@ -294,16 +292,6 @@
                 await apiFetch(`/hifz/${id}`, 'DELETE');
                 showToast('تم حذف السجل', 'success');
                 if (typeof fetchMemorizationData === 'function') fetchMemorizationData();
-            } catch (err) { showToast(err.message, 'error'); }
-        });
-    }
-
-    function deleteExam(id, title) {
-        global.confirmDelete(`حذف اختبار "${title}"؟`, async () => {
-            try {
-                await apiFetch(`/exams/${id}`, 'DELETE');
-                showToast('تم حذف الاختبار', 'success');
-                if (typeof fetchExams === 'function') fetchExams();
             } catch (err) { showToast(err.message, 'error'); }
         });
     }
@@ -560,7 +548,6 @@
     // ─── تصدير المحفظين/الحلقات تم نقله إلى teachers.js ───
 
     global.deleteHifzRecord = deleteHifzRecord;
-    global.deleteExam = deleteExam;
     global.sendBulkAbsenceNotifs = sendBulkAbsenceNotifs;
     global.sendHifzPraise = sendHifzPraise;
     global.saveAnn = saveAnn;

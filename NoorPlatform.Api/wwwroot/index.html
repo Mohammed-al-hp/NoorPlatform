@@ -154,10 +154,6 @@
                     <div class="nav-icon" data-icon="settings" data-icon-size="20"></div>
                     <span>الإعدادات</span>
                 </div>
-                <div class="nav-item" onclick="navigate('competitions', this)">
-                    <div class="nav-icon" data-icon="award" data-icon-size="20"></div>
-                    <span>المسابقات</span>
-                </div>
             </div>
 
             <!-- صفحات إدارية (تسجيل حضور / إدخال تسميع / نتائج) — للمحفّظ والمشرف فقط -->
@@ -171,11 +167,6 @@
                     <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
                     <span>الحفظ والتسميع</span>
                 </div>
-                <div class="nav-item" onclick="navigate('exams', this)">
-                    <div class="nav-icon" data-icon="file-text" data-icon-size="20"></div>
-                    <span>الاختبارات</span>
-                </div>
-
                 <div class="nav-item" onclick="navigate('evaluation', this)">
                     <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
                     <span>التقييم التربوي</span>
@@ -731,18 +722,6 @@
             </div>
         </div>
 
-        <!-- ===== EXAMS ===== -->
-        <div class="content" id="page-exams">
-            <div class="page-header">
-                <div>
-                    <h2>الاختبارات والتقييمات</h2>
-                    <p>إدارة الاختبارات الدورية ورصد النتائج</p>
-                </div>
-                <button class="btn btn-primary" onclick="openModal('addExamModal')"><span data-icon="plus" data-icon-size="14"></span> إنشاء اختبار</button>
-            </div>
-            <div class="exam-cards" id="examsList"></div>
-        </div>
-
         <!-- ===== PEDAGOGICAL EVALUATION ===== -->
         <div class="content" id="page-evaluation">
             <div class="page-header">
@@ -1083,14 +1062,88 @@
         <div class="content" id="page-payments">
             <div class="page-header">
                 <div>
-                    <h2>إدارة المدفوعات والفواتير</h2>
-                    <p class="text-muted">متابعة الرسوم الدراسية وإصدار الفواتير للطلاب</p>
+                    <h2><span data-icon="credit-card" data-icon-size="22"></span> الإدارة المالية</h2>
+                    <p class="text-muted">متابعة الرسوم وإصدار الفواتير وإدارة الحسابات المالية للمركز</p>
                 </div>
-                <button class="btn btn-primary" onclick="showNewInvoiceModal()">+ إصدار فاتورة</button>
+                <button class="btn btn-primary" onclick="showNewInvoiceModal()"><span data-icon="plus" data-icon-size="14"></span> إصدار فاتورة</button>
             </div>
-            <div class="grid" id="paymentsGrid">
-                <!-- Data populated via JS -->
+
+            <!-- بطاقات الملخص المالي -->
+            <div id="paymentsSummaryCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px">
+                <div class="chart-card" style="border-right:4px solid var(--green);padding:20px">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                        <div style="width:40px;height:40px;border-radius:12px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center">
+                            <span data-icon="check-circle" data-icon-size="20" style="color:var(--green)"></span>
+                        </div>
+                        <span style="font-size:13px;color:var(--text-muted)">المدفوعة</span>
+                    </div>
+                    <div id="paymentsPaidAmount" style="font-size:24px;font-weight:800;color:var(--green)">—</div>
+                    <div id="paymentsPaidCount" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+                </div>
+                <div class="chart-card" style="border-right:4px solid #f59e0b;padding:20px">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                        <div style="width:40px;height:40px;border-radius:12px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center">
+                            <span data-icon="clock" data-icon-size="20" style="color:#f59e0b"></span>
+                        </div>
+                        <span style="font-size:13px;color:var(--text-muted)">بانتظار الدفع</span>
+                    </div>
+                    <div id="paymentsPendingAmount" style="font-size:24px;font-weight:800;color:#f59e0b">—</div>
+                    <div id="paymentsPendingCount" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+                </div>
+                <div class="chart-card" style="border-right:4px solid #ef4444;padding:20px">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                        <div style="width:40px;height:40px;border-radius:12px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center">
+                            <span data-icon="alert-triangle" data-icon-size="20" style="color:#ef4444"></span>
+                        </div>
+                        <span style="font-size:13px;color:var(--text-muted)">متأخرة</span>
+                    </div>
+                    <div id="paymentsOverdueAmount" style="font-size:24px;font-weight:800;color:#ef4444">—</div>
+                    <div id="paymentsOverdueCount" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+                </div>
+                <div class="chart-card" style="border-right:4px solid var(--primary);padding:20px">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                        <div style="width:40px;height:40px;border-radius:12px;background:rgba(34,197,94,0.06);display:flex;align-items:center;justify-content:center">
+                            <span data-icon="dollar-sign" data-icon-size="20" style="color:var(--primary)"></span>
+                        </div>
+                        <span style="font-size:13px;color:var(--text-muted)">الإجمالي</span>
+                    </div>
+                    <div id="paymentsTotalAmount" style="font-size:24px;font-weight:800;color:var(--text)">—</div>
+                    <div id="paymentsTotalCount" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+                </div>
             </div>
+
+            <!-- فلتر البحث -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+                <div class="filter-chips" id="paymentStatusFilter" style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="filter-chip active" onclick="filterPaymentsByStatus('all', this)">الكل</button>
+                    <button class="filter-chip" onclick="filterPaymentsByStatus('Paid', this)">مدفوعة</button>
+                    <button class="filter-chip" onclick="filterPaymentsByStatus('Pending', this)">بانتظار</button>
+                    <button class="filter-chip" onclick="filterPaymentsByStatus('Overdue', this)">متأخرة</button>
+                </div>
+                <input type="text" id="paymentSearchInput" class="form-input" placeholder="ابحث باسم الطالب..." style="max-width:250px;padding:8px 14px;font-size:13px" oninput="searchPayments(this.value)">
+            </div>
+
+            <!-- جدول الفواتير -->
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الطالب</th>
+                                <th>البيان</th>
+                                <th>المبلغ</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="paymentsPagination" style="display:flex;justify-content:center;align-items:center;gap:12px;padding:16px 0"></div>
         </div>
 
         <div class="content" id="page-parentFees">
@@ -1507,31 +1560,6 @@
         </nav>
 
         <!-- ===== MODALS ===== -->
-        <!-- مودال إدخال نتائج الاختبار -->
-        <div class="modal-overlay" id="addExamResultModal">
-            <div class="modal" style="max-width:580px">
-                <div class="modal-header">
-                    <h3><span data-icon="bar-chart" data-icon-size="18"></span> إدخال نتائج الاختبار</h3>
-                    <button class="modal-close" onclick="closeModal('addExamResultModal')"><span data-icon="x" data-icon-size="16"></span></button>
-                </div>
-                <div class="modal-body">
-                    <div id="examResultFormTitle"
-                         style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:10px">
-                    </div>
-                    <div id="examResultRows" style="display:flex;flex-direction:column;gap:10px">
-                        <!-- rows injected dynamically -->
-                    </div>
-                    <p style="font-size:12px;color:var(--text-muted);margin-top:12px">
-                        * يمكن ترك خانات الطلاب الغائبين فارغة
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeModal('addExamResultModal')">إلغاء</button>
-                    <button class="btn btn-primary" onclick="submitExamResults()"><span data-icon="save" data-icon-size="14"></span> حفظ النتائج</button>
-                </div>
-            </div>
-        </div>
-
         <!-- Add Student Modal -->
         <div class="modal-overlay" id="addStudentModal">
             <div class="modal">
@@ -1972,37 +2000,6 @@
         </div>
 
 
-        <!-- Add Exam Modal -->
-        <div class="modal-overlay" id="addExamModal">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3><span data-icon="file-text" data-icon-size="18"></span> إنشاء اختبار جديد</h3>
-                    <button class="modal-close" onclick="closeModal('addExamModal')"><span data-icon="x" data-icon-size="16"></span></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label">عنوان الاختبار *</label>
-                        <input class="form-input" id="examTitle" type="text" placeholder="اختبار الجزء الأول">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">التاريخ *</label>
-                            <input class="form-input" id="examDate" type="date">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">الوصف</label>
-                            <textarea class="form-input" id="examDesc" rows="2" placeholder="وصف مختصر للاختبار (اختياري)"
-                                      style="resize:vertical"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeModal('addExamModal')">إلغاء</button>
-                    <button class="btn btn-primary" onclick="saveExam()"><span data-icon="send" data-icon-size="14"></span> إنشاء الاختبار</button>
-                </div>
-            </div>
-        </div>
-
         <!-- Role Switch Modal -->
         <div class="modal-overlay" id="teacherProfileModal">
             <div class="modal" style="max-width:480px">
@@ -2155,34 +2152,33 @@
         <!-- Confirm Delete Modal -->
         <!-- Modal: إضافة فاتورة جديدة -->
         <div class="modal-overlay" id="addInvoiceModal">
-            <div class="modal">
+            <div class="modal" style="max-width:520px">
                 <div class="modal-header">
-                    <h3>إصدار فاتورة جديدة</h3>
-                    <span class="close-modal" onclick="closeModal('addInvoiceModal')">&times;</span>
+                    <h3><span data-icon="credit-card" data-icon-size="18"></span> إصدار فاتورة جديدة</h3>
+                    <button class="modal-close" onclick="closeModal('addInvoiceModal')"><span data-icon="x" data-icon-size="16"></span></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>الطالب</label>
-                        <select id="invoiceStudentId" class="form-control"></select>
+                        <label class="form-label">الطالب *</label>
+                        <select id="invoiceStudentId" class="form-input" onchange="onInvoiceStudentChanged()"></select>
+                    </div>
+                    <div id="invoiceParentHint" style="display:none;margin:-4px 0 14px;padding:10px 12px;border-radius:10px;background:rgba(16,185,129,0.08);font-size:13px;color:var(--text-muted)"></div>
+                    <div class="form-group">
+                        <label class="form-label">المبلغ (د.ل) *</label>
+                        <input type="number" id="invoiceAmount" class="form-input" min="0.01" step="0.01" placeholder="مثال: 50.00">
                     </div>
                     <div class="form-group">
-                        <label>المبلغ (د.ل)</label>
-                        <input type="number" id="invoiceAmount" class="form-control" placeholder="مثال: 500">
+                        <label class="form-label">البيان / الوصف</label>
+                        <input type="text" id="invoiceDesc" class="form-input" placeholder="رسوم شهر ربيع الأول">
                     </div>
                     <div class="form-group">
-                        <label>البيان / الوصف</label>
-                        <input type="text" id="invoiceDesc" class="form-control" placeholder="رسوم شهر مايو">
-                    </div>
-                    <div class="form-group">
-                        <label>تاريخ الاستحقاق</label>
-                        <input type="date" id="invoiceDueDate" class="form-control">
+                        <label class="form-label">تاريخ الاستحقاق *</label>
+                        <input type="date" id="invoiceDueDate" class="form-input">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="submitInvoice()"
-                            style="width:100%; justify-content:center; margin-top:15px;">
-                        إصدار الفاتورة
-                    </button>
+                    <button class="btn btn-outline" onclick="closeModal('addInvoiceModal')">إلغاء</button>
+                    <button class="btn btn-primary" onclick="submitInvoice()"><span data-icon="plus" data-icon-size="14"></span> إصدار الفاتورة</button>
                 </div>
             </div>
         </div>
@@ -2655,12 +2651,11 @@
         <script src="/js/messages.js"></script>
 
         <!-- All inline scripts have been extracted into modular JS files -->
-        <script src="/js/exams.js?v=3"></script>
         <script src="/js/pedagogical.js?v=1"></script>
         <script src="/js/teachers.js?v=2"></script>
         <script src="/js/reports.js?v=3"></script>
         <script src="/js/app-ui-extensions.js?v=2"></script>
-        <script src="/js/payments.js?v=2"></script>
+        <script src="/js/payments.js?v=3"></script>
         <script src="/js/page-controller.js?v=3"></script>
         <script>
             // مساعد الجدول المرن للحلقات
@@ -2890,21 +2885,6 @@
             </div>
         </div>
 
-        <!-- COMPETITIONS PAGE -->
-        <div class="content" id="page-competitions">
-            <div class="page-header">
-                <div>
-                    <h2>المسابقات القرآنية</h2>
-                    <p>إدارة المسابقات واستعراض تراتيب الطلاب الفائزين</p>
-                </div>
-                <button class="btn btn-primary" onclick="NoorCompetitions.openAddModal()" style="background:var(--blue);box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);">
-                    <span data-icon="award" data-icon-size="16"></span> إنشاء مسابقة
-                </button>
-            </div>
-
-            <div class="cards-grid" id="competitionsGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:20px;">
-            </div>
-        </div>
     </main>
 
     <!-- ==================== NEW MODALS ==================== -->
@@ -2954,61 +2934,7 @@
         </div>
     </div>
 
-    <!-- Add Competition Modal -->
-    <div class="modal-overlay" id="addCompetitionModal" onclick="if(event.target===this) closeModal('addCompetitionModal')">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>إنشاء مسابقة جديدة</h3>
-                <button class="modal-close" onclick="closeModal('addCompetitionModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="addCompForm" onsubmit="NoorCompetitions.saveCompetition(event)">
-                    <div class="form-group">
-                        <label class="form-label">اسم المسابقة</label>
-                        <input type="text" id="compName" class="form-input" required placeholder="مثال: مسابقة الماهر بالقرآن (رمضان)">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">تاريخ المسابقة</label>
-                        <input type="date" id="compStartDate" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">مستوى المسابقة</label>
-                        <select id="compLevel" class="form-input" required>
-                            <option value="Internal">داخلية (على مستوى المركز)</option>
-                            <option value="Regional">إقليمية (الأوقاف / المنطقة)</option>
-                            <option value="National">وطنية</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">وصف / تفاصيل</label>
-                        <textarea id="compDesc" class="form-input" rows="3"></textarea>
-                    </div>
-                    <div class="modal-footer" style="padding: 16px 0 0; border: none;">
-                        <button type="button" class="btn btn-outline" onclick="closeModal('addCompetitionModal')">إلغاء</button>
-                        <button type="submit" class="btn btn-primary">إنشاء المسابقة</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Leaderboard Modal -->
-    <div class="modal-overlay" id="leaderboardModal" onclick="if(event.target===this) closeModal('leaderboardModal')">
-        <div class="modal" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3 id="leaderboardModalTitle">تراتيب المسابقة</h3>
-                <button class="modal-close" onclick="closeModal('leaderboardModal')">&times;</button>
-            </div>
-            <div class="modal-body" id="leaderboardBody">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="closeModal('leaderboardModal')">إغلاق</button>
-            </div>
-        </div>
-    </div>
-
     <script src="/js/expenses.js"></script>
-    <script src="/js/competitions.js"></script>
 </body>
 
 </html>

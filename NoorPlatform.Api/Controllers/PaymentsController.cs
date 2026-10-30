@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
+using System.Linq;
 using System.Security.Claims;
 
 namespace NoorPlatform.Api.Controllers;
@@ -31,6 +32,28 @@ public class PaymentsController : ControllerBase
         var query = _context.Payments.IgnoreQueryFilters().AsQueryable();
 
         var total = await query.CountAsync();
+        var summaryRows = await query
+            .GroupBy(p => p.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count(), Amount = g.Sum(x => x.Amount) })
+            .ToListAsync();
+
+        decimal SumStatus(PaymentStatus status) =>
+            summaryRows.FirstOrDefault(r => r.Status == status)?.Amount ?? 0;
+        int CountStatus(PaymentStatus status) =>
+            summaryRows.FirstOrDefault(r => r.Status == status)?.Count ?? 0;
+
+        var summary = new
+        {
+            paidAmount = SumStatus(PaymentStatus.Paid),
+            paidCount = CountStatus(PaymentStatus.Paid),
+            pendingAmount = SumStatus(PaymentStatus.Pending),
+            pendingCount = CountStatus(PaymentStatus.Pending),
+            overdueAmount = SumStatus(PaymentStatus.Overdue),
+            overdueCount = CountStatus(PaymentStatus.Overdue),
+            totalAmount = summaryRows.Sum(r => r.Amount),
+            totalCount = total
+        };
+
         var items = await query
             .IgnoreQueryFilters()
             .Include(p => p.Student).ThenInclude(s => s.User)
@@ -49,7 +72,7 @@ public class PaymentsController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(new { total, page, pageSize, items });
+        return Ok(new { total, page, pageSize, items, summary });
     }
 
     // لولي الأمر: جلب فواتير الأبناء
