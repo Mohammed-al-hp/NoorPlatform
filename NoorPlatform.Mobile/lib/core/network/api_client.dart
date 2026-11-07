@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../../config/api_config.dart';
 import '../storage/secure_storage.dart';
@@ -41,7 +42,7 @@ class ApiClient {
           responseHeader: false,
           responseBody: true,
           error: true,
-          logPrint: (obj) => print('🌐 $obj'),
+          logPrint: (obj) => debugPrint('🌐 $obj'),
         ),
       );
       return true;

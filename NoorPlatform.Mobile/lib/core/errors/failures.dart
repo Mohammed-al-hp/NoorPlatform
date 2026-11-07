@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Failure types for the domain layer (used with Either<Failure, T>).
+/// Failure types for the domain layer (used with Either&lt;Failure, T&gt;).
 
 abstract class Failure extends Equatable {
   final String message;

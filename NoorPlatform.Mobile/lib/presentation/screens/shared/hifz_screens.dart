@@ -188,7 +188,7 @@ class QuranMapScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    '${Formatters.number(s.number)}',
+                                     Formatters.number(s.number),
                                     style: TextStyle(color: fg, fontSize: 11),
                                   ),
                                   if (pct > 0)

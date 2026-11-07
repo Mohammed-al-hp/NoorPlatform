@@ -164,7 +164,7 @@ class _HomeNoteViewState extends State<_HomeNoteView> {
                 padding: const EdgeInsets.all(NoorTheme.spacingMd),
                 children: [
                   DropdownButtonFormField<int>(
-                    value: _studentId ?? children.first.id,
+                    initialValue: _studentId ?? children.first.id,
                     decoration: const InputDecoration(labelText: 'الابن'),
                     items: children
                         .map(
@@ -184,7 +184,7 @@ class _HomeNoteViewState extends State<_HomeNoteView> {
                     child: Column(
                       children: [
                         DropdownButtonFormField<int>(
-                          value: _rating,
+                           initialValue: _rating,
                           decoration:
                               const InputDecoration(labelText: 'التقييم'),
                           items: ratings.entries

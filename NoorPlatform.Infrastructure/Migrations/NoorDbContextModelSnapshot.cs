@@ -982,6 +982,15 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<double>("OralOpeningPenalty")
                         .HasColumnType("float");
 
+                    b.Property<int>("PointsAttendancePresent")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsHifzMemorization")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsHifzRevision")
+                        .HasColumnType("int");
+
                     b.Property<double>("ProgressThreshold10")
                         .HasColumnType("float");
 

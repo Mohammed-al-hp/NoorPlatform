@@ -3436,3 +3436,89 @@ body.dark-mode .bottom-nav {
     padding: 48px 20px;
     color: var(--text-muted);
 }
+
+/* ===== صفحة الحفظ والتسميع — خريطة السور ===== */
+.mem-surah-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+    padding: 16px 20px 8px;
+}
+.mem-surah-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 12px;
+    line-height: 1.3;
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mem-surah-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+.mem-surah-cell strong { font-size: 13px; font-weight: 700; }
+.mem-surah-cell span { font-size: 10px; color: var(--text-muted); font-weight: 600; }
+
+.mem-surah-cell.done {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.mem-surah-cell.done strong { color: #047857; }
+.mem-surah-cell.done span { color: #059669; }
+
+.mem-surah-cell.partial {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.mem-surah-cell.partial strong { color: #b45309; }
+.mem-surah-cell.partial span { color: #d97706; }
+
+.mem-surah-cell.pending {
+    background: var(--card);
+    border-color: var(--border);
+    opacity: 0.75;
+}
+
+.mem-empty {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.mem-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 20px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.mem-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.mem-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
+.mem-dot-done { background: #10b981; }
+.mem-dot-partial { background: #f59e0b; }
+.mem-dot-pending { background: #cbd5e1; }
+
+/* تحسينات عامة للصفحة */
+#page-memorization .memorize-layout { align-items: start; }
+#page-memorization .side-panel { position: sticky; top: 90px; }
+#page-memorization .filter-bar { margin-bottom: 14px; }
+#page-memorization #memStudentFilter { min-width: 280px; }
+
+body.dark-mode .mem-surah-cell.done { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); }
+body.dark-mode .mem-surah-cell.done strong { color: #34d399; }
+body.dark-mode .mem-surah-cell.partial { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
+body.dark-mode .mem-surah-cell.partial strong { color: #fbbf24; }

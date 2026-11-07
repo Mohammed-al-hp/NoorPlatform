@@ -53,7 +53,7 @@ class _MessagesView extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: recipientType,
+                    initialValue: recipientType,
                     decoration: const InputDecoration(labelText: 'المستلم'),
                     items: const [
                       DropdownMenuItem(
@@ -72,7 +72,7 @@ class _MessagesView extends StatelessWidget {
                   if (recipientType == 'Teacher') ...[
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
-                      value: teacherId,
+                       initialValue: teacherId,
                       decoration:
                           const InputDecoration(labelText: 'اختر المحفّظ'),
                       items: cubit.state.recipients
