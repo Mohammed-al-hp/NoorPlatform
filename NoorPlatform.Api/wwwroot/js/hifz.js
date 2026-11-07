@@ -665,9 +665,21 @@
 
     function filterStudentById(studentId) {
         const id = parseInt(studentId, 10);
+        const list = document.getElementById('surahList');
+        const plan = document.getElementById('memPlanBody');
         if (!id) {
             const header = document.getElementById('memProgressTitle');
+            const sub = document.getElementById('memProgressSub');
+            const pct = document.getElementById('memProgressPct');
+            const fill = document.getElementById('memProgressFill');
+            const badge = document.getElementById('memProgressBadge');
             if (header) header.textContent = 'تقدم الحفظ';
+            if (sub) sub.textContent = 'اختر طالباً لعرض التقدم وخريطة السور';
+            if (pct) pct.textContent = '0%';
+            if (fill) fill.style.width = '0%';
+            if (badge) badge.textContent = '—';
+            if (list) list.innerHTML = '<div class="mem-empty">اختر طالباً من القائمة لعرض السور المحفوظة والمتبقية</div>';
+            if (plan) plan.innerHTML = '<p>تظهر هنا خطة مبسطة بعد اختيار الطالب حسب نسبة حفظه الحالية.</p>';
             return;
         }
         const student = (window._students || []).find(s => s.id === id);
@@ -683,14 +695,57 @@
         if (pct) pct.textContent = progress + '%';
         if (fill) fill.style.width = progress + '%';
         if (badge) badge.textContent = progress + '% مكتمل';
+        if (plan) {
+            const remain = Math.max(0, 100 - progress);
+            plan.innerHTML = `
+                <p><span data-icon="target" data-icon-size="14"></span> الهدف الأسبوعي: <strong style="color:var(--text)">نصف حزب تقريباً</strong></p>
+                <p><span data-icon="trending-up" data-icon-size="14"></span> المتبقي من المصحف: <strong style="color:var(--text)">${remain}%</strong></p>
+                <p><span data-icon="zap" data-icon-size="14"></span> المستوى الحالي: <strong style="color:var(--green)">${progress >= 70 ? 'ممتاز' : progress >= 40 ? 'جيد' : 'يحتاج متابعة'}</strong></p>`;
+            if (global.renderNoorIcons) global.renderNoorIcons(plan);
+        }
         loadStudentHifzMap(id);
     }
 
+    function renderMemorizationSurahList(hifzRecords) {
+        const list = document.getElementById('surahList');
+        if (!list) return;
+        const memorizedSurahs = {};
+        (hifzRecords || []).forEach(r => {
+            if (r.type === 'Memorization' || r.type === 0) {
+                const key = r.surahName;
+                if (!memorizedSurahs[key]) memorizedSurahs[key] = 0;
+                memorizedSurahs[key] += r.verseCount || (global.NoorUtils && global.NoorUtils.parseVerseCount ? global.NoorUtils.parseVerseCount(r.verses || '') : 0);
+            }
+        });
+        const surahs = window.SURAHS || [];
+        if (!surahs.length) {
+            list.innerHTML = '<div class="mem-empty">لا توجد قائمة سور</div>';
+            return;
+        }
+        list.innerHTML = '<div class="mem-surah-grid">' + surahs.map(s => {
+            const memorized = memorizedSurahs[s.name] || 0;
+            let cls = 'pending';
+            let label = 'لم يُحفظ';
+            const pct = memorized > 0 ? Math.min(Math.round(memorized / s.v * 100), 100) : 0;
+            if (memorized >= s.v) { cls = 'done'; label = 'محفوظ'; }
+            else if (memorized > 0) { cls = 'partial'; label = pct + '%'; }
+            return `<div class="mem-surah-cell ${cls}" title="${s.name}: ${memorized}/${s.v}">
+                <strong>${s.name}</strong>
+                <span>${label}</span>
+            </div>`;
+        }).join('') + '</div>';
+    }
+
     async function loadStudentHifzMap(studentId) {
+        const list = document.getElementById('surahList');
+        if (list) list.innerHTML = '<div class="mem-empty">جاري تحميل خريطة الحفظ...</div>';
         try {
             const records = await global.apiFetch(`/hifz/student/${studentId}`);
+            renderMemorizationSurahList(records);
             if (typeof global.renderQuranMap === 'function') global.renderQuranMap(records);
-        } catch (e) { /* silent */ }
+        } catch (e) {
+            if (list) list.innerHTML = '<div class="mem-empty">تعذر تحميل سجل الحفظ</div>';
+        }
     }
 
     function openHifzModalForStudent(studentId) {

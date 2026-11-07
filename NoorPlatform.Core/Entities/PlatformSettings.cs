@@ -57,5 +57,12 @@ public class PlatformSettings
     /// <summary>هل يظهر تقييم الفترة للطالب وولي الأمر؟</summary>
     public bool EvaluationsVisibleToStudentsAndParents { get; set; } = true;
 
+    /// <summary>نقاط تُضاف للطالب عند تسجيل حضور (حاضر).</summary>
+    public int PointsAttendancePresent { get; set; } = 10;
+    /// <summary>نقاط تُضاف عند تسجيل حفظ جديد.</summary>
+    public int PointsHifzMemorization { get; set; } = 50;
+    /// <summary>نقاط تُضاف عند تسجيل مراجعة.</summary>
+    public int PointsHifzRevision { get; set; } = 20;
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

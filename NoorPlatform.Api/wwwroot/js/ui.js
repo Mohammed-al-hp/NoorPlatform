@@ -48,6 +48,9 @@
     function openModal(id) {
         const el = document.getElementById(id);
         if (el) el.classList.add('open');
+        if (id === 'addStudentModal' && typeof global.populateExistingParentSelect === 'function') {
+            global.populateExistingParentSelect();
+        }
     }
 
     function closeModal(id) {

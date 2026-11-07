@@ -51,15 +51,19 @@ public class DashboardController : ControllerBase
                     .Select(c => c.Id);
                 q = q.Where(s => s.CircleId != null && circleIds.Contains(s.CircleId.Value));
             }
-            return await q.CountAsync();
+            var total = await q.CountAsync();
+            var thisMonth = await q.CountAsync(s => s.CreatedAt >= startOfMonth || s.RegistrationDate >= startOfMonth);
+            return (total, thisMonth);
         });
 
         var teachersTask = Task.Run(async () =>
         {
-            if (isTeacher && !isAdmin) return 1;
+            if (isTeacher && !isAdmin) return (1, 0);
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<NoorDbContext>();
-            return await db.Teachers.CountAsync();
+            var total = await db.Teachers.CountAsync();
+            var thisMonth = await db.Teachers.CountAsync(t => t.User.CreatedAt >= startOfMonth);
+            return (total, thisMonth);
         });
 
         var circlesTask = Task.Run(async () =>
@@ -84,7 +88,8 @@ public class DashboardController : ControllerBase
      a.Status == AttendanceStatus.ExcusedAbsence ? AttendanceScore.ExcusedWeight : 0.0);
             var totalToday = await q.CountAsync(a => a.Date.Date == today);
             
-            var rawAttendances = await q.Where(a => a.Date >= weekStart).Select(a => new { a.Date, a.Status }).ToListAsync();
+            var last30Start = today.AddDays(-29);
+            var rawAttendances = await q.Where(a => a.Date >= last30Start).Select(a => new { a.Date, a.Status }).ToListAsync();
             
             var weeklyRaw = rawAttendances
                 .GroupBy(a => a.Date.Date)
@@ -129,8 +134,8 @@ public class DashboardController : ControllerBase
         // انتظار جميع المهام بشكل متوازٍ
         await Task.WhenAll(studentsTask, teachersTask, circlesTask, attendancesTask, hifzTask);
 
-        var totalStudents = studentsTask.Result;
-        var totalTeachers = teachersTask.Result;
+        var (totalStudents, studentsThisMonth) = studentsTask.Result;
+        var (totalTeachers, teachersNewThisMonth) = teachersTask.Result;
         var totalCircles = circlesTask.Result;
         var (presentToday, totalToday, weeklyRaw) = attendancesTask.Result;
         var (recentHifz, weeklyVerses) = hifzTask.Result;
@@ -192,9 +197,14 @@ public class DashboardController : ControllerBase
         return Ok(new
         {
             students = totalStudents,
+            studentsThisMonth,
             teachers = totalTeachers,
+            teachersNewThisMonth,
             circles = totalCircles,
             attendanceToday = $"{attendancePercent}%",
+            attendanceLast30 = weeklyRaw.Count > 0
+                ? (int)Math.Round(weeklyRaw.Sum(r => r.Present + r.Late) * 100.0 / Math.Max(1, weeklyRaw.Sum(r => r.Total)))
+                : 0,
             weeklyAttendance,
             levelDistribution,
             recentHifz,

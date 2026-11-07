@@ -167,6 +167,26 @@
             box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
         }
 
+        .noor-mark {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-family: 'Amiri', 'Tajawal', serif;
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+            letter-spacing: 0;
+        }
+        .noor-mark-sm { width: 48px; height: 48px; font-size: 26px; border-radius: 14px; }
+        .noor-mark-lg { width: 72px; height: 72px; font-size: 40px; border-radius: 20px; margin-bottom: 12px; }
+
         .logo-text h1 {
             font-size: 20px;
             font-weight: 800;
@@ -1277,6 +1297,7 @@
             display: grid;
             grid-template-columns: 1fr 340px;
             gap: 20px;
+            align-items: start;
         }
 
         .surah-progress-grid {
@@ -3272,4 +3293,146 @@ body.dark-mode .bottom-nav {
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 8px;
+}
+/* ===== صفحة التقارير ===== */
+.report-filters-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+.report-filters-title {
+    font-weight: 700;
+    margin-bottom: 14px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+}
+
+.report-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--gradient);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+    margin-bottom: 20px;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    flex-wrap: wrap;
+}
+.report-hero-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.report-hero-title { font-size: 20px; font-weight: 800; }
+.report-hero-sub { font-size: 13px; opacity: 0.9; margin-top: 3px; }
+.report-hero-actions { margin-inline-start: auto; display: flex; gap: 8px; }
+.report-hero-actions .btn { background: rgba(255,255,255,0.95); color: var(--green-dark, #047857); }
+
+.report-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.report-stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+    overflow: hidden;
+}
+.report-stat-card::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--card-accent, var(--green, #10b981));
+}
+.report-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+.report-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    background: var(--card-accent, var(--green, #10b981));
+}
+.report-stat-info { min-width: 0; }
+.report-stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.report-stat-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.report-accent-green  { --card-accent: #10b981; }
+.report-accent-blue   { --card-accent: #3b82f6; }
+.report-accent-amber  { --card-accent: #f59e0b; }
+.report-accent-purple { --card-accent: #8b5cf6; }
+.report-accent-teal   { --card-accent: #14b8a6; }
+.report-accent-rose   { --card-accent: #f43f5e; }
+.report-accent-slate  { --card-accent: #64748b; }
+
+.report-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+.report-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 999px;
+}
+.report-note {
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 16px;
+}
+.report-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
 }

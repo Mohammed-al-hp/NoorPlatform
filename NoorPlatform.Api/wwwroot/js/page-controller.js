@@ -78,6 +78,10 @@
         if (page === 'settings' && global.NoorDashboard) global.NoorDashboard.fetchSettings();
         if (page === 'expenses' && global.NoorExpenses) global.NoorExpenses.fetchExpenses();
         if (page === 'announcements' && global.NoorDashboard) global.NoorDashboard.fetchAnnouncements();
+        if (page === 'reports') {
+            if (typeof initReportDates === 'function') initReportDates();
+            if (typeof loadReportData === 'function') loadReportData();
+        }
     };
 
     window.addEventListener('popstate', function (e) {
@@ -129,7 +133,13 @@
             <div style="text-align:center;margin-bottom:20px">
                 <div class="student-avatar-lg" style="background:var(--gradient);width:64px;height:64px;font-size:24px;margin:0 auto 10px">${escapeHtml((s.fullName || '').slice(0, 2))}</div>
                 <h3>${escapeHtml(s.fullName)}</h3>
-                <p style="color:var(--text-muted)">${escapeHtml(s.email || '')} | ${escapeHtml(s.circleName || '')}</p>
+            </div>
+            <div style="display:grid;gap:8px;margin-bottom:16px;font-size:13px;text-align:right">
+                <p><strong>الحلقة:</strong> ${escapeHtml(s.circleName || 'بدون حلقة')}</p>
+                <p><strong>المحفظ:</strong> ${escapeHtml(s.teacherName || '—')}</p>
+                <p><strong>هاتف الطالب:</strong> <span dir="ltr">${escapeHtml(s.studentPhone || '—')}</span></p>
+                <p><strong>ولي الأمر:</strong> ${escapeHtml(s.parentName || '—')} — <span dir="ltr">${escapeHtml(s.parentPhone || '')}</span></p>
+                <p><strong>بريد حساب الدخول:</strong> ${escapeHtml(s.email || 'لا يوجد — الدخول برقم الهاتف')}</p>
             </div>
                         <div class="student-card-stats" style="margin-bottom:16px">
                 <div class="mini-stat"><label>الحفظ</label><p>${s.progress ?? 0}%</p></div>

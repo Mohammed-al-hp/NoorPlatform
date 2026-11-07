@@ -95,7 +95,7 @@ public class StudentsController : ControllerBase
 
         var student = await _context.Students
             .Include(s => s.User)
-            .Include(s => s.Circle)
+            .Include(s => s.Circle).ThenInclude(c => c!.Teacher).ThenInclude(t => t!.User)
             .Include(s => s.Parent).ThenInclude(p => p!.User)
             .Include(s => s.Attendances)
             .Include(s => s.HifzRecords)
@@ -110,6 +110,7 @@ public class StudentsController : ControllerBase
             fullName = student.User.FullName,
             student.User.Email,
             student.Level,
+            teacherName = student.Circle?.Teacher?.User?.FullName ?? "—",
             circleName = student.Circle?.Name ?? "بدون حلقة",
             circleId = student.CircleId,
             parentName = !string.IsNullOrWhiteSpace(student.GuardianName)

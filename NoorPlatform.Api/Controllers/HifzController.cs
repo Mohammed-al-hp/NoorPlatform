@@ -325,8 +325,11 @@ public class HifzController : ControllerBase
         var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == request.StudentId);
         if (student != null)
         {
-            if (recordType == RecordType.Memorization) student.Points += 50;
-            else student.Points += 20;
+            var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
+            if (recordType == RecordType.Memorization)
+                student.Points += settings?.PointsHifzMemorization ?? 50;
+            else
+                student.Points += settings?.PointsHifzRevision ?? 20;
 
             _context.ActivityFeeds.Add(new ActivityFeed {
                 UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),

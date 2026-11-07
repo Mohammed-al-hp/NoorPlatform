@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="شعار منصة نور">
+  <defs>
+    <linearGradient id="noorBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="0.55" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="noorSheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="crescentCut">
+      <rect width="512" height="512" fill="black"/>
+      <circle cx="318" cy="222" r="86" fill="white"/>
+    </mask>
+  </defs>
+
+  <!-- الخلفية -->
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#noorBg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#noorSheen)"/>
+
+  <!-- إطار داخلي رفيع -->
+  <rect x="34" y="34" width="444" height="444" rx="104" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="4"/>
+
+  <!-- الهلال -->
+  <g mask="url(#crescentCut)">
+    <circle cx="238" cy="238" r="128" fill="#ffffff"/>
+  </g>
+
+  <!-- النجمة four-point -->
+  <path d="M330 148 l10 26 26 10 -26 10 -10 26 -10 -26 -26 -10 26 -10 z" fill="#fde68a"/>
+
+  <!-- وهج خفيف أسفل الهلال -->
+  <circle cx="238" cy="238" r="128" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="6"/>
+</svg>

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * منصة نور — نظام الرسائل (ولي الأمر ↔ المحفّظ/الإدارة)
  */
 (function (global) {
@@ -18,7 +18,8 @@
         const btnNew = document.getElementById('btnNewMessage');
         if (!list) return;
 
-        if (btnNew) btnNew.style.display = isParent() ? 'inline-flex' : 'none';
+        if (btnNew) btnNew.style.display = 'inline-flex';
+        if (btnNew && !btnNew.textContent.includes('إرسال')) btnNew.innerHTML = (window.Icon ? window.Icon('send', {size:14}) : '') + ' إرسال رسالة';
 
         list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:14}) : '') + '</span> جاري التحميل...</div>';
 

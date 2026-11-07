@@ -93,6 +93,7 @@ public class TeachersController : ControllerBase
             teacher.Id,
             teacher.User.FullName,
             teacher.User.Email,
+            phone = AccountProvisioningService.ToDisplayPhone(teacher.User.UserName ?? teacher.User.PhoneNumber ?? ""),
             teacher.Qualification,
             teacher.BirthDate,
             teacher.AverageRating,

@@ -207,14 +207,25 @@
     async function populateExistingParentSelect() {
         const sel = document.getElementById('existingParentId');
         if (!sel) return;
+        const current = sel.value;
         try {
-            const res = await apiFetch('/parents?pageSize=100');
-            const items = res.items || [];
+            const res = await apiFetch('/parents/lookup');
+            const items = Array.isArray(res) ? res : (res.items || []);
             sel.innerHTML = '<option value="">— أدخل بيانات ولي أمر جديد بالأسفل —</option>' +
-                items.map(p => `<option value="${p.id}">${esc(p.fullName)} — ${esc(p.accountPhone)}</option>`).join('');
+                items.map(p => `<option value="${p.id}">${esc(p.fullName)} — ${esc(p.accountPhone || p.phone || '')}</option>`).join('');
+            if (current) sel.value = current;
+            if (typeof global.toggleExistingParentFields === 'function') global.toggleExistingParentFields();
         } catch (e) {
             sel.innerHTML = '<option value="">— تعذر تحميل قائمة أولياء الأمور —</option>';
         }
+    }
+
+    function toggleExistingParentFields() {
+        const sel = document.getElementById('existingParentId');
+        const box = document.getElementById('newParentFields');
+        if (!box) return;
+        const hasExisting = !!(sel && sel.value);
+        box.style.display = hasExisting ? 'none' : '';
     }
 
     global.NoorStudents = {
@@ -227,9 +238,11 @@
         deleteStudent,
         restoreStudent,
         cycleCircleFilter,
-        populateExistingParentSelect
+        populateExistingParentSelect,
+        toggleExistingParentFields
     };
     global.populateExistingParentSelect = populateExistingParentSelect;
+    global.toggleExistingParentFields = toggleExistingParentFields;
     global.fetchStudents = fetchStudents;
     global.filterStudentsLive = filterStudentsLive;
     global.setStudentFilter = setStudentFilter;

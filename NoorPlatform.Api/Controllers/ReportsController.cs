@@ -204,9 +204,17 @@ public class ReportsController : ControllerBase
             _ => await BuildAttendanceSummaryAsync(fromDt, toExclusive, circleId, teacherUserId)
         };
 
+        var typeLabel = reportType switch
+        {
+            "hifz" => "حفظ وتسميع",
+            "payments" => "مالية",
+            "students" => "طلاب",
+            _ => "حضور وغياب"
+        };
         return Ok(new
         {
             type = reportType,
+            typeLabel,
             from = fromDate.ToString("yyyy-MM-dd"),
             to = toDate.ToString("yyyy-MM-dd"),
             circleId,
@@ -249,7 +257,7 @@ public class ReportsController : ControllerBase
             {
                 var val = prop.GetValue(data);
                 if (val == null || val is System.Collections.IEnumerable and not string) continue;
-                rows.Add((prop.Name, val.ToString() ?? ""));
+                rows.Add((ArabicSummaryLabel(prop.Name), val.ToString() ?? ""));
             }
         }
 
@@ -270,6 +278,7 @@ public class ReportsController : ControllerBase
                 page.Size(PageSizes.A4);
                 page.Margin(1.5f, Unit.Centimetre);
                 page.PageColor(Colors.White);
+                page.ContentFromRightToLeft();
                 page.DefaultTextStyle(ArabicPdfFonts.DefaultStyle(12));
 
                 page.Header().Background("#1a5c3a").Padding(15).Column(col =>
@@ -286,7 +295,7 @@ public class ReportsController : ControllerBase
                         col.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).Row(row =>
                         {
                             row.RelativeItem().Text(label).FontColor(Colors.Grey.Darken1);
-                            row.RelativeItem().AlignLeft().Text(value).Bold();
+                            row.RelativeItem().AlignRight().Text(value).Bold();
                         });
                     }
                 });
@@ -415,6 +424,7 @@ public class ReportsController : ControllerBase
                 page.Size(PageSizes.A4.Landscape());
                 page.Margin(2, Unit.Centimetre);
                 page.PageColor(Colors.White);
+                page.ContentFromRightToLeft();
                 page.DefaultTextStyle(ArabicPdfFonts.DefaultStyle(14));
 
                 page.Content().Border(5).BorderColor("#b8860b").Padding(30).Column(col =>
@@ -466,11 +476,12 @@ public class ReportsController : ControllerBase
                 page.Size(PageSizes.A4);
                 page.Margin(1.5f, Unit.Centimetre);
                 page.PageColor(Colors.White);
+                page.ContentFromRightToLeft();
                 page.DefaultTextStyle(ArabicPdfFonts.DefaultStyle(12));
 
                 page.Header().Background("#1a5c3a").Padding(15).Column(col =>
                 {
-                    col.Item().AlignCenter().Text("📋 التقرير الشهري").FontSize(24).FontColor(Colors.White).Bold();
+                    col.Item().AlignCenter().Text("التقرير الشهري").FontSize(24).FontColor(Colors.White).Bold();
                     col.Item().AlignCenter().Text($"مركز نور لتحفيظ القرآن الكريم — {month} {year}").FontSize(14).FontColor("#e8f5e9");
                 });
 
@@ -513,21 +524,21 @@ public class ReportsController : ControllerBase
 
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("#").Bold();
-                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("السورة").Bold();
-                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("الآيات").Bold();
-                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("التقييم").Bold();
-                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("ملاحظات").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("#").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("السورة").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("الآيات").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("التقييم").Bold();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("ملاحظات").Bold();
                         });
 
                         int i = 1;
                         foreach (var r in hifzRecords)
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(i.ToString());
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.SurahName);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.Verses);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.Evaluation);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).Text(r.Notes ?? "—");
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).AlignRight().Text(i.ToString());
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).AlignRight().Text(r.SurahName);
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).AlignRight().Text(r.Verses);
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).AlignRight().Text(r.Evaluation);
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5).AlignRight().Text(r.Notes ?? "—");
                             i++;
                         }
                     });
@@ -551,6 +562,31 @@ public class ReportsController : ControllerBase
         >= 25 => "حفظ ربع القرآن الكريم",
         >= 10 => "إتقان الأجزاء الأولى من القرآن الكريم",
         _ => "التقدم في حفظ القرآن الكريم"
+    };
+
+    private static string ArabicSummaryLabel(string name) => name switch
+    {
+        "studentsInScope" => "الطلاب في النطاق",
+        "totalRecords" => "سجلات الحضور",
+        "present" => "حاضر",
+        "late" => "متأخر",
+        "excusedAbsence" => "غياب بعذر",
+        "unexcusedAbsence" => "غياب بدون عذر",
+        "attendanceRate" => "نسبة الحضور %",
+        "sessions" => "جلسات التسميع",
+        "memorizationSessions" => "تسميع جديد",
+        "reviewSessions" => "مراجعة",
+        "versesMemorized" => "آيات محفوظة",
+        "totalInvoices" => "الفواتير",
+        "paid" => "مدفوع",
+        "unpaid" => "غير مدفوع",
+        "amountPaid" => "المبلغ المحصّل",
+        "amountDue" => "المبلغ المستحق",
+        "totalActive" => "طلاب نشطون",
+        "withCircle" => "منضمون لحلقة",
+        "withoutCircle" => "بدون حلقة",
+        "message" => "ملاحظة",
+        _ => name
     };
 
     private static string GetArabicMonth(int month) => month switch

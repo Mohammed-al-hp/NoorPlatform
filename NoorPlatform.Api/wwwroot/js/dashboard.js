@@ -21,6 +21,25 @@
             if (el('dashTeachers')) el('dashTeachers').textContent = data.teachers;
             if (el('dashCircles')) el('dashCircles').textContent = data.circles;
             if (el('dashAttendance')) el('dashAttendance').textContent = data.attendanceToday || '0%';
+            if (el('dashStudentsTrend')) {
+                const n = data.studentsThisMonth ?? 0;
+                el('dashStudentsTrend').textContent = n > 0 ? `${n} هذا الشهر` : 'لا تسجيلات هذا الشهر';
+                el('dashStudentsTrend').className = 'stat-trend' + (n > 0 ? ' trend-up' : '');
+            }
+            if (el('dashTeachersTrend')) {
+                const n = data.teachersNewThisMonth ?? 0;
+                el('dashTeachersTrend').textContent = n > 0 ? `${n} جديد` : 'لا إضافات هذا الشهر';
+                el('dashTeachersTrend').className = 'stat-trend' + (n > 0 ? ' trend-up' : '');
+            }
+            if (el('dashAttTrend')) {
+                const rate = data.attendanceLast30 ?? data.attendanceLast30Days;
+                el('dashAttTrend').textContent = rate != null && rate !== ''
+                    ? `آخر 30 يوم: ${String(rate).includes('%') ? rate : rate + '%'}`
+                    : 'لا بيانات حضور';
+            }
+            if (el('dashCirclesTrend')) {
+                el('dashCirclesTrend').textContent = (data.circles ?? 0) + ' حلقة مسجّلة';
+            }
 
             const weekly = Array.isArray(data.weeklyAttendance)
                 ? data.weeklyAttendance
@@ -281,7 +300,10 @@
                 'settingsWRev': data.weightRevision,
                 'settingsWProg': data.weightProgress,
                 'settingsWMatn': data.weightMatn,
-                'settingsWDress': data.weightDress
+                'settingsWDress': data.weightDress,
+                'settingsPointsAttendance': data.pointsAttendancePresent,
+                'settingsPointsHifzMemorization': data.pointsHifzMemorization,
+                'settingsPointsHifzRevision': data.pointsHifzRevision
             };
             
             for (const [id, value] of Object.entries(fields)) {
@@ -372,7 +394,10 @@
             weightProgress: getVal('settingsWProg') ? parseFloat(getVal('settingsWProg')) : null,
             weightMatn: getVal('settingsWMatn') ? parseFloat(getVal('settingsWMatn')) : null,
             weightDress: getVal('settingsWDress') ? parseFloat(getVal('settingsWDress')) : null,
-            evaluationsVisibleToStudentsAndParents: !!document.getElementById('settingsEvalsVisible')?.checked
+            evaluationsVisibleToStudentsAndParents: !!document.getElementById('settingsEvalsVisible')?.checked,
+            pointsAttendancePresent: getVal('settingsPointsAttendance') ? parseInt(getVal('settingsPointsAttendance'), 10) : 10,
+            pointsHifzMemorization: getVal('settingsPointsHifzMemorization') ? parseInt(getVal('settingsPointsHifzMemorization'), 10) : 50,
+            pointsHifzRevision: getVal('settingsPointsHifzRevision') ? parseInt(getVal('settingsPointsHifzRevision'), 10) : 20
         };
 
         if (!payload.centerName) {

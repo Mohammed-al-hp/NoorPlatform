@@ -110,6 +110,7 @@
                     </div>
                 </div>
                 <p><strong>تاريخ الميلاد:</strong> ${birthStr}</p>
+                <p style="margin-top:8px"><strong>رقم الهاتف:</strong> <span dir="ltr">${esc(t.phone || '—')}</span></p>
                 <p style="margin-top:8px"><strong>البريد الإلكتروني:</strong> ${esc(t.email || '—')}</p>
                 <h4 style="margin-top:16px;margin-bottom:8px">الحلقات</h4>
                 <ul style="padding-right:20px;line-height:2">${circlesHtml}</ul>
@@ -409,8 +410,13 @@
             if (typeof setCircleScheduleType === 'function') setCircleScheduleType(isPrayer ? 'prayer' : 'custom', 'editCircleModal');
 
             if (isPrayer) {
-                const sel = document.getElementById('editCircleTimeSelect');
-                if (sel) sel.value = time;
+                const prayers = ['الفجر','الظهر','العصر','المغرب','العشاء'];
+                const found = prayers.filter(p => time.includes(p));
+                const fromEl = document.getElementById('editCirclePrayerFrom');
+                const toEl = document.getElementById('editCirclePrayerTo');
+                if (fromEl && found[0]) fromEl.value = found[0];
+                if (toEl && found[1]) toEl.value = found[1];
+                else if (toEl && found[0]) toEl.value = found[0];
             } else {
                 const parts = time.split(' - ');
                 if (parts.length === 2) {
@@ -479,6 +485,10 @@
         const prayerPanel = document.getElementById(prefix === 'edit' ? 'editCirclePrayerPanel' : 'addCirclePrayerPanel');
         const isHidden = prayerPanel && prayerPanel.style.display === 'none';
         if (!isHidden) {
+            const from = document.getElementById(prefix === 'edit' ? 'editCirclePrayerFrom' : 'circlePrayerFrom')?.value || '';
+            const to = document.getElementById(prefix === 'edit' ? 'editCirclePrayerTo' : 'circlePrayerTo')?.value || '';
+            if (from && to) return `من صلاة ${from} إلى صلاة ${to}`;
+            if (from) return `بعد صلاة ${from}`;
             return document.getElementById(id('CircleTimeSelect'))?.value || '';
         }
         const from = document.getElementById(id('CircleTimeFrom'))?.value;
@@ -516,5 +526,15 @@
 
     global.toggleCircleExtraFields = toggleCircleExtraFields;
     global.filterExtraEnrollList = filterExtraEnrollList;
+
+    function filterCircles(query) {
+        const circles = global.NoorApp?.state?.circles || [];
+        const q = (query || '').trim();
+        const grid = document.getElementById('circlesGrid');
+        if (!grid || !circles.length) return;
+        const filtered = q ? circles.filter(c => (c.name || '').includes(q) || (c.teacherName || '').includes(q)) : circles;
+        grid.innerHTML = filtered.length ? filtered.map(c => renderCircleCard(c)).join('') : '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">لا توجد نتائج</div>';
+    }
+    global.filterCircles = filterCircles;
 
 })(window);

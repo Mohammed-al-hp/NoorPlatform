@@ -51,7 +51,10 @@ public class SettingsController : ControllerBase
                 weightProgress = 1.0,
                 weightMatn = 1.0,
                 weightDress = 1.0,
-                evaluationsVisibleToStudentsAndParents = true
+                evaluationsVisibleToStudentsAndParents = true,
+                pointsAttendancePresent = 10,
+                pointsHifzMemorization = 50,
+                pointsHifzRevision = 20
             });
         }
         if (settings.ProgressThreshold10 <= 0)
@@ -90,7 +93,10 @@ public class SettingsController : ControllerBase
             settings.WeightProgress,
             settings.WeightMatn,
             settings.WeightDress,
-            settings.EvaluationsVisibleToStudentsAndParents
+            settings.EvaluationsVisibleToStudentsAndParents,
+            settings.PointsAttendancePresent,
+            settings.PointsHifzMemorization,
+            settings.PointsHifzRevision
         });
     }
 
@@ -150,6 +156,12 @@ public class SettingsController : ControllerBase
             settings.WeightDress = request.WeightDress.Value;
         if (request.EvaluationsVisibleToStudentsAndParents.HasValue)
             settings.EvaluationsVisibleToStudentsAndParents = request.EvaluationsVisibleToStudentsAndParents.Value;
+        if (request.PointsAttendancePresent.HasValue)
+            settings.PointsAttendancePresent = Math.Max(0, request.PointsAttendancePresent.Value);
+        if (request.PointsHifzMemorization.HasValue)
+            settings.PointsHifzMemorization = Math.Max(0, request.PointsHifzMemorization.Value);
+        if (request.PointsHifzRevision.HasValue)
+            settings.PointsHifzRevision = Math.Max(0, request.PointsHifzRevision.Value);
         settings.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -217,4 +229,7 @@ public class UpdateSettingsRequest
     public double? WeightMatn { get; set; }
     public double? WeightDress { get; set; }
     public bool? EvaluationsVisibleToStudentsAndParents { get; set; }
+    public int? PointsAttendancePresent { get; set; }
+    public int? PointsHifzMemorization { get; set; }
+    public int? PointsHifzRevision { get; set; }
 }

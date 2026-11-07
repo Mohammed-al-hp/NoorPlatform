@@ -39,7 +39,7 @@
 <body>
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
-        <div class="splash-logo" data-icon="mosque" data-icon-size="48"></div>
+        <div class="noor-mark noor-mark-lg" data-icon="mosque" data-icon-size="44" aria-hidden="true"></div>
         <div class="splash-text">منصة نور</div>
         <div class="splash-sub">مركز تحفيظ القرآن الكريم</div>
         <div class="splash-loader"></div>
@@ -48,20 +48,20 @@
     <!-- Login Screen -->
     <div id="loginScreen" class="login-overlay">
         <div class="login-card">
-            <div class="logo-icon" style="margin: 0 auto 20px;" data-icon="book-open" data-icon-size="32"></div>
+            <div class="noor-mark" style="margin: 0 auto 16px;" data-icon="mosque" data-icon-size="30" aria-hidden="true"></div>
             <h2>تسجيل الدخول</h2>
-            <p>مرحباً بك في منصة نور لتحفيظ القرآن</p>
+            <p>مرحبا بك في منصة نور لإدارة حلقات تحفيظ القرآن الكريم</p>
 
             <!-- بداية نموذج تسجيل الدخول -->
             <form id="loginForm" onsubmit="event.preventDefault(); handleLogin()">
                 <div class="form-group">
                     <label>رقم الهاتف</label>
-                    <input type="text" id="loginPhone" class="form-control" placeholder="09xxxxxxxx"
+                    <input type="text" id="loginPhone" class="form-control" placeholder="أدخل رقم الهاتف"
                            autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label>كلمة المرور</label>
-                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••"
+                    <input type="password" id="loginPassword" class="form-control" placeholder="أدخل كلمة المرور"
                            autocomplete="current-password">
                 </div>
                 <!-- الزر بنوع submit ليعمل مع Enter تلقائياً -->
@@ -83,7 +83,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
             <div class="logo-wrap">
-                <div class="logo-icon" data-icon="mosque" data-icon-size="28"></div>
+                <div class="noor-mark noor-mark-sm" data-icon="mosque" data-icon-size="26" aria-hidden="true"></div>
                 <div class="logo-text">
                     <h1>منصة نور</h1>
                     <span>مركز تحفيظ القرآن الكريم</span>
@@ -114,7 +114,7 @@
             </div>
 
             <div class="nav-section" id="staffSection">
-                <div class="nav-section-label">الإدارة</div>
+                <div class="nav-section-label">المستخدمون</div>
                 <div class="nav-item" onclick="navigate('students', this)">
                     <div class="nav-icon" data-icon="graduation-cap" data-icon-size="20"></div>
                     <span>الطلاب</span>
@@ -122,6 +122,10 @@
             </div>
             <div class="nav-section" id="adminOnlySection" style="display:none">
                 <div class="nav-section-label">المستخدمون</div>
+                <div class="nav-item" onclick="navigate('students', this)">
+                    <div class="nav-icon" data-icon="graduation-cap" data-icon-size="20"></div>
+                    <span>الطلاب</span>
+                </div>
                 <div class="nav-item" onclick="navigate('users', this)">
                     <div class="nav-icon" data-icon="users" data-icon-size="20"></div>
                     <span>المستخدمون</span>
@@ -134,6 +138,9 @@
                     <div class="nav-icon" data-icon="user-check" data-icon-size="20"></div>
                     <span>المحفظون</span>
                 </div>
+            </div>
+            <div class="nav-section" id="adminOpsSection" style="display:none">
+                <div class="nav-section-label">الإدارة</div>
                 <div class="nav-item" onclick="navigate('circles', this)">
                     <div class="nav-icon" data-icon="circle-dot" data-icon-size="20"></div>
                     <span>الحلقات</span>
@@ -171,10 +178,10 @@
                     <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
                     <span>التقييم التربوي</span>
                 </div>
-            </div>
             <div class="nav-item" id="staffMessagesNav" onclick="navigate('messages', this)">
                 <div class="nav-icon" data-icon="message-circle" data-icon-size="20"></div>
                 <span>الرسائل</span>
+            </div>
             </div>
             <div class="nav-section" id="libraryNavSection">
                 <div class="nav-section-label">المكتبة</div>
@@ -268,7 +275,7 @@
                     <div class="stat-card-body">
                         <div class="stat-value" id="dashStudents">—</div>
                         <div class="stat-label">إجمالي الطلاب</div>
-                        <div class="stat-trend trend-up"><span data-icon="trending-up" data-icon-size="12"></span> 12 هذا الشهر</div>
+                        <div class="stat-trend" id="dashStudentsTrend">—</div>
                     </div>
                 </div>
                 <div class="stat-card blue">
@@ -276,7 +283,7 @@
                     <div class="stat-card-body">
                         <div class="stat-value" id="dashTeachers">—</div>
                         <div class="stat-label">المحفظون النشطون</div>
-                        <div class="stat-trend trend-up"><span data-icon="trending-up" data-icon-size="12"></span> 2 جديد</div>
+                        <div class="stat-trend" id="dashTeachersTrend">—</div>
                     </div>
                 </div>
                 <div class="stat-card teal">
@@ -284,7 +291,7 @@
                     <div class="stat-card-body">
                         <div class="stat-value" id="dashCircles">—</div>
                         <div class="stat-label">الحلقات الفعالة</div>
-                        <div class="stat-trend trend-up">نشط</div>
+                        <div class="stat-trend" id="dashCirclesTrend">—</div>
                     </div>
                 </div>
                 <div class="stat-card purple">
@@ -292,7 +299,7 @@
                     <div class="stat-card-body">
                         <div class="stat-value" id="dashAttendance">89%</div>
                         <div class="stat-label">معدل الحضور</div>
-                        <div class="stat-trend" id="dashAttTrend">آخر 30 يوم</div>
+                        <div class="stat-trend" id="dashAttTrend">—</div>
                     </div>
                 </div>
             </div>
@@ -612,6 +619,7 @@
                 </div>
                 <button class="btn btn-primary" onclick="openModal('addCircleModal')"><span data-icon="plus" data-icon-size="14"></span> إنشاء حلقة</button>
             </div>
+            <div style="margin-bottom:12px"><input type="text" id="circleSearchInput" class="form-input" placeholder="ابحث عن حلقة..." style="width:100%;max-width:400px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);font-size:14px" oninput="filterCircles(this.value)"></div>
             <div class="cards-grid" id="circlesGrid"></div>
         </div>
 
@@ -667,7 +675,7 @@
                     <p>متابعة تقدم الطلاب في حفظ القرآن الكريم</p>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-outline" id="jlwmab" onclick="showCenterSummary()"><span data-icon="users" data-icon-size="14"></span> الإنجاز الجماعي</button>
+                    <button class="btn btn-outline" id="jlwmab" onclick="showCenterSummary()" title="عرض أرقام المركز: عدد الطلاب والمحفظين والحلقات وجلسات التسميع لهذا الشهر"><span data-icon="users" data-icon-size="14"></span> ملخص المركز</button>
                     <button class="btn btn-primary" onclick="openModal('addMemModal')"><span data-icon="plus" data-icon-size="14"></span> تسجيل تسميع</button>
                 </div>
             </div>
@@ -699,7 +707,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="surahList"></div>
+                        <div id="surahList"><div class="mem-empty">اختر طالباً من القائمة لعرض السور المحفوظة والمتبقية</div></div>
                     </div>
                 </div>
 
@@ -711,10 +719,8 @@
                     <div class="panel-card">
                         <div class="panel-card-header"><span data-icon="trending-up" data-icon-size="16"></span> خطة الحفظ المقترحة</div>
                         <div class="panel-card-body">
-                            <div style="font-size:13px;color:var(--text-muted);line-height:1.8">
-                                <p><span data-icon="target" data-icon-size="14"></span> الهدف الأسبوعي: <strong style="color:var(--text)">نصف حزب</strong></p>
-                                <p><span data-icon="calendar" data-icon-size="14"></span> الانتهاء المتوقع: <strong style="color:var(--text)">مارس 2027</strong></p>
-                                <p><span data-icon="zap" data-icon-size="14"></span> معدل الحفظ: <strong style="color:var(--green)">ممتاز</strong></p>
+                            <div id="memPlanBody" style="font-size:13px;color:var(--text-muted);line-height:1.8">
+                                <p>اختر طالباً لعرض خطة مبسطة حسب نسبة حفظه.</p>
                             </div>
                         </div>
                     </div>
@@ -1164,7 +1170,7 @@
                     <h2><span data-icon="message-circle" data-icon-size="20"></span> الرسائل</h2>
                     <p id="messagesSubtitle">التواصل مع الإدارة والمحفظين</p>
                 </div>
-                <button class="btn btn-primary" id="btnNewMessage" style="display:none" onclick="openNewMessageModal()"><span data-icon="plus" data-icon-size="14"></span> رسالة جديدة</button>
+                <button class="btn btn-primary" id="btnNewMessage" onclick="openNewMessageModal()"><span data-icon="send" data-icon-size="14"></span> إرسال رسالة</button>
             </div>
             <div class="table-card">
                 <div id="messagesList" style="padding:10px 0">
@@ -1230,8 +1236,8 @@
             </div>
 
             <!-- فلاتر التقارير -->
-            <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
-                <div style="font-weight:700;margin-bottom:14px;font-size:14px"><span data-icon="search" data-icon-size="14"></span> فلاتر التقرير</div>
+            <div class="report-filters-card">
+                <div class="report-filters-title"><span data-icon="list" data-icon-size="15"></span> فلاتر التقرير</div>
                 <div class="form-row" style="display:flex;gap:14px;flex-wrap:wrap">
                     <div class="form-group" style="flex:1;min-width:140px">
                         <label class="form-label">نوع التقرير</label>
@@ -1259,9 +1265,11 @@
                 </div>
             </div>
 
-            <div id="reportResults" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-muted)">
-                <div style="margin-bottom:16px" data-icon="clipboard-list" data-icon-size="48"></div>
-                <p>اختر نوع التقرير والفترة الزمنية لعرض النتائج</p>
+            <div id="reportResults" class="report-results">
+                <div class="report-empty">
+                    <div style="margin-bottom:16px" data-icon="clipboard-list" data-icon-size="48"></div>
+                    <p>اختر نوع التقرير والفترة الزمنية لعرض النتائج</p>
+                </div>
             </div>
         </div>
 
@@ -1318,6 +1326,26 @@
                             <label class="form-label">وقت النهاية</label>
                             <input type="time" id="settingsWorkEndTime" class="form-input">
                         </div>
+                    </div>
+                </div>
+
+                <!-- 3. نقاط الطلاب -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                        <span data-icon="star" data-icon-size="20"></span> نقاط الطلاب
+                    </h3>
+                    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">تُضاف هذه النقاط تلقائياً عند الحضور والتسميع. يمكن للمدير تعديل القيم.</p>
+                    <div class="form-group">
+                        <label class="form-label">نقاط الحضور (حاضر)</label>
+                        <input type="number" id="settingsPointsAttendance" class="form-input" min="0" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نقاط الحفظ الجديد</label>
+                        <input type="number" id="settingsPointsHifzMemorization" class="form-input" min="0" value="50">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">نقاط المراجعة</label>
+                        <input type="number" id="settingsPointsHifzRevision" class="form-input" min="0" value="20">
                     </div>
                 </div>
 
@@ -1621,11 +1649,12 @@
 
                     <div class="form-group">
                         <label class="form-label">ولي أمر موجود مسبقاً (اختياري)</label>
-                        <select id="existingParentId" class="form-input">
+                        <select id="existingParentId" class="form-input" onclick="populateExistingParentSelect()" onfocus="populateExistingParentSelect()" onchange="toggleExistingParentFields()">
                             <option value="">— أدخل بيانات ولي أمر جديد بالأسفل —</option>
                         </select>
                     </div>
 
+                    <div id="newParentFields">
                     <div class="form-group">
                         <label class="form-label">اسم ولي الأمر *</label>
                         <input id="guardianName" class="form-input" type="text" placeholder="اسم ولي الأمر">
@@ -1648,6 +1677,7 @@
                                 <option value="Other">أخرى</option>
                             </select>
                         </div>
+                    </div>
                     </div>
 
                 </div>
@@ -2055,13 +2085,29 @@
                         </div>
                         <!-- وقت الصلاة -->
                         <div id="addCirclePrayerPanel">
-                            <select id="circleTimeSelect" class="form-input">
-                                <option value="بعد صلاة الفجر">بعد صلاة الفجر</option>
-                                <option value="بعد صلاة الظهر">بعد صلاة الظهر</option>
-                                <option value="بعد صلاة العصر">بعد صلاة العصر</option>
-                                <option value="بعد صلاة المغرب">بعد صلاة المغرب</option>
-                                <option value="بعد صلاة العشاء">بعد صلاة العشاء</option>
-                            </select>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">من (صلاة …)</label>
+                                    <select id="circlePrayerFrom" class="form-input">
+                                        <option value="الفجر">الفجر</option>
+                                        <option value="الظهر">الظهر</option>
+                                        <option value="العصر">العصر</option>
+                                        <option value="المغرب">المغرب</option>
+                                        <option value="العشاء">العشاء</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">إلى (صلاة …)</label>
+                                    <select id="circlePrayerTo" class="form-input">
+                                        <option value="الفجر">الفجر</option>
+                                        <option value="الظهر">الظهر</option>
+                                        <option value="العصر">العصر</option>
+                                        <option value="المغرب">المغرب</option>
+                                        <option value="العشاء">العشاء</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <select id="circleTimeSelect" class="form-input" style="display:none" aria-hidden="true"></select>
                         </div>
                         <!-- وقت مخصص -->
                         <div id="addCircleCustomPanel" style="display:none">
@@ -2138,7 +2184,7 @@
         <div class="modal-overlay" id="centerSummaryModal">
             <div class="modal" style="max-width:600px">
                 <div class="modal-header">
-                    <h3><span data-icon="users" data-icon-size="18"></span> إحصائيات المركز (الإنجاز الجماعي)</h3>
+                    <h3><span data-icon="users" data-icon-size="18"></span> ملخص إحصائيات المركز</h3>
                     <button class="modal-close" onclick="closeModal('centerSummaryModal')"><span data-icon="x" data-icon-size="16"></span></button>
                 </div>
                 <div class="modal-body" id="centerSummaryBody">
@@ -2336,13 +2382,29 @@
                             </button>
                         </div>
                         <div id="editCirclePrayerPanel">
-                            <select id="editCircleTimeSelect" class="form-input">
-                                <option value="بعد صلاة الفجر">بعد صلاة الفجر</option>
-                                <option value="بعد صلاة الظهر">بعد صلاة الظهر</option>
-                                <option value="بعد صلاة العصر">بعد صلاة العصر</option>
-                                <option value="بعد صلاة المغرب">بعد صلاة المغرب</option>
-                                <option value="بعد صلاة العشاء">بعد صلاة العشاء</option>
-                            </select>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">من (صلاة …)</label>
+                                    <select id="editCirclePrayerFrom" class="form-input">
+                                        <option value="الفجر">الفجر</option>
+                                        <option value="الظهر">الظهر</option>
+                                        <option value="العصر">العصر</option>
+                                        <option value="المغرب">المغرب</option>
+                                        <option value="العشاء">العشاء</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">إلى (صلاة …)</label>
+                                    <select id="editCirclePrayerTo" class="form-input">
+                                        <option value="الفجر">الفجر</option>
+                                        <option value="الظهر">الظهر</option>
+                                        <option value="العصر">العصر</option>
+                                        <option value="المغرب">المغرب</option>
+                                        <option value="العشاء">العشاء</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <select id="editCircleTimeSelect" class="form-input" style="display:none" aria-hidden="true"></select>
                         </div>
                         <div id="editCircleCustomPanel" style="display:none">
                             <div class="form-row">
@@ -2688,7 +2750,14 @@
                 const rows = [...document.querySelectorAll('#attendanceList tbody tr')];
                 if (!rows.length) { showToast('لا توجد بيانات للطباعة'); return; }
 
-                const date = document.getElementById('currentDate')?.textContent || '';
+                const raw = document.getElementById('attendanceDatePicker')?.value || '';
+                const parts = raw.split('-').map(Number);
+                const _d = (parts.length === 3 && parts[0])
+                    ? new Date(parts[0], parts[1] - 1, parts[2])
+                    : new Date();
+                const _arDays = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+                const _arMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+                const date = `${_arDays[_d.getDay()]} ${_d.getDate()} ${_arMonths[_d.getMonth()]} ${_d.getFullYear()}`;
                 const rowsHtml = rows.map(r => {
                     const cells = r.querySelectorAll('td');
                     const name = cells[0]?.textContent?.trim() || '';
@@ -2722,6 +2791,25 @@
             }
 
             // دالة بسيطة للتقارير
+            const _typeAr = {attendance:'حضور وغياب',hifz:'حفظ وتسميع',payments:'مالية',students:'طلاب'};
+            function _fmtArDate(iso) {
+                if (!iso) return '—';
+                const p = String(iso).split('-').map(Number);
+                if (p.length < 3 || !p[0]) return iso;
+                const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+                return `${p[2]} ${months[p[1]-1] || ''} ${p[0]}`;
+            }
+            function initReportDates() {
+                const fromEl = document.getElementById('reportFrom');
+                const toEl = document.getElementById('reportTo');
+                if (!fromEl || !toEl || fromEl.value) return;
+                const to = new Date();
+                const from = new Date();
+                from.setDate(from.getDate() - 29);
+                const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                fromEl.value = iso(from);
+                toEl.value = iso(to);
+            }
             function loadReportData() {
                 const type = document.getElementById('reportType')?.value;
                 const from = document.getElementById('reportFrom')?.value;
@@ -2730,15 +2818,18 @@
                 const res = document.getElementById('reportResults');
                 if (!res) return;
                 if (!from || !to) {
-                    res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="margin-bottom:16px" data-icon="clipboard-list" data-icon-size="48"></div><p>اختر نوع التقرير والفترة الزمنية</p></div>';
+                    res.innerHTML = '<div class="report-empty"><p>اختر نوع التقرير والفترة الزمنية</p></div>';
                     return;
                 }
-                res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon" data-icon="loader" data-icon-size="14"></span> جاري تحميل التقرير...</div>';
+                res.innerHTML = '<div class="report-empty"><span class="spin-icon" data-icon="loader" data-icon-size="14"></span> جاري تحميل التقرير...</div>';
                 let url = `/reports/summary?type=${encodeURIComponent(type || 'attendance')}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
                 if (circleId) url += `&circleId=${encodeURIComponent(circleId)}`;
                 (typeof apiFetch === 'function' ? apiFetch(url) : Promise.reject(new Error('apiFetch غير متاح')))
                     .then(data => {
                         const d = data?.data || data || {};
+                        const typeKey = String(data.type || type || '').toLowerCase();
+                        const typeLabel = data.typeLabel || _typeAr[typeKey] || 'حضور وغياب';
+                        const icon = (n, s) => (window.Icon ? window.Icon(n, { size: s || 18 }) : '');
                         const labels = {
                             studentsInScope: 'الطلاب في النطاق',
                             totalRecords: 'سجلات الحضور',
@@ -2746,7 +2837,7 @@
                             late: 'متأخر',
                             excusedAbsence: 'غياب بعذر',
                             unexcusedAbsence: 'غياب بدون عذر',
-                            attendanceRate: 'نسبة الحضور %',
+                            attendanceRate: 'نسبة الحضور',
                             sessions: 'جلسات التسميع',
                             memorizationSessions: 'تسميع جديد',
                             reviewSessions: 'مراجعة',
@@ -2761,21 +2852,47 @@
                             withoutCircle: 'بدون حلقة',
                             message: 'ملاحظة'
                         };
-                        const cards = Object.keys(d)
-                            .filter(k => k !== 'byLevel' && d[k] !== undefined && d[k] !== null && typeof d[k] !== 'object')
-                            .map(k => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:140px;flex:1">
-                                                                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${labels[k] || k}</div>
-                                                                            <div style="font-size:22px;font-weight:800">${d[k]}</div>
-                                                                        </div>`)
-                            .join('');
-                        res.innerHTML = `<div style="text-align:right">
-                                                                        <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">الفترة: ${data.from || from} → ${data.to || to} · النوع: ${data.type || type}</div>
-                                                                        <div style="display:flex;flex-wrap:wrap;gap:12px">${cards || '<p>لا توجد بيانات لهذه الفترة</p>'}</div>
-                                                                    </div>`;
+                        const metricIcons = {
+                            studentsInScope: 'users', totalRecords: 'clipboard-list', present: 'check-circle',
+                            late: 'clock', excusedAbsence: 'calendar', unexcusedAbsence: 'x-circle',
+                            attendanceRate: 'trending-up', sessions: 'book-open', memorizationSessions: 'book-open',
+                            reviewSessions: 'refresh-cw', versesMemorized: 'star', totalInvoices: 'credit-card',
+                            paid: 'check-circle', unpaid: 'alert-triangle', amountPaid: 'wallet', amountDue: 'wallet',
+                            totalActive: 'users', withCircle: 'circle-dot', withoutCircle: 'circle-dot',
+                            message: 'info'
+                        };
+                        const accents = ['report-accent-green','report-accent-blue','report-accent-amber','report-accent-purple','report-accent-teal','report-accent-rose','report-accent-slate'];
+                        const entries = Object.keys(d).filter(k => k !== 'byLevel' && k !== 'message' && d[k] !== undefined && d[k] !== null && typeof d[k] !== 'object');
+                        const cards = entries.map((k, i) => {
+                            const v = d[k];
+                            const shown = (typeof v === 'number') ? v.toLocaleString('en-US') : v;
+                            return `<div class="report-stat-card ${accents[i % accents.length]}">
+                                <div class="report-stat-icon">${icon(metricIcons[k] || 'info', 20)}</div>
+                                <div class="report-stat-info">
+                                    <div class="report-stat-label">${labels[k] || k}</div>
+                                    <div class="report-stat-value">${shown}</div>
+                                </div>
+                            </div>`;
+                        }).join('');
+                        const levels = Array.isArray(d.byLevel) ? d.byLevel.map(x => `<span class="report-chip">${x.level || x.Level}: ${x.count || x.Count}</span>`).join('') : '';
+                        const note = typeof d.message === 'string' && d.message ? `<div class="report-note">${d.message}</div>` : '';
+                        res.innerHTML = `<div class="report-hero">
+                                <div class="report-hero-icon">${icon('bar-chart', 26)}</div>
+                                <div>
+                                    <div class="report-hero-title">${typeLabel}</div>
+                                    <div class="report-hero-sub">الفترة: ${_fmtArDate(data.from || from)} — ${_fmtArDate(data.to || to)}</div>
+                                </div>
+                                <div class="report-hero-actions">
+                                    <button class="btn btn-outline" onclick="generateReport()" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.4)">${icon('download', 14)} تصدير PDF</button>
+                                </div>
+                            </div>
+                            <div class="report-stat-grid">${cards || '<div class="report-empty" style="grid-column:1/-1">لا توجد بيانات لهذه الفترة</div>'}</div>
+                            ${levels ? `<div class="report-chips">${levels}</div>` : ''}
+                            ${note}`;
                     })
                     .catch((err) => {
                         const msg = err?.message || 'تعذر تحميل التقرير';
-                        res.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444">${msg}</div>`;
+                        res.innerHTML = `<div class="report-empty" style="color:#ef4444">${msg}</div>`;
                     });
             }
 

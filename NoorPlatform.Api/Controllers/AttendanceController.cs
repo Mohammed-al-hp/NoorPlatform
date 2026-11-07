@@ -226,7 +226,11 @@ public class AttendanceController : ControllerBase
             var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == sid.Value);
             if (student != null)
             {
-                if (parsedStatus == AttendanceStatus.Present) student.Points += 10;
+                if (parsedStatus == AttendanceStatus.Present)
+                {
+                    var pts = await GetAttendancePointsAsync();
+                    student.Points += pts;
+                }
 
                 _context.ActivityFeeds.Add(new ActivityFeed
                 {
@@ -405,7 +409,7 @@ public class AttendanceController : ControllerBase
                 if (status == AttendanceStatus.Present)
                 {
                     var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == record.StudentId);
-                    if (student != null) student.Points += 10;
+                    if (student != null) student.Points += await GetAttendancePointsAsync();
                 }
             }
         }
@@ -455,6 +459,12 @@ public class AttendanceController : ControllerBase
 
         return await _context.Students.AnyAsync(s =>
             s.Id == studentId && s.CircleId == circleId);
+    }
+
+    private async Task<int> GetAttendancePointsAsync()
+    {
+        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
+        return settings?.PointsAttendancePresent ?? 10;
     }
 }
 

@@ -9,6 +9,15 @@
     let usersSearch = '';
     let usersRoleFilter = '';
     const pageSize = 15;
+    const roleLabels = { Admin: 'مشرف', Teacher: 'محفظ', Student: 'طالب', Parent: 'ولي أمر' };
+    function roleAr(r) {
+        if (r && typeof r === 'object') r = r.name || r.value;
+        const key = String(r ?? '');
+        return roleLabels[key]
+            || roleLabels[key.charAt(0).toUpperCase() + key.slice(1).toLowerCase()]
+            || { '0': 'مشرف', '1': 'محفظ', '2': 'طالب', '3': 'ولي أمر' }[key]
+            || 'طالب';
+    }
 
     async function fetchUsers(page) {
         if (page) usersPage = page;
@@ -48,12 +57,10 @@
         if (wrap) wrap.style.display = 'block';
         if (empty) empty.style.display = 'none';
 
-        const roleLabels = { Admin: 'مشرف', Teacher: 'محفظ', Student: 'طالب', Parent: 'ولي أمر' };
-
         tbody.innerHTML = items.map(u => `
             <tr>
                 <td><strong>${U().escapeHtml(u.fullName)}</strong></td>
-                <td>${roleLabels[u.role] || u.role}</td>
+                <td>${roleAr(u.role)}</td>
                 <td dir="ltr">${U().escapeHtml(u.phone)}</td>
                 <td>${u.lastLoginAt ? U().formatDateTimeEnGb(u.lastLoginAt) : '—'}</td>
                 <td><span class="status-badge ${u.isActive ? 'status-present' : 'status-absent'}">${u.isActive ? 'نشط' : 'معطّل'}</span></td>
@@ -96,7 +103,7 @@
             const u = await global.apiFetch(`/users/${id}`);
             global.setModalBody('userDetailBody', `
                 <p><strong>الاسم:</strong> ${U().escapeHtml(u.fullName)}</p>
-                <p><strong>الدور:</strong> ${U().escapeHtml(u.role)}</p>
+                <p><strong>الدور:</strong> ${roleAr(u.role)}</p>
                 <p><strong>الهاتف:</strong> <span dir="ltr">${U().escapeHtml(u.phone)}</span></p>
                 <p><strong>البريد:</strong> ${U().escapeHtml(u.email || '—')}</p>
                 <p><strong>آخر دخول:</strong> ${u.lastLoginAt ? U().formatDateTimeEnGb(u.lastLoginAt) : '—'}</p>

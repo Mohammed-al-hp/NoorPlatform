@@ -123,8 +123,10 @@
         const staffMessagesNav = document.getElementById('staffMessagesNav');
         if (staffMessagesNav) staffMessagesNav.style.display = isStaff ? '' : 'none';
 
-        if (staffSection) staffSection.style.display = isStaff ? 'block' : 'none';
+        if (staffSection) staffSection.style.display = isTeacher && !isAdmin ? 'block' : 'none';
         if (adminOnlySection) adminOnlySection.style.display = isAdmin ? 'block' : 'none';
+        const adminOpsSection = document.getElementById('adminOpsSection');
+        if (adminOpsSection) adminOpsSection.style.display = isAdmin ? 'block' : 'none';
         if (isAdmin || isTeacher) {
             if (studentSection) studentSection.style.display = 'none';
             if (parentSection) parentSection.style.display = 'none';

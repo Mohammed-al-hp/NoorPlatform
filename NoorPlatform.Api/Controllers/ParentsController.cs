@@ -75,6 +75,25 @@ public class ParentsController : ControllerBase
         return Ok(new { total, page, pageSize, items });
     }
 
+    [HttpGet("lookup")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> Lookup()
+    {
+        var items = await _context.Parents
+            .AsNoTracking()
+            .Where(p => !p.IsDeleted)
+            .OrderBy(p => p.User.FullName)
+            .Select(p => new
+            {
+                p.Id,
+                fullName = p.User.FullName,
+                phone = AccountProvisioningService.ToDisplayPhone(p.Phone),
+                accountPhone = AccountProvisioningService.ToDisplayPhone(p.User.UserName ?? p.Phone)
+            })
+            .ToListAsync();
+        return Ok(items);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
