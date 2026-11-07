@@ -1,0 +1,67 @@
+name: noor_mobile
+description: "NoorPlatform Mobile - Quran Center Management for Students & Parents"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Networking
+  dio: ^5.4.3
+  connectivity_plus: ^6.0.3
+
+  # Secure Storage
+  flutter_secure_storage: ^9.2.2
+
+  # Offline Cache
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # DI
+  get_it: ^7.7.0
+
+  # UI
+  google_fonts: ^6.2.1
+  fl_chart: ^0.68.0
+  shimmer: ^3.0.0
+  percent_indicator: ^4.2.3
+
+  # PDF / file open
+  path_provider: ^2.1.4
+  open_filex: ^4.5.0
+
+  # Local reminders
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+  flutter_timezone: ^3.0.1
+
+  # Routing
+  go_router: ^14.2.7
+
+  # Utils
+  intl: ^0.20.2
+  json_annotation: ^4.9.0
+  dartz: ^0.10.1
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  json_serializable: ^6.8.0
+  build_runner: ^2.4.13
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/

@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Noor Chrome (localhost API)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define=API_BASE_URL=http://localhost:5032"
+      ]
+    },
+    {
+      "name": "Noor Windows (localhost API)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "windows",
+      "toolArgs": [
+        "--dart-define=API_BASE_URL=http://localhost:5032"
+      ]
+    },
+    {
+      "name": "Noor Android Emulator (host API)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "android",
+      "toolArgs": [
+        "--dart-define=API_BASE_URL=http://10.0.2.2:5032"
+      ]
+    },
+    {
+      "name": "Noor Android Device (LAN API)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "android",
+      "toolArgs": [
+        "--dart-define=API_BASE_URL=http://192.168.1.10:5032"
+      ]
+    }
+  ]
+}
