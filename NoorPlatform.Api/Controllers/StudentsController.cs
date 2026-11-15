@@ -18,11 +18,13 @@ public class StudentsController : ControllerBase
 {
     private readonly NoorDbContext _context;
     private readonly AccountProvisioningService _accounts;
+    private readonly StudentRestorationService _restoration;
 
-    public StudentsController(NoorDbContext context, AccountProvisioningService accounts)
+    public StudentsController(NoorDbContext context, AccountProvisioningService accounts, StudentRestorationService restoration)
     {
         _context = context;
         _accounts = accounts;
+        _restoration = restoration;
     }
 
     // GET /api/students
@@ -171,9 +173,31 @@ public class StudentsController : ControllerBase
                 return Forbid();
         }
 
-        var loginPhone = string.IsNullOrWhiteSpace(request.Phone)
-            ? request.ParentPhone
-            : request.Phone;
+        if (!string.IsNullOrWhiteSpace(request.Phone) && !LibyanPhone.IsValid(request.Phone))
+            return BadRequest(new { message = "رقم هاتف الطالب غير صالح. يجب أن يبدأ بـ 09 ويتكون من 10 أرقام" });
+
+        // ─── عودة الطالب بعد المغادرة: استعادة الحساب المؤرشف بدل إنشاء حساب جديد ───
+        var isAdminUser = User.IsInRole("Admin");
+        if (request.RestoreArchivedStudentId.HasValue)
+        {
+            if (!isAdminUser)
+                return StatusCode(403, new { message = "استعادة الطلاب السابقين متاحة للإدارة فقط" });
+            return await RestoreOnReRegistrationAsync(request.RestoreArchivedStudentId.Value, request, linkingExistingParent);
+        }
+
+        if (!request.IgnoreArchivedMatch)
+        {
+            var parentPhoneForMatch = linkingExistingParent
+                ? await _context.Parents.Where(p => p.Id == request.ParentId!.Value).Select(p => p.Phone).FirstOrDefaultAsync()
+                : request.ParentPhone;
+            var archived = await _restoration.FindArchivedMatchAsync(request.Phone, request.FullName, parentPhoneForMatch);
+            if (archived != null)
+                return ArchivedMatchConflict(archived, isAdminUser);
+        }
+
+        var phoneConflict = await _restoration.GetActivePhoneConflictAsync(request.Phone);
+        if (phoneConflict != null)
+            return BadRequest(new { message = phoneConflict });
 
         await using var tx = await _context.Database.BeginTransactionAsync();
         var (user, tempPassword, err) = string.IsNullOrWhiteSpace(request.Phone)
@@ -267,6 +291,122 @@ public class StudentsController : ControllerBase
                 user.UserName!,
                 AccountProvisioningService.ToDisplayPhone(user.UserName!),
                 tempPassword,
+                UserRole.Student.ToString(),
+                true)
+        });
+    }
+
+    private ObjectResult ArchivedMatchConflict(Student archived, bool canRestore) => Conflict(new
+    {
+        code = StudentRestorationService.ArchivedMatchCode,
+        canRestore,
+        message = canRestore
+            ? "هذا طالب سابق — استعادة بياناته؟"
+            : "هذا طالب سابق مؤرشف. يرجى التواصل مع الإدارة لاستعادة حسابه.",
+        archivedStudent = StudentRestorationService.ToMatchDto(archived)
+    });
+
+    /// <summary>
+    /// يعيد تفعيل طالب مؤرشف ويحدّث بياناته بالبيانات الجديدة مع إبقاء سجلاته التاريخية.
+    /// </summary>
+    private async Task<IActionResult> RestoreOnReRegistrationAsync(int archivedId, CreateStudentRequest request, bool linkingExistingParent)
+    {
+        var student = await _context.Students.IgnoreQueryFilters()
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.Id == archivedId);
+        if (student == null)
+            return NotFound(new { message = "الطالب السابق غير موجود" });
+        if (!student.IsDeleted)
+            return BadRequest(new { message = "هذا الطالب نشط بالفعل ولا يحتاج استعادة" });
+
+        var newPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : AccountProvisioningService.NormalizePhone(request.Phone);
+        var phoneConflict = await _restoration.GetActivePhoneConflictAsync(newPhone, student.UserId);
+        if (phoneConflict != null)
+            return BadRequest(new { message = phoneConflict });
+
+        GuardianRelationship? relationship = student.GuardianRelationship;
+        if (!linkingExistingParent)
+        {
+            if (!Enum.TryParse<GuardianRelationship>(request.GuardianRelationship, true, out var parsed))
+                return BadRequest(new { message = "صلة القرابة غير صالحة" });
+            relationship = parsed;
+        }
+
+        await using var tx = await _context.Database.BeginTransactionAsync();
+
+        Parent? parent;
+        string? parentTempPassword = null;
+        if (linkingExistingParent)
+        {
+            parent = await _context.Parents.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == request.ParentId!.Value);
+        }
+        else
+        {
+            var (p, pPass, pErr) = await _accounts.EnsureParentAsync(request.GuardianName, request.ParentPhone);
+            if (pErr != null)
+                return BadRequest(new { message = pErr });
+            parent = p;
+            parentTempPassword = pPass;
+        }
+
+        // اسم الدخول يتحول إلى رقم الطالب الجديد إن أُدخل (وإلا يبقى كما هو، مثل st123456)
+        if (newPhone != null && student.User.UserName != newPhone)
+        {
+            student.User.UserName = newPhone;
+            student.User.NormalizedUserName = newPhone.ToUpperInvariant();
+            student.User.PhoneNumber = newPhone;
+        }
+
+        student.User.FullName = request.FullName.Trim();
+        student.Level = request.Level ?? student.Level;
+        student.CircleId = request.CircleId;
+        student.DateOfBirth = request.DateOfBirth ?? student.DateOfBirth;
+        student.RegistrationDate = request.RegistrationDate ?? LibyaTime.Today;
+        student.StudentPhone = newPhone ?? student.StudentPhone;
+        student.Residence = string.IsNullOrWhiteSpace(request.Residence) ? student.Residence : request.Residence.Trim();
+        student.GuardianRelationship = relationship;
+        if (parent != null)
+        {
+            student.Parent = parent;
+            student.ParentPhone = parent.Phone;
+            student.GuardianName = linkingExistingParent ? parent.User.FullName : request.GuardianName.Trim();
+        }
+
+        var (tempPassword, rErr) = await _restoration.ReactivateAsync(student, User.FindFirstValue(ClaimTypes.NameIdentifier));
+        if (rErr != null)
+            return BadRequest(new { message = rErr });
+
+        _context.ActivityFeeds.Add(new ActivityFeed
+        {
+            UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            UserName = User.Identity?.Name ?? "Admin",
+            ActivityType = "استعادة طالب",
+            Description = $"عاد الطالب السابق {student.User.FullName} وتمت استعادة بياناته",
+            Icon = "🔄",
+            Color = "text-green-500"
+        });
+
+        await _context.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        return Ok(new
+        {
+            message = "تمت استعادة الطالب السابق وتحديث بياناته مع الإبقاء على سجلاته السابقة",
+            restored = true,
+            studentId = student.Id,
+            userId = student.UserId,
+            parentCredentials = (parentTempPassword == null || parent == null) ? null : new AccountCredentialsDto(
+                parent.User.FullName,
+                parent.User.UserName!,
+                AccountProvisioningService.ToDisplayPhone(parent.User.UserName!),
+                parentTempPassword,
+                UserRole.Parent.ToString(),
+                true),
+            credentials = new AccountCredentialsDto(
+                student.User.FullName,
+                student.User.UserName!,
+                AccountProvisioningService.ToDisplayPhone(student.User.UserName!),
+                tempPassword!,
                 UserRole.Student.ToString(),
                 true)
         });
@@ -451,6 +591,12 @@ public class CreateStudentRequest
     public string? Level { get; set; }
     public int? CircleId { get; set; }
     public int? ParentId { get; set; }
+
+    /// <summary>عند تأكيد الأدمن: معرّف الطالب المؤرشف الذي يُستعاد بدل إنشاء طالب جديد.</summary>
+    public int? RestoreArchivedStudentId { get; set; }
+
+    /// <summary>تجاهل التطابق مع طالب سابق وإنشاء طالب جديد (عند تشابه الاسم فقط).</summary>
+    public bool IgnoreArchivedMatch { get; set; }
 }
 
 public class UpdateStudentRequest

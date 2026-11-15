@@ -1,3 +1,4 @@
+import 'monthly_hifz_rating_model.dart';
 // ── Safe type converters ──
 int _toInt(dynamic v) {
   if (v == null) return 0;
@@ -36,6 +37,7 @@ class StudentSummaryModel {
   final List<RecentGrade> recentGrades;
   final List<RecentHifz> recentHifz;
   final List<TeacherNote> teacherNotes;
+  final MonthlyHifzRatingModel? monthlyHifzRating;
 
   const StudentSummaryModel({
     required this.id,
@@ -57,6 +59,7 @@ class StudentSummaryModel {
     required this.recentGrades,
     required this.recentHifz,
     required this.teacherNotes,
+    this.monthlyHifzRating,
   });
 
   List<String> get badgeList =>
@@ -99,6 +102,7 @@ class StudentSummaryModel {
               ?.map((e) => TeacherNote.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      monthlyHifzRating: MonthlyHifzRatingModel.tryParse(json['monthlyHifzRating']),
     );
   }
 
@@ -122,6 +126,7 @@ class StudentSummaryModel {
         'recentGrades': recentGrades.map((e) => e.toJson()).toList(),
         'recentHifz': recentHifz.map((e) => e.toJson()).toList(),
         'teacherNotes': teacherNotes.map((e) => e.toJson()).toList(),
+        'monthlyHifzRating': monthlyHifzRating?.toJson(),
       };
 }
 

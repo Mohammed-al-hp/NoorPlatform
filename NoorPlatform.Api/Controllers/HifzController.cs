@@ -15,10 +15,76 @@ namespace NoorPlatform.Api.Controllers;
 public class HifzController : ControllerBase
 {
     private readonly NoorDbContext _context;
+    private readonly MonthlyHifzRatingService _monthlyRating;
 
-    public HifzController(NoorDbContext context)
+    public HifzController(NoorDbContext context, MonthlyHifzRatingService monthlyRating)
     {
         _context = context;
+        _monthlyRating = monthlyRating;
+    }
+
+    // GET /api/hifz/monthly-rating/my?year=&month= — تقييم الطالب الشهري بحسب جلسات الحفظ الجديد الناجحة
+    [HttpGet("monthly-rating/my")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> GetMyMonthlyRating([FromQuery] int? year, [FromQuery] int? month)
+    {
+        var userId = AuthorizationHelpers.GetUserId(User);
+        var studentId = await _context.Students.Where(s => s.UserId == userId).Select(s => (int?)s.Id).FirstOrDefaultAsync();
+        if (studentId == null)
+            return NotFound(new { message = "لم يُعثر على بيانات الطالب" });
+        return await MonthlyRatingFor(studentId.Value, year, month);
+    }
+
+    // GET /api/hifz/monthly-rating/{studentId}?year=&month=
+    [HttpGet("monthly-rating/{studentId:int}")]
+    public async Task<IActionResult> GetMonthlyRating(int studentId, [FromQuery] int? year, [FromQuery] int? month)
+    {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
+            return Forbid();
+        return await MonthlyRatingFor(studentId, year, month);
+    }
+
+    private async Task<IActionResult> MonthlyRatingFor(int studentId, int? year, int? month)
+    {
+        var (y, m) = MonthlyHifzRatingService.ResolveMonth(year, month);
+        var r = await _monthlyRating.GetForStudentAsync(studentId, y, m);
+        return r == null
+            ? NotFound(new { message = "الطالب غير موجود" })
+            : Ok(MonthlyHifzRatingService.ToDto(r));
+    }
+
+    // GET /api/hifz/monthly-ratings?year=&month=&circleId= — تقرير المحفظ/الأدمن (المحفظ يرى طلابه فقط)
+    [HttpGet("monthly-ratings")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GetMonthlyRatings([FromQuery] int? year, [FromQuery] int? month, [FromQuery] int? circleId)
+    {
+        var (y, m) = MonthlyHifzRatingService.ResolveMonth(year, month);
+        var query = StudentQueryHelper.ScopeForUser(_context, User);
+        if (circleId.HasValue)
+            query = query.Where(s => s.CircleId == circleId || s.ExtraEnrollments.Any(e => e.CircleId == circleId));
+
+        var students = await query
+            .Select(s => new { s.Id, fullName = s.User.FullName, circleName = s.Circle != null ? s.Circle.Name : "بدون حلقة" })
+            .OrderBy(s => s.fullName)
+            .ToListAsync();
+
+        var ratings = await _monthlyRating.GetForStudentsAsync(students.Select(s => s.Id), y, m);
+        var cfg = await _monthlyRating.GetConfigAsync();
+
+        return Ok(new
+        {
+            year = y,
+            month = m,
+            passingEvaluations = cfg.PassingEvaluations,
+            targets = new { age5To7 = cfg.TargetAge5To7, age8To10 = cfg.TargetAge8To10, age11Plus = cfg.TargetAge11Plus },
+            items = students.Select(s => new
+            {
+                studentId = s.Id,
+                s.fullName,
+                s.circleName,
+                rating = ratings.TryGetValue(s.Id, out var r) ? MonthlyHifzRatingService.ToDto(r) : null
+            })
+        });
     }
 
     // GET /api/hifz/student/{studentId}

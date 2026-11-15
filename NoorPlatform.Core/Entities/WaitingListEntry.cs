@@ -4,7 +4,8 @@ public class WaitingListEntry
 {
     public int Id { get; set; }
     public string FullName { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
+    /// <summary>هاتف الطالب — اختياري (كثير من الطلاب الصغار لا يملكون هاتفاً).</summary>
+    public string? Phone { get; set; }
     public string ParentName { get; set; } = string.Empty;
     public string ParentPhone { get; set; } = string.Empty;
     public int? Age { get; set; }

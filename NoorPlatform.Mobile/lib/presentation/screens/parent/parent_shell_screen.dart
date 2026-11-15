@@ -12,6 +12,7 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../blocs/notifications/notifications_cubit.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/monthly_rating_card.dart';
 import 'parent_fees_screen.dart';
 import 'parent_messages_screen.dart';
 import 'parent_more_screen.dart';
@@ -242,8 +243,21 @@ class _ChildCard extends StatelessWidget {
                   icon: Icons.star,
                   color: NoorTheme.accentGold,
                 ),
+                if (child.monthlyHifzRating != null)
+                  StatChip(
+                    label: 'تقييم الشهر (${child.monthlyHifzRating!.successfulSessions}/${child.monthlyHifzRating!.target})',
+                    value: '${formatScore(child.monthlyHifzRating!.score)}/10',
+                    icon: Icons.workspace_premium,
+                    color: scoreColor(child.monthlyHifzRating!.score),
+                  ),
               ],
             ),
+            if (child.monthlyHifzRating?.warning != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('⚠ ${child.monthlyHifzRating!.warning}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: NoorTheme.warning)),
+              ),
             if (child.badgeList.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(

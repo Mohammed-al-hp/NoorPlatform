@@ -41,6 +41,14 @@ builder.Services.Configure<IISServerOptions>(options =>
 });
 
 builder.Services.AddScoped<AccountProvisioningService>();
+builder.Services.AddScoped<StudentRestorationService>();
+builder.Services.AddScoped<MonthlyHifzRatingService>();
+
+// رموز التحقق لاستعادة كلمة المرور — في الذاكرة فقط (بدون جداول إضافية)
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<OtpService>();
+builder.Services.AddSingleton<IOtpSender, WhatsAppOtpSender>(); // للتبديل إلى SMS: سجّل تطبيقاً آخر لـ IOtpSender
 
 // إعدادات واتساب — تُقرأ مرة واحدة عبر IOptions لتجنب تسرب التوكن في Memory traces
 builder.Services.Configure<NoorPlatform.Api.Services.WhatsAppSettings>(
@@ -71,6 +79,18 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("login", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+    // طلب رمز OTP: حد لكل IP (حد كل رقم يُطبَّق داخل OtpService)
+    o.AddPolicy("otp-request", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(15) }));
+    o.AddPolicy("otp-verify", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(15) }));
+    o.OnRejected = async (ctx, ct) =>
+    {
+        ctx.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        await ctx.HttpContext.Response.WriteAsJsonAsync(new { message = "طلبات كثيرة جداً. يرجى المحاولة بعد قليل." }, ct);
+    };
 });
 // Health Checks
 builder.Services.AddHealthChecks()

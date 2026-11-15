@@ -71,4 +71,54 @@ class ApiConfig {
       '/api/oral-exams/student/$studentId';
 
   static const String health = '/api/health';
+
+  // ── استعادة كلمة المرور (OTP) ──
+  static const String forgotPassword = '/api/auth/forgot-password';
+  static const String verifyOtp = '/api/auth/verify-otp';
+  static const String resetPassword = '/api/auth/reset-password';
+
+  // ── التقييم الشهري للحفظ الجديد ──
+  static const String myMonthlyRating = '/api/hifz/monthly-rating/my';
+  static String studentMonthlyRating(int studentId) =>
+      '/api/hifz/monthly-rating/$studentId';
+  static const String monthlyRatings = '/api/hifz/monthly-ratings';
+
+  // ── المحفّظ (نفس endpoints واجهة الويب) ──
+  static const String dashboardStats = '/api/dashboard/stats';
+  static const String dashboardActivities = '/api/dashboard/activities';
+  static const String dashboardLeaderboard = '/api/dashboard/leaderboard';
+  static const String circles = '/api/circles';
+  static String circle(int id) => '/api/circles/$id';
+  static String attendanceByCircle(int circleId) => '/api/attendance/circle/$circleId';
+  static const String attendanceBulk = '/api/attendance/bulk';
+  static const String notifyAbsence = '/api/notifications/absence';
+  static const String notifyBulkAbsence = '/api/notifications/bulk-absence';
+  static const String notifyHifzPraise = '/api/notifications/hifz-praise';
+  static const String students = '/api/students';
+  static String student(int id) => '/api/students/$id';
+  static const String parentsLookup = '/api/parents/lookup';
+  static const String waitingList = '/api/waiting-list';
+  static String waitingEntry(int id) => '/api/waiting-list/$id';
+  static const String hifz = '/api/hifz';
+  static String hifzRecord(int id) => '/api/hifz/$id';
+  static const String hifzRecent = '/api/hifz/recent';
+  static String hifzLastPosition(int studentId) => '/api/hifz/last-position/$studentId';
+  static const String oralExams = '/api/oral-exams';
+  static const String gradingDefaults = '/api/pedagogical/grading-defaults';
+  static const String matns = '/api/matns';
+  static const String matnRecords = '/api/pedagogical/matn';
+  static String matnRecord(int id) => '/api/pedagogical/matn/$id';
+  static const String monthlyTargetsBase = '/api/pedagogical/monthly-targets';
+  static const String monthlyTargetsSync = '/api/pedagogical/monthly-targets/sync-from-oral';
+  static const String periods = '/api/pedagogical/periods';
+  static String periodEvaluations(int id) => '/api/pedagogical/periods/$id/evaluations';
+  static String periodAutoDraft(int id, int studentId) =>
+      '/api/pedagogical/periods/$id/auto-draft/$studentId';
+  static const String dress = '/api/pedagogical/dress';
+  static const String dressBulk = '/api/pedagogical/dress/bulk';
+  static String prayerOverride(int id) => '/api/pedagogical/prayer/$id/override';
+  static const String messagesInbox = '/api/messages/inbox';
+  static String messageRead(int id) => '/api/messages/$id/read';
+  static const String libraryUpload = '/api/library/upload';
+  static String libraryItem(int id) => '/api/library/$id';
 }

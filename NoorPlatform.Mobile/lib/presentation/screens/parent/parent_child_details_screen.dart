@@ -50,7 +50,7 @@ class _ParentChildDetailsScreenState extends State<ParentChildDetailsScreen>
           controller: _tabs,
           tabs: const [
             Tab(text: 'الحضور'),
-            Tab(text: 'التسميع'),
+            Tab(text: 'الحفظ والمراجعة'),
             Tab(text: 'الصلاة'),
           ],
         ),

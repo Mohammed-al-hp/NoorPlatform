@@ -5,6 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/change_password_screen.dart';
+import 'presentation/screens/auth/forgot_password_screen.dart';
+import 'presentation/screens/teacher/teacher_shell_screen.dart';
+import 'presentation/screens/teacher/teacher_students_screens.dart';
+import 'presentation/screens/teacher/teacher_hifz_screens.dart';
+import 'presentation/screens/teacher/teacher_pedagogical_screens.dart';
+import 'presentation/screens/teacher/teacher_misc_screens.dart';
 import 'presentation/screens/student/student_shell_screen.dart';
 import 'presentation/screens/student/attendance_screen.dart';
 import 'presentation/screens/parent/parent_shell_screen.dart';
@@ -46,7 +52,14 @@ class AppRouter {
 
   AppRouter(this.secureStorage);
 
-  static const _validRoles = {'Student', 'Parent'};
+  static const _validRoles = {'Student', 'Parent', 'Teacher'};
+
+  /// الصفحة الرئيسية لكل دور.
+  static String homeFor(String role) => switch (role) {
+        'Student' => '/student',
+        'Parent' => '/parent',
+        _ => '/teacher',
+      };
 
   late final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -55,6 +68,7 @@ class AppRouter {
     redirect: (context, state) async {
       final loc = state.matchedLocation;
       final isLoggingIn = loc == '/login';
+      final isForgot = loc == '/forgot-password';
       final isSplash = loc == '/';
       final isChangePassword = loc.startsWith('/change-password');
 
@@ -65,7 +79,7 @@ class AppRouter {
       final mustChange = await secureStorage.getMustChangePassword();
 
       if (!hasToken || user == null) {
-        return isLoggingIn ? null : '/login';
+        return (isLoggingIn || isForgot) ? null : '/login';
       }
 
       final role = user['role'] as String?;
@@ -78,21 +92,70 @@ class AppRouter {
         return '/change-password?forced=true';
       }
 
-      if (isLoggingIn) {
+      if (isLoggingIn || isForgot) {
         if (mustChange) return '/change-password?forced=true';
-        return role == 'Student' ? '/student' : '/parent';
+        return homeFor(role);
       }
 
-      final isStudentRoute = loc.startsWith('/student');
-      final isParentRoute = loc.startsWith('/parent');
-      if (isStudentRoute && role != 'Student') return '/parent';
-      if (isParentRoute && role != 'Parent') return '/student';
+      // حماية المسارات بالدور: /student للطالب، /parent لولي الأمر، /teacher للمحفّظ
+      final routeRole = loc.startsWith('/student')
+          ? 'Student'
+          : loc.startsWith('/parent')
+              ? 'Parent'
+              : loc.startsWith('/teacher')
+                  ? 'Teacher'
+                  : null;
+      if (routeRole != null && routeRole != role) return homeFor(role);
 
       return null;
     },
     routes: [
       GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
+
+      // Teacher (المحفّظ)
+      GoRoute(path: '/teacher', builder: (_, __) => const TeacherShellScreen()),
+      GoRoute(
+        path: '/teacher/student/:id',
+        builder: (_, state) =>
+            TeacherStudentDetailsScreen(studentId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/teacher/student/:id/hifz',
+        builder: (_, state) =>
+            HifzLogScreen(studentId: int.parse(state.pathParameters['id']!), isMine: false),
+      ),
+      GoRoute(
+        path: '/teacher/student/:id/quran-map',
+        builder: (_, state) =>
+            QuranMapScreen(studentId: int.parse(state.pathParameters['id']!), isMine: false),
+      ),
+      GoRoute(
+        path: '/teacher/student/:id/exams',
+        builder: (_, state) => OralExamsScreen(studentId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/teacher/hifz/new',
+        builder: (_, state) => HifzSessionFormScreen(
+          studentId: int.tryParse(state.uri.queryParameters['studentId'] ?? ''),
+        ),
+      ),
+      GoRoute(
+        path: '/teacher/monthly-ratings',
+        builder: (_, __) => const MonthlyRatingsReportScreen(),
+      ),
+      GoRoute(
+        path: '/teacher/evaluation',
+        builder: (_, state) => TeacherEvaluationScreen(
+          initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0,
+          studentId: int.tryParse(state.uri.queryParameters['studentId'] ?? ''),
+        ),
+      ),
+      GoRoute(path: '/teacher/messages', builder: (_, __) => const TeacherInboxScreen()),
+      GoRoute(path: '/teacher/announcements', builder: (_, __) => const TeacherAnnouncementsScreen()),
+      GoRoute(path: '/teacher/library', builder: (_, __) => const TeacherLibraryScreen()),
+      GoRoute(path: '/teacher/settings', builder: (_, __) => const SettingsScreen()),
       GoRoute(
         path: '/change-password',
         builder: (context, state) {

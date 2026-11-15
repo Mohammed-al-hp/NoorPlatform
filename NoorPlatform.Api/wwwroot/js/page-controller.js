@@ -63,6 +63,7 @@
             if (typeof fetchAttendanceForDate === 'function') fetchAttendanceForDate();
         }
         if (page === 'memorization' && typeof fetchMemorizationData === 'function') fetchMemorizationData();
+        if (page === 'memorization') global.NoorMonthlyRating?.initReport();
         if (page === 'library' && typeof fetchLibraryItems === 'function') fetchLibraryItems();
         if (page === 'evaluation' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('matn');
         if (page === 'myPrayer' && typeof fetchPedagogicalPage === 'function') fetchPedagogicalPage('prayer');
@@ -234,6 +235,58 @@
         } catch (err) { showToast(err.message, 'error'); }
     }
 
+    /**
+     * نافذة "هذا طالب سابق — استعادة بياناته؟" — تعيد 'restore' أو 'new' أو null (إلغاء).
+     * تُنشأ ديناميكياً فوق النافذة الحالية.
+     */
+    function promptArchivedStudent(data) {
+        return new Promise(resolve => {
+            const s = data.archivedStudent || {};
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay open';
+            overlay.style.zIndex = '1200';
+            overlay.innerHTML = `
+                <div class="modal" style="max-width:440px" role="dialog" aria-modal="true">
+                    <div class="modal-header"><h3>${global.Icon ? global.Icon('refresh-cw', { size: 18 }) : ''} طالب سابق</h3></div>
+                    <div class="modal-body">
+                        <p style="font-weight:700;margin-bottom:10px">${escapeHtml(data.message || 'هذا طالب سابق — استعادة بياناته؟')}</p>
+                        <p><strong>الاسم:</strong> ${escapeHtml(s.fullName || '—')}</p>
+                        <p><strong>اسم الدخول:</strong> <code>${escapeHtml(s.displayPhone || '—')}</code></p>
+                        <p><strong>الحلقة السابقة:</strong> ${escapeHtml(s.circleName || '—')} · <strong>النقاط:</strong> ${escapeHtml(String(s.points ?? 0))}</p>
+                        <p style="font-size:12px;color:var(--text-muted);margin-top:10px">الاستعادة تعيد تفعيل حسابه نفسه مع سجلات الحفظ والحضور والنقاط، وتُحدّث بياناته بما أدخلته الآن، وتُولّد كلمة مرور مؤقتة جديدة.</p>
+                    </div>
+                    <div class="modal-footer" style="display:flex;gap:8px;flex-wrap:wrap">
+                        ${data.canRestore ? '<button type="button" class="btn btn-primary" data-act="restore">استعادة بياناته</button>' : ''}
+                        ${data.canRestore ? '<button type="button" class="btn btn-outline" data-act="new">طالب مختلف — إنشاء جديد</button>' : ''}
+                        <button type="button" class="btn btn-outline" data-act="cancel">${data.canRestore ? 'إلغاء' : 'حسناً'}</button>
+                    </div>
+                </div>`;
+            overlay.addEventListener('click', (ev) => {
+                const act = ev.target.closest('[data-act]')?.dataset.act;
+                if (!act && ev.target !== overlay) return;
+                overlay.remove();
+                resolve(act === 'restore' || act === 'new' ? act : null);
+            });
+            document.body.appendChild(overlay);
+            overlay.querySelector('[data-act]')?.focus();
+        });
+    }
+
+    /** يرسل الطلب، وعند اكتشاف طالب سابق يسأل الأدمن ثم يعيد الإرسال بالقرار. */
+    async function submitWithArchivedCheck(submit) {
+        try {
+            return await submit();
+        } catch (err) {
+            if (err.status !== 409 || err.data?.code !== 'ARCHIVED_STUDENT_FOUND') throw err;
+            const choice = await promptArchivedStudent(err.data);
+            if (!choice) return null;
+            return await submit(choice === 'restore'
+                ? { restoreArchivedStudentId: err.data.archivedStudent.id }
+                : { ignoreArchivedMatch: true });
+        }
+    }
+    global.submitWithArchivedCheck = submitWithArchivedCheck;
+
     async function saveStudent() {
         const modal = document.getElementById('addStudentModal');
         const fullName = modal.querySelector('#studentFullName')?.value.trim() || '';
@@ -259,8 +312,8 @@
         }
 
         showToast('جاري حفظ البيانات...', 'info');
-        try {
-            const data = await apiFetch('/students', 'POST', {
+        const submit = (extra) => apiFetch('/students', 'POST', {
+                ...(extra || {}),
                 fullName,
                 phone: phone || null,
                 parentId: existingParentId ? parseInt(existingParentId, 10) : null,
@@ -273,8 +326,11 @@
                 circleId: parseInt(halaqa, 10) || null,
                 level: level || null
             });
+        try {
+            const data = await submitWithArchivedCheck(submit);
+            if (!data) return; // أُلغيت العملية من نافذة "طالب سابق"
             closeModal('addStudentModal');
-            showToast('تم إضافة الطالب بنجاح', 'success');
+            showToast(data.restored ? data.message : 'تم إضافة الطالب بنجاح', 'success');
             if (data.credentials) showAccountCredentialsModal(data.credentials, parentPhone);
             const pc = data.parentCredentials;
             const credBody = document.getElementById('accountCredentialsBody');

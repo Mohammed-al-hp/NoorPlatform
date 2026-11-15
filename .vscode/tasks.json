@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-api",
+      "detail": "بناء NoorPlatform.Api (net9.0) قبل التشغيل",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/NoorPlatform.Api/NoorPlatform.Api.csproj",
+        "-c",
+        "Debug",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "flutter-pub-get",
+      "detail": "جلب حزم تطبيق الهاتف",
+      "type": "shell",
+      "command": "flutter pub get",
+      "options": {
+        "cwd": "${workspaceFolder}/NoorPlatform.Mobile"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Noor API (http://localhost:5032)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-api",
+      "program": "${workspaceFolder}/NoorPlatform.Api/bin/Debug/net9.0/NoorPlatform.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/NoorPlatform.Api",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://0.0.0.0:5032"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+https?://\\S+",
+        "uriFormat": "http://localhost:5032/index.html"
+      }
+    },
+    {
+      "name": "Noor Mobile (Chrome → localhost:5032)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/NoorPlatform.Mobile",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define=API_BASE_URL=http://localhost:5032"
+      ]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Noor: API + Mobile (Chrome)",
+      "configurations": [
+        "Noor API (http://localhost:5032)",
+        "Noor Mobile (Chrome → localhost:5032)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

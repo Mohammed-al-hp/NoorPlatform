@@ -54,7 +54,11 @@ public class SettingsController : ControllerBase
                 evaluationsVisibleToStudentsAndParents = true,
                 pointsAttendancePresent = 10,
                 pointsHifzMemorization = 50,
-                pointsHifzRevision = 20
+                pointsHifzRevision = 20,
+                hifzRatingTargetAge5To7 = 4,
+                hifzRatingTargetAge8To10 = 6,
+                hifzRatingTargetAge11Plus = 8,
+                hifzRatingPassingEvaluations = "ممتاز,جيد جداً,جيد,ضعيف"
             });
         }
         if (settings.ProgressThreshold10 <= 0)
@@ -96,7 +100,11 @@ public class SettingsController : ControllerBase
             settings.EvaluationsVisibleToStudentsAndParents,
             settings.PointsAttendancePresent,
             settings.PointsHifzMemorization,
-            settings.PointsHifzRevision
+            settings.PointsHifzRevision,
+            settings.HifzRatingTargetAge5To7,
+            settings.HifzRatingTargetAge8To10,
+            settings.HifzRatingTargetAge11Plus,
+            settings.HifzRatingPassingEvaluations
         });
     }
 
@@ -162,6 +170,21 @@ public class SettingsController : ControllerBase
             settings.PointsHifzMemorization = Math.Max(0, request.PointsHifzMemorization.Value);
         if (request.PointsHifzRevision.HasValue)
             settings.PointsHifzRevision = Math.Max(0, request.PointsHifzRevision.Value);
+        if (request.HifzRatingTargetAge5To7.HasValue)
+            settings.HifzRatingTargetAge5To7 = Math.Clamp(request.HifzRatingTargetAge5To7.Value, 1, 60);
+        if (request.HifzRatingTargetAge8To10.HasValue)
+            settings.HifzRatingTargetAge8To10 = Math.Clamp(request.HifzRatingTargetAge8To10.Value, 1, 60);
+        if (request.HifzRatingTargetAge11Plus.HasValue)
+            settings.HifzRatingTargetAge11Plus = Math.Clamp(request.HifzRatingTargetAge11Plus.Value, 1, 60);
+        if (request.HifzRatingPassingEvaluations != null)
+        {
+            var passing = string.Join(",", request.HifzRatingPassingEvaluations
+                .Split(new[] { ',', '،' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct());
+            if (passing.Length == 0)
+                return BadRequest(new { message = "حدد تقييماً واحداً على الأقل يُعدّ ناجحاً" });
+            settings.HifzRatingPassingEvaluations = passing;
+        }
         settings.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -232,4 +255,8 @@ public class UpdateSettingsRequest
     public int? PointsAttendancePresent { get; set; }
     public int? PointsHifzMemorization { get; set; }
     public int? PointsHifzRevision { get; set; }
+    public int? HifzRatingTargetAge5To7 { get; set; }
+    public int? HifzRatingTargetAge8To10 { get; set; }
+    public int? HifzRatingTargetAge11Plus { get; set; }
+    public string? HifzRatingPassingEvaluations { get; set; }
 }

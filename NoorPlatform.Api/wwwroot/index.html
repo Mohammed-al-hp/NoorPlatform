@@ -33,7 +33,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css?v=2">
 </head>
 
 <body>
@@ -172,7 +172,7 @@
                 </div>
                 <div class="nav-item" onclick="navigate('memorization', this)">
                     <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
-                    <span>الحفظ والتسميع</span>
+                    <span>تقدم الحفظ والمراجعة</span>
                 </div>
                 <div class="nav-item" onclick="navigate('evaluation', this)">
                     <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
@@ -671,7 +671,7 @@
         <div class="content" id="page-memorization">
             <div class="page-header">
                 <div>
-                    <h2>الحفظ والتسميع</h2>
+                    <h2>تقدم الحفظ والمراجعة</h2>
                     <p>متابعة تقدم الطلاب في حفظ القرآن الكريم</p>
                 </div>
                 <div style="display:flex; gap:10px;">
@@ -729,6 +729,30 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- تقرير التقييم الشهري بحسب جلسات الحفظ الجديد الناجحة (المحفظ: طلابه فقط) -->
+            <div class="table-card" style="margin-top:20px">
+                <div class="card-header" style="flex-wrap:wrap;gap:10px">
+                    <div>
+                        <h3><span data-icon="award" data-icon-size="16"></span> التقييم الشهري للحفظ الجديد</h3>
+                        <p id="monthlyRatingMeta" style="font-size:12px;color:var(--text-muted)"></p>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <input type="month" id="monthlyRatingMonth" class="filter-select" onchange="NoorMonthlyRating.loadReport()" aria-label="الشهر">
+                        <select id="monthlyRatingCircle" class="filter-select" onchange="NoorMonthlyRating.loadReport()" aria-label="الحلقة">
+                            <option value="">كل الحلقات</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr><th>الطالب</th><th>العمر</th><th>الناجحة / الهدف</th><th>كل جلسات الحفظ</th><th>التقييم</th></tr>
+                        </thead>
+                        <tbody id="monthlyRatingBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -862,6 +886,8 @@
                     <div class="hero-badges" id="studentHeroBadges"></div>
                 </div>
             </div>
+
+            <div id="studentMonthlyRating" style="display:none;margin-bottom:20px"></div>
 
             <!-- لوحة تحفيز الطالب — استبدال الكروت القديمة -->
             <div id="studentGamificationDash" style="display:flex; flex-direction:column; gap:20px; margin-bottom:24px;">
@@ -1354,6 +1380,32 @@
                     </div>
                 </div>
 
+                <!-- التقييم الشهري بحسب جلسات الحفظ الجديد الناجحة -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+                    <h3 style="font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                        <span data-icon="award" data-icon-size="20"></span> التقييم الشهري للحفظ الجديد
+                    </h3>
+                    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">عدد جلسات الحفظ الجديد الناجحة في الشهر اللازم للحصول على 10/10 حسب عمر الطالب. الدرجة = العدد ÷ الهدف × 10 (بحد أقصى 10).</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">5–7 سنوات (وغير المعروف)</label>
+                            <input type="number" id="settingsHifzTarget5To7" class="form-input" min="1" max="60" value="4">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">8–10 سنوات</label>
+                            <input type="number" id="settingsHifzTarget8To10" class="form-input" min="1" max="60" value="6">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">11 فأكثر</label>
+                            <input type="number" id="settingsHifzTarget11Plus" class="form-input" min="1" max="60" value="8">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">التقييمات التي تُعدّ الجلسة بها ناجحة (مفصولة بفاصلة)</label>
+                        <input type="text" id="settingsHifzPassingEvals" class="form-input" value="ممتاز,جيد جداً,جيد,ضعيف">
+                    </div>
+                </div>
+
                 <!-- 3. إعدادات المالية -->
                 <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
                     <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
@@ -1472,7 +1524,7 @@
                         </label>
                         <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
                             <input type="checkbox" id="prefNotifHifz" checked onchange="NoorDashboard.savePref('notifHifz', this.checked)">
-                            <span>إشعارات الحفظ والتسميع</span>
+                            <span>إشعارات تقدم الحفظ والمراجعة</span>
                         </label>
                         <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
                             <input type="checkbox" id="prefNotifPayments" checked onchange="NoorDashboard.savePref('notifPayments', this.checked)">
@@ -1583,7 +1635,7 @@
                 </div>
                 <div class="bottom-nav-item" onclick="navBottom('memorization', this)">
                     <span class="bnav-icon" data-icon="book-open" data-icon-size="20"></span>
-                    <span>التسميع</span>
+                    <span>تقدم الحفظ</span>
                 </div>
                 <div class="bottom-nav-item" onclick="navBottom('announcements', this)">
                     <span class="bnav-icon" data-icon="megaphone" data-icon-size="20"></span>
@@ -2562,13 +2614,52 @@
             <div class="modal" onclick="event.stopPropagation()">
                 <div class="modal-header">
                     <h3><span data-icon="help-circle" data-icon-size="18"></span> استرجاع كلمة المرور</h3>
+                    <button class="close-modal" type="button" onclick="closeModal('forgotPasswordModal')" aria-label="إغلاق">×</button>
                 </div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted)">لا يمكن استرجاع كلمة المرور تلقائياً. يرجى التواصل مع مدير المنصة وسيقوم بإعادة تعيينها لك.</p>
-                    <p id="forgotPasswordContact" style="font-weight:600; margin-top:12px"></p>
+                    <p id="fpStepLabel" style="font-size:12px;color:var(--text-muted);margin-bottom:10px">الخطوة 1 من 3</p>
+                    <div id="fpError" role="alert" style="display:none" class="modal-inline-alert"></div>
+                    <div id="fpInfo" style="display:none;margin-bottom:12px;font-size:13px;color:var(--green-dark)"></div>
+
+                    <!-- الخطوة 1: رقم الهاتف -->
+                    <form id="fpStep1" onsubmit="event.preventDefault(); fpRequestCode()">
+                        <div class="form-group">
+                            <label>رقم الهاتف المسجّل</label>
+                            <input type="tel" id="fpPhone" class="form-control" placeholder="09xxxxxxxx" inputmode="numeric" autocomplete="tel" dir="ltr">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">إرسال رمز التحقق عبر واتساب</button>
+                    </form>
+
+                    <!-- الخطوة 2: رمز التحقق -->
+                    <form id="fpStep2" style="display:none" onsubmit="event.preventDefault(); fpVerifyCode()">
+                        <div class="form-group">
+                            <label>رمز التحقق (6 أرقام)</label>
+                            <input type="text" id="fpCode" class="form-control" maxlength="6" inputmode="numeric" autocomplete="one-time-code" dir="ltr" style="letter-spacing:6px;text-align:center;font-size:20px">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">تحقق</button>
+                        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px">
+                            <a href="#" onclick="event.preventDefault(); fpGoToStep(1)">تغيير الرقم</a>
+                            <button type="button" id="fpResendBtn" class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="fpRequestCode(true)" disabled>إعادة الإرسال</button>
+                        </div>
+                    </form>
+
+                    <!-- الخطوة 3: كلمة المرور الجديدة -->
+                    <form id="fpStep3" style="display:none" onsubmit="event.preventDefault(); fpResetPassword()">
+                        <div class="form-group">
+                            <label>كلمة المرور الجديدة</label>
+                            <input type="password" id="fpNewPassword" class="form-control" autocomplete="new-password" placeholder="8 أحرف على الأقل وتحتوي رقماً">
+                        </div>
+                        <div class="form-group">
+                            <label>تأكيد كلمة المرور</label>
+                            <input type="password" id="fpConfirmPassword" class="form-control" autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">حفظ كلمة المرور</button>
+                    </form>
+
+                    <p id="forgotPasswordContact" style="font-size:12px;color:var(--text-muted);margin-top:16px"></p>
                 </div>
                 <div class="modal-footer" id="forgotPasswordWhatsappBtns" style="display:flex;flex-direction:column;width:100%">
-                    <!-- الأزرار تُنشأ ديناميكياً في auth.js -->
+                    <!-- أزرار التواصل مع الإدارة تُنشأ ديناميكياً في auth.js -->
                 </div>
             </div>
         </div>
@@ -2589,8 +2680,8 @@
                         </div>
                         <div class="form-row" style="display:flex;gap:12px">
                             <div class="form-group" style="flex:1">
-                                <label>هاتف الطالب *</label><input class="form-control"
-                                                                   id="wlPhone" type="tel" required placeholder="09xxxxxxxx">
+                                <label>هاتف الطالب (اختياري)</label><input class="form-control"
+                                                                   id="wlPhone" type="tel" placeholder="09xxxxxxxx">
                             </div>
                             <div class="form-group" style="flex:1">
                                 <label>العمر</label><input class="form-control"
@@ -2601,8 +2692,8 @@
                             <label>اسم ولي الأمر</label><input class="form-control" id="wlParentName">
                         </div>
                         <div class="form-group">
-                            <label>هاتف ولي الأمر</label><input class="form-control" id="wlParentPhone"
-                                                                type="tel" placeholder="09xxxxxxxx">
+                            <label>هاتف ولي الأمر *</label><input class="form-control" id="wlParentPhone"
+                                                                type="tel" required placeholder="09xxxxxxxx">
                         </div>
                         <div class="form-row" style="display:flex;gap:12px">
                             <div class="form-group" style="flex:1">
@@ -2696,8 +2787,8 @@
         <script src="/js/app.js"></script>
         <script src="/js/utils.js"></script>
         <script>if (typeof syncNoorUtils === 'function') syncNoorUtils();</script>
-        <script src="/js/api.js"></script>
-        <script src="/js/ui.js?v=10"></script>
+        <script src="/js/api.js?v=2"></script>
+        <script src="/js/ui.js?v=11"></script>
         <script>
             // شبكة أمان: إن وُجدت الدالة على NoorApp فقط انقلها لـ window (لحماية onclick)
             if (typeof window.toggleSidebar !== 'function' && window.NoorApp?.ui?.toggleSidebar) {
@@ -2706,24 +2797,25 @@
                 window.closeSidebar = window.NoorApp.ui.closeSidebar;
             }
         </script>
-        <script src="/js/modals.js?v=2"></script>
-        <script src="/js/auth.js?v=4"></script>
-        <script src="/js/dashboard.js?v=2"></script>
-        <script src="/js/students.js?v=2"></script>
+        <script src="/js/modals.js?v=3"></script>
+        <script src="/js/auth.js?v=5"></script>
+        <script src="/js/dashboard.js?v=3"></script>
+        <script src="/js/students.js?v=3"></script>
         <script src="/js/attendance.js?v=4"></script>
         <script src="/js/quran-text.js"></script>
         <script src="/js/hifz.js?v=2"></script>
         <script src="/js/parents.js?v=2"></script>
-        <script src="/js/users.js?v=2"></script>
+        <script src="/js/users.js?v=3"></script>
         <script src="/js/messages.js"></script>
 
         <!-- All inline scripts have been extracted into modular JS files -->
         <script src="/js/pedagogical.js?v=1"></script>
         <script src="/js/teachers.js?v=2"></script>
         <script src="/js/reports.js?v=3"></script>
-        <script src="/js/app-ui-extensions.js?v=2"></script>
+        <script src="/js/app-ui-extensions.js?v=3"></script>
         <script src="/js/payments.js?v=3"></script>
-        <script src="/js/page-controller.js?v=3"></script>
+        <script src="/js/monthly-rating.js?v=1"></script>
+        <script src="/js/page-controller.js?v=4"></script>
         <script>
             // مساعد الجدول المرن للحلقات
             function setCircleScheduleType(type, modalId) {

@@ -101,7 +101,7 @@ class StudentMoreScreen extends StatelessWidget {
               ),
               MoreMenuTile(
                 icon: Icons.menu_book_outlined,
-                title: 'سجل التسميع والمراجعة',
+                title: 'تقدم الحفظ والمراجعة',
                 onTap: () => context.push('/student/hifz'),
               ),
               MoreMenuTile(

@@ -115,12 +115,35 @@ public class AccountProvisioningService
         if (string.IsNullOrEmpty(normalized))
             return (null, null, null);
 
+        // يشمل أولياء الأمور المؤرشفين: ولي الأمر العائد يُعاد تفعيله بدل إنشاء حساب مكرر
         var existing = await _context.Parents
+            .IgnoreQueryFilters()
             .Include(p => p.User)
+            .OrderBy(p => p.IsDeleted)
             .FirstOrDefaultAsync(p => p.Phone == normalized || p.User.UserName == normalized);
 
         if (existing != null)
+        {
+            if (existing.IsDeleted || !existing.User.IsActive)
+            {
+                existing.IsDeleted = false;
+                existing.User.IsActive = true;
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = "System",
+                    Action = AuditAction.Update,
+                    EntityName = nameof(Parent),
+                    EntityId = existing.Id.ToString(),
+                    NewValues = "{\"Event\":\"ArchivedParentRestoredOnReRegistration\"}"
+                });
+            }
             return (existing, null, null);
+        }
+
+        // الرقم مستخدم لحساب آخر ليس ولي أمر (مثلاً محفظ أو طالب)
+        var otherUser = await _userManager.FindByNameAsync(normalized);
+        if (otherUser != null)
+            return (null, null, $"رقم ولي الأمر مستخدم لحساب آخر ({otherUser.FullName}). استخدم رقماً مختلفاً.");
 
         var (parentUser, tempPassword, err) = await CreateUserAsync(
             normalized,

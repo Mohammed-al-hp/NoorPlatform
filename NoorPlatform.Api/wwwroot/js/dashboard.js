@@ -303,7 +303,11 @@
                 'settingsWDress': data.weightDress,
                 'settingsPointsAttendance': data.pointsAttendancePresent,
                 'settingsPointsHifzMemorization': data.pointsHifzMemorization,
-                'settingsPointsHifzRevision': data.pointsHifzRevision
+                'settingsPointsHifzRevision': data.pointsHifzRevision,
+                'settingsHifzTarget5To7': data.hifzRatingTargetAge5To7,
+                'settingsHifzTarget8To10': data.hifzRatingTargetAge8To10,
+                'settingsHifzTarget11Plus': data.hifzRatingTargetAge11Plus,
+                'settingsHifzPassingEvals': data.hifzRatingPassingEvaluations
             };
             
             for (const [id, value] of Object.entries(fields)) {
@@ -397,7 +401,11 @@
             evaluationsVisibleToStudentsAndParents: !!document.getElementById('settingsEvalsVisible')?.checked,
             pointsAttendancePresent: getVal('settingsPointsAttendance') ? parseInt(getVal('settingsPointsAttendance'), 10) : 10,
             pointsHifzMemorization: getVal('settingsPointsHifzMemorization') ? parseInt(getVal('settingsPointsHifzMemorization'), 10) : 50,
-            pointsHifzRevision: getVal('settingsPointsHifzRevision') ? parseInt(getVal('settingsPointsHifzRevision'), 10) : 20
+            pointsHifzRevision: getVal('settingsPointsHifzRevision') ? parseInt(getVal('settingsPointsHifzRevision'), 10) : 20,
+            hifzRatingTargetAge5To7: getVal('settingsHifzTarget5To7') ? parseInt(getVal('settingsHifzTarget5To7'), 10) : null,
+            hifzRatingTargetAge8To10: getVal('settingsHifzTarget8To10') ? parseInt(getVal('settingsHifzTarget8To10'), 10) : null,
+            hifzRatingTargetAge11Plus: getVal('settingsHifzTarget11Plus') ? parseInt(getVal('settingsHifzTarget11Plus'), 10) : null,
+            hifzRatingPassingEvaluations: getVal('settingsHifzPassingEvals') || null
         };
 
         if (!payload.centerName) {

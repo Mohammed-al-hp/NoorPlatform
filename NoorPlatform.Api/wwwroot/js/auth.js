@@ -316,17 +316,150 @@
 
         if (contactEl) {
             contactEl.textContent = phones.length
-                ? 'يمكنك التواصل عبر واتساب مع أحد المسؤولين:'
-                : 'يرجى التواصل مع مدير المنصة مباشرة.';
+                ? 'لم يصلك الرمز أو لا تملك رقماً مسجلاً؟ تواصل مع الإدارة عبر واتساب:'
+                : 'لم يصلك الرمز أو لا تملك رقماً مسجلاً؟ تواصل مع مدير المنصة ليعيد تعيين كلمة المرور.';
         }
         if (btnsWrap) {
             btnsWrap.innerHTML = phones.map((phone, idx) => {
                 const digits = phone.replace(/[^0-9]/g, '').replace(/^0/, '218');
                 const label = phones.length > 1 ? `تواصل عبر واتساب (${idx + 1})` : 'تواصل عبر واتساب';
-                return `<button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="window.open('https://wa.me/${digits}','_blank')">${label}</button>`;
+                return `<button type="button" class="btn btn-outline" style="width:100%;margin-bottom:8px" onclick="window.open('https://wa.me/${digits}','_blank')">${label}</button>`;
             }).join('');
         }
+        const loginPhone = document.getElementById('loginPhone')?.value?.trim() || '';
+        const fpPhone = document.getElementById('fpPhone');
+        if (fpPhone && /^[0-9٠-٩]{10}$/.test(loginPhone)) fpPhone.value = loginPhone;
+        fpGoToStep(1);
         ui().openModal('forgotPasswordModal');
+    }
+
+    // ─── استعادة كلمة المرور برمز التحقق (OTP) — 3 خطوات ───
+    let fpTimer = null;
+    const fp = { phone: '', code: '' };
+
+    function fpShowError(msg) {
+        const el = document.getElementById('fpError');
+        if (!el) return ui().showToast(msg, 'error');
+        el.textContent = msg;
+        el.style.display = msg ? 'flex' : 'none';
+        if (msg) el.scrollIntoView({ block: 'nearest' });
+    }
+
+    function fpShowInfo(msg) {
+        const el = document.getElementById('fpInfo');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+    }
+
+    function fpGoToStep(step) {
+        [1, 2, 3].forEach(n => {
+            const f = document.getElementById('fpStep' + n);
+            if (f) f.style.display = n === step ? 'block' : 'none';
+        });
+        const label = document.getElementById('fpStepLabel');
+        if (label) label.textContent = `الخطوة ${step} من 3`;
+        fpShowError('');
+        if (step === 1) fpShowInfo('');
+        const focusId = { 1: 'fpPhone', 2: 'fpCode', 3: 'fpNewPassword' }[step];
+        setTimeout(() => document.getElementById(focusId)?.focus(), 50);
+    }
+
+    function fpStartResendCountdown(seconds) {
+        const btn = document.getElementById('fpResendBtn');
+        if (!btn) return;
+        clearInterval(fpTimer);
+        let left = Math.max(0, seconds | 0);
+        const tick = () => {
+            btn.disabled = left > 0;
+            btn.textContent = left > 0 ? `إعادة الإرسال (${left})` : 'إعادة الإرسال';
+            if (left-- <= 0) clearInterval(fpTimer);
+        };
+        tick();
+        fpTimer = setInterval(tick, 1000);
+    }
+
+    async function fpPost(path, body) {
+        let res;
+        try {
+            res = await fetch(app().state.apiUrl + path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        } catch {
+            throw Object.assign(new Error('لا يوجد اتصال بالإنترنت أو الخادم غير متاح'), { status: 0 });
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw Object.assign(new Error(data.message || 'حدث خطأ، حاول مرة أخرى'), { status: res.status, data });
+        return data;
+    }
+
+    async function fpRequestCode(isResend) {
+        const phone = isResend ? fp.phone : (document.getElementById('fpPhone')?.value || '').trim();
+        const U = global.NoorUtils || {};
+        const valid = typeof U.isValidLibyanPhone === 'function' ? U.isValidLibyanPhone(phone) : /^09\d{8}$/.test(phone);
+        if (!valid) return fpShowError('أدخل رقم هاتف صحيح يبدأ بـ 09 ويتكون من 10 أرقام');
+
+        const btn = isResend ? document.getElementById('fpResendBtn') : document.querySelector('#fpStep1 .btn-primary');
+        if (!isResend) ui().btnLoading(btn, true);
+        try {
+            const data = await fpPost('/auth/forgot-password', { phone });
+            fp.phone = phone;
+            fpGoToStep(2);
+            fpShowInfo(data.message);
+            fpStartResendCountdown(data.resendAfterSeconds || 60);
+        } catch (e) {
+            if (e.status === 429 && e.data?.retryAfterSeconds && fp.phone === phone) {
+                fpGoToStep(2);
+                fpStartResendCountdown(e.data.retryAfterSeconds);
+            }
+            fpShowError(e.message);
+        } finally {
+            if (!isResend) ui().btnLoading(btn, false);
+        }
+    }
+
+    async function fpVerifyCode() {
+        const code = (document.getElementById('fpCode')?.value || '').trim();
+        if (!/^\d{6}$/.test(code)) return fpShowError('رمز التحقق يتكون من 6 أرقام');
+        const btn = document.querySelector('#fpStep2 .btn-primary');
+        ui().btnLoading(btn, true);
+        try {
+            await fpPost('/auth/verify-otp', { phone: fp.phone, code });
+            fp.code = code;
+            fpShowInfo('');
+            fpGoToStep(3);
+        } catch (e) {
+            fpShowError(e.message);
+        } finally {
+            ui().btnLoading(btn, false);
+        }
+    }
+
+    async function fpResetPassword() {
+        const pass = document.getElementById('fpNewPassword')?.value || '';
+        const confirmPass = document.getElementById('fpConfirmPassword')?.value || '';
+        if (pass.length < 8 || !/\d/.test(pass)) return fpShowError('كلمة المرور 8 أحرف على الأقل وتحتوي رقماً واحداً على الأقل');
+        if (pass !== confirmPass) return fpShowError('كلمة المرور وتأكيدها غير متطابقين');
+        const btn = document.querySelector('#fpStep3 .btn-primary');
+        ui().btnLoading(btn, true);
+        try {
+            const data = await fpPost('/auth/reset-password', { phone: fp.phone, code: fp.code, newPassword: pass });
+            ['fpCode', 'fpNewPassword', 'fpConfirmPassword'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            clearInterval(fpTimer);
+            ui().closeModal('forgotPasswordModal');
+            const loginPhone = document.getElementById('loginPhone');
+            if (loginPhone) loginPhone.value = fp.phone;
+            ui().showToast(data.message || 'تم تعيين كلمة المرور الجديدة', 'success');
+            document.getElementById('loginPassword')?.focus();
+        } catch (e) {
+            // انتهاء الصلاحية أو تجاوز المحاولات يتطلب طلب رمز جديد
+            if (/اطلب رمزاً جديداً/.test(e.message)) fpGoToStep(1);
+            fpShowError(e.message);
+        } finally {
+            ui().btnLoading(btn, false);
+        }
     }
 
     function logout() {
@@ -353,4 +486,8 @@
     global.logout = logout;
     global.updateUserInfo = updateUserInfo;
     global.openForgotPasswordHelp = openForgotPasswordHelp;
+    global.fpRequestCode = fpRequestCode;
+    global.fpVerifyCode = fpVerifyCode;
+    global.fpResetPassword = fpResetPassword;
+    global.fpGoToStep = fpGoToStep;
 })(window);

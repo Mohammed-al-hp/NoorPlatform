@@ -40,6 +40,8 @@ class _SplashScreenState extends State<SplashScreen> {
       context.go('/student');
     } else if (role == 'Parent') {
       context.go('/parent');
+    } else if (role == 'Teacher') {
+      context.go('/teacher');
     } else {
       // دور غير معروف — نفس معالجة app_router.dart لأدوار غير صالحة.
       await secureStorage.clearAll();

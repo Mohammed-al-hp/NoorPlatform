@@ -70,6 +70,7 @@
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.viewUser(${u.id})">عرض</button>
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.editUser(${u.id})">تعديل</button>
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.toggleUser(${u.id})">${u.isActive ? 'تعطيل' : 'تفعيل'}</button>
+                        <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.resetUserPassword(${u.id})" title="توليد كلمة مرور مؤقتة جديدة">إعادة تعيين كلمة المرور</button>
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px;color:#ef4444" onclick="NoorUsers.deleteUser(${u.id})">حذف</button>
                     </div>
                 </td>
@@ -180,6 +181,24 @@
         });
     }
 
+    function resetUserPassword(id) {
+        const msg = 'سيتم توليد كلمة مرور مؤقتة جديدة وإنهاء جلسات المستخدم الحالية، وسيُطلب منه تغييرها عند الدخول. متابعة؟';
+        if (!confirm(msg)) return;
+        (async () => {
+            try {
+                const res = await global.apiFetch(`/users/${id}/reset-password`, 'POST');
+                global.showToast(res?.message || 'تمت إعادة تعيين كلمة المرور', 'success');
+                // كلمة المرور المؤقتة تُعرض مرة واحدة فقط ولا يمكن استرجاعها لاحقاً
+                if (res?.credentials && typeof global.showAccountCredentialsModal === 'function') {
+                    global.showAccountCredentialsModal(res.credentials, res.credentials.displayPhone || res.credentials.phone);
+                }
+                fetchUsers();
+            } catch (e) {
+                global.handleApiError(e);
+            }
+        })();
+    }
+
     async function saveNewAdmin() {
         const fullName = document.getElementById('adminFullName')?.value?.trim();
         const phone = document.getElementById('adminPhone')?.value?.trim();
@@ -220,6 +239,7 @@
         saveUserEdit,
         toggleUser,
         deleteUser,
+        resetUserPassword,
         saveNewAdmin
     };
     global.saveNewAdmin = saveNewAdmin;

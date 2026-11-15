@@ -6,10 +6,57 @@
 
     const app = () => global.NoorApp;
 
+    /** أعلى نافذة منبثقة مفتوحة حالياً (آخرها في DOM أو صاحبة أعلى z-index). */
+    function getTopOpenModal() {
+        const open = Array.from(document.querySelectorAll('.modal-overlay.open'));
+        if (!open.length) return null;
+        return open.reduce((top, el) => {
+            const z = parseInt(getComputedStyle(el).zIndex, 10) || 0;
+            const tz = parseInt(getComputedStyle(top).zIndex, 10) || 0;
+            return z >= tz ? el : top;
+        });
+    }
+
+    function clearModalAlert(overlay) {
+        overlay?.querySelectorAll('.modal-inline-alert').forEach(n => n.remove());
+    }
+
+    /**
+     * يعرض رسالة الخطأ داخل النافذة المنبثقة نفسها فوق الحقول — حتى لا تختفي خلف الخلفية
+     * المعتمة ولا يضطر المستخدم للبحث عنها على الشاشات الصغيرة.
+     */
+    function showModalAlert(overlay, msg, type) {
+        const modal = overlay?.querySelector('.modal');
+        if (!modal) return;
+        clearModalAlert(overlay);
+        const box = document.createElement('div');
+        box.className = 'modal-inline-alert modal-inline-alert-' + (type || 'error');
+        box.setAttribute('role', 'alert');
+        const text = document.createElement('span');
+        text.textContent = msg;
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'modal-inline-alert-close';
+        close.textContent = '×';
+        close.setAttribute('aria-label', 'إغلاق');
+        close.addEventListener('click', () => box.remove());
+        box.appendChild(text);
+        box.appendChild(close);
+        const anchor = modal.querySelector('.modal-body') || modal.querySelector('form') || modal;
+        anchor.insertBefore(box, anchor.firstChild);
+        try { box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch { box.scrollIntoView(); }
+    }
+
     function showToast(msg, type) {
         const c = document.getElementById('toastContainer');
         if (!c) return;
+        // الحاوية يجب أن تكون ابناً مباشراً لـ body حتى لا تحصرها أي stacking context تحت النوافذ
+        if (c.parentElement !== document.body) document.body.appendChild(c);
         const resolvedType = type || 'success';
+        if (resolvedType === 'error' || resolvedType === 'warning') {
+            const overlay = getTopOpenModal();
+            if (overlay) showModalAlert(overlay, msg, resolvedType);
+        }
         const iconNames = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
 
         const t = document.createElement('div');
@@ -47,7 +94,7 @@
 
     function openModal(id) {
         const el = document.getElementById(id);
-        if (el) el.classList.add('open');
+        if (el) { clearModalAlert(el); el.classList.add('open'); }
         if (id === 'addStudentModal' && typeof global.populateExistingParentSelect === 'function') {
             global.populateExistingParentSelect();
         }
@@ -55,7 +102,7 @@
 
     function closeModal(id) {
         const el = document.getElementById(id);
-        if (el) el.classList.remove('open');
+        if (el) { el.classList.remove('open'); clearModalAlert(el); }
     }
 
     function openSidebar() {
@@ -169,6 +216,8 @@
 
     const ui = {
         showToast,
+        showModalAlert,
+        clearModalAlert,
         openModal,
         closeModal,
         openSidebar,

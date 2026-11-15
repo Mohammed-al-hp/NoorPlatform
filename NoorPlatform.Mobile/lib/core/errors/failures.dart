@@ -25,3 +25,17 @@ class AuthFailure extends Failure {
 class NetworkFailure extends Failure {
   const NetworkFailure([super.message = 'لا يوجد اتصال بالإنترنت']);
 }
+
+/// إضافة طالب سابق مؤرشف — الاستعادة من صلاحيات الإدارة (409 ARCHIVED_STUDENT_FOUND).
+class ArchivedStudentFailure extends Failure {
+  final bool canRestore;
+  final int archivedStudentId;
+  final String archivedName;
+
+  const ArchivedStudentFailure(
+    super.message, {
+    required this.canRestore,
+    required this.archivedStudentId,
+    required this.archivedName,
+  });
+}

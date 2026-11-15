@@ -263,7 +263,7 @@
         document.getElementById('waitingListFormTitle').innerHTML = icon('edit', { size: 16 }) + ' تعديل قائمة الانتظار';
         document.getElementById('waitingEntryId').value = w.id;
         document.getElementById('wlFullName').value = w.fullName;
-        document.getElementById('wlPhone').value = w.displayPhone || w.phone;
+        document.getElementById('wlPhone').value = w.displayPhone || w.phone || '';
         document.getElementById('wlAge').value = w.age || '';
         document.getElementById('wlParentName').value = w.parentName || '';
         document.getElementById('wlParentPhone').value = w.displayParentPhone || w.parentPhone || '';
@@ -289,6 +289,13 @@
             notes: document.getElementById('wlNotes').value.trim(),
             status: document.getElementById('wlStatus').value
         };
+        // هاتف الطالب اختياري (يُتحقق من صيغته فقط إن أُدخل) — هاتف ولي الأمر إلزامي
+        const rules = [
+            { id: 'wlFullName', required: true, requiredMsg: 'اسم الطالب مطلوب', minLength: 2 },
+            { id: 'wlParentPhone', required: true, requiredMsg: 'هاتف ولي الأمر مطلوب', patternLibyan: true }
+        ];
+        if (payload.phone) rules.push({ id: 'wlPhone', patternLibyan: true });
+        if (!app().ui.validateForm(rules)) return;
         try {
             if (id) await apiFetch(`/waiting-list/${id}`, 'PUT', payload);
             else await apiFetch('/waiting-list', 'POST', payload);
@@ -327,7 +334,12 @@
         const circleId = parseInt(document.getElementById('convertCircleId').value, 10);
         if (!_convertWaitingId || !circleId) return;
         try {
-            const res = await apiFetch(`/waiting-list/${_convertWaitingId}/convert-to-student`, 'POST', { circleId });
+            const url = `/waiting-list/${_convertWaitingId}/convert-to-student`;
+            const submit = (extra) => apiFetch(url, 'POST', { ...(extra || {}), circleId });
+            const res = typeof global.submitWithArchivedCheck === 'function'
+                ? await global.submitWithArchivedCheck(submit)
+                : await submit();
+            if (!res) return; // أُلغي من نافذة "طالب سابق"
             app().ui.closeModal('convertWaitingModal');
             app().ui.showToast(res.message || 'تم التحويل', 'success');
             if (res.credentials && typeof showAccountCredentialsModal === 'function') {

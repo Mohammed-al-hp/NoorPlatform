@@ -27,7 +27,7 @@ class HifzLogScreen extends StatelessWidget {
         return cubit;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('سجل التسميع والمراجعة')),
+        appBar: AppBar(title: const Text('تقدم الحفظ والمراجعة')),
         body: BlocBuilder<HifzCubit, HifzState>(
           builder: (context, state) {
             return AsyncBody(

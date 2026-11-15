@@ -5,6 +5,7 @@ import '../../../config/theme.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -67,6 +68,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       context.go('/student');
                     } else if (state.user.role == 'Parent') {
                       context.go('/parent');
+                    } else if (state.user.role == 'Teacher') {
+                      context.go('/teacher');
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('هذا الحساب غير مدعوم في تطبيق الهاتف — استخدم المنصة على الويب'),
+                          backgroundColor: NoorTheme.error,
+                        ),
+                      );
+                      context.read<AuthBloc>().add(LogoutRequested());
                     }
                   }
                 },
@@ -147,6 +158,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? const CircularProgressIndicator(color: Colors.white)
                                   : const Text('دخول'),
                             ),
+                          ),
+                          const SizedBox(height: NoorTheme.spacingSm),
+                          TextButton(
+                            onPressed: state is AuthLoading
+                                ? null
+                                : () => Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (_) => ForgotPasswordScreen(
+                                        initialPhone: _phoneController.text.trim(),
+                                      ),
+                                    )),
+                            child: const Text('نسيت كلمة المرور؟'),
                           ),
                         ],
                       ),

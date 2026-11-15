@@ -64,5 +64,15 @@ public class PlatformSettings
     /// <summary>نقاط تُضاف عند تسجيل مراجعة.</summary>
     public int PointsHifzRevision { get; set; } = 20;
 
+    // ─── التقييم الشهري بحسب جلسات الحفظ الجديد الناجحة (هدف 10/10 حسب العمر) ───
+    /// <summary>عدد جلسات الحفظ الجديد الناجحة المطلوبة شهرياً لعمر 5–7 سنوات (وأقل من 5 أو عمر غير معروف).</summary>
+    public int HifzRatingTargetAge5To7 { get; set; } = 4;
+    /// <summary>الهدف الشهري لعمر 8–10 سنوات.</summary>
+    public int HifzRatingTargetAge8To10 { get; set; } = 6;
+    /// <summary>الهدف الشهري لعمر 11 سنة فأكثر.</summary>
+    public int HifzRatingTargetAge11Plus { get; set; } = 8;
+    /// <summary>قيم التقييم (Evaluation) التي تُعدّ الجلسة بها ناجحة — مفصولة بفواصل.</summary>
+    public string HifzRatingPassingEvaluations { get; set; } = "ممتاز,جيد جداً,جيد,ضعيف";
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

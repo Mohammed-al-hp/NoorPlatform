@@ -16,10 +16,12 @@ namespace NoorPlatform.Api.Controllers;
 public class DashboardController : ControllerBase
 {
     private readonly NoorDbContext _context;
+    private readonly MonthlyHifzRatingService _monthlyRating;
 
-    public DashboardController(NoorDbContext context)
+    public DashboardController(NoorDbContext context, MonthlyHifzRatingService monthlyRating)
     {
         _context = context;
+        _monthlyRating = monthlyRating;
     }
 
     // GET /api/dashboard/stats
@@ -275,11 +277,15 @@ public class DashboardController : ControllerBase
                 .ToListAsync();
         }
 
+        var (rYear, rMonth) = MonthlyHifzRatingService.ResolveMonth(null, null);
+        var monthlyRating = await _monthlyRating.GetForStudentAsync(student.Id, rYear, rMonth);
+
         return Ok(new
         {
             id = student.Id,
             fullName = student.User?.FullName ?? User.Identity?.Name,
             hifzProgress,
+            monthlyHifzRating = monthlyRating == null ? null : MonthlyHifzRatingService.ToDto(monthlyRating),
             attendancePercentage = Math.Round(attendancePercent, 1),
             lastEvaluation = lastRecord?.Evaluation ?? "لا يوجد",
             lastSurah = lastRecord != null ? $"{lastRecord.SurahName} ({lastRecord.Verses})" : "—",
@@ -339,11 +345,15 @@ public class DashboardController : ControllerBase
         if (parent == null)
             return NotFound(new { message = "لم يُعثر على بيانات ولي الأمر" });
 
+        var (rYear, rMonth) = MonthlyHifzRatingService.ResolveMonth(null, null);
+        var ratings = await _monthlyRating.GetForStudentsAsync(parent.Children.Select(c => c.Id), rYear, rMonth);
+
         var childrenData = parent.Children.Select(c => new
         {
             c.Id,
             fullName = c.User.FullName,
             progress = HifzProgressCalculator.Calculate(c.HifzRecords),
+            monthlyHifzRating = ratings.TryGetValue(c.Id, out var mr) ? MonthlyHifzRatingService.ToDto(mr) : null,
             attendance = AttendanceScore.Percent(c.Attendances.Select(a => a.Status)),
             points = c.Points,
             badges = c.Badges,

@@ -1,3 +1,4 @@
+import 'monthly_hifz_rating_model.dart';
 // ── Safe type converters ──
 int _toInt(dynamic v) {
   if (v == null) return 0;
@@ -52,6 +53,7 @@ class ChildDataModel {
   final int points;
   final String? badges;
   final String lastNote;
+  final MonthlyHifzRatingModel? monthlyHifzRating;
 
   const ChildDataModel({
     required this.id,
@@ -61,6 +63,7 @@ class ChildDataModel {
     required this.points,
     this.badges,
     required this.lastNote,
+    this.monthlyHifzRating,
   });
 
   List<String> get badgeList =>
@@ -75,6 +78,7 @@ class ChildDataModel {
       points: _toInt(json['points']),
       badges: json['badges']?.toString(),
       lastNote: json['lastNote']?.toString() ?? 'لا توجد ملاحظات',
+      monthlyHifzRating: MonthlyHifzRatingModel.tryParse(json['monthlyHifzRating']),
     );
   }
 
@@ -86,6 +90,7 @@ class ChildDataModel {
         'points': points,
         'badges': badges,
         'lastNote': lastNote,
+        'monthlyHifzRating': monthlyHifzRating?.toJson(),
       };
 }
 

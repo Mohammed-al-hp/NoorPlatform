@@ -18,6 +18,10 @@ import '../data/datasources/remote/auth_remote_datasource.dart';
 import '../data/datasources/remote/student_remote_datasource.dart';
 import '../data/datasources/remote/parent_remote_datasource.dart';
 import '../data/datasources/remote/portal_remote_datasource.dart';
+import '../data/datasources/remote/teacher_remote_datasource.dart';
+import '../domain/repositories/teacher_repository.dart';
+import '../data/repositories/teacher_repository_impl.dart';
+import '../presentation/blocs/password_reset/password_reset_bloc.dart';
 
 // Repositories
 import '../domain/repositories/auth_repository.dart';
@@ -62,6 +66,7 @@ Future<void> init() async {
   // ── Blocs ──
   sl.registerFactory(() => AttendanceBloc(attendanceRepository: sl()));
   sl.registerFactory(() => AuthBloc(authRepository: sl()));
+  sl.registerFactory(() => PasswordResetBloc(authRepository: sl()));
   sl.registerFactory(() => StudentDashboardBloc(studentRepository: sl()));
   sl.registerFactory(() => ParentDashboardBloc(parentRepository: sl()));
 
@@ -89,6 +94,9 @@ Future<void> init() async {
   sl.registerLazySingleton<PortalRepository>(
     () => PortalRepositoryImpl(remote: sl(), networkInfo: sl()),
   );
+  sl.registerLazySingleton<TeacherRepository>(
+    () => TeacherRepositoryImpl(remote: sl(), networkInfo: sl()),
+  );
 
   // ── Data Sources ──
   sl.registerLazySingleton<AttendanceRemoteDataSource>(
@@ -105,6 +113,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<PortalRemoteDataSource>(
     () => PortalRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<TeacherRemoteDataSource>(
+    () => TeacherRemoteDataSourceImpl(sl()),
   );
 
   // ── Core ──

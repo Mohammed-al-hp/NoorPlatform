@@ -1796,7 +1796,8 @@
     position: fixed;
     bottom: 24px;
     left: 24px;
-    z-index: 300;
+    /* أعلى من كل النوافذ المنبثقة (بما فيها عارض PDF ذو z-index 10000) */
+    z-index: 10100;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -3437,7 +3438,7 @@ body.dark-mode .bottom-nav {
     color: var(--text-muted);
 }
 
-/* ===== صفحة الحفظ والتسميع — خريطة السور ===== */
+/* ===== صفحة تقدم الحفظ والمراجعة — خريطة السور ===== */
 .mem-surah-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -3522,3 +3523,49 @@ body.dark-mode .mem-surah-cell.done { background: rgba(16,185,129,0.12); border-
 body.dark-mode .mem-surah-cell.done strong { color: #34d399; }
 body.dark-mode .mem-surah-cell.partial { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
 body.dark-mode .mem-surah-cell.partial strong { color: #fbbf24; }
+
+/* ===== خطأ داخل النافذة المنبثقة (يظهر فوق الحقول بدل خلف الخلفية) ===== */
+.modal-inline-alert {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.6;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+    scroll-margin: 16px;
+}
+
+.modal-inline-alert-warning {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.modal-inline-alert-close {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+body.dark-mode .modal-inline-alert {
+    background: rgba(185, 28, 28, 0.15);
+    border-color: rgba(248, 113, 113, 0.4);
+    color: #fca5a5;
+}
+
+body.dark-mode .modal-inline-alert-warning {
+    background: rgba(146, 64, 14, 0.18);
+    border-color: rgba(251, 191, 36, 0.4);
+    color: #fcd34d;
+}

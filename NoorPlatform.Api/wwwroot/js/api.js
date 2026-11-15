@@ -82,6 +82,7 @@
             const payload = await res.json().catch(() => ({}));
             const err = new Error(payload.message || 'HTTP ' + res.status);
             err.status = res.status;
+            err.data = payload; // مثل 409 ARCHIVED_STUDENT_FOUND مع بيانات الطالب السابق
             throw err;
         }
 

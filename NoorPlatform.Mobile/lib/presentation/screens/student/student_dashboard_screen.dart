@@ -11,6 +11,7 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/monthly_rating_card.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   final bool embedded;
@@ -165,6 +166,7 @@ class _DashboardBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: NoorTheme.spacingMd),
+          if (s.monthlyHifzRating != null) MonthlyRatingCard(rating: s.monthlyHifzRating!),
           SectionCard(
             title: 'الهدف الأسبوعي',
             child: Column(

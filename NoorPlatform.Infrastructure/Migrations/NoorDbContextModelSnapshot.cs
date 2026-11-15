@@ -970,6 +970,19 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<bool>("EvaluationsVisibleToStudentsAndParents")
                         .HasColumnType("bit");
 
+                    b.Property<string>("HifzRatingPassingEvaluations")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("HifzRatingTargetAge11Plus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HifzRatingTargetAge5To7")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HifzRatingTargetAge8To10")
+                        .HasColumnType("int");
+
                     b.Property<double>("OralAlertPenalty")
                         .HasColumnType("float");
 
@@ -1439,7 +1452,6 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("PreferredTime")

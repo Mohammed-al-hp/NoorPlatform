@@ -9,6 +9,9 @@ import '../../models/auth_models.dart';
 abstract class AuthRemoteDataSource {
   Future<AuthResponseModel> login(LoginRequestModel request);
   Future<void> changePassword(ChangePasswordRequestModel request);
+  Future<(String, int)> requestPasswordOtp(String phone);
+  Future<void> verifyPasswordOtp(String phone, String code);
+  Future<String> resetPasswordWithOtp(String phone, String code, String newPassword);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -48,6 +51,40 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
       throw mapDioErrorToException(e, fallbackMessage: 'فشل تسجيل الدخول');
     }
+  }
+
+  Future<Map<String, dynamic>> _postPublic(String path, Map<String, dynamic> body, String fallback) async {
+    try {
+      final res = await apiClient.post(path, data: body);
+      ApiResponseHelper.ensureSuccess(res, fallback: fallback);
+      return res.data is Map ? Map<String, dynamic>.from(res.data as Map) : <String, dynamic>{};
+    } on DioException catch (e) {
+      throw mapDioErrorToException(e, fallbackMessage: fallback);
+    }
+  }
+
+  @override
+  Future<(String, int)> requestPasswordOtp(String phone) async {
+    final data = await _postPublic(ApiConfig.forgotPassword, {'phone': phone}, 'تعذر إرسال رمز التحقق');
+    return (
+      toStr(data['message'], 'تم إرسال رمز التحقق'),
+      data['resendAfterSeconds'] == null ? 60 : toInt(data['resendAfterSeconds']),
+    );
+  }
+
+  @override
+  Future<void> verifyPasswordOtp(String phone, String code) async {
+    await _postPublic(ApiConfig.verifyOtp, {'phone': phone, 'code': code}, 'رمز التحقق غير صحيح');
+  }
+
+  @override
+  Future<String> resetPasswordWithOtp(String phone, String code, String newPassword) async {
+    final data = await _postPublic(
+      ApiConfig.resetPassword,
+      {'phone': phone, 'code': code, 'newPassword': newPassword},
+      'تعذر تعيين كلمة المرور',
+    );
+    return toStr(data['message'], 'تم تعيين كلمة المرور الجديدة');
   }
 
   @override

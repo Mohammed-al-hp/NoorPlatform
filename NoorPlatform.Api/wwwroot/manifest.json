@@ -44,8 +44,8 @@
       "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "الحفظ والتسميع",
-      "short_name": "التسميع",
+      "name": "تقدم الحفظ والمراجعة",
+      "short_name": "تقدم الحفظ",
       "url": "/#memorization",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }

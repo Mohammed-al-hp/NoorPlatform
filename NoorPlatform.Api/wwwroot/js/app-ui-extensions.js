@@ -42,6 +42,7 @@
                             <div class="mini-stat"><label>الحفظ</label><p>${c.progress}%</p></div>
                             <div class="mini-stat"><label>الحضور</label><p>${c.attendance}%</p></div>
                             <div class="mini-stat"><label>النقاط</label><p style="color:var(--amber-dark)">${window.Icon ? window.Icon('star', {size:14}) : ''} ${c.points || 0}</p></div>
+                            ${window.NoorMonthlyRating ? window.NoorMonthlyRating.miniStatHtml(c.monthlyHifzRating) : ''}
                         </div>
                         <div style="font-size:12px; margin-bottom: 10px; display: flex; gap: 4px; flex-wrap: wrap;">
                             ${c.badges ? c.badges.split(',').map(b => b.trim() ? `<span style="background:var(--amber-light); color:var(--amber-dark); padding: 2px 6px; border-radius: 4px;">${window.Icon ? window.Icon('medal-gold', {size:12}) : ''} ${escapeHtml(b.trim())}</span>` : '').join('') : ''}
@@ -180,6 +181,7 @@
             }
             
             renderStudentGamification(data);
+            window.NoorMonthlyRating?.renderStudentCard('studentMonthlyRating', data.monthlyHifzRating);
             fetchStudentAttendance();
 
             const hifzTbody = document.querySelector('#studentHifzTable tbody');

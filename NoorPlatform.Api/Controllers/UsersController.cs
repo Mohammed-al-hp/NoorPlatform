@@ -204,6 +204,49 @@ public class UsersController : ControllerBase
         return Ok(new { message = "تم تعطيل الحساب" });
     }
 
+    // POST /api/users/{id}/reset-password — إعادة تعيين كلمة المرور من الأدمن
+    // تُعاد كلمة المرور المؤقتة مرة واحدة فقط في هذه الاستجابة ولا تُخزَّن نصاً في أي مكان
+    [HttpPost("{id}/reset-password")]
+    public async Task<IActionResult> ResetPassword(int id)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user == null)
+            return NotFound(new { message = "المستخدم غير موجود" });
+
+        var tempPassword = AccountProvisioningService.GenerateSecurePassword();
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, tempPassword); // يحدّث SecurityStamp فتُبطَل الجلسات القديمة
+        if (!result.Succeeded)
+            return BadRequest(new { message = string.Join("، ", result.Errors.Select(e => e.Description)) });
+
+        user.MustChangePassword = true;
+        user.AccessFailedCount = 0;
+        user.LockoutEnd = null;
+        await _userManager.UpdateAsync(user);
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "System",
+            Action = AuditAction.Update,
+            EntityName = nameof(Core.Entities.User),
+            EntityId = user.Id.ToString(),
+            NewValues = "{\"Event\":\"PasswordResetByAdmin\",\"MustChangePassword\":true}"
+        });
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "تمت إعادة تعيين كلمة المرور. سلّمها للمستخدم — لن تظهر مرة أخرى.",
+            credentials = new AccountCredentialsDto(
+                user.FullName,
+                user.UserName!,
+                AccountProvisioningService.ToDisplayPhone(user.UserName!),
+                tempPassword,
+                user.Role.ToString(),
+                true)
+        });
+    }
+
     // POST /api/users/admin — إنشاء مشرف جديد (Admin فقط، محمي بشكل صارم)
     [HttpPost("admin")]
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request)
