@@ -199,10 +199,25 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // Indexes — لتسريع الاستعلامات الشائعة
         // ─────────────────────────────────────────────
 
-        // الحضور: نُبحث دائماً بالطالب والتاريخ
+        // الحضور: سجل واحد فقط لكل (طالب، يوم، حلقة). HasFilter(null) يجعل SQL Server يعامل
+        // CircleId = NULL كقيمة واحدة فيمنع تكرار سجل «بدون حلقة» أيضاً. يغطي أيضاً البحث بالطالب والتاريخ.
         modelBuilder.Entity<Attendance>()
-            .HasIndex(a => new { a.StudentId, a.Date })
-            .HasDatabaseName("IX_Attendance_StudentId_Date");
+            .HasIndex(a => new { a.StudentId, a.Date, a.CircleId })
+            .IsUnique()
+            .HasFilter(null)
+            .HasDatabaseName("UX_Attendance_Student_Date_Circle");
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.RecipientUser)
+            .WithMany()
+            .HasForeignKey(m => m.RecipientUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Announcement>()
+            .HasOne(a => a.Teacher)
+            .WithMany()
+            .HasForeignKey(a => a.TeacherId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // سجلات التسميع: نُبحث دائماً بالطالب والتاريخ
         modelBuilder.Entity<HifzRecord>()

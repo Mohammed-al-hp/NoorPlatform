@@ -19,4 +19,8 @@ public class Announcement
     // حقول مطلوبة في الواجهة الأمامية
     public AnnouncementTarget Target { get; set; } = AnnouncementTarget.All;
     public string Color { get; set; } = "#10b981"; // اللون الافتراضي أخضر
+
+    /// <summary>المحفّظ الناشر (null = إعلان عام من الإدارة). إعلان المحفّظ يظهر لطلاب حلقاته وأولياء أمورهم فقط.</summary>
+    public int? TeacherId { get; set; }
+    public Teacher? Teacher { get; set; }
 }

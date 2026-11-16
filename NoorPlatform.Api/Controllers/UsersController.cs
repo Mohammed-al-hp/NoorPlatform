@@ -106,20 +106,40 @@ public class UsersController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(request.Phone))
         {
+            if (!LibyanPhone.IsValid(request.Phone))
+                return BadRequest(new { message = "رقم الهاتف غير صالح. يجب أن يبدأ بـ 09 ويتكون من 10 أرقام" });
+
             var normalized = AccountProvisioningService.NormalizePhone(request.Phone);
-            var existing = await _userManager.FindByNameAsync(normalized);
-            if (existing != null && existing.Id != user.Id)
-                return BadRequest(new { message = "رقم الهاتف مستخدم بالفعل" });
-            user.UserName = normalized;
-            user.PhoneNumber = normalized;
+            if (normalized != user.UserName)
+            {
+                var existing = await _context.Users.AnyAsync(u =>
+                    u.Id != user.Id && (u.UserName == normalized || u.PhoneNumber == normalized));
+                if (existing)
+                    return BadRequest(new { message = "رقم الهاتف مستخدم بالفعل" });
+
+                var oldPhone = user.UserName;
+                user.UserName = normalized;
+                user.PhoneNumber = normalized;
+                await SyncProfilePhoneAsync(user, oldPhone, normalized);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(request.Email))
             user.Email = request.Email.Trim();
 
         // ─── إصلاح حرج: حماية صارمة عند تغيير الدور ───
-        if (!string.IsNullOrWhiteSpace(request.Role) && Enum.TryParse<UserRole>(request.Role, true, out var newRole))
+        if (!string.IsNullOrWhiteSpace(request.Role) && Enum.TryParse<UserRole>(request.Role, true, out var newRole)
+            && newRole != user.Role)
         {
+            // ─── إصلاح: الحساب المرتبط بملف (طالب/محفّظ/ولي أمر) لا يُغيَّر دوره، وإلا يبقى الملف القديم يتيماً
+            // ويفقد الحساب الجديد ملفه (حلقات، سجلات، أبناء) ───
+            var hasProfile =
+                await _context.Students.IgnoreQueryFilters().AnyAsync(s => s.UserId == user.Id) ||
+                await _context.Teachers.IgnoreQueryFilters().AnyAsync(t => t.UserId == user.Id) ||
+                await _context.Parents.IgnoreQueryFilters().AnyAsync(p => p.UserId == user.Id);
+            if (hasProfile)
+                return BadRequest(new { message = "لا يمكن تغيير دور حساب مرتبط بملف طالب أو محفّظ أو ولي أمر. أنشئ حساباً جديداً بالدور المطلوب من الصفحة المختصة." });
+
             // منع الترقية إلى Admin لحماية النظام من التلاعب
             if (newRole == UserRole.Admin)
                 return BadRequest(new { message = "لا يمكن ترقية المستخدم إلى مشرف من هذه الواجهة. تواصل مع مدير النظام." });
@@ -159,6 +179,28 @@ public class UsersController : ControllerBase
             return BadRequest(new { message = string.Join("، ", result.Errors.Select(e => e.Description)) });
 
         return Ok(new { message = "تم تحديث المستخدم" });
+    }
+
+    /// <summary>يبقي رقم الهاتف في ملف الطالب/ولي الأمر متطابقاً مع رقم الدخول بعد تعديله.</summary>
+    private async Task SyncProfilePhoneAsync(User user, string? oldPhone, string newPhone)
+    {
+        if (user.Role == UserRole.Student)
+        {
+            var student = await _context.Students.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.UserId == user.Id);
+            if (student != null) student.StudentPhone = newPhone;
+        }
+        else if (user.Role == UserRole.Parent)
+        {
+            var parent = await _context.Parents.IgnoreQueryFilters()
+                .Include(p => p.Children)
+                .FirstOrDefaultAsync(p => p.UserId == user.Id);
+            if (parent == null) return;
+            var previousParentPhone = parent.Phone;
+            parent.Phone = newPhone;
+            foreach (var child in parent.Children.Where(c =>
+                         string.IsNullOrWhiteSpace(c.ParentPhone) || c.ParentPhone == previousParentPhone || c.ParentPhone == oldPhone))
+                child.ParentPhone = newPhone;
+        }
     }
 
     [HttpPatch("{id}/toggle-active")]

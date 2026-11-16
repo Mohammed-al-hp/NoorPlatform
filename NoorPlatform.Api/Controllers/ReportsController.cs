@@ -49,7 +49,13 @@ public class ReportsController : ControllerBase
         var progress = Math.Min((int)Math.Round((double)totalVerses / 6236 * 100), 100);
         var teacherName = student.Circle?.Teacher?.User?.FullName ?? "—";
         var circleName = student.Circle?.Name ?? "—";
-        var achievement = surah ?? GetAchievementText(progress);
+        // ─── إصلاح أمني: نص الإنجاز المخصص للمحفّظ/المشرف فقط — الطالب وولي الأمر يحصلان على النص المحسوب
+        // من سجلات الحفظ الفعلية، لمنع إصدار شهادة بإنجاز غير حقيقي ───
+        var isStaff = User.IsInRole("Admin") || User.IsInRole("Teacher");
+        var customText = isStaff && !string.IsNullOrWhiteSpace(surah) ? surah.Trim() : null;
+        if (customText is { Length: > 100 })
+            return BadRequest(new { message = "نص الإنجاز طويل جداً (الحد 100 حرف)" });
+        var achievement = customText ?? GetAchievementText(progress);
 
         var pdfBytes = GenerateCertificatePdf(
             student.User.FullName,
@@ -108,8 +114,8 @@ public class ReportsController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
             return Forbid();
 
-        var targetMonth = month ?? DateTime.UtcNow.Month;
-        var targetYear = year ?? DateTime.UtcNow.Year;
+        var targetMonth = month ?? LibyaTime.Today.Month;
+        var targetYear = year ?? LibyaTime.Today.Year;
 
         var student = await _context.Students.AsNoTracking()
             .Include(s => s.User)

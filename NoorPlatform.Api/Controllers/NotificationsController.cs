@@ -62,7 +62,7 @@ public class NotificationsController : ControllerBase
         if (!await NoorPlatform.Api.Security.AuthorizationHelpers.CanAccessStudentAsync(_context, User, student.Id))
             return Forbid();
 
-        var parentPhone = student.ParentPhone ?? student.Parent?.Phone;
+        var parentPhone = GuardianPhone(student);
         if (string.IsNullOrEmpty(parentPhone))
             return BadRequest(new { message = "لا يوجد رقم هاتف لولي الأمر" });
 
@@ -130,7 +130,7 @@ public class NotificationsController : ControllerBase
 
         foreach (var student in absentStudents)
         {
-            var phone = student.ParentPhone ?? student.Parent?.Phone;
+            var phone = GuardianPhone(student);
             if (string.IsNullOrEmpty(phone)) { failed++; continue; }
 
             var message = $"📚 منصة نور: ابنكم/ابنتكم *{student.User.FullName}* غاب اليوم {today:yyyy/MM/dd}. للاستفسار تواصل مع المركز.";
@@ -173,7 +173,7 @@ public class NotificationsController : ControllerBase
         if (isTeacher && student.Circle?.Teacher?.UserId != currentUserId)
             return Forbid();
 
-        var phone = student.ParentPhone ?? student.Parent?.Phone;
+        var phone = GuardianPhone(student);
         if (string.IsNullOrEmpty(phone))
             return BadRequest(new { message = "لا يوجد رقم هاتف لولي الأمر" });
 
@@ -198,6 +198,15 @@ public class NotificationsController : ControllerBase
     // الإرسال الفعلي عبر WhatsApp Cloud API (Meta)
     // إصلاح: استخدام WhatsAppSettings المحقونة عبر IOptions بدلاً من IConfiguration
     // ─────────────────────────────────────────────────
+    /// <summary>
+    /// رقم ولي الأمر للتواصل: رقم الطالب المسجّل أولاً ثم رقم حساب ولي الأمر المرتبط.
+    /// (ParentPhone نص فارغ وليس null عند غيابه، لذلك لا يصلح معه ??)
+    /// </summary>
+    private static string? GuardianPhone(Student student) =>
+        !string.IsNullOrWhiteSpace(student.ParentPhone) ? student.ParentPhone
+        : !string.IsNullOrWhiteSpace(student.Parent?.Phone) ? student.Parent!.Phone
+        : null;
+
     private async Task<bool> SendWhatsAppMessage(string phone, string message)
     {
         try

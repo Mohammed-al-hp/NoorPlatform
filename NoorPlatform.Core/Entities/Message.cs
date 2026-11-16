@@ -3,7 +3,8 @@
 public enum MessageRecipientType
 {
     Teacher,    // موجهة لمحفّظ محدد
-    Admin       // موجهة للإدارة
+    Admin,      // موجهة للإدارة
+    Parent      // رد من المحفّظ/الإدارة إلى ولي الأمر
 }
 
 public class Message
@@ -18,6 +19,10 @@ public class Message
     // فقط لو RecipientType == Teacher
     public int? RecipientTeacherId { get; set; }
     public Teacher? RecipientTeacher { get; set; }
+
+    // فقط لو RecipientType == Parent (رد على رسالة ولي الأمر)
+    public int? RecipientUserId { get; set; }
+    public User? RecipientUser { get; set; }
 
     public string Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

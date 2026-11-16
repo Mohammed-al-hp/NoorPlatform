@@ -27,7 +27,7 @@ namespace NoorPlatform.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> GetAll([FromQuery] string? category, [FromQuery] string? search)
         {
-            var query = _context.LibraryItems.AsQueryable();
+            var query = VisibleItems();
 
             if (!string.IsNullOrEmpty(category))
                 query = query.Where(l => l.Category == category);
@@ -69,6 +69,24 @@ namespace NoorPlatform.Api.Controllers
 
             if (request.File.Length > 50 * 1024 * 1024)
                 return BadRequest(new { message = "حجم الملف يتجاوز الحد المسموح (50MB)" });
+
+            if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Trim().Length > 200)
+                return BadRequest(new { message = "عنوان الملف مطلوب (حتى 200 حرف)" });
+            if ((request.Description?.Length ?? 0) > 1000)
+                return BadRequest(new { message = "الوصف طويل جداً (الحد 1000 حرف)" });
+
+            // ─── التحقق من محتوى الملف نفسه: كل ملف PDF يبدأ بالتوقيع %PDF- (نوع المحتوى يرسله المتصفح ويمكن تزويره) ───
+            if (!await HasPdfSignatureAsync(request.File))
+                return BadRequest(new { message = "الملف ليس PDF صالحاً" });
+
+            // ربط الملف بحلقة: المحفّظ لحلقاته فقط، والحلقة يجب أن تكون موجودة
+            if (request.CircleId.HasValue)
+            {
+                if (!await _context.Circles.AnyAsync(c => c.Id == request.CircleId.Value))
+                    return BadRequest(new { message = "الحلقة المحددة غير موجودة" });
+                if (!await AuthorizationHelpers.CanAccessCircleAsync(_context, User, request.CircleId.Value))
+                    return StatusCode(403, new { message = "يمكنك رفع الملفات لحلقاتك فقط" });
+            }
 
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "library");
             Directory.CreateDirectory(uploadsFolder);
@@ -144,7 +162,7 @@ namespace NoorPlatform.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Student,Parent")]
         public async Task<IActionResult> GetFile(int id)
         {
-            var item = await _context.LibraryItems.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
+            var item = await VisibleItems().AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
             if (item == null)
                 return NotFound(new { message = "الملف غير موجود" });
 
@@ -158,6 +176,42 @@ namespace NoorPlatform.Api.Controllers
                 .ExecuteUpdateAsync(s => s.SetProperty(l => l.DownloadCount, l => l.DownloadCount + 1));
 
             return PhysicalFile(physicalPath, "application/pdf", $"{item.Title}.pdf");
+        }
+
+        /// <summary>
+        /// الملفات المرئية للمستخدم الحالي: الملف العام (بدون حلقة) للجميع، وملف الحلقة لطلابها
+        /// (رسمياً أو بالتسجيل الإضافي) وأولياء أمورهم ومحفّظها ورافعه، والمشرف يرى الكل.
+        /// </summary>
+        private IQueryable<LibraryItem> VisibleItems()
+        {
+            var query = _context.LibraryItems.AsQueryable();
+            if (User.IsInRole("Admin"))
+                return query;
+
+            var userId = AuthorizationHelpers.GetUserId(User) ?? -1;
+            if (User.IsInRole("Teacher"))
+                return query.Where(l => l.CircleId == null || l.UploadedByUserId == userId ||
+                    (l.Circle != null && l.Circle.Teacher != null && l.Circle.Teacher.UserId == userId));
+
+            if (User.IsInRole("Student"))
+                return query.Where(l => l.CircleId == null || _context.Students.Any(s => s.UserId == userId &&
+                    (s.CircleId == l.CircleId || s.ExtraEnrollments.Any(e => e.CircleId == l.CircleId))));
+
+            if (User.IsInRole("Parent"))
+                return query.Where(l => l.CircleId == null || _context.Students.Any(s =>
+                    s.Parent != null && s.Parent.UserId == userId &&
+                    (s.CircleId == l.CircleId || s.ExtraEnrollments.Any(e => e.CircleId == l.CircleId))));
+
+            return query.Where(_ => false);
+        }
+
+        private static async Task<bool> HasPdfSignatureAsync(IFormFile file)
+        {
+            var header = new byte[5];
+            await using var stream = file.OpenReadStream();
+            var read = await stream.ReadAsync(header.AsMemory(0, header.Length));
+            return read == 5 && header[0] == (byte)'%' && header[1] == (byte)'P' && header[2] == (byte)'D'
+                   && header[3] == (byte)'F' && header[4] == (byte)'-';
         }
 
         // POST /api/library/{id}/download — للتوافق مع العملاء القديمة (لا يُضاعف العداد إن استُخدم /file)

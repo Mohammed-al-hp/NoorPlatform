@@ -29,6 +29,9 @@ public class HifzRecord
     public string Evaluation { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
 
+    /// <summary>النقاط الممنوحة فعلياً لهذه الجلسة — تُسحب عند الحذف وتُعاد حسابها عند التعديل.</summary>
+    public int PointsAwarded { get; set; }
+
     // Helper: يحسب VerseCount من نص مثل "1-10" أو "5" أو "كاملة"
     public static int ParseVerseCount(string verses)
     {

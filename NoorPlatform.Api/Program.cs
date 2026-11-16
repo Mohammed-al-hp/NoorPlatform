@@ -151,6 +151,8 @@ builder.Services.AddAuthentication(x =>
             var user = id == null ? null : await um.FindByIdAsync(id);
             if (user == null || !user.IsActive || user.SecurityStamp != stamp)
                 context.Fail("invalid");
+            else
+                context.HttpContext.Items[MustChangePasswordGuard.ItemKey] = user.MustChangePassword;
         },
         OnAuthenticationFailed = context =>
         {
@@ -264,6 +266,7 @@ app.UseMiddleware<BlockLibraryUploadsMiddleware>();
 
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<MustChangePasswordGuard>();
 app.UseAuthorization();
 
 var defaultFilesOptions = new DefaultFilesOptions();

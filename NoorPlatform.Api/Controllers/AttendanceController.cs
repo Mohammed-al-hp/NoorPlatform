@@ -84,7 +84,7 @@ public class AttendanceController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId))
             return Forbid();
 
-        var since = DateTime.UtcNow.AddDays(-30).Date;
+        var since = LibyaTime.Today.AddDays(-30);
         var records = await _context.Attendances
             .Where(a => a.StudentId == studentId && a.Date >= since)
             .OrderByDescending(a => a.Date)
@@ -200,17 +200,23 @@ public class AttendanceController : ControllerBase
 
         var (dayStart, dayEnd) = ParseAttendanceDayRange(dateText);
 
-        var record = await _context.Attendances
+        var isMainSlot = await IsMainAttendanceSlotAsync(cid);
+        var record = await SameSlot(_context.Attendances, cid, isMainSlot)
             .FirstOrDefaultAsync(a =>
                 a.StudentId == sid &&
                 a.Date >= dayStart &&
-                a.Date < dayEnd &&
-                a.CircleId == cid);
+                a.Date < dayEnd);
+
+        var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == sid.Value);
+        if (student == null)
+            return NotFound(new { message = "الطالب غير موجود" });
+        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
 
         if (record != null)
         {
             record.Status = parsedStatus;
-            record.CircleId = cid;
+            if (cid.HasValue) record.CircleId = cid; // لا نمسح حلقة سجل موجود عند الرصد بدون حلقة
+            record.PointsAwarded = PointsLedger.Apply(student, record.PointsAwarded, PointsLedger.ForAttendance(parsedStatus, settings));
         }
         else
         {
@@ -219,29 +225,20 @@ public class AttendanceController : ControllerBase
                 StudentId = sid.Value,
                 Date = dayStart,
                 Status = parsedStatus,
-                CircleId = cid
+                CircleId = cid,
+                PointsAwarded = PointsLedger.Apply(student, 0, PointsLedger.ForAttendance(parsedStatus, settings))
             };
             _context.Attendances.Add(record);
 
-            var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == sid.Value);
-            if (student != null)
+            _context.ActivityFeeds.Add(new ActivityFeed
             {
-                if (parsedStatus == AttendanceStatus.Present)
-                {
-                    var pts = await GetAttendancePointsAsync();
-                    student.Points += pts;
-                }
-
-                _context.ActivityFeeds.Add(new ActivityFeed
-                {
-                    UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
-                    UserName = User.Identity?.Name ?? "User",
-                    ActivityType = "Attendance",
-                    Description = $"تم تسجيل حضور الطالب {student.User.FullName}",
-                    Icon = "✅",
-                    Color = "green"
-                });
-            }
+                UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+                UserName = User.Identity?.Name ?? "User",
+                ActivityType = "Attendance",
+                Description = $"تم تسجيل حضور الطالب {student.User.FullName}",
+                Icon = "✅",
+                Color = "green"
+            });
         }
 
         await _context.SaveChangesAsync();
@@ -260,7 +257,7 @@ public class AttendanceController : ControllerBase
     public async Task<IActionResult> GetSummary([FromQuery] int days = 7)
     {
         days = Math.Clamp(days, 1, 90);
-        var since = DateTime.UtcNow.AddDays(-days).Date;
+        var since = LibyaTime.Today.AddDays(-days);
 
         // ─── إصلاح: تصفية الحضور حسب حلقات المعلم ───
         var query = _context.Attendances.Where(a => a.Date >= since);
@@ -295,7 +292,8 @@ public class AttendanceController : ControllerBase
         if (string.IsNullOrWhiteSpace(date))
         {
             // ─── إصلاح: استخدام UtcNow بدل Now لتوافق بيئة Docker (UTC) ───
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            // اليوم بتوقيت ليبيا (UTC+2) — نفس المرجع المستخدم في بقية المنصة
+            var today = DateOnly.FromDateTime(LibyaTime.Today);
             var start = today.ToDateTime(TimeOnly.MinValue);
             return (start, start.AddDays(1));
         }
@@ -306,7 +304,7 @@ public class AttendanceController : ControllerBase
             return (start, start.AddDays(1));
         }
 
-        var fallback = DateOnly.FromDateTime(DateTime.UtcNow).ToDateTime(TimeOnly.MinValue);
+        var fallback = DateOnly.FromDateTime(LibyaTime.Today).ToDateTime(TimeOnly.MinValue);
         return (fallback, fallback.AddDays(1));
     }
 
@@ -323,7 +321,21 @@ public class AttendanceController : ControllerBase
         if (!DateOnly.TryParse(request.Date, out var date))
             return BadRequest(new { message = "تاريخ غير صالح" });
 
-        var studentIds = request.Records.Select(r => r.StudentId).Distinct().ToList();
+        // إزالة التكرار داخل الطلب نفسه (آخر حالة للطالب هي المعتمدة) ورفض الحالات غير الصالحة صراحة
+        var parsedRecords = new List<(int StudentId, AttendanceStatus Status, string? Note)>();
+        var invalid = 0;
+        foreach (var r in request.Records)
+        {
+            if (Enum.TryParse<AttendanceStatus>(r.Status, true, out var st) && Enum.IsDefined(st))
+                parsedRecords.Add((r.StudentId, st, string.IsNullOrWhiteSpace(r.Note) ? null : r.Note.Trim()));
+            else
+                invalid++;
+        }
+        parsedRecords = parsedRecords.GroupBy(r => r.StudentId).Select(g => g.Last()).ToList();
+        if (parsedRecords.Count == 0)
+            return BadRequest(new { message = "لا توجد حالات حضور صالحة للحفظ" });
+
+        var studentIds = parsedRecords.Select(r => r.StudentId).ToList();
         var circleId = request.CircleId;
 
         var isTeacherOnly = User.IsInRole("Teacher") && !User.IsInRole("Admin");
@@ -371,28 +383,36 @@ public class AttendanceController : ControllerBase
                 return BadRequest(new { message = "الحلقة غير موجودة" });
         }
 
-        var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var existingStudents = await _context.Students.CountAsync(s => studentIds.Contains(s.Id));
+        if (existingStudents != studentIds.Count)
+            return BadRequest(new { message = "بعض الطلاب المحددين غير موجودين" });
 
-        var existing = await _context.Attendances
-                        .Where(a =>
+        var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var isMainSlot = await IsMainAttendanceSlotAsync(circleId);
+
+        var existing = await SameSlot(_context.Attendances, circleId, isMainSlot)
+            .Where(a =>
                 a.Date >= targetDate && a.Date < targetDate.AddDays(1) &&
-                studentIds.Contains(a.StudentId) &&
-                a.CircleId == circleId)
+                studentIds.Contains(a.StudentId))
             .ToListAsync();
 
-        foreach (var record in request.Records)
-        {
-            // تم تحسين التحويل ليدعم الحالات الأربعة: حاضر، متأخر، غائب بإذن، غائب بدون إذن
-            if (!Enum.TryParse<AttendanceStatus>(record.Status, true, out var status))
-                continue;
+        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
+        var students = await _context.Students.Where(s => studentIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id);
 
-            var att = existing.FirstOrDefault(a => a.StudentId == record.StudentId && a.CircleId == circleId);
+        foreach (var record in parsedRecords)
+        {
+            var status = record.Status;
+            var student = students[record.StudentId];
+            var points = PointsLedger.ForAttendance(status, settings);
+            var att = existing.FirstOrDefault(a => a.StudentId == record.StudentId);
             if (att != null)
             {
                 att.Status = status;
                 att.Date = targetDate;
                 att.Note = record.Note;
-                att.CircleId = circleId;
+                if (circleId.HasValue) att.CircleId = circleId;
+                // تعديل الحالة يعدّل النقاط بالفرق (حاضر ← غائب يسحب النقاط والعكس)
+                att.PointsAwarded = PointsLedger.Apply(student, att.PointsAwarded, points);
             }
             else
             {
@@ -402,15 +422,9 @@ public class AttendanceController : ControllerBase
                     Status = status,
                     Date = targetDate,
                     Note = record.Note,
-                    CircleId = circleId
+                    CircleId = circleId,
+                    PointsAwarded = PointsLedger.Apply(student, 0, points)
                 });
-
-                // إضافة نقاط للحاضرين الجدد
-                if (status == AttendanceStatus.Present)
-                {
-                    var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == record.StudentId);
-                    if (student != null) student.Points += await GetAttendancePointsAsync();
-                }
             }
         }
 
@@ -420,14 +434,17 @@ public class AttendanceController : ControllerBase
             UserId = userId,
             UserName = User.Identity?.Name ?? "User",
             ActivityType = "Attendance",
-            Description = $"تم حفظ حضور جماعي لـ {request.Records.Count} طالب بتاريخ {date:yyyy-MM-dd}",
+            Description = $"تم حفظ حضور جماعي لـ {parsedRecords.Count} طالب بتاريخ {date:yyyy-MM-dd}",
             Icon = "📝",
             Color = "blue"
         });
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = $"تم حفظ {request.Records.Count} سجل حضور بنجاح" });
+        var resultMessage = invalid > 0
+            ? $"تم حفظ {parsedRecords.Count} سجل حضور، وتم تجاهل {invalid} سجل بحالة غير صالحة"
+            : $"تم حفظ {parsedRecords.Count} سجل حضور بنجاح";
+        return Ok(new { message = resultMessage, saved = parsedRecords.Count, skipped = invalid });
     }
 
     /// <summary>
@@ -461,11 +478,18 @@ public class AttendanceController : ControllerBase
             s.Id == studentId && s.CircleId == circleId);
     }
 
-    private async Task<int> GetAttendancePointsAsync()
-    {
-        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
-        return settings?.PointsAttendancePresent ?? 10;
-    }
+    /// <summary>الحضور «الرئيسي» لليوم: بدون حلقة أو في الحلقة الرسمية. الحلقات الإضافية لها سجل مستقل.</summary>
+    private async Task<bool> IsMainAttendanceSlotAsync(int? circleId) =>
+        circleId == null || !await _context.Circles.AnyAsync(c => c.Id == circleId && c.IsExtra);
+
+    /// <summary>
+    /// يطابق سجل اليوم نفسه دون تكرار: في الحضور الرئيسي يُعدّ السجل بدون حلقة والسجل في أي حلقة رسمية
+    /// سجلاً واحداً (كانت صفحة الحلقة تعرض الأول بينما الحفظ يبحث عن الثاني فيُنشئ نسخة مكررة).
+    /// </summary>
+    private static IQueryable<Attendance> SameSlot(IQueryable<Attendance> query, int? circleId, bool isMainSlot) =>
+        isMainSlot
+            ? query.Where(a => a.CircleId == null || a.CircleId == circleId || (a.Circle != null && !a.Circle.IsExtra))
+            : query.Where(a => a.CircleId == circleId);
 }
 
 // ════════════════════════════════════════════════════════

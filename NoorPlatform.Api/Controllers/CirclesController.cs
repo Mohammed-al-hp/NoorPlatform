@@ -204,13 +204,26 @@ public class CirclesController : ControllerBase
             .Select(e => e.StudentId)
             .ToListAsync();
 
-        var toAdd = ids.Except(existing).ToList();
-        foreach (var sid in toAdd)
+        var candidates = ids.Except(existing).ToList();
+
+        // ─── إصلاح أمني: المحفّظ يسجّل في حلقته الإضافية طلاب حلقاته الرسمية فقط ───
+        // (وإلا يكتسب صلاحية الوصول لبيانات أي طالب في المركز عبر CircleEnrollments)
+        var studentsQuery = _context.Students.Where(s => candidates.Contains(s.Id));
+        var isTeacherOnly = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        if (isTeacherOnly)
         {
-            if (!await _context.Students.AnyAsync(s => s.Id == sid))
-                continue;
-            _context.CircleEnrollments.Add(new CircleEnrollment { CircleId = id, StudentId = sid });
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var ownIds = await studentsQuery
+                .Where(s => s.Circle != null && s.Circle.Teacher != null && s.Circle.Teacher.UserId == userId)
+                .Select(s => s.Id)
+                .ToListAsync();
+            if (ownIds.Count != candidates.Count)
+                return StatusCode(403, new { message = "يمكنك تسجيل طلاب حلقاتك الرسمية فقط في الحلقة الإضافية" });
         }
+
+        var toAdd = await studentsQuery.Select(s => s.Id).ToListAsync();
+        foreach (var sid in toAdd)
+            _context.CircleEnrollments.Add(new CircleEnrollment { CircleId = id, StudentId = sid });
 
         await _context.SaveChangesAsync();
         return Ok(new { message = $"تم تسجيل {toAdd.Count} طالب في الحلقة الإضافية", added = toAdd.Count });

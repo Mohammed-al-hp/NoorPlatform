@@ -155,13 +155,19 @@ public class StudentsController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.FullName) || request.DateOfBirth == null || request.RegistrationDate == null)
                 return BadRequest(new { message = "الاسم الثلاثي وتاريخ الميلاد وتاريخ التسجيل مطلوبة" });
 
-            var parentExists = await _context.Parents.AnyAsync(p => p.Id == request.ParentId.Value && !p.IsDeleted);
+            var parentId = request.ParentId!.Value;
+            var parentExists = await _context.Parents.AnyAsync(p => p.Id == parentId && !p.IsDeleted);
             if (!parentExists)
                 return BadRequest(new { message = "ولي الأمر المحدد غير موجود" });
         }
 
         // ─── إصلاح: منع المحفّظ من إضافة طالب لحلقة خارج نطاقه ───
         var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        // المحفّظ يضيف الطالب إلى إحدى حلقاته دائماً، وإلا يختفي الطالب من قائمته بعد الحفظ
+        if (isTeacher && !request.CircleId.HasValue)
+            return BadRequest(new { message = "اختر إحدى حلقاتك لإضافة الطالب إليها" });
+        if (!linkingExistingParent && !LibyanPhone.IsValid(request.ParentPhone))
+            return BadRequest(new { message = "رقم هاتف ولي الأمر غير صالح. يجب أن يبدأ بـ 09 ويتكون من 10 أرقام" });
         if (isTeacher && request.CircleId.HasValue)
         {
             var ownsCircle = await _context.Circles.AnyAsync(c =>
@@ -429,8 +435,24 @@ public class StudentsController : ControllerBase
         if (validationError != null)
             return BadRequest(new { message = validationError });
 
+        if (!LibyanPhone.IsValid(request.ParentPhone))
+            return BadRequest(new { message = "رقم هاتف ولي الأمر غير صالح. يجب أن يبدأ بـ 09 ويتكون من 10 أرقام" });
+        if (!string.IsNullOrWhiteSpace(request.StudentPhone) && !LibyanPhone.IsValid(request.StudentPhone))
+            return BadRequest(new { message = "رقم هاتف الطالب غير صالح. يجب أن يبدأ بـ 09 ويتكون من 10 أرقام" });
+
         // ─── إصلاح: منع المحفّظ من نقل طالب إلى حلقة خارج نطاقه ───
         var isTeacherUpdate = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        if (isTeacherUpdate)
+        {
+            // تعديل البيانات الشخصية لطلاب الحلقات الرسمية للمحفّظ فقط (لا طلاب الحلقات الإضافية)
+            var teacherUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var ownsPrimary = await _context.Students.AnyAsync(s => s.Id == id &&
+                s.Circle != null && s.Circle.Teacher != null && s.Circle.Teacher.UserId == teacherUserId);
+            if (!ownsPrimary)
+                return StatusCode(403, new { message = "يمكنك تعديل بيانات طلاب حلقاتك الرسمية فقط" });
+            if (!request.CircleId.HasValue)
+                return BadRequest(new { message = "لا يمكن إخراج الطالب من الحلقات — تواصل مع الإدارة لنقله" });
+        }
         if (isTeacherUpdate && request.CircleId.HasValue && request.CircleId != student.CircleId)
         {
             var ownsTargetCircle = await _context.Circles.AnyAsync(c =>
@@ -450,9 +472,21 @@ public class StudentsController : ControllerBase
         student.DateOfBirth = request.DateOfBirth;
         student.RegistrationDate = request.RegistrationDate ?? student.RegistrationDate;
         student.Residence = string.IsNullOrWhiteSpace(request.Residence) ? null : request.Residence.Trim();
-        student.StudentPhone = string.IsNullOrWhiteSpace(request.StudentPhone)
+        var newStudentPhone = string.IsNullOrWhiteSpace(request.StudentPhone)
             ? null
             : AccountProvisioningService.NormalizePhone(request.StudentPhone);
+        if (newStudentPhone != null && newStudentPhone != student.StudentPhone)
+        {
+            var conflict = await _restoration.GetActivePhoneConflictAsync(newStudentPhone, student.UserId);
+            if (conflict != null)
+                return BadRequest(new { message = conflict });
+            // رقم الطالب هو اسم الدخول: نحدّثه معه حتى يدخل الطالب برقمه الجديد
+            student.User.UserName = newStudentPhone;
+            student.User.NormalizedUserName = newStudentPhone.ToUpperInvariant();
+            student.User.PhoneNumber = newStudentPhone;
+        }
+        // عند حذف الرقم يبقى اسم الدخول الحالي كما هو (الحساب يحتاج اسم دخول دائماً)
+        student.StudentPhone = newStudentPhone;
 
         if (!Enum.TryParse<GuardianRelationship>(request.GuardianRelationship, true, out var relationship))
             return BadRequest(new { message = "صلة القرابة غير صالحة" });

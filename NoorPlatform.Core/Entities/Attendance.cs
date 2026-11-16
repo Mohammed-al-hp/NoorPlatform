@@ -20,4 +20,7 @@ public class Attendance
     /// <summary>الحلقة التي سُجّل فيها الحضور (رسمية أو إضافية).</summary>
     public int? CircleId { get; set; }
     public Circle? Circle { get; set; }
+
+    /// <summary>النقاط الممنوحة فعلياً بسبب هذا السجل — تُعدَّل عند تغيير الحالة حتى يبقى رصيد الطالب متسقاً.</summary>
+    public int PointsAwarded { get; set; }
 }

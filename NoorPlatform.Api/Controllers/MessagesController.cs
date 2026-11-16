@@ -26,6 +26,8 @@ public class MessagesController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Content))
             return BadRequest(new { message = "نص الرسالة مطلوب" });
+        if (request.Content.Trim().Length > MaxContentLength)
+            return BadRequest(new { message = "الرسالة طويلة جداً (الحد 2000 حرف)" });
 
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -36,7 +38,9 @@ public class MessagesController : ControllerBase
         if (parent == null)
             return NotFound(new { message = "لم يُعثر على بيانات ولي الأمر" });
 
-        if (!Enum.TryParse<MessageRecipientType>(request.RecipientType, true, out var recipientType))
+        // ولي الأمر يراسل المحفّظ أو الإدارة فقط (النوع Parent مخصص للردود)
+        if (!Enum.TryParse<MessageRecipientType>(request.RecipientType, true, out var recipientType)
+            || recipientType is not (MessageRecipientType.Teacher or MessageRecipientType.Admin))
             return BadRequest(new { message = "نوع المستلم غير صالح" });
 
         Teacher? recipientTeacher = null;
@@ -53,6 +57,15 @@ public class MessagesController : ControllerBase
                 return Forbid();
 
             recipientTeacher = await _context.Teachers.FindAsync(request.RecipientTeacherId.Value);
+        }
+
+        // ParentMessageId: متابعة محادثة تخص ولي الأمر نفسه فقط (رسالته أو رد موجّه إليه)
+        if (request.ParentMessageId.HasValue)
+        {
+            var ownsThread = await _context.Messages.AnyAsync(m => m.Id == request.ParentMessageId.Value &&
+                (m.SenderUserId == userId || m.RecipientUserId == userId));
+            if (!ownsThread)
+                return BadRequest(new { message = "الرسالة الأصلية غير موجودة" });
         }
 
         var message = new Message
@@ -79,17 +92,23 @@ public class MessagesController : ControllerBase
 
         var messages = await _context.Messages
             .Where(m => m.SenderUserId == userId)
-            .Include(m => m.RecipientTeacher).ThenInclude(t => t!.User)
             .OrderByDescending(m => m.CreatedAt)
             .Select(m => new
             {
                 m.Id,
                 m.Content,
                 m.CreatedAt,
+                m.IsRead,
                 RecipientType = m.RecipientType.ToString(),
                 RecipientName = m.RecipientType == MessageRecipientType.Admin
                     ? "إدارة المركز"
-                    : (m.RecipientTeacher != null ? m.RecipientTeacher.User.FullName : "—")
+                    : (m.RecipientTeacher != null ? m.RecipientTeacher.User.FullName : "—"),
+                // ردود المحفّظ/الإدارة على هذه الرسالة
+                Replies = _context.Messages
+                    .Where(r => r.ParentMessageId == m.Id && r.RecipientUserId == userId)
+                    .OrderBy(r => r.CreatedAt)
+                    .Select(r => new { r.Id, r.Content, r.CreatedAt, SenderName = r.SenderUser.FullName })
+                    .ToList()
             })
             .ToListAsync();
 
@@ -122,7 +141,6 @@ public class MessagesController : ControllerBase
         }
 
         var messages = await query
-            .Include(m => m.SenderUser)
             .OrderByDescending(m => m.CreatedAt)
             .Select(m => new
             {
@@ -130,7 +148,12 @@ public class MessagesController : ControllerBase
                 m.Content,
                 m.CreatedAt,
                 m.IsRead,
-                SenderName = m.SenderUser.FullName
+                SenderName = m.SenderUser.FullName,
+                Replies = _context.Messages
+                    .Where(r => r.ParentMessageId == m.Id && r.RecipientType == MessageRecipientType.Parent)
+                    .OrderBy(r => r.CreatedAt)
+                    .Select(r => new { r.Id, r.Content, r.CreatedAt, SenderName = r.SenderUser.FullName })
+                    .ToList()
             })
             .ToListAsync();
 
@@ -167,6 +190,49 @@ public class MessagesController : ControllerBase
         return Ok(new { message = "تم التعليم كمقروءة" });
     }
 
+    // POST /api/messages/{id}/reply — رد المحفّظ/الإدارة على رسالة ولي أمر
+    [HttpPost("{id}/reply")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> Reply(int id, [FromBody] ReplyMessageRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Content))
+            return BadRequest(new { message = "نص الرد مطلوب" });
+        if (request.Content.Trim().Length > MaxContentLength)
+            return BadRequest(new { message = "الرد طويل جداً (الحد 2000 حرف)" });
+
+        var original = await _context.Messages.FindAsync(id);
+        if (original == null)
+            return NotFound(new { message = "الرسالة غير موجودة" });
+
+        if (!await IsAddressedToCurrentUserAsync(original))
+            return Forbid();
+
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        _context.Messages.Add(new Message
+        {
+            SenderUserId = userId,
+            RecipientType = MessageRecipientType.Parent,
+            RecipientUserId = original.SenderUserId,
+            ParentMessageId = original.Id,
+            Content = request.Content.Trim()
+        });
+        original.IsRead = true;
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "تم إرسال الرد إلى ولي الأمر" });
+    }
+
+    private const int MaxContentLength = 2000;
+
+    /// <summary>الرسالة موجهة للمستخدم الحالي: للإدارة إن كان مشرفاً، أو لملف المحفّظ الحالي.</summary>
+    private async Task<bool> IsAddressedToCurrentUserAsync(Message message)
+    {
+        if (User.IsInRole("Admin"))
+            return message.RecipientType == MessageRecipientType.Admin;
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+        return teacher != null && message.RecipientType == MessageRecipientType.Teacher && message.RecipientTeacherId == teacher.Id;
+    }
+
     // GET /api/messages/available-recipients — قائمة محفّظي أبناء ولي الأمر (لملء القائمة المنسدلة بالواجهة)
     [HttpGet("available-recipients")]
     [Authorize(Roles = "Parent")]
@@ -192,4 +258,8 @@ public class SendMessageRequest
     public int? RecipientTeacherId { get; set; }
     public string Content { get; set; } = string.Empty;
     public int? ParentMessageId { get; set; }
+}
+public class ReplyMessageRequest
+{
+    public string Content { get; set; } = string.Empty;
 }

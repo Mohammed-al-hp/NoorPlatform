@@ -242,11 +242,10 @@ public class ParentsController : ControllerBase
         if (parent == null)
             return NotFound(new { message = "ولي الأمر غير موجود" });
 
+        // فك الربط بالحساب فقط مع الإبقاء على رقم ولي الأمر واسمه في ملف الطالب،
+        // حتى لا يضيع رقم التواصل (إشعارات الغياب وغيرها) بعد أرشفة الحساب
         foreach (var child in parent.Children)
-        {
             child.ParentId = null;
-            child.ParentPhone = string.Empty;
-        }
 
         // ─── إصلاح: توحيد آلية الأرشفة (IsDeleted) + تعطيل الحساب وإبطال الجلسات ───
         parent.IsDeleted = true;

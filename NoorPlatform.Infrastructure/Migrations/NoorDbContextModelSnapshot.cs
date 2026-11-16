@@ -224,11 +224,16 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<int>("Target")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TeacherId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TeacherId");
 
                     b.ToTable("Announcements");
                 });
@@ -250,6 +255,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PointsAwarded")
+                        .HasColumnType("int");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -263,8 +271,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.HasIndex("Date")
                         .HasDatabaseName("IX_Attendance_Date");
 
-                    b.HasIndex("StudentId", "Date")
-                        .HasDatabaseName("IX_Attendance_StudentId_Date");
+                    b.HasIndex("StudentId", "Date", "CircleId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Attendance_Student_Date_Circle");
 
                     b.ToTable("Attendances");
                 });
@@ -516,6 +525,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PointsAwarded")
+                        .HasColumnType("int");
+
                     b.Property<string>("RevisionMode")
                         .HasColumnType("nvarchar(max)");
 
@@ -700,6 +712,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<int>("RecipientType")
                         .HasColumnType("int");
 
+                    b.Property<int?>("RecipientUserId")
+                        .HasColumnType("int");
+
                     b.Property<int>("SenderUserId")
                         .HasColumnType("int");
 
@@ -711,6 +726,8 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.HasIndex("ParentMessageId");
 
                     b.HasIndex("RecipientTeacherId");
+
+                    b.HasIndex("RecipientUserId");
 
                     b.HasIndex("SenderUserId");
 
@@ -1544,6 +1561,16 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NoorPlatform.Core.Entities.Announcement", b =>
+                {
+                    b.HasOne("NoorPlatform.Core.Entities.Teacher", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("NoorPlatform.Core.Entities.Attendance", b =>
                 {
                     b.HasOne("NoorPlatform.Core.Entities.Circle", "Circle")
@@ -1681,6 +1708,11 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .HasForeignKey("RecipientTeacherId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("NoorPlatform.Core.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("NoorPlatform.Core.Entities.User", "SenderUser")
                         .WithMany()
                         .HasForeignKey("SenderUserId")
@@ -1690,6 +1722,8 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Navigation("ParentMessage");
 
                     b.Navigation("RecipientTeacher");
+
+                    b.Navigation("RecipientUser");
 
                     b.Navigation("SenderUser");
                 });

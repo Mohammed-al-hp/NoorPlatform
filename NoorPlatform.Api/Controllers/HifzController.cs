@@ -5,6 +5,7 @@ using NoorPlatform.Api.Security;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Infrastructure.Data;
 using NoorPlatform.Core.Entities;
+using NoorPlatform.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 
 namespace NoorPlatform.Api.Controllers;
@@ -360,42 +361,22 @@ public class HifzController : ControllerBase
         if (!studentExists)
             return NotFound(new { message = "الطالب غير موجود" });
 
-        if (!Enum.TryParse<RecordType>(request.Type, true, out var recordType))
-            return BadRequest(new { message = $"نوع السجل غير صالح: {request.Type}. القيم المقبولة: Memorization, Revision" });
+        var validationError = ValidateRecord(request, out var recordType);
+        if (validationError != null)
+            return BadRequest(new { message = validationError });
 
-        var verses = request.Verses?.Trim() ?? string.Empty;
-
-        // ✅ إصلاح 1: حساب VerseCount تلقائياً من نص الآيات
-        var verseCount = HifzRecord.ParseVerseCount(verses);
-
-        var record = new HifzRecord
-        {
-            StudentId = request.StudentId,
-            SurahName = request.SurahName?.Trim() ?? string.Empty,
-            ToSurahName = request.ToSurahName?.Trim(),
-            Verses = verses,
-            VerseCount = verseCount,
-            StartVerseText = request.StartVerseText?.Trim() ?? string.Empty,
-            EndVerseText = request.EndVerseText?.Trim() ?? string.Empty,
-            RevisionMode = request.RevisionMode?.Trim(),
-            SessionDetailsJson = request.SessionDetailsJson,
-            Type = recordType,
-            Evaluation = request.Evaluation?.Trim() ?? string.Empty,
-            Notes = request.Notes?.Trim() ?? string.Empty,
-            Date = request.Date ?? DateTime.UtcNow
-        };
+        var record = new HifzRecord { StudentId = request.StudentId };
+        ApplyRequest(record, request, recordType);
+        record.Date = request.Date ?? DateTime.UtcNow;
 
         _context.HifzRecords.Add(record);
-        
-        // Gamification & ActivityFeed
+
+        // Gamification & ActivityFeed — الجلسة الناجحة فقط تمنح نقاطاً، والقيمة تُحفظ في السجل
         var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == request.StudentId);
         if (student != null)
         {
             var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
-            if (recordType == RecordType.Memorization)
-                student.Points += settings?.PointsHifzMemorization ?? 50;
-            else
-                student.Points += settings?.PointsHifzRevision ?? 20;
+            record.PointsAwarded = PointsLedger.Apply(student, 0, PointsLedger.ForHifz(recordType, record.Evaluation, settings));
 
             _context.ActivityFeeds.Add(new ActivityFeed {
                 UserId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!),
@@ -436,9 +417,101 @@ public class HifzController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, record.StudentId))
             return Forbid();
 
+        // سحب النقاط التي منحتها هذه الجلسة
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == record.StudentId);
+        if (student != null)
+            PointsLedger.Apply(student, record.PointsAwarded, 0);
+
         _context.HifzRecords.Remove(record);
         await _context.SaveChangesAsync();
         return Ok(new { message = "تم حذف السجل" });
+    }
+
+    // PUT /api/hifz/{id} — تعديل جلسة تسميع (تصحيح خطأ إدخال) مع إعادة حساب النقاط
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> Update(int id, [FromBody] AddHifzRecordRequest request)
+    {
+        var record = await _context.HifzRecords.FirstOrDefaultAsync(r => r.Id == id);
+        if (record == null)
+            return NotFound(new { message = "السجل غير موجود" });
+
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, record.StudentId))
+            return Forbid();
+
+        request.StudentId = record.StudentId; // لا يُسمح بنقل الجلسة لطالب آخر
+        // الحقول غير المُرسلة تبقى كما هي (نموذج التعديل المختصر لا يمحو تفاصيل الجلسة)
+        request.StartVerseText ??= record.StartVerseText;
+        request.EndVerseText ??= record.EndVerseText;
+        request.RevisionMode ??= record.RevisionMode;
+        request.SessionDetailsJson ??= record.SessionDetailsJson;
+        request.Notes ??= record.Notes;
+        var validationError = ValidateRecord(request, out var recordType);
+        if (validationError != null)
+            return BadRequest(new { message = validationError });
+
+        ApplyRequest(record, request, recordType);
+        if (request.Date.HasValue) record.Date = request.Date.Value;
+
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == record.StudentId);
+        if (student != null)
+        {
+            var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
+            record.PointsAwarded = PointsLedger.Apply(student, record.PointsAwarded,
+                PointsLedger.ForHifz(recordType, record.Evaluation, settings));
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "تم تعديل جلسة التسميع", record.Id, record.VerseCount, record.PointsAwarded });
+    }
+
+    private const int MaxSessionDetailsLength = 20_000;
+
+    /// <summary>التحقق من مدخلات جلسة التسميع (مشترك بين الإضافة والتعديل).</summary>
+    private static string? ValidateRecord(AddHifzRecordRequest request, out RecordType recordType)
+    {
+        if (!Enum.TryParse(request.Type, true, out recordType) || !Enum.IsDefined(recordType))
+            return $"نوع السجل غير صالح: {request.Type}. القيم المقبولة: Memorization, Revision";
+        if (string.IsNullOrWhiteSpace(request.SurahName))
+            return "اسم السورة مطلوب";
+        if (request.SurahName.Trim().Length > 50 || (request.ToSurahName?.Trim().Length ?? 0) > 50)
+            return "اسم السورة طويل جداً";
+        if (string.IsNullOrWhiteSpace(request.Evaluation))
+            return "التقييم مطلوب";
+        if (request.Evaluation.Trim().Length > 30)
+            return "التقييم طويل جداً";
+        if ((request.Verses?.Trim().Length ?? 0) > 50)
+            return "نطاق الآيات طويل جداً";
+        if ((request.Notes?.Length ?? 0) > 1000)
+            return "الملاحظات طويلة جداً (الحد 1000 حرف)";
+        if ((request.StartVerseText?.Length ?? 0) > 500 || (request.EndVerseText?.Length ?? 0) > 500)
+            return "نص الآية طويل جداً";
+        if (request.Date.HasValue && request.Date.Value > DateTime.UtcNow.AddDays(1))
+            return "لا يمكن تسجيل جلسة بتاريخ مستقبلي";
+        if (!string.IsNullOrEmpty(request.SessionDetailsJson))
+        {
+            if (request.SessionDetailsJson.Length > MaxSessionDetailsLength)
+                return "تفاصيل الجلسة كبيرة جداً";
+            try { using var _ = System.Text.Json.JsonDocument.Parse(request.SessionDetailsJson); }
+            catch (System.Text.Json.JsonException) { return "تفاصيل الجلسة ليست بصيغة صحيحة"; }
+        }
+        return null;
+    }
+
+    private static void ApplyRequest(HifzRecord record, AddHifzRecordRequest request, RecordType recordType)
+    {
+        var verses = request.Verses?.Trim() ?? string.Empty;
+        record.SurahName = request.SurahName.Trim();
+        record.ToSurahName = string.IsNullOrWhiteSpace(request.ToSurahName) ? null : request.ToSurahName.Trim();
+        record.Verses = verses;
+        record.VerseCount = HifzRecord.ParseVerseCount(verses); // يُحسب تلقائياً من نص الآيات
+        record.StartVerseText = request.StartVerseText?.Trim() ?? string.Empty;
+        record.EndVerseText = request.EndVerseText?.Trim() ?? string.Empty;
+        record.RevisionMode = request.RevisionMode?.Trim();
+        record.SessionDetailsJson = string.IsNullOrWhiteSpace(request.SessionDetailsJson) ? null : request.SessionDetailsJson;
+        record.Type = recordType;
+        record.Evaluation = request.Evaluation.Trim();
+        record.Notes = request.Notes?.Trim() ?? string.Empty;
     }
 }
 
@@ -454,6 +527,6 @@ public class AddHifzRecordRequest
     public string? SessionDetailsJson { get; set; }
     public string Type { get; set; } = "Memorization";
     public string Evaluation { get; set; } = string.Empty;
-    public string Notes { get; set; } = string.Empty;
+    public string? Notes { get; set; }
     public DateTime? Date { get; set; }
 }
