@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../config/theme.dart';
+import '../../core/network/center_info.dart';
+import '../../di/injection_container.dart';
 
 /// شعار منصة نور: العلامة (SVG) + الاسم بخط Amiri — نفس شعار منصة الويب.
 class NoorLogo extends StatelessWidget {
@@ -10,12 +12,16 @@ class NoorLogo extends StatelessWidget {
   final bool onDark;
   final bool vertical;
 
+  /// عرض اسم المركز الفعلي بدل العبارة التعريفية (رؤوس الشاشات بعد الدخول).
+  final bool showCenterName;
+
   const NoorLogo({
     super.key,
     this.size = 56,
     this.showName = true,
     this.onDark = false,
     this.vertical = false,
+    this.showCenterName = false,
   });
 
   @override
@@ -34,6 +40,12 @@ class NoorLogo extends StatelessWidget {
     );
     if (!showName) return mark;
 
+    final subtitleStyle = TextStyle(
+      fontSize: (size * 0.2).clamp(11, 16).toDouble(),
+      fontWeight: FontWeight.w600,
+      color: onDark ? NoorTheme.accentGoldLight : NoorTheme.accentGold,
+    );
+
     final name = Column(
       crossAxisAlignment: vertical ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -45,14 +57,23 @@ class NoorLogo extends StatelessWidget {
             color: onDark ? NoorTheme.goldSoft : NoorTheme.primaryGreen,
           ).copyWith(height: 1.25),
         ),
-        Text(
-          'لتحفيظ القرآن الكريم',
-          style: TextStyle(
-            fontSize: (size * 0.2).clamp(11, 16).toDouble(),
-            fontWeight: FontWeight.w600,
-            color: onDark ? NoorTheme.accentGoldLight : NoorTheme.accentGold,
+        // تحت «منصة نور»: اسم المركز المسجل في الإعدادات (في رؤوس الشاشات)، أو العبارة التعريفية
+        if (showCenterName)
+          ValueListenableBuilder<String?>(
+            valueListenable: sl<CenterInfo>().centerName,
+            builder: (_, name, __) => Text(
+              name ?? CenterInfo.fallbackCenterName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: subtitleStyle,
+            ),
+          )
+        else
+          Text(
+            CenterInfo.tagline,
+            textAlign: vertical ? TextAlign.center : TextAlign.start,
+            style: subtitleStyle,
           ),
-        ),
       ],
     );
 

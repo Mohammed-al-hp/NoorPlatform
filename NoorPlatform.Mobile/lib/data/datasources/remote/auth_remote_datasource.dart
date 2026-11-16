@@ -10,7 +10,7 @@ abstract class AuthRemoteDataSource {
   Future<AuthResponseModel> login(LoginRequestModel request);
   /// يعيد التوكن الجديد: الخادم يُبطل التوكن القديم بعد تغيير كلمة المرور.
   Future<String?> changePassword(ChangePasswordRequestModel request);
-  Future<(String, int)> requestPasswordOtp(String phone);
+  Future<(String, int)> requestPasswordOtp(String phone, {String? channel});
   Future<void> verifyPasswordOtp(String phone, String code);
   Future<String> resetPasswordWithOtp(String phone, String code, String newPassword);
 }
@@ -65,8 +65,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<(String, int)> requestPasswordOtp(String phone) async {
-    final data = await _postPublic(ApiConfig.forgotPassword, {'phone': phone}, 'تعذر إرسال رمز التحقق');
+  Future<(String, int)> requestPasswordOtp(String phone, {String? channel}) async {
+    final data = await _postPublic(
+      ApiConfig.forgotPassword,
+      {'phone': phone, if (channel != null) 'channel': channel},
+      'تعذر إرسال رمز التحقق',
+    );
     return (
       toStr(data['message'], 'تم إرسال رمز التحقق'),
       data['resendAfterSeconds'] == null ? 60 : toInt(data['resendAfterSeconds']),

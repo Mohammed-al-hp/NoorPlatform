@@ -118,7 +118,7 @@ class TeacherDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const NoorLogo(size: 34),
+        title: const NoorLogo(size: 34, showCenterName: true),
         centerTitle: false,
       ),
       body: LoadView<_DashboardData>(

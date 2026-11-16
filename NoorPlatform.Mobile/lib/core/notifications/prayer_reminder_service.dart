@@ -5,6 +5,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../storage/app_preferences.dart';
+import '../utils/prayer_times.dart';
 
 /// Schedules a daily local reminder for the student prayer log.
 ///
@@ -80,7 +81,7 @@ class PrayerReminderService {
     final androidDetails = AndroidNotificationDetails(
       channelId,
       channelName,
-      channelDescription: 'تذكير يومي بتسجيل صلاة المسجد',
+      channelDescription: 'تذكير بالورد اليومي وبدخول أوقات الصلاة',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -95,8 +96,8 @@ class PrayerReminderService {
     final when = _nextInstanceOf(hour, minute);
     await _plugin.zonedSchedule(
       notificationId,
-      'تذكير سجل الصلاة',
-      'سجّل صلاة اليوم قبل إقفال السجل — بارك الله فيك',
+      'هل قرأت وردك اليوم؟',
+      'حافظ على وردك اليومي، ولا تنسَ تسجيل صلواتك — بارك الله فيك',
       when,
       details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -104,12 +105,57 @@ class PrayerReminderService {
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
     );
+
+    await _scheduleAdhanReminders(details);
+  }
+
+  // ─── تنبيه عند دخول وقت كل صلاة (مواقيت مصراتة) للأيام القادمة ───
+  static const _adhanBaseId = 1100;
+  static const _adhanDays = 7;
+
+  Future<void> _scheduleAdhanReminders(NotificationDetails details) async {
+    await _cancelAdhan();
+    tz.Location libya;
+    try {
+      libya = tz.getLocation('Africa/Tripoli');
+    } catch (_) {
+      libya = tz.local;
+    }
+    final now = tz.TZDateTime.now(libya);
+    for (var day = 0; day < _adhanDays; day++) {
+      final date = DateTime(now.year, now.month, now.day).add(Duration(days: day));
+      final times = MisrataPrayerTimes.forDate(date);
+      for (var i = 0; i < MisrataPrayerTimes.keys.length; i++) {
+        final key = MisrataPrayerTimes.keys[i];
+        final t = times[key]!;
+        final at = tz.TZDateTime(libya, date.year, date.month, date.day, t.hour, t.minute);
+        if (!at.isAfter(now)) continue;
+        final name = MisrataPrayerTimes.names[key]!;
+        await _plugin.zonedSchedule(
+          _adhanBaseId + day * 5 + i,
+          'حان وقت صلاة $name',
+          'صلاة الجماعة في المسجد أعظم أجراً — ثم سجّل صلاتك في منصة نور',
+          at,
+          details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelAdhan() async {
+    for (var id = _adhanBaseId; id < _adhanBaseId + _adhanDays * 5; id++) {
+      await _plugin.cancel(id);
+    }
   }
 
   Future<void> cancel() async {
     if (!isSupported) return;
     await init();
     await _plugin.cancel(notificationId);
+    await _cancelAdhan();
   }
 
   tz.TZDateTime _nextInstanceOf(int hour, int minute) {

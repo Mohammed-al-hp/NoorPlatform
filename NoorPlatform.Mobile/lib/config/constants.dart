@@ -3,7 +3,7 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'نور';
-  static const String appNameFull = 'منصة نور لتحفيظ القرآن';
+  static const String appNameFull = 'منصة نور لإدارة مركز وحلقات تحفيظ القرآن الكريم';
   static const int totalQuranVerses = 6236;
 
   // ── Cache TTL (in minutes) ──

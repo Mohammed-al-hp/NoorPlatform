@@ -20,13 +20,12 @@ abstract class PortalRemoteDataSource {
   Future<PortalConfigModel> getPortalConfig();
   Future<List<EvaluationModel>> getMyEvaluations({int? studentId});
   Future<List<PrayerLogModel>> getMyPrayerLogs();
-  Future<void> submitMyPrayer({
+  Future<String?> submitMyPrayer({
     required String date,
-    required bool prayedInMosque,
-    required bool onTime,
-    int? mosquePrayerCount,
+    required List<PrayerEntryModel> prayers,
     String? studentNote,
   });
+  Future<PrayerTimesModel> getPrayerTimes({String? date});
   Future<List<PrayerLogModel>> getPrayerByStudent(int studentId);
   Future<List<ParentHomeFeedbackModel>> getParentHome(int studentId);
   Future<void> submitParentHome({
@@ -96,11 +95,9 @@ class PortalRemoteDataSourceImpl implements PortalRemoteDataSource {
       }, 'فشل تحميل سجل الصلاة');
 
   @override
-  Future<void> submitMyPrayer({
+  Future<String?> submitMyPrayer({
     required String date,
-    required bool prayedInMosque,
-    required bool onTime,
-    int? mosquePrayerCount,
+    required List<PrayerEntryModel> prayers,
     String? studentNote,
   }) =>
       _guard(() async {
@@ -108,15 +105,26 @@ class PortalRemoteDataSourceImpl implements PortalRemoteDataSource {
           ApiConfig.myPrayer,
           data: {
             'date': date,
-            'prayedInMosque': prayedInMosque,
-            'onTime': onTime,
-            if (mosquePrayerCount != null)
-              'mosquePrayerCount': mosquePrayerCount,
+            'prayers': prayers.map((p) => p.toJson()).toList(),
             if (studentNote != null) 'studentNote': studentNote,
           },
         );
         ApiResponseHelper.ensureSuccess(res, fallback: 'فشل تسجيل الصلاة');
+        final data = res.data;
+        return data is Map ? data['message']?.toString() : null;
       }, 'فشل تسجيل الصلاة');
+
+  @override
+  Future<PrayerTimesModel> getPrayerTimes({String? date}) => _guard(() async {
+        final res = await apiClient.get(
+          ApiConfig.prayerTimes,
+          queryParameters: date == null ? null : {'date': date},
+        );
+        ApiResponseHelper.ensureSuccess(res, fallback: 'تعذر تحميل مواقيت الصلاة');
+        return PrayerTimesModel.fromJson(
+          Map<String, dynamic>.from(res.data as Map),
+        );
+      }, 'تعذر تحميل مواقيت الصلاة');
 
   @override
   Future<List<PrayerLogModel>> getPrayerByStudent(int studentId) =>

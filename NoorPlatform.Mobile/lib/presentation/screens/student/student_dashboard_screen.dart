@@ -11,7 +11,9 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/noor_widgets.dart';
 import '../../widgets/monthly_rating_card.dart';
+import '../../widgets/wird_reminder_card.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   final bool embedded;
@@ -39,7 +41,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('لوحة الطالب'),
+        title: const NoorLogo(size: 34, showCenterName: true),
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -97,6 +100,7 @@ class _DashboardBody extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(NoorTheme.spacingMd),
         children: [
+          const WirdReminderCard(),
           Container(
             padding: const EdgeInsets.all(NoorTheme.spacingMd),
             decoration: BoxDecoration(

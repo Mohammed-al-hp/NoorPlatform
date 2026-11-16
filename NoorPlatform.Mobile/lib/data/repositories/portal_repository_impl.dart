@@ -50,23 +50,20 @@ class PortalRepositoryImpl implements PortalRepository {
       _run(remote.getMyPrayerLogs);
 
   @override
-  Future<Either<Failure, Unit>> submitMyPrayer({
+  Future<Either<Failure, String?>> submitMyPrayer({
     required String date,
-    required bool prayedInMosque,
-    required bool onTime,
-    int? mosquePrayerCount,
+    required List<PrayerEntryModel> prayers,
     String? studentNote,
   }) =>
-      _run(() async {
-        await remote.submitMyPrayer(
-          date: date,
-          prayedInMosque: prayedInMosque,
-          onTime: onTime,
-          mosquePrayerCount: mosquePrayerCount,
-          studentNote: studentNote,
-        );
-        return unit;
-      });
+      _run(() => remote.submitMyPrayer(
+            date: date,
+            prayers: prayers,
+            studentNote: studentNote,
+          ));
+
+  @override
+  Future<Either<Failure, PrayerTimesModel>> getPrayerTimes({String? date}) =>
+      _run(() => remote.getPrayerTimes(date: date));
 
   @override
   Future<Either<Failure, List<PrayerLogModel>>> getPrayerByStudent(

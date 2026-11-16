@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get_it/get_it.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -8,6 +10,7 @@ import '../presentation/blocs/attendance/attendance_bloc.dart';
 
 // Core
 import '../core/network/api_client.dart';
+import '../core/network/center_info.dart';
 import '../core/network/network_info.dart';
 import '../core/storage/app_preferences.dart';
 import '../core/storage/secure_storage.dart';
@@ -121,6 +124,7 @@ Future<void> init() async {
   // ── Core ──
   sl.registerLazySingleton(() => SecureStorage());
   sl.registerLazySingleton(() => ApiClient(sl()));
+  sl.registerLazySingleton(() => CenterInfo(sl()));
   sl.registerLazySingleton(() => NetworkInfo(connectivity: sl()));
   sl.registerLazySingleton(() => AppRouter(sl()));
 
@@ -131,4 +135,6 @@ Future<void> init() async {
   await sl<ThemeCubit>().load();
   await sl<ReminderCubit>().load();
   await sl<PrayerReminderService>().syncFromPreferences();
+  // اسم المركز وقنوات التحقق — دون انتظار (لا يؤخر أول إطار)
+  unawaited(sl<CenterInfo>().load());
 }

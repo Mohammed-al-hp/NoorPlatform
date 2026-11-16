@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../config/constants.dart';
 import '../../../config/theme.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_state.dart';
 import '../../blocs/reminder/reminder_cubit.dart';
 import '../../blocs/theme/theme_cubit.dart';
 import '../../widgets/async_body.dart';
@@ -46,6 +48,24 @@ class SettingsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(NoorTheme.spacingMd),
           children: [
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, auth) {
+                if (auth is! AuthAuthenticated) return const SizedBox.shrink();
+                final u = auth.user;
+                return SectionCard(
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      backgroundColor: NoorTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      child: Text(u.fullName.isEmpty ? '؟' : u.fullName.characters.first),
+                    ),
+                    title: Text(u.fullName, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    subtitle: Text(u.roleLabel),
+                  ),
+                );
+              },
+            ),
             SectionCard(
               title: 'المظهر',
               child: BlocBuilder<ThemeCubit, ThemeMode>(
@@ -85,7 +105,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             SectionCard(
-              title: 'تذكير سجل الصلاة',
+              title: 'تذكير الصلاة والورد',
               child: BlocBuilder<ReminderCubit, ReminderState>(
                 builder: (context, state) {
                   return Column(
@@ -93,10 +113,10 @@ class SettingsScreen extends StatelessWidget {
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         secondary: const Icon(Icons.mosque_outlined),
-                        title: const Text('تذكير يومي'),
+                        title: const Text('تنبيه الأذان والورد اليومي'),
                         subtitle: Text(
                           state.supported
-                              ? 'ينبّهك لتسجيل صلاة اليوم قبل الإقفال'
+                              ? 'تنبيه عند دخول وقت كل صلاة في مصراتة + «هل قرأت وردك اليوم؟»'
                               : 'متاح على Android / iOS — ليس على المتصفح',
                         ),
                         value: state.enabled,
@@ -109,7 +129,7 @@ class SettingsScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         enabled: state.supported,
                         leading: const Icon(Icons.schedule),
-                        title: const Text('وقت التذكير'),
+                        title: const Text('وقت تذكير الورد اليومي'),
                         subtitle: Text(state.timeLabel),
                         trailing: const Icon(Icons.chevron_left),
                         onTap: state.supported && !state.busy
@@ -133,7 +153,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: const Text('واجهة الطالب وولي الأمر'),
                   ),
                   const Text(
-                    'مركز الإشعارات يجمع الإعلانات وتنبيهات الفواتير، مع تذكير محلي بتسجيل الصلاة.',
+                    'مركز الإشعارات يجمع الإعلانات وتنبيهات الفواتير، مع تنبيه عند كل أذان (مواقيت مصراتة) وتذكير يومي بالورد.',
                   ),
                 ],
               ),

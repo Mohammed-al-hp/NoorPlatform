@@ -1,15 +1,60 @@
 import '../../core/network/api_response_helper.dart';
 
+/// أسماء الصلوات الخمس بالعربية (مفاتيح الخادم: Fajr, Dhuhr, Asr, Maghrib, Isha).
+const Map<String, String> kPrayerNames = {
+  'Fajr': 'الفجر',
+  'Dhuhr': 'الظهر',
+  'Asr': 'العصر',
+  'Maghrib': 'المغرب',
+  'Isha': 'العشاء',
+};
+
+/// تسجيل صلاة واحدة: صلّاها؟ في المسجد؟ في وقتها؟
+class PrayerEntryModel {
+  final String prayer;
+  final bool prayed;
+  final bool inMosque;
+  final bool onTime;
+
+  const PrayerEntryModel({
+    required this.prayer,
+    required this.prayed,
+    required this.inMosque,
+    required this.onTime,
+  });
+
+  String get arabicName => kPrayerNames[prayer] ?? prayer;
+
+  factory PrayerEntryModel.fromJson(Map<String, dynamic> json) =>
+      PrayerEntryModel(
+        prayer: toStr(json['prayer']),
+        prayed: toBool(json['prayed']),
+        inMosque: toBool(json['inMosque']),
+        onTime: toBool(json['onTime']),
+      );
+
+  /// صلاة لم تُؤدَّ لا تُحتسب في المسجد ولا في وقتها (منعاً للتناقض).
+  Map<String, dynamic> toJson() => {
+        'prayer': prayer,
+        'prayed': prayed,
+        'inMosque': prayed && inMosque,
+        'onTime': prayed && onTime,
+      };
+}
+
 class PrayerLogModel {
   final int id;
   final String date;
   final bool prayedInMosque;
   final bool onTime;
   final int mosquePrayerCount;
+  final int? prayedCount;
+  final int? onTimeCount;
   final bool isLocked;
   final String? studentNote;
   final String? sheikhOverrideNote;
   final String? submittedAt;
+  final List<PrayerEntryModel> entries;
 
   const PrayerLogModel({
     required this.id,
@@ -18,10 +63,20 @@ class PrayerLogModel {
     required this.onTime,
     required this.mosquePrayerCount,
     required this.isLocked,
+    this.prayedCount,
+    this.onTimeCount,
     this.studentNote,
     this.sheikhOverrideNote,
     this.submittedAt,
+    this.entries = const [],
   });
+
+  PrayerEntryModel? entryFor(String prayer) {
+    for (final e in entries) {
+      if (e.prayer == prayer) return e;
+    }
+    return null;
+  }
 
   factory PrayerLogModel.fromJson(Map<String, dynamic> json) => PrayerLogModel(
         id: toInt(json['id']),
@@ -29,10 +84,71 @@ class PrayerLogModel {
         prayedInMosque: toBool(json['prayedInMosque']),
         onTime: toBool(json['onTime']),
         mosquePrayerCount: toInt(json['mosquePrayerCount']),
+        prayedCount:
+            json['prayedCount'] == null ? null : toInt(json['prayedCount']),
+        onTimeCount:
+            json['onTimeCount'] == null ? null : toInt(json['onTimeCount']),
         isLocked: toBool(json['isLocked']),
         studentNote: json['studentNote']?.toString(),
         sheikhOverrideNote: json['sheikhOverrideNote']?.toString(),
         submittedAt: json['submittedAt']?.toString(),
+        entries: (json['entries'] is List)
+            ? (json['entries'] as List)
+                .whereType<Map>()
+                .map((e) => PrayerEntryModel.fromJson(Map<String, dynamic>.from(e)))
+                .toList()
+            : const [],
+      );
+}
+
+/// ميقات صلاة واحدة في مصراتة (من الخادم).
+class PrayerTimeItem {
+  final String prayer;
+  final String name;
+  final String time;
+  final bool started;
+
+  const PrayerTimeItem({
+    required this.prayer,
+    required this.name,
+    required this.time,
+    required this.started,
+  });
+
+  factory PrayerTimeItem.fromJson(Map<String, dynamic> json) => PrayerTimeItem(
+        prayer: toStr(json['prayer']),
+        name: toStr(json['name']),
+        time: toStr(json['time']),
+        started: toBool(json['started']),
+      );
+}
+
+class PrayerTimesModel {
+  final String city;
+  final String date;
+  final List<PrayerTimeItem> prayers;
+  final PrayerTimeItem? next;
+
+  const PrayerTimesModel({
+    required this.city,
+    required this.date,
+    required this.prayers,
+    this.next,
+  });
+
+  factory PrayerTimesModel.fromJson(Map<String, dynamic> json) =>
+      PrayerTimesModel(
+        city: toStr(json['city'], 'مصراتة'),
+        date: toStr(json['date']),
+        prayers: (json['prayers'] is List)
+            ? (json['prayers'] as List)
+                .whereType<Map>()
+                .map((e) => PrayerTimeItem.fromJson(Map<String, dynamic>.from(e)))
+                .toList()
+            : const [],
+        next: json['next'] is Map
+            ? PrayerTimeItem.fromJson(Map<String, dynamic>.from(json['next'] as Map))
+            : null,
       );
 }
 

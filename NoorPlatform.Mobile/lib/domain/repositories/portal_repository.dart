@@ -14,13 +14,13 @@ abstract class PortalRepository {
     int? studentId,
   });
   Future<Either<Failure, List<PrayerLogModel>>> getMyPrayerLogs();
-  Future<Either<Failure, Unit>> submitMyPrayer({
+  /// يعيد رسالة الخادم (مثل «تم تسجيل صلاة الظهر»).
+  Future<Either<Failure, String?>> submitMyPrayer({
     required String date,
-    required bool prayedInMosque,
-    required bool onTime,
-    int? mosquePrayerCount,
+    required List<PrayerEntryModel> prayers,
     String? studentNote,
   });
+  Future<Either<Failure, PrayerTimesModel>> getPrayerTimes({String? date});
   Future<Either<Failure, List<PrayerLogModel>>> getPrayerByStudent(
     int studentId,
   );

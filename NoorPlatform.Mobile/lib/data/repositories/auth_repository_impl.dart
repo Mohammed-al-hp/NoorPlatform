@@ -86,8 +86,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, (String, int)>> requestPasswordOtp(String phone) =>
-      _run(() => remoteDataSource.requestPasswordOtp(phone));
+  Future<Either<Failure, (String, int)>> requestPasswordOtp(String phone, {String? channel}) =>
+      _run(() => remoteDataSource.requestPasswordOtp(phone, channel: channel));
 
   @override
   Future<Either<Failure, Unit>> verifyPasswordOtp(String phone, String code) => _run(() async {

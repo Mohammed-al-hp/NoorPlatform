@@ -4,7 +4,10 @@ class UserModel {
   final String fullName;
   final String phone;
   final String? email;
-  final String role; // "Student" | "Parent"
+  final String role; // "Admin" | "Teacher" | "Student" | "Parent"
+  /// تسمية الدور بالعربية من الخادم (مدير عام / مشرف / محفّظ / طالب / ولي أمر).
+  final String? serverRoleLabel;
+  final bool isSuperAdmin;
 
   const UserModel({
     required this.id,
@@ -12,10 +15,31 @@ class UserModel {
     required this.phone,
     this.email,
     required this.role,
+    this.serverRoleLabel,
+    this.isSuperAdmin = false,
   });
 
   bool get isStudent => role == 'Student';
   bool get isParent => role == 'Parent';
+
+  /// لا تظهر Admin/Teacher بالإنجليزية في الواجهة أبداً.
+  String get roleLabel {
+    if (serverRoleLabel != null && serverRoleLabel!.isNotEmpty) {
+      return serverRoleLabel!;
+    }
+    switch (role) {
+      case 'Admin':
+        return isSuperAdmin ? 'مدير عام' : 'مشرف';
+      case 'Teacher':
+        return 'محفّظ';
+      case 'Student':
+        return 'طالب';
+      case 'Parent':
+        return 'ولي أمر';
+      default:
+        return role;
+    }
+  }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -24,6 +48,8 @@ class UserModel {
       phone: json['phone'] as String? ?? '',
       email: json['email'] as String?,
       role: json['role'] as String,
+      serverRoleLabel: json['roleLabel'] as String?,
+      isSuperAdmin: json['isSuperAdmin'] == true,
     );
   }
 
@@ -33,6 +59,8 @@ class UserModel {
         'phone': phone,
         'email': email,
         'role': role,
+        'roleLabel': serverRoleLabel,
+        'isSuperAdmin': isSuperAdmin,
       };
 }
 

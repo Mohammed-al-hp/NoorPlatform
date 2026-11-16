@@ -48,6 +48,9 @@ class ApiConfig {
   static const String portalConfig = '/api/pedagogical/portal-config';
   static const String myEvaluations = '/api/pedagogical/my-evaluations';
   static const String myPrayer = '/api/pedagogical/prayer/my';
+  static const String prayerTimes = '/api/pedagogical/prayer-times';
+  static const String publicSettings = '/api/settings/public';
+  static const String me = '/api/auth/me';
   static String prayerByStudent(int studentId) =>
       '/api/pedagogical/prayer?studentId=$studentId';
   static String parentHome(int studentId) =>

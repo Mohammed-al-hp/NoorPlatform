@@ -11,9 +11,11 @@ abstract class PasswordResetEvent extends Equatable {
 
 class OtpRequested extends PasswordResetEvent {
   final String phone;
-  const OtpRequested(this.phone);
+  /// قناة الإرسال: WhatsApp أو Sms (اختياري — حسب إعدادات المركز).
+  final String? channel;
+  const OtpRequested(this.phone, {this.channel});
   @override
-  List<Object?> get props => [phone];
+  List<Object?> get props => [phone, channel];
 }
 
 class OtpResendRequested extends PasswordResetEvent {
@@ -88,10 +90,14 @@ class PasswordResetState extends Equatable {
 /// تدفق "نسيت كلمة المرور" بثلاث خطوات: رقم الهاتف ← رمز التحقق ← كلمة المرور الجديدة.
 class PasswordResetBloc extends Bloc<PasswordResetEvent, PasswordResetState> {
   final AuthRepository authRepository;
+  String? _channel;
   static final _phonePattern = RegExp(r'^09\d{8}$');
 
   PasswordResetBloc({required this.authRepository}) : super(const PasswordResetState()) {
-    on<OtpRequested>((e, emit) => _request(e.phone.trim(), emit));
+    on<OtpRequested>((e, emit) {
+      _channel = e.channel;
+      return _request(e.phone.trim(), emit);
+    });
     on<OtpResendRequested>((e, emit) => _request(state.phone, emit));
     on<OtpSubmitted>(_onCode);
     on<NewPasswordSubmitted>(_onPassword);
@@ -105,7 +111,7 @@ class PasswordResetBloc extends Bloc<PasswordResetEvent, PasswordResetState> {
       return;
     }
     emit(state.copyWith(loading: true, clearError: true));
-    final r = await authRepository.requestPasswordOtp(phone);
+    final r = await authRepository.requestPasswordOtp(phone, channel: _channel);
     r.fold(
       (f) => emit(state.copyWith(loading: false, error: f.message)),
       (v) => emit(state.copyWith(

@@ -12,6 +12,7 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../blocs/notifications/notifications_cubit.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/noor_widgets.dart';
 import '../../widgets/monthly_rating_card.dart';
 import 'parent_fees_screen.dart';
 import 'parent_messages_screen.dart';
@@ -114,7 +115,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('متابعة الأبناء'),
+        title: const NoorLogo(size: 34, showCenterName: true),
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

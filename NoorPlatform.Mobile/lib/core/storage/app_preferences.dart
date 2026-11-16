@@ -77,4 +77,27 @@ class AppPreferences {
     await box.put(_prayerReminderHourKey, hour);
     await box.put(_prayerReminderMinuteKey, minute);
   }
+
+  // ─── تذكير «هل قرأت وردك اليوم؟» داخل التطبيق ───
+  static const _wirdDoneKey = 'wird_done_date';
+  static const _wirdSnoozeKey = 'wird_snooze_until';
+
+  /// هل يجب إظهار بطاقة الورد الآن؟ (لم يؤكد قراءته اليوم ولم يؤجّل)
+  Future<bool> shouldShowWirdReminder(String todayYmd) async {
+    final box = await _box();
+    if (box.get(_wirdDoneKey) == todayYmd) return false;
+    final snooze = box.get(_wirdSnoozeKey, defaultValue: 0) as int;
+    return DateTime.now().millisecondsSinceEpoch >= snooze;
+  }
+
+  Future<void> markWirdDone(String todayYmd) async {
+    await (await _box()).put(_wirdDoneKey, todayYmd);
+  }
+
+  Future<void> snoozeWird(Duration duration) async {
+    await (await _box()).put(
+      _wirdSnoozeKey,
+      DateTime.now().add(duration).millisecondsSinceEpoch,
+    );
+  }
 }
