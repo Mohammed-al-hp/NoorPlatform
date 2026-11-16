@@ -4,6 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../widgets/noor_widgets.dart';
+import '../../../di/injection_container.dart';
+import '../../../core/offline/sync_service.dart';
+import '../../blocs/notifications/notifications_cubit.dart';
+import '../../widgets/notification_bell.dart';
+import '../../widgets/sync_status_badge.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/teacher_models.dart';
@@ -28,6 +33,13 @@ class _TeacherShellScreenState extends State<TeacherShellScreen> {
   int _index = 0;
 
   @override
+  void initState() {
+    super.initState();
+    sl<NotificationsCubit>().startPolling(isParent: false, isTeacher: true);
+    sl<SyncService>().syncNow();
+  }
+
+  @override
   Widget build(BuildContext context) {
     const pages = [
       TeacherDashboardScreen(),
@@ -39,7 +51,10 @@ class _TeacherShellScreenState extends State<TeacherShellScreen> {
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthUnauthenticated) context.go('/login');
+        if (state is AuthUnauthenticated) {
+          sl<NotificationsCubit>().stopPolling();
+          context.go('/login');
+        }
       },
       child: Scaffold(
         body: IndexedStack(index: _index, children: pages),
@@ -120,6 +135,10 @@ class TeacherDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const NoorLogo(size: 34, showCenterName: true),
         centerTitle: false,
+        actions: const [
+          SyncStatusBadge(),
+          NotificationBell(route: '/teacher/notifications'),
+        ],
       ),
       body: LoadView<_DashboardData>(
         loader: _loadDashboard,

@@ -8,9 +8,31 @@ import '../../../di/injection_container.dart';
 import '../../blocs/notifications/notifications_cubit.dart';
 import '../../widgets/async_body.dart';
 
+/// أيقونة ولون كل نوع إشعار.
+(IconData, Color) inboxVisual(InboxItem item) {
+  if (item.kind == InboxKind.payment) return (Icons.payments_outlined, NoorTheme.warning);
+  if (item.kind == InboxKind.announcement) return (Icons.campaign_outlined, NoorTheme.primaryGreen);
+  switch (item.serverKind) {
+    case 'Hifz':
+      return (Icons.menu_book_rounded, NoorTheme.primaryGreen);
+    case 'Absence':
+      return (Icons.event_busy_rounded, NoorTheme.error);
+    case 'Announcement':
+      return (Icons.campaign_outlined, NoorTheme.accentGold);
+    case 'Message':
+    case 'MessageReply':
+      return (Icons.mail_outline_rounded, NoorTheme.info);
+    case 'MonthlyReport':
+      return (Icons.summarize_outlined, NoorTheme.accentGold);
+    default:
+      return (Icons.notifications_none_rounded, NoorTheme.primaryGreen);
+  }
+}
+
 class NotificationsInboxScreen extends StatefulWidget {
   final bool isParent;
-  const NotificationsInboxScreen({super.key, required this.isParent});
+  final bool isTeacher;
+  const NotificationsInboxScreen({super.key, required this.isParent, this.isTeacher = false});
 
   @override
   State<NotificationsInboxScreen> createState() =>
@@ -21,7 +43,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
   @override
   void initState() {
     super.initState();
-    sl<NotificationsCubit>().refresh(isParent: widget.isParent);
+    sl<NotificationsCubit>().refresh(isParent: widget.isParent, isTeacher: widget.isTeacher);
   }
 
   @override
@@ -53,18 +75,18 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
               isEmpty: state.status == NotificationsStatus.loaded &&
                   state.items.isEmpty,
               emptyTitle: 'لا توجد إشعارات',
-              emptySubtitle: 'ستظهر هنا الإعلانات وتنبيهات الفواتير',
+              emptySubtitle: 'ستظهر هنا تنبيهات التسميع والغياب والإعلانات والرسائل',
               emptyIcon: Icons.notifications_none_outlined,
               errorMessage: state.status == NotificationsStatus.error
                   ? state.error
                   : null,
               onRetry: () => context
                   .read<NotificationsCubit>()
-                  .refresh(isParent: widget.isParent),
+                  .refresh(isParent: widget.isParent, isTeacher: widget.isTeacher),
               child: RefreshIndicator(
                 onRefresh: () => context
                     .read<NotificationsCubit>()
-                    .refresh(isParent: widget.isParent),
+                    .refresh(isParent: widget.isParent, isTeacher: widget.isTeacher),
                 child: ListView.separated(
                   padding: const EdgeInsets.all(NoorTheme.spacingMd),
                   itemCount: state.items.length,
@@ -109,12 +131,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
             children: [
               Row(
                 children: [
-                  Icon(
-                    item.kind == InboxKind.payment
-                        ? Icons.payments_outlined
-                        : Icons.campaign_outlined,
-                    color: NoorTheme.primaryGreen,
-                  ),
+                  Icon(inboxVisual(item).$1, color: inboxVisual(item).$2),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -125,7 +142,10 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(item.body),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.55),
+                child: SingleChildScrollView(child: Text(item.body)),
+              ),
               if (item.date != null) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -143,7 +163,9 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                   child: Text(
                     item.kind == InboxKind.payment
                         ? 'عرض الرسوم'
-                        : 'عرض الإعلانات',
+                        : item.kind == InboxKind.announcement || item.serverKind == 'Announcement'
+                            ? 'عرض الإعلانات'
+                            : 'عرض التفاصيل',
                   ),
                 ),
               ],
@@ -178,17 +200,8 @@ class _InboxTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                backgroundColor: item.kind == InboxKind.payment
-                    ? NoorTheme.warning.withValues(alpha: 0.2)
-                    : NoorTheme.primaryGreen.withValues(alpha: 0.15),
-                child: Icon(
-                  item.kind == InboxKind.payment
-                      ? Icons.payments_outlined
-                      : Icons.campaign_outlined,
-                  color: item.kind == InboxKind.payment
-                      ? NoorTheme.warning
-                      : NoorTheme.primaryGreen,
-                ),
+                backgroundColor: inboxVisual(item).$2.withValues(alpha: 0.15),
+                child: Icon(inboxVisual(item).$1, color: inboxVisual(item).$2),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -4,6 +4,8 @@ import '../../../config/api_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_response_helper.dart';
 import '../../../core/network/dio_error_mapper.dart';
+import '../../../core/errors/exceptions.dart';
+import '../../../core/offline/read_cache.dart';
 import '../../models/teacher_models.dart';
 
 /// مصدر بيانات دور المحفّظ — نفس الـ endpoints التي تستخدمها واجهة الويب.
@@ -90,7 +92,28 @@ abstract class TeacherRemoteDataSource {
 class TeacherRemoteDataSourceImpl implements TeacherRemoteDataSource {
   final ApiClient apiClient;
 
-  TeacherRemoteDataSourceImpl(this.apiClient);
+  /// نسخة محلية من آخر استجابات القراءة — تتيح للمحفّظ فتح حلقاته وطلابه داخل المسجد دون إنترنت.
+  final ReadCache? readCache;
+
+  TeacherRemoteDataSourceImpl(this.apiClient, {this.readCache});
+
+  /// GET مع الرجوع للنسخة المحلية عند انقطاع الاتصال فقط (لا عند أخطاء الخادم).
+  Future<dynamic> _fetch(String path, String fallback, {Map<String, dynamic>? query}) async {
+    final key = ReadCache.keyFor(path, query);
+    try {
+      final res = await apiClient.get(path, queryParameters: query);
+      ApiResponseHelper.ensureSuccess(res, fallback: fallback);
+      await readCache?.put(key, res.data);
+      return res.data;
+    } on DioException catch (e) {
+      final mapped = mapDioErrorToException(e, fallbackMessage: fallback);
+      if (mapped.isConnectivity) {
+        final cached = await readCache?.get(key);
+        if (cached != null) return cached;
+      }
+      throw mapped;
+    }
+  }
 
   Future<T> _guard<T>(Future<T> Function() run, String fallback) async {
     try {
@@ -110,17 +133,15 @@ class TeacherRemoteDataSourceImpl implements TeacherRemoteDataSource {
     Map<String, dynamic>? query,
   }) =>
       _guard(() async {
-        final res = await apiClient.get(path, queryParameters: query);
-        ApiResponseHelper.ensureSuccess(res, fallback: fallback);
-        return ApiResponseHelper.asMapList(res.data).map(parse).toList();
+        final data = await _fetch(path, fallback, query: query);
+        return ApiResponseHelper.asMapList(data).map(parse).toList();
       }, fallback);
 
   Future<Map<String, dynamic>> _getMap(String path, String fallback,
           {Map<String, dynamic>? query}) =>
       _guard(() async {
-        final res = await apiClient.get(path, queryParameters: query);
-        ApiResponseHelper.ensureSuccess(res, fallback: fallback);
-        return Map<String, dynamic>.from(res.data as Map);
+        final data = await _fetch(path, fallback, query: query);
+        return Map<String, dynamic>.from(data as Map);
       }, fallback);
 
   Future<String> _send(
@@ -178,13 +199,27 @@ class TeacherRemoteDataSourceImpl implements TeacherRemoteDataSource {
   }
 
   @override
-  Future<List<AttendanceRosterItem>> getAttendanceRoster(int circleId, String date) =>
-      _getList(
+  Future<List<AttendanceRosterItem>> getAttendanceRoster(int circleId, String date) async {
+    try {
+      final list = await _getList(
         ApiConfig.attendanceByCircle(circleId),
         AttendanceRosterItem.fromJson,
         'فشل تحميل سجل الحضور',
         query: {'date': date},
       );
+      // آخر قائمة للحلقة — أساس لرصد يوم جديد دون اتصال
+      await readCache?.put('roster-latest:$circleId',
+          list.map((r) => {'studentId': r.studentId, 'fullName': r.fullName}).toList());
+      return list;
+    } on ServerException catch (e) {
+      if (!e.isConnectivity) rethrow;
+      final latest = await readCache?.get('roster-latest:$circleId');
+      if (latest == null) rethrow;
+      return ApiResponseHelper.asMapList(latest)
+          .map((j) => AttendanceRosterItem.fromJson({...j, 'status': 'NotRecorded'}))
+          .toList();
+    }
+  }
 
   @override
   Future<String> saveBulkAttendance({

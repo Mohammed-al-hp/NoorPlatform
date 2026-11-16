@@ -27,7 +27,7 @@ class _StudentShellScreenState extends State<StudentShellScreen> {
   void initState() {
     super.initState();
     _index = widget.initialIndex;
-    sl<NotificationsCubit>().refresh(isParent: false);
+    sl<NotificationsCubit>().startPolling(isParent: false);
     sl<PrayerReminderService>().syncFromPreferences();
   }
 
@@ -54,6 +54,7 @@ class _StudentShellScreenState extends State<StudentShellScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
+          sl<NotificationsCubit>().stopPolling();
           context.go('/login');
         }
       },

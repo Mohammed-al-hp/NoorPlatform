@@ -44,6 +44,10 @@ import '../presentation/blocs/theme/theme_cubit.dart';
 import '../presentation/blocs/notifications/notifications_cubit.dart';
 import '../presentation/blocs/reminder/reminder_cubit.dart';
 import '../core/notifications/prayer_reminder_service.dart';
+import '../core/offline/offline_queue.dart';
+import '../core/offline/read_cache.dart';
+import '../core/offline/sync_service.dart';
+import '../data/datasources/remote/smart_remote_datasource.dart';
 
 final sl = GetIt.instance;
 
@@ -63,8 +67,17 @@ Future<void> init() async {
       portalRepository: sl(),
       parentRepository: sl(),
       preferences: sl(),
+      smart: sl(),
     ),
   );
+
+  // ── العمل دون اتصال للمحفّظ: طابور مشفّر + مزامنة تلقائية ──
+  sl.registerLazySingleton(() => OfflineQueue(HiveOfflineStore(sl())));
+  sl.registerLazySingleton<ReadCache>(() => HiveReadCache());
+  sl.registerLazySingleton(
+    () => SyncService(queue: sl(), api: sl(), network: sl(), secure: sl()),
+  );
+  sl.registerLazySingleton(() => SmartRemoteDataSource(sl()));
 
   // ── Blocs ──
   sl.registerFactory(() => AttendanceBloc(attendanceRepository: sl()));
@@ -98,7 +111,12 @@ Future<void> init() async {
     () => PortalRepositoryImpl(remote: sl(), networkInfo: sl()),
   );
   sl.registerLazySingleton<TeacherRepository>(
-    () => TeacherRepositoryImpl(remote: sl(), networkInfo: sl()),
+    () => TeacherRepositoryImpl(
+      remote: sl(),
+      networkInfo: sl(),
+      offlineQueue: sl(),
+      secureStorage: sl(),
+    ),
   );
 
   // ── Data Sources ──
@@ -118,7 +136,7 @@ Future<void> init() async {
     () => PortalRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<TeacherRemoteDataSource>(
-    () => TeacherRemoteDataSourceImpl(sl()),
+    () => TeacherRemoteDataSourceImpl(sl(), readCache: sl()),
   );
 
   // ── Core ──
@@ -137,4 +155,6 @@ Future<void> init() async {
   await sl<PrayerReminderService>().syncFromPreferences();
   // اسم المركز وقنوات التحقق — دون انتظار (لا يؤخر أول إطار)
   unawaited(sl<CenterInfo>().load());
+  // رفع ما حُفظ دون اتصال في جلسة سابقة فور توفر الشبكة
+  unawaited(sl<SyncService>().start());
 }

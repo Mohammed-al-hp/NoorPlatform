@@ -9,6 +9,7 @@ import '../../../core/errors/failures.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/teacher_models.dart';
 import 'teacher_ui.dart';
+import '../../../data/repositories/teacher_repository_impl.dart';
 
 /// صفحة "تقدم الحفظ والمراجعة" للمحفّظ: آخر الجلسات + تسجيل جلسة + التقييم الشهري.
 class TeacherHifzHubScreen extends StatefulWidget {
@@ -365,7 +366,9 @@ class _HifzSessionFormScreenState extends State<HifzSessionFormScreen> {
       action = () async {
         final r = await teacherRepo.addHifzRecord(body);
         // تسجيل متن اختياري بنفس الجلسة (حفظ جديد فقط) — كما في الويب
-        if (r.isRight() && _kind == _SessionKind.memorization && _includeMatn && _matnName != null) {
+        // الجلسة المحفوظة دون اتصال: المتن يُسجَّل لاحقاً يدوياً (لا يُضاف للطابور)
+        final savedOffline = r.fold((_) => false, (m) => m == TeacherRepositoryImpl.offlineSavedMessage);
+        if (r.isRight() && !savedOffline && _kind == _SessionKind.memorization && _includeMatn && _matnName != null) {
           final m = await teacherRepo.addMatnRecord({
             'studentId': id,
             'date': body['date'],

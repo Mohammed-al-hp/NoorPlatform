@@ -69,11 +69,13 @@ ServerException mapDioErrorToException(DioException e, {String? fallbackMessage}
           e.type == DioExceptionType.sendTimeout) {
         return const ServerException(
           message: 'انتهت مهلة الاتصال بالخادم، تحقق من جودة الشبكة',
+          isConnectivity: true,
         );
       }
       if (e.type == DioExceptionType.connectionError) {
         return const ServerException(
           message: 'تعذّر الاتصال بالخادم، تحقق من اتصالك بالإنترنت',
+          isConnectivity: true,
         );
       }
       return ServerException(

@@ -68,9 +68,22 @@ class SecureStorage {
     return int.tryParse(v);
   }
 
+  /// يمسح بيانات الجلسة مع الإبقاء على مفتاح تشفير طابور العمل دون اتصال،
+  /// حتى لا تضيع سجلات لم تُرفع بعد إذا سجّل المحفّظ الخروج قبل المزامنة.
   Future<void> clearAll() async {
+    final offlineKey = await _storage.read(key: _offlineKeyName);
     await _storage.deleteAll();
+    if (offlineKey != null) {
+      await _storage.write(key: _offlineKeyName, value: offlineKey);
+    }
   }
+
+  static const String _offlineKeyName = 'noor_offline_queue_key';
+
+  /// مفتاح AES (32 بايت، base64) لتشفير صندوق Hive الخاص بالعمليات المؤجلة.
+  Future<String?> readOfflineKey() => _storage.read(key: _offlineKeyName);
+  Future<void> writeOfflineKey(String value) =>
+      _storage.write(key: _offlineKeyName, value: value);
 
   Future<bool> hasToken() async {
     final token = await getToken();

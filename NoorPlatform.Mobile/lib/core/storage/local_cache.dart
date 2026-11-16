@@ -103,6 +103,7 @@ class LocalCache {
       'library_cache',
       'payments_cache',
       'user_box',
+      'teacher_offline_cache',
     ];
     for (final name in boxNames) {
       try {

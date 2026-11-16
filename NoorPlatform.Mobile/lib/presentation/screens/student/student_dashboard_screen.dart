@@ -14,6 +14,8 @@ import '../../widgets/async_body.dart';
 import '../../widgets/noor_widgets.dart';
 import '../../widgets/monthly_rating_card.dart';
 import '../../widgets/wird_reminder_card.dart';
+import '../../widgets/mastery_widgets.dart';
+import '../../widgets/notification_bell.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   final bool embedded;
@@ -44,6 +46,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         title: const NoorLogo(size: 34, showCenterName: true),
         centerTitle: false,
         actions: [
+          const NotificationBell(route: '/student/notifications'),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => context
@@ -101,6 +104,7 @@ class _DashboardBody extends StatelessWidget {
         padding: const EdgeInsets.all(NoorTheme.spacingMd),
         children: [
           const WirdReminderCard(),
+          ReviewTodayCard(onOpenMap: () => context.push('/student/quran-map')),
           Container(
             padding: const EdgeInsets.all(NoorTheme.spacingMd),
             decoration: BoxDecoration(

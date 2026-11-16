@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/storage/app_preferences.dart';
+import '../../../data/datasources/remote/smart_remote_datasource.dart';
 import '../../../data/models/announcement_models.dart';
+import '../../../data/models/smart_models.dart';
 import '../../../domain/repositories/parent_repository.dart';
 import '../../../domain/repositories/portal_repository.dart';
 
-enum InboxKind { announcement, payment }
+/// announcement/payment تُبنى محلياً، وserver من مركز الإشعارات في الخادم (/api/inbox).
+enum InboxKind { announcement, payment, server }
 
 class InboxItem extends Equatable {
   final String id;
@@ -17,6 +22,10 @@ class InboxItem extends Equatable {
   final bool isRead;
   final String? actionRoute;
 
+  /// نوع إشعار الخادم: Hifz | Absence | Announcement | Message | MessageReply | MonthlyReport
+  final String? serverKind;
+  final int? serverId;
+
   const InboxItem({
     required this.id,
     required this.kind,
@@ -25,6 +34,8 @@ class InboxItem extends Equatable {
     this.date,
     required this.isRead,
     this.actionRoute,
+    this.serverKind,
+    this.serverId,
   });
 
   InboxItem copyWith({bool? isRead}) => InboxItem(
@@ -35,10 +46,12 @@ class InboxItem extends Equatable {
         date: date,
         isRead: isRead ?? this.isRead,
         actionRoute: actionRoute,
+        serverKind: serverKind,
+        serverId: serverId,
       );
 
   @override
-  List<Object?> get props => [id, kind, title, body, date, isRead, actionRoute];
+  List<Object?> get props => [id, kind, title, body, date, isRead, actionRoute, serverKind, serverId];
 }
 
 enum NotificationsStatus { initial, loading, loaded, error }
@@ -80,33 +93,77 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   final PortalRepository portalRepository;
   final ParentRepository parentRepository;
   final AppPreferences preferences;
+  final SmartRemoteDataSource? smart;
+
+  Timer? _poll;
+  bool _isTeacher = false;
 
   NotificationsCubit({
     required this.portalRepository,
     required this.parentRepository,
     required this.preferences,
+    this.smart,
   }) : super(const NotificationsState());
 
-  Future<void> refresh({required bool isParent}) async {
-    emit(state.copyWith(
-      status: NotificationsStatus.loading,
-      isParent: isParent,
-      clearError: true,
-    ));
+  /// سحب دوري خفيف كل دقيقة (الإشعارات الفورية داخل التطبيق دون خدمة دفع خارجية).
+  void startPolling({required bool isParent, bool isTeacher = false}) {
+    _isTeacher = isTeacher;
+    _poll?.cancel();
+    unawaited(refresh(isParent: isParent, isTeacher: isTeacher));
+    _poll = Timer.periodic(const Duration(seconds: 60), (_) {
+      unawaited(refresh(isParent: isParent, isTeacher: isTeacher, silent: true));
+    });
+  }
+
+  void stopPolling() {
+    _poll?.cancel();
+    _poll = null;
+  }
+
+  @override
+  Future<void> close() {
+    stopPolling();
+    return super.close();
+  }
+
+  Future<void> refresh({required bool isParent, bool? isTeacher, bool silent = false}) async {
+    if (isTeacher != null) _isTeacher = isTeacher;
+    if (!silent || state.status != NotificationsStatus.loaded) {
+      emit(state.copyWith(
+        status: NotificationsStatus.loading,
+        isParent: isParent,
+        clearError: true,
+      ));
+    }
 
     final readIds = await preferences.getReadInboxIds();
     final items = <InboxItem>[];
 
-    final announcements = await portalRepository.getAnnouncements();
-    String? error;
-    announcements.fold(
-      (f) => error = f.message,
-      (list) {
-        for (final a in list.where((e) => e.isActive)) {
-          items.add(_fromAnnouncement(a, readIds, isParent));
+    // ── إشعارات الخادم (التسميع، الغياب، الإعلانات، الردود، التقرير الشهري) ──
+    var hasServerAnnouncements = false;
+    if (smart != null) {
+      try {
+        final inbox = await smart!.getInbox();
+        for (final n in inbox.items) {
+          if (n.kind == 'Announcement') hasServerAnnouncements = true;
+          items.add(_fromServer(n, isParent));
         }
-      },
-    );
+      } catch (_) {/* بلا اتصال: نكمل بالمصادر الأخرى */}
+    }
+
+    String? error;
+    // الإعلانات القديمة (قبل مركز الإشعارات) تُعرض محلياً فقط إن لم تصل من الخادم
+    if (!hasServerAnnouncements && !_isTeacher) {
+      final announcements = await portalRepository.getAnnouncements();
+      announcements.fold(
+        (f) => error = f.message,
+        (list) {
+          for (final a in list.where((e) => e.isActive)) {
+            items.add(_fromAnnouncement(a, readIds, isParent));
+          }
+        },
+      );
+    }
 
     if (isParent) {
       final summary = await parentRepository.getParentSummary();
@@ -152,6 +209,27 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     ));
   }
 
+  InboxItem _fromServer(ServerNotification n, bool isParent) {
+    String? route;
+    if (n.kind == 'Announcement' && !_isTeacher) {
+      route = isParent ? '/parent/announcements' : '/student/announcements';
+    } else if (n.kind == 'Hifz' || n.kind == 'Absence') {
+      if (isParent && n.studentId != null) route = '/parent/child/${n.studentId}';
+      if (!isParent && !_isTeacher) route = '/student/quran-map';
+    }
+    return InboxItem(
+      id: 'srv:${n.id}',
+      kind: InboxKind.server,
+      title: n.title,
+      body: n.body,
+      date: n.createdAt,
+      isRead: n.isRead,
+      actionRoute: route,
+      serverKind: n.kind,
+      serverId: n.id,
+    );
+  }
+
   InboxItem _fromAnnouncement(
     AnnouncementModel a,
     Set<String> readIds,
@@ -170,6 +248,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> markRead(String id) async {
+    final item = state.items.where((e) => e.id == id).firstOrNull;
+    if (item?.serverId != null && !item!.isRead) {
+      try { await smart?.markRead(item.serverId!); } catch (_) {}
+    }
     await preferences.markInboxIdsRead([id]);
     final updated = state.items
         .map((e) => e.id == id ? e.copyWith(isRead: true) : e)
@@ -178,6 +260,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> markAllRead() async {
+    if (state.items.any((e) => e.serverId != null && !e.isRead)) {
+      try { await smart?.markAllRead(); } catch (_) {}
+    }
     final ids = state.items.map((e) => e.id);
     await preferences.markInboxIdsRead(ids);
     emit(

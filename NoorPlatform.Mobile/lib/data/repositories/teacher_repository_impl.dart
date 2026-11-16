@@ -2,7 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/errors/failures.dart';
+import '../../../config/api_config.dart';
 import '../../../core/network/network_info.dart';
+import '../../../core/offline/offline_queue.dart';
+import '../../../core/storage/secure_storage.dart';
 import '../../../domain/repositories/teacher_repository.dart';
 import '../datasources/remote/teacher_remote_datasource.dart';
 import '../models/teacher_models.dart';
@@ -11,10 +14,53 @@ class TeacherRepositoryImpl implements TeacherRepository {
   final TeacherRemoteDataSource remote;
   final NetworkInfo networkInfo;
 
-  TeacherRepositoryImpl({required this.remote, required this.networkInfo});
+  /// طابور العمل دون اتصال (الحضور والتسميع) — اختياري حتى تبقى الاختبارات بسيطة.
+  final OfflineQueue? offlineQueue;
+  final SecureStorage? secureStorage;
+
+  TeacherRepositoryImpl({
+    required this.remote,
+    required this.networkInfo,
+    this.offlineQueue,
+    this.secureStorage,
+  });
+
+  static const String offlineSavedMessage =
+      'تم الحفظ على الهاتف دون اتصال — سيُرفع تلقائياً عند عودة الإنترنت';
+
+  /// ينفّذ عملية كتابة؛ إن لم يتوفر اتصال (أو انقطع أثناء الإرسال) تُحفظ في الطابور المحلي وتُعتبر ناجحة.
+  Future<Either<Failure, String>> _writeOrQueue({
+    required PendingKind kind,
+    required String path,
+    required Map<String, dynamic> body,
+    required String label,
+    required Future<String> Function() action,
+  }) async {
+    final queue = offlineQueue;
+    Future<Either<Failure, String>> enqueue() async {
+      final owner = (await secureStorage?.getUserJson())?['id'] as int?;
+      await queue!.enqueue(kind: kind, path: path, body: body, label: label, ownerUserId: owner);
+      return const Right(offlineSavedMessage);
+    }
+
+    if (queue != null && !await networkInfo.isConnected) return enqueue();
+    try {
+      return Right(await action());
+    } on ServerException catch (e) {
+      if (queue != null && e.isConnectivity) return enqueue();
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      if (queue != null) return enqueue();
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      debugPrint('repository error: $e');
+      return const Left(ServerFailure('حدث خطأ غير متوقع، حاول مرة أخرى'));
+    }
+  }
 
   Future<Either<Failure, T>> _run<T>(Future<T> Function() action) async {
-    if (!await networkInfo.isConnected) {
+    // مع وجود النسخة المحلية نحاول حتى دون اتصال: القراءات تعود من الذاكرة المحلية
+    if (offlineQueue == null && !await networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
     try {
@@ -27,6 +73,7 @@ class TeacherRepositoryImpl implements TeacherRepository {
         archivedName: e.archivedName,
       ));
     } on ServerException catch (e) {
+      if (e.isConnectivity) return Left(NetworkFailure(e.message));
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
@@ -64,7 +111,13 @@ class TeacherRepositoryImpl implements TeacherRepository {
     required int circleId,
     required List<Map<String, dynamic>> records,
   }) =>
-      _run(() => remote.saveBulkAttendance(date: date, circleId: circleId, records: records));
+      _writeOrQueue(
+        kind: PendingKind.attendanceBulk,
+        path: ApiConfig.attendanceBulk,
+        body: {'date': date, 'circleId': circleId, 'records': records},
+        label: 'حضور ${records.length} طالب — $date',
+        action: () => remote.saveBulkAttendance(date: date, circleId: circleId, records: records),
+      );
 
   @override
   Future<Either<Failure, String>> sendBulkAbsence(int circleId) =>
@@ -115,8 +168,19 @@ class TeacherRepositoryImpl implements TeacherRepository {
       _run(() => remote.getLastPosition(studentId, sequential: sequential));
 
   @override
-  Future<Either<Failure, String>> addHifzRecord(Map<String, dynamic> body) =>
-      _run(() => remote.addHifzRecord(body));
+  Future<Either<Failure, String>> addHifzRecord(Map<String, dynamic> body) {
+    // معرّف ثابت للجلسة: إعادة الإرسال (بعد انقطاع أثناء الطلب) لا تكرر الجلسة على الخادم
+    final withId = {...body, 'clientRequestId': body['clientRequestId'] ?? OfflineQueue.newId()};
+    final kind = withId['type'] == 'Revision' ? 'مراجعة' : 'تسميع';
+    final name = withId['studentName'] ?? 'طالب';
+    return _writeOrQueue(
+      kind: PendingKind.hifz,
+      path: ApiConfig.hifz,
+      body: withId..remove('studentName'),
+      label: '$kind ${withId['surahName'] ?? ''} (${withId['verses'] ?? ''}) — $name',
+      action: () => remote.addHifzRecord(withId),
+    );
+  }
 
   @override
   Future<Either<Failure, String>> deleteHifzRecord(int id) =>

@@ -31,7 +31,7 @@ class _ParentShellScreenState extends State<ParentShellScreen> {
   @override
   void initState() {
     super.initState();
-    sl<NotificationsCubit>().refresh(isParent: true);
+    sl<NotificationsCubit>().startPolling(isParent: true);
   }
 
   Widget _badgeIcon(IconData icon, int count) {
@@ -56,7 +56,10 @@ class _ParentShellScreenState extends State<ParentShellScreen> {
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthUnauthenticated) context.go('/login');
+        if (state is AuthUnauthenticated) {
+          sl<NotificationsCubit>().stopPolling();
+          context.go('/login');
+        }
       },
       child: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, notif) {

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../config/quran_surahs.dart';
+import '../../../core/errors/exceptions.dart';
+import '../../../data/datasources/remote/smart_remote_datasource.dart';
+import '../../../data/models/smart_models.dart';
+import '../../widgets/mastery_widgets.dart';
 import '../../../config/theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../di/injection_container.dart';
@@ -60,162 +63,69 @@ class HifzLogScreen extends StatelessWidget {
   }
 }
 
-class QuranMapScreen extends StatelessWidget {
+/// خريطة الإتقان الحرارية للمصحف + مراجعة اليوم.
+/// لون كل سورة يعكس قوة حفظها: أخضر زمردي داكن بعد مراجعة ممتازة، ويبهت تدريجياً كلما طال الانقطاع.
+class QuranMapScreen extends StatefulWidget {
   final int? studentId;
   final bool isMine;
 
   const QuranMapScreen({super.key, this.studentId, this.isMine = true});
 
-  Map<String, int> _memorizedVerses(List<HifzRecordModel> records) {
-    final map = <String, int>{};
-    for (final r in records) {
-      if (!r.isMemorization) continue;
-      final key = r.surahName;
-      final count = r.verseCount > 0 ? r.verseCount : 0;
-      map[key] = (map[key] ?? 0) + count;
-    }
-    return map;
+  @override
+  State<QuranMapScreen> createState() => _QuranMapScreenState();
+}
+
+class _QuranMapScreenState extends State<QuranMapScreen> {
+  late Future<HeatmapModel> _future = _load();
+
+  int? get _id => widget.isMine ? null : widget.studentId;
+
+  Future<HeatmapModel> _load() => sl<SmartRemoteDataSource>().getHeatmap(studentId: _id);
+
+  Future<void> _reload() async {
+    setState(() => _future = _load());
+    await _future.catchError((_) => const HeatmapModel(memorizedCount: 0, averageRetention: 0, surahs: [], juz: []));
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) {
-        final cubit = HifzCubit(sl());
-        if (isMine || studentId == null) {
-          cubit.loadMine();
-        } else {
-          cubit.loadForStudent(studentId!);
-        }
-        return cubit;
-      },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('خريطة حفظ القرآن')),
-        body: BlocBuilder<HifzCubit, HifzState>(
-          builder: (context, state) {
-            return AsyncBody(
-              isLoading: state.status == HifzStatus.loading ||
-                  state.status == HifzStatus.initial,
-              isEmpty: false,
-              errorMessage:
-                  state.status == HifzStatus.error ? state.error : null,
-              onRetry: () {
-                if (isMine || studentId == null) {
-                  context.read<HifzCubit>().loadMine();
-                } else {
-                  context.read<HifzCubit>().loadForStudent(studentId!);
-                }
-              },
-              child: Builder(
-                builder: (context) {
-                  final memorized = _memorizedVerses(state.records);
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Wrap(
-                          spacing: 12,
-                          children: const [
-                            _Legend(color: Color(0xFFE5E7EB), label: 'لم يُحفظ'),
-                            _Legend(color: Color(0xFFFBBF24), label: 'جزئي'),
-                            _Legend(color: Color(0xFF16A34A), label: 'مكتمل'),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(12),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 8,
-                            crossAxisSpacing: 8,
-                            childAspectRatio: 1.1,
-                          ),
-                          itemCount: kQuranSurahs.length,
-                          itemBuilder: (context, i) {
-                            final s = kQuranSurahs[i];
-                            final done = memorized[s.name] ?? 0;
-                            final pct = done <= 0
-                                ? 0
-                                : ((done / s.verseCount) * 100)
-                                    .clamp(0, 100)
-                                    .round();
-                            Color bg;
-                            if (done >= s.verseCount) {
-                              bg = const Color(0xFF16A34A);
-                            } else if (done > 0) {
-                              bg = const Color(0xFFFBBF24);
-                            } else {
-                              bg = const Color(0xFFE5E7EB);
-                            }
-                            final fg = done > 0 ? Colors.white : NoorTheme.textPrimary;
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: bg,
-                                borderRadius:
-                                    BorderRadius.circular(NoorTheme.radiusMd),
-                              ),
-                              padding: const EdgeInsets.all(8),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    s.name,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: fg,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  Text(
-                                     Formatters.number(s.number),
-                                    style: TextStyle(color: fg, fontSize: 11),
-                                  ),
-                                  if (pct > 0)
-                                    Text(
-                                      '${Formatters.number(pct)}%',
-                                      style: TextStyle(color: fg, fontSize: 11),
-                                    ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            );
-          },
-        ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('خريطة إتقان الحفظ')),
+      body: FutureBuilder<HeatmapModel>(
+        future: _future,
+        builder: (context, snap) {
+          return AsyncBody(
+            pullToRefresh: false,
+            isLoading: snap.connectionState != ConnectionState.done,
+            isEmpty: false,
+            errorMessage: snap.hasError ? errorText(snap.error) : null,
+            onRetry: _reload,
+            child: snap.hasData
+                ? RefreshIndicator(
+                    onRefresh: _reload,
+                    child: ListView(
+                      padding: const EdgeInsets.all(NoorTheme.spacingMd),
+                      children: [
+                        ReviewTodayCard(key: ValueKey(_future), studentId: _id),
+                        const SizedBox(height: 8),
+                        MasteryHeatmapView(data: snap.data!),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          );
+        },
       ),
     );
   }
 }
 
-class _Legend extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _Legend({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: 14, height: 14, color: color),
-        const SizedBox(width: 6),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
-    );
-  }
+/// رسالة عربية مناسبة للخطأ (لا تُعرض نصوص الاستثناءات التقنية).
+String errorText(Object? e) {
+  if (e is ServerException) return e.message;
+  return 'تعذر تحميل خريطة الإتقان';
 }
 
-
-/// ملخص أعلى سجل التسميع: عدد جلسات الحفظ والمراجعة ومجموع الآيات.
 class _HifzSummary extends StatelessWidget {
   final List<HifzRecordModel> records;
   const _HifzSummary({required this.records});

@@ -202,6 +202,10 @@ class AppRouter {
         builder: (_, __) => const LibraryScreen(),
       ),
       GoRoute(
+        path: '/teacher/notifications',
+        builder: (_, __) => const NotificationsInboxScreen(isParent: false, isTeacher: true),
+      ),
+      GoRoute(
         path: '/student/notifications',
         builder: (_, __) => const NotificationsInboxScreen(isParent: false),
       ),

@@ -4,7 +4,10 @@ class ServerException implements Exception {
   final String message;
   final int? statusCode;
 
-  const ServerException({required this.message, this.statusCode});
+  /// الطلب لم يصل للخادم (انقطاع/مهلة) — يمكن حفظ العملية محلياً وإعادة إرسالها لاحقاً.
+  final bool isConnectivity;
+
+  const ServerException({required this.message, this.statusCode, this.isConnectivity = false});
 
   @override
   String toString() => 'ServerException($statusCode): $message';
