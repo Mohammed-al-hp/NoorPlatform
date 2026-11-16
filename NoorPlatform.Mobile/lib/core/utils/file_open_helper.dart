@@ -26,7 +26,8 @@ class FileOpenHelper {
     return io_impl.savePdf(bytes, filename);
   }
 
-  static Future<void> openResult(String result) {
+  /// يعيد null عند النجاح، أو رسالة خطأ عربية إن تعذّر فتح الملف.
+  static Future<String?> openResult(String result) {
     if (kIsWeb || isBrowserDownload(result)) {
       return web_impl.openResult(result);
     }

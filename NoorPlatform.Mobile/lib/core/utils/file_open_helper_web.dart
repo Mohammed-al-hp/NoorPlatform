@@ -17,6 +17,7 @@ Future<String> savePdf(Uint8List bytes, String filename) async {
   return '${FileOpenHelper.browserPrefix}$filename';
 }
 
-Future<void> openResult(String result) async {
+Future<String?> openResult(String result) async {
   // Browser download already triggered in [savePdf].
+  return null;
 }

@@ -840,9 +840,10 @@ Future<void> _downloadMonthlyReport(BuildContext context, int studentId) async {
   await result.fold(
     (f) async => messenger.showSnackBar(SnackBar(content: Text(f.message), backgroundColor: NoorTheme.error)),
     (path) async {
-      await FileOpenHelper.openResult(path);
+      final openError = await FileOpenHelper.openResult(path);
       messenger.showSnackBar(SnackBar(
-        content: Text(FileOpenHelper.isBrowserDownload(path) ? 'بدأ تنزيل التقرير' : 'تم فتح التقرير'),
+        content: Text(openError ?? (FileOpenHelper.isBrowserDownload(path) ? 'بدأ تنزيل التقرير' : 'تم فتح التقرير')),
+        backgroundColor: openError != null ? NoorTheme.error : null,
       ));
     },
   );

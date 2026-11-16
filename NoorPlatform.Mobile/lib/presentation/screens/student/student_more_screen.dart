@@ -60,14 +60,14 @@ class StudentMoreScreen extends StatelessWidget {
         }
       },
       (path) async {
-        await FileOpenHelper.openResult(path);
+        final openError = await FileOpenHelper.openResult(path);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                FileOpenHelper.isBrowserDownload(path)
+                openError ?? (FileOpenHelper.isBrowserDownload(path)
                     ? 'بدأ تنزيل الشهادة'
-                    : 'تم فتح الشهادة',
+                    : 'تم فتح الشهادة'),
               ),
             ),
           );

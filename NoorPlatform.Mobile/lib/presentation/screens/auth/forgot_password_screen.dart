@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
+import '../../../core/network/center_info.dart';
 import '../../../di/injection_container.dart';
 import '../../blocs/password_reset/password_reset_bloc.dart';
 
-/// "نسيت كلمة المرور؟" — رمز تحقق عبر واتساب بثلاث خطوات (نفس تدفق الويب).
+/// "نسيت كلمة المرور؟" — رمز تحقق عبر واتساب أو SMS بثلاث خطوات (نفس تدفق الويب).
 class ForgotPasswordScreen extends StatelessWidget {
   final String? initialPhone;
   const ForgotPasswordScreen({super.key, this.initialPhone});
@@ -36,6 +37,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
   final _confirm = TextEditingController();
   Timer? _ticker;
   bool _obscure = true;
+  String? _channel;
 
   @override
   void initState() {
@@ -110,7 +112,32 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                     child: Text(state.error!, style: const TextStyle(color: NoorTheme.error)),
                   ),
                 if (state.step == PasswordResetStep.phone) ...[
-                  const Text('أدخل رقم هاتفك المسجّل وسنرسل لك رمز تحقق عبر واتساب.'),
+                  ValueListenableBuilder<List<String>>(
+                    valueListenable: sl<CenterInfo>().otpChannels,
+                    builder: (context, channels, _) {
+                      final selected = channels.contains(_channel) ? _channel! : channels.first;
+                      if (channels.length < 2) {
+                        return Text(selected == 'Sms'
+                            ? 'أدخل رقم هاتفك المسجّل وسنرسل لك رمز تحقق برسالة نصية (SMS).'
+                            : 'أدخل رقم هاتفك المسجّل وسنرسل لك رمز تحقق عبر واتساب.');
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text('أدخل رقم هاتفك المسجّل واختر طريقة استلام الرمز:'),
+                          const SizedBox(height: 10),
+                          SegmentedButton<String>(
+                            segments: const [
+                              ButtonSegment(value: 'WhatsApp', label: Text('واتساب'), icon: Icon(Icons.chat)),
+                              ButtonSegment(value: 'Sms', label: Text('رسالة SMS'), icon: Icon(Icons.sms_outlined)),
+                            ],
+                            selected: {selected},
+                            onSelectionChanged: (s) => setState(() => _channel = s.first),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _phone,
@@ -124,7 +151,9 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                   ),
                   const SizedBox(height: 16),
                   FilledButton(
-                    onPressed: state.loading ? null : () => bloc.add(OtpRequested(_phone.text)),
+                    onPressed: state.loading
+                        ? null
+                        : () => bloc.add(OtpRequested(_phone.text, channel: _channel ?? sl<CenterInfo>().otpChannels.value.first)),
                     child: state.loading
                         ? const CircularProgressIndicator()
                         : const Text('إرسال رمز التحقق'),

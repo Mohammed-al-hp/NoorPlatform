@@ -197,14 +197,14 @@ class LibraryScreen extends StatelessWidget {
                                         .read<LibraryCubit>()
                                         .download(item);
                                     if (path == null) return;
-                                    await FileOpenHelper.openResult(path);
+                                    final openError = await FileOpenHelper.openResult(path);
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          FileOpenHelper.isBrowserDownload(path)
+                                          openError ?? (FileOpenHelper.isBrowserDownload(path)
                                               ? 'بدأ تنزيل الملف'
-                                              : 'تم فتح الملف',
+                                              : 'تم فتح الملف'),
                                         ),
                                       ),
                                     );

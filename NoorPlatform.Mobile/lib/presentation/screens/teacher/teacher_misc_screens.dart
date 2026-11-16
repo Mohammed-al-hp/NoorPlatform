@@ -243,9 +243,9 @@ class _TeacherLibraryScreenState extends State<TeacherLibraryScreen> {
     await r.fold(
       (f) async => showSnack(context, f.message, error: true),
       (path) async {
-        await FileOpenHelper.openResult(path);
+        final openError = await FileOpenHelper.openResult(path);
         if (mounted) {
-          showSnack(context, FileOpenHelper.isBrowserDownload(path) ? 'بدأ تنزيل الملف' : 'تم فتح الملف');
+          showSnack(context, openError ?? (FileOpenHelper.isBrowserDownload(path) ? 'بدأ تنزيل الملف' : 'تم فتح الملف'), error: openError != null);
         }
       },
     );

@@ -6,4 +6,4 @@ Future<String> savePdf(Uint8List bytes, String filename) async {
   throw UnsupportedError('FileOpenHelper: wrong platform stub for savePdf');
 }
 
-Future<void> openResult(String result) async {}
+Future<String?> openResult(String result) async => null;
