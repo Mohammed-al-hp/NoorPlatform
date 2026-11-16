@@ -8,15 +8,10 @@
     <meta name="keywords" content="تحفيظ القرآن, مراكز تحفيظ, حلقات قرآن, إدارة طلاب, منصة نور">
     <meta name="author" content="منصة نور">
     <title>منصة نور — مركز تحفيظ القرآن الكريم</title>
-    <link rel="icon" href="/icon-192.png" type="image/png">
+    <link rel="icon" href="/img/logo-mark.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/icon-192.png" type="image/png">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap"
-          rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    </noscript>
+    <link rel="stylesheet" href="/css/fonts.css">
     <script src="/js/icons.js"></script>
     <script src="/js/asset-loader.js"></script>
     <script src="/js/chart.min.js"></script>
@@ -27,7 +22,7 @@
     </script>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#10b981">
+    <meta name="theme-color" content="#1A5C3A">
     <link rel="stylesheet" href="/css/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <meta name="mobile-web-app-capable" content="yes">
@@ -39,7 +34,7 @@
 <body>
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
-        <div class="noor-mark noor-mark-lg" data-icon="mosque" data-icon-size="44" aria-hidden="true"></div>
+        <div class="noor-mark noor-mark-lg" aria-hidden="true"><img src="/img/logo-mark.svg" alt="" class="noor-mark-img"></div>
         <div class="splash-text">منصة نور</div>
         <div class="splash-sub">مركز تحفيظ القرآن الكريم</div>
         <div class="splash-loader"></div>
@@ -48,7 +43,8 @@
     <!-- Login Screen -->
     <div id="loginScreen" class="login-overlay">
         <div class="login-card">
-            <div class="noor-mark" style="margin: 0 auto 16px;" data-icon="mosque" data-icon-size="30" aria-hidden="true"></div>
+            <div class="noor-mark noor-mark-lg" style="margin: 0 auto 10px;" aria-hidden="true"><img src="/img/logo-mark.svg" alt="" class="noor-mark-img"></div>
+            <div class="login-brand">منصة نور</div>
             <h2>تسجيل الدخول</h2>
             <p>مرحبا بك في منصة نور لإدارة حلقات تحفيظ القرآن الكريم</p>
 
@@ -83,7 +79,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
             <div class="logo-wrap">
-                <div class="noor-mark noor-mark-sm" data-icon="mosque" data-icon-size="26" aria-hidden="true"></div>
+                <div class="noor-mark noor-mark-sm" aria-hidden="true"><img src="/img/logo-mark.svg" alt="" class="noor-mark-img"></div>
                 <div class="logo-text">
                     <h1>منصة نور</h1>
                     <span>مركز تحفيظ القرآن الكريم</span>
@@ -100,45 +96,16 @@
         </div>
 
         <nav class="nav">
-            <div class="nav-section">
+            <!-- ═══ الرئيسية ═══ -->
+            <div class="nav-section" id="homeNavSection">
                 <div class="nav-section-label">الرئيسية</div>
                 <div class="nav-item active" onclick="navigate('dashboard', this)">
                     <div class="nav-icon" data-icon="bar-chart" data-icon-size="20"></div>
-                    <span>لوحة التحكم</span>
-                </div>
-                <div class="nav-item" onclick="navigate('announcements', this)">
-                    <div class="nav-icon" data-icon="megaphone" data-icon-size="20"></div>
-                    <span>الإعلانات</span>
-                    <span class="nav-badge" id="announcementsBadge" style="display:none">0</span>
+                    <span>لوحة التحكم والإحصائيات</span>
                 </div>
             </div>
 
-            <div class="nav-section" id="staffSection">
-                <div class="nav-section-label">المستخدمون</div>
-                <div class="nav-item" onclick="navigate('students', this)">
-                    <div class="nav-icon" data-icon="graduation-cap" data-icon-size="20"></div>
-                    <span>الطلاب</span>
-                </div>
-            </div>
-            <div class="nav-section" id="adminOnlySection" style="display:none">
-                <div class="nav-section-label">المستخدمون</div>
-                <div class="nav-item" onclick="navigate('students', this)">
-                    <div class="nav-icon" data-icon="graduation-cap" data-icon-size="20"></div>
-                    <span>الطلاب</span>
-                </div>
-                <div class="nav-item" onclick="navigate('users', this)">
-                    <div class="nav-icon" data-icon="users" data-icon-size="20"></div>
-                    <span>المستخدمون</span>
-                </div>
-                <div class="nav-item" onclick="navigate('parents', this)">
-                    <div class="nav-icon" data-icon="users" data-icon-size="20"></div>
-                    <span>أولياء الأمور</span>
-                </div>
-                <div class="nav-item" onclick="navigate('teachers', this)">
-                    <div class="nav-icon" data-icon="user-check" data-icon-size="20"></div>
-                    <span>المحفظون</span>
-                </div>
-            </div>
+            <!-- ═══ الإدارة (المشرف) ═══ -->
             <div class="nav-section" id="adminOpsSection" style="display:none">
                 <div class="nav-section-label">الإدارة</div>
                 <div class="nav-item" onclick="navigate('circles', this)">
@@ -147,15 +114,11 @@
                 </div>
                 <div class="nav-item" onclick="navigate('payments', this)">
                     <div class="nav-icon" data-icon="credit-card" data-icon-size="20"></div>
-                    <span>المدفوعات</span>
+                    <span>الفواتير والاشتراكات</span>
                 </div>
                 <div class="nav-item" onclick="navigate('expenses', this)">
                     <div class="nav-icon" data-icon="dollar-sign" data-icon-size="20"></div>
                     <span>المصروفات</span>
-                </div>
-                <div class="nav-item" onclick="navigate('reports', this)">
-                    <div class="nav-icon" data-icon="bar-chart" data-icon-size="20"></div>
-                    <span>التقارير</span>
                 </div>
                 <div class="nav-item" onclick="navigate('settings', this)">
                     <div class="nav-icon" data-icon="settings" data-icon-size="20"></div>
@@ -163,34 +126,69 @@
                 </div>
             </div>
 
-            <!-- صفحات إدارية (تسجيل حضور / إدخال تسميع / نتائج) — للمحفّظ والمشرف فقط -->
+            <!-- ═══ المستخدمون ═══ -->
+            <div class="nav-section" id="adminOnlySection" style="display:none">
+                <div class="nav-section-label">المستخدمون</div>
+                <div class="nav-item" onclick="navigate('users', this)">
+                    <div class="nav-icon" data-icon="users" data-icon-size="20"></div>
+                    <span>المشرفون والحسابات</span>
+                </div>
+                <div class="nav-item" onclick="navigate('teachers', this)">
+                    <div class="nav-icon" data-icon="user-check" data-icon-size="20"></div>
+                    <span>المحفّظون</span>
+                </div>
+                <div class="nav-item" onclick="navigate('students', this)">
+                    <div class="nav-icon" data-icon="graduation-cap" data-icon-size="20"></div>
+                    <span>الطلاب</span>
+                </div>
+                <div class="nav-item" onclick="navigate('parents', this)">
+                    <div class="nav-icon" data-icon="users" data-icon-size="20"></div>
+                    <span>أولياء الأمور</span>
+                </div>
+            </div>
+            <div class="nav-section" id="staffSection" style="display:none">
+                <div class="nav-section-label">المستخدمون</div>
+                <div class="nav-item" onclick="navigate('students', this)">
+                    <div class="nav-icon" data-icon="graduation-cap" data-icon-size="20"></div>
+                    <span>طلابي</span>
+                </div>
+            </div>
+
+            <!-- ═══ المتابعة (المحفّظ والمشرف) ═══ -->
             <div class="nav-section" id="trackingNavSection">
                 <div class="nav-section-label">المتابعة</div>
+                <div class="nav-item" onclick="navigate('memorization', this)">
+                    <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
+                    <span>التسميع والحفظ</span>
+                </div>
                 <div class="nav-item" onclick="navigate('attendance', this)">
                     <div class="nav-icon" data-icon="check-circle" data-icon-size="20"></div>
                     <span>الحضور والغياب</span>
-                </div>
-                <div class="nav-item" onclick="navigate('memorization', this)">
-                    <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
-                    <span>تقدم الحفظ والمراجعة</span>
                 </div>
                 <div class="nav-item" onclick="navigate('evaluation', this)">
                     <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
                     <span>التقييم التربوي</span>
                 </div>
-            <div class="nav-item" id="staffMessagesNav" onclick="navigate('messages', this)">
-                <div class="nav-icon" data-icon="message-circle" data-icon-size="20"></div>
-                <span>الرسائل</span>
-            </div>
-            </div>
-            <div class="nav-section" id="libraryNavSection">
-                <div class="nav-section-label">المكتبة</div>
+                <div class="nav-item admin-only-action" onclick="navigate('reports', this)">
+                    <div class="nav-icon" data-icon="file-text" data-icon-size="20"></div>
+                    <span>التقارير</span>
+                </div>
+                <div class="nav-item" id="staffMessagesNav" onclick="navigate('messages', this)">
+                    <div class="nav-icon" data-icon="message-circle" data-icon-size="20"></div>
+                    <span>الرسائل</span>
+                </div>
+                <div class="nav-item" onclick="navigate('announcements', this)">
+                    <div class="nav-icon" data-icon="megaphone" data-icon-size="20"></div>
+                    <span>الإعلانات</span>
+                    <span class="nav-badge" id="announcementsBadge" style="display:none">0</span>
+                </div>
                 <div class="nav-item" onclick="navigate('library', this)">
                     <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
                     <span>مكتبة الطلاب</span>
                 </div>
             </div>
 
+            <!-- ═══ بوابة الطالب ═══ -->
             <div class="nav-section" id="studentSection" style="display:none">
                 <div class="nav-section-label">بوابة الطالب</div>
                 <div class="nav-item" onclick="navigate('studentView', this)">
@@ -205,9 +203,17 @@
                     <div class="nav-icon" data-icon="clipboard-list" data-icon-size="20"></div>
                     <span>تقييماتي</span>
                 </div>
+                <div class="nav-item" onclick="navigate('announcements', this)">
+                    <div class="nav-icon" data-icon="megaphone" data-icon-size="20"></div>
+                    <span>الإعلانات</span>
+                </div>
+                <div class="nav-item" onclick="navigate('library', this)">
+                    <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
+                    <span>المكتبة الرقمية</span>
+                </div>
             </div>
 
-            <!-- قسم ولي الأمر -->
+            <!-- ═══ بوابة ولي الأمر ═══ -->
             <div class="nav-section" id="parentSection" style="display:none">
                 <div class="nav-section-label">بوابة ولي الأمر</div>
                 <div class="nav-item" onclick="navigate('parentView', this)">
@@ -229,6 +235,14 @@
                 <div class="nav-item" onclick="navigate('messages', this)">
                     <div class="nav-icon" data-icon="message-circle" data-icon-size="20"></div>
                     <span>الرسائل</span>
+                </div>
+                <div class="nav-item" onclick="navigate('announcements', this)">
+                    <div class="nav-icon" data-icon="megaphone" data-icon-size="20"></div>
+                    <span>الإعلانات</span>
+                </div>
+                <div class="nav-item" onclick="navigate('library', this)">
+                    <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
+                    <span>المكتبة الرقمية</span>
                 </div>
             </div>
             <div class="search-box">
@@ -1996,7 +2010,7 @@
                             <option value="Student">طالب</option>
                             <option value="Parent">ولي أمر</option>
                         </select>
-                        <small id="userEditRoleHint" style="color:var(--text-muted);display:none;margin-top:4px">لا يمكن تغيير دور المشرف من هذه الواجهة</small>
+                        <small id="userEditRoleHint" style="color:var(--text-muted);display:none;margin-top:4px">الدور مرتبط بملف الحساب ولا يمكن تغييره — أنشئ حساباً جديداً بالدور المطلوب</small>
                     </div>
                     <label style="display:flex;gap:8px;font-size:13px;margin:8px 0">
                         <input type="checkbox" id="userEditActive"> حساب نشط
@@ -2265,7 +2279,7 @@
                         <label class="form-label">الطالب *</label>
                         <select id="invoiceStudentId" class="form-input" onchange="onInvoiceStudentChanged()"></select>
                     </div>
-                    <div id="invoiceParentHint" style="display:none;margin:-4px 0 14px;padding:10px 12px;border-radius:10px;background:rgba(16,185,129,0.08);font-size:13px;color:var(--text-muted)"></div>
+                    <div id="invoiceParentHint" style="display:none;margin:-4px 0 14px;padding:10px 12px;border-radius:10px;background:rgba(26, 92, 58,0.08);font-size:13px;color:var(--text-muted)"></div>
                     <div class="form-group">
                         <label class="form-label">المبلغ (د.ل) *</label>
                         <input type="number" id="invoiceAmount" class="form-input" min="0.01" step="0.01" placeholder="مثال: 50.00">
@@ -2282,6 +2296,86 @@
                 <div class="modal-footer">
                     <button class="btn btn-outline" onclick="closeModal('addInvoiceModal')">إلغاء</button>
                     <button class="btn btn-primary" onclick="submitInvoice()"><span data-icon="plus" data-icon-size="14"></span> إصدار الفاتورة</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- تعديل جلسة تسميع -->
+        <div class="modal-overlay" id="editHifzModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3><span data-icon="edit" data-icon-size="18"></span> تعديل جلسة التسميع</h3>
+                    <button class="modal-close" onclick="closeModal('editHifzModal')"><span data-icon="x" data-icon-size="16"></span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editHifzId">
+                    <p id="editHifzStudent" style="font-weight:700;margin-bottom:12px"></p>
+                    <div class="form-group">
+                        <label class="form-label">نوع الجلسة *</label>
+                        <select class="form-input" id="editHifzType">
+                            <option value="Memorization">حفظ جديد</option>
+                            <option value="Revision">مراجعة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">السورة *</label>
+                        <input type="text" class="form-input" id="editHifzSurah" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">إلى سورة (للمراجعة — اختياري)</label>
+                        <input type="text" class="form-input" id="editHifzToSurah" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الآيات (مثال: 1-10)</label>
+                        <input type="text" class="form-input" id="editHifzVerses" maxlength="50" dir="ltr">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">التقييم *</label>
+                        <select class="form-input" id="editHifzEvaluation">
+                            <option value="ممتاز">ممتاز</option>
+                            <option value="جيد جدًا">جيد جدًا</option>
+                            <option value="جيد">جيد</option>
+                            <option value="ضعيف">ضعيف</option>
+                            <option value="يحتاج مراجعة">يحتاج مراجعة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ملاحظة</label>
+                        <textarea class="form-input" id="editHifzNotes" rows="2" maxlength="1000"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('editHifzModal')">إلغاء</button>
+                    <button class="btn btn-primary" onclick="saveHifzEdit(this)"><span data-icon="check" data-icon-size="14"></span> حفظ التعديل</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- تعديل فاتورة غير مدفوعة -->
+        <div class="modal-overlay" id="editInvoiceModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3><span data-icon="edit" data-icon-size="18"></span> تعديل الفاتورة</h3>
+                    <button class="modal-close" onclick="closeModal('editInvoiceModal')"><span data-icon="x" data-icon-size="16"></span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editInvoiceId">
+                    <div class="form-group">
+                        <label class="form-label">الوصف *</label>
+                        <input type="text" id="editInvoiceDescription" class="form-input" maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">المبلغ (د.ل) *</label>
+                        <input type="number" id="editInvoiceAmount" class="form-input" min="1" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">تاريخ الاستحقاق *</label>
+                        <input type="date" id="editInvoiceDueDate" class="form-input">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('editInvoiceModal')">إلغاء</button>
+                    <button class="btn btn-primary" onclick="saveInvoiceEdit(this)"><span data-icon="check" data-icon-size="14"></span> حفظ التعديل</button>
                 </div>
             </div>
         </div>

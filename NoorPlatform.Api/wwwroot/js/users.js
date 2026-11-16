@@ -125,10 +125,10 @@
             document.getElementById('userEditPhone').value = u.phone;
             const roleSelect = document.getElementById('userEditRole');
             const roleHint = document.getElementById('userEditRoleHint');
-            const isAdmin = u.role === 'Admin';
+            // الدور ثابت: الحساب مرتبط بملفه (طالب/محفّظ/ولي أمر)، والخادم يرفض تغييره
             roleSelect.value = u.role;
-            roleSelect.disabled = isAdmin;
-            if (roleHint) roleHint.style.display = isAdmin ? 'block' : 'none';
+            roleSelect.disabled = true;
+            if (roleHint) roleHint.style.display = 'block';
             document.getElementById('userEditActive').checked = u.isActive;
             document.getElementById('userEditMustChange').checked = u.mustChangePassword;
             global.openModal('userEditModal');

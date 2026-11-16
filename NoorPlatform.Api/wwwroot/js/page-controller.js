@@ -362,6 +362,59 @@
         });
     }
 
+    // ─── تعديل جلسة تسميع (تصحيح خطأ إدخال) — النقاط يعيد الخادم حسابها ───
+    let recentHifzById = {};
+
+    function openHifzEdit(id) {
+        const r = recentHifzById[id];
+        if (!r) return;
+        document.getElementById('editHifzId').value = String(r.id);
+        document.getElementById('editHifzStudent').textContent = r.studentName || '';
+        document.getElementById('editHifzType').value = r.type === 'Revision' ? 'Revision' : 'Memorization';
+        document.getElementById('editHifzSurah').value = r.surahName || '';
+        document.getElementById('editHifzToSurah').value = r.toSurahName || '';
+        document.getElementById('editHifzVerses').value = r.verses || '';
+        const evalSelect = document.getElementById('editHifzEvaluation');
+        const ev = (r.evaluation || '').trim();
+        // إضافة التقييم الحالي إن لم يكن ضمن الخيارات (بيانات قديمة)
+        if (ev && ![...evalSelect.options].some(o => o.value === ev)) {
+            const opt = document.createElement('option');
+            opt.value = ev; opt.textContent = ev;
+            evalSelect.appendChild(opt);
+        }
+        evalSelect.value = ev || 'جيد';
+        document.getElementById('editHifzNotes').value = r.notes || '';
+        global.openModal('editHifzModal');
+    }
+
+    async function saveHifzEdit(btn) {
+        const id = document.getElementById('editHifzId').value;
+        const surahName = document.getElementById('editHifzSurah').value.trim();
+        if (!surahName) {
+            showToast('اسم السورة مطلوب', 'error');
+            return;
+        }
+        const body = {
+            type: document.getElementById('editHifzType').value,
+            surahName,
+            toSurahName: document.getElementById('editHifzToSurah').value.trim() || null,
+            verses: document.getElementById('editHifzVerses').value.trim(),
+            evaluation: document.getElementById('editHifzEvaluation').value,
+            notes: document.getElementById('editHifzNotes').value.trim()
+        };
+        try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
+            await apiFetch(`/hifz/${id}`, 'PUT', body);
+            closeModal('editHifzModal');
+            showToast('تم تعديل جلسة التسميع', 'success');
+            fetchMemorizationData();
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false);
+        }
+    }
+
     async function sendBulkAbsenceNotifs(circleId) {
         const cid = parseInt(circleId, 10);
         if (!cid || isNaN(cid)) {
@@ -425,6 +478,7 @@
         if (panel && data.length > 0) {
             try {
                 const records = await apiFetch('/hifz/recent?count=8');
+                recentHifzById = Object.fromEntries(records.map(r => [r.id, r]));
                 panel.innerHTML = records.length ? records.map(r => `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
               <div>
@@ -433,7 +487,8 @@
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                   <span class="status-badge ${r.evaluation === 'ممتاز' ? 'status-excellent' : 'status-good'}">${escapeHtml(r.evaluation)}</span>
-                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981" onclick="sendHifzPraise(${r.studentId}, ${jsArg(r.surahName)}, ${jsArg(r.verses)}, ${jsArg(r.evaluation)})" title="إرسال رسالة مديح لولي الأمر عبر واتساب">${window.Icon ? window.Icon('message-circle', { size: 12 }) : ''} مديح</button>
+                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#1A5C3A;border-color:#1A5C3A" onclick="sendHifzPraise(${r.studentId}, ${jsArg(r.surahName)}, ${jsArg(r.verses)}, ${jsArg(r.evaluation)})" title="إرسال رسالة مديح لولي الأمر عبر واتساب">${window.Icon ? window.Icon('message-circle', { size: 12 }) : ''} مديح</button>
+                  <button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openHifzEdit(${Number(r.id)})" title="تعديل الجلسة">${window.Icon ? window.Icon('edit', { size: 12 }) : ''}</button>
                   <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#ef4444;border-color:#ef4444" onclick="deleteHifzRecord(${r.id})" title="حذف السجل">${window.Icon ? window.Icon('trash-2', { size: 12 }) : ''}</button>
               </div>
             </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px">لا توجد جلسات بعد</p>';
@@ -614,6 +669,8 @@
     // ─── تصدير المحفظين/الحلقات تم نقله إلى teachers.js ───
 
     global.deleteHifzRecord = deleteHifzRecord;
+    global.openHifzEdit = openHifzEdit;
+    global.saveHifzEdit = saveHifzEdit;
     global.sendBulkAbsenceNotifs = sendBulkAbsenceNotifs;
     global.sendHifzPraise = sendHifzPraise;
     global.saveAnn = saveAnn;

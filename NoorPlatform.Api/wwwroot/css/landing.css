@@ -4,24 +4,24 @@
 
 /* ─── CSS Variables ─── */
 :root {
-    --green: #10b981;
-    --green-dark: #059669;
-    --green-light: #d1fae5;
+    --green: #1A5C3A;
+    --green-dark: #0F3D27;
+    --green-light: #E3F1E8;
     --blue: #3b82f6;
     --blue-dark: #2563eb;
     --blue-light: #dbeafe;
-    --teal: #14b8a6;
-    --bg: #f0fdf9;
-    --bg-secondary: #e8f5f0;
+    --teal: #2D8B57;
+    --bg: #F7F5EE;
+    --bg-secondary: #EFEBDD;
     --card: #ffffff;
     --text: #1e293b;
     --text-muted: #64748b;
     --border: #e2e8f0;
-    --gradient: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-    --gradient-reverse: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
-    --shadow: 0 4px 24px rgba(16, 185, 129, 0.08);
-    --shadow-lg: 0 12px 48px rgba(16, 185, 129, 0.15);
-    --shadow-xl: 0 20px 60px rgba(16, 185, 129, 0.2);
+    --gradient: linear-gradient(135deg, #1A5C3A 0%, #2D8B57 100%);
+    --gradient-reverse: linear-gradient(135deg, #2D8B57 0%, #1A5C3A 100%);
+    --shadow: 0 4px 24px rgba(26, 92, 58, 0.08);
+    --shadow-lg: 0 12px 48px rgba(26, 92, 58, 0.15);
+    --shadow-xl: 0 20px 60px rgba(26, 92, 58, 0.2);
     --radius: 20px;
     --radius-sm: 12px;
     --glass: rgba(255, 255, 255, 0.7);
@@ -88,7 +88,8 @@ img { max-width: 100%; }
 }
 .nav-logo-icon {
     width: 46px; height: 46px;
-    background: var(--gradient);
+    background: #FFFDF5;
+    border: 1px solid rgba(184, 134, 11, 0.35);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -97,7 +98,7 @@ img { max-width: 100%; }
     font-family: 'Amiri', 'Tajawal', serif;
     font-weight: 700;
     color: #fff;
-    box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+    box-shadow: 0 4px 14px rgba(26, 92, 58,0.4);
     flex-shrink: 0;
 }
 .nav-logo-text {
@@ -155,12 +156,12 @@ img { max-width: 100%; }
     font-weight: 700;
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+    box-shadow: 0 4px 14px rgba(26, 92, 58,0.35);
     transition: all 0.3s;
 }
 .btn-primary-landing:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(16,185,129,0.45);
+    box-shadow: 0 8px 25px rgba(26, 92, 58,0.45);
 }
 
 .btn-outline-landing {
@@ -200,7 +201,7 @@ img { max-width: 100%; }
     left: -200px;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(26, 92, 58,0.12) 0%, transparent 70%);
     border-radius: 50%;
     animation: float 8s ease-in-out infinite;
 }
@@ -307,7 +308,7 @@ img { max-width: 100%; }
 .card-dot { width: 10px; height: 10px; border-radius: 50%; }
 .card-dot.red { background: #ef4444; }
 .card-dot.yellow { background: #f59e0b; }
-.card-dot.green { background: #10b981; }
+.card-dot.green { background: #1A5C3A; }
 
 .hero-stats-grid {
     display: grid;
@@ -445,12 +446,12 @@ img { max-width: 100%; }
     opacity: 0.06;
     transition: opacity 0.3s;
 }
-.feature-card:nth-child(1)::before { background: #10b981; }
+.feature-card:nth-child(1)::before { background: #1A5C3A; }
 .feature-card:nth-child(2)::before { background: #3b82f6; }
 .feature-card:nth-child(3)::before { background: #8b5cf6; }
 .feature-card:nth-child(4)::before { background: #f59e0b; }
 .feature-card:nth-child(5)::before { background: #ef4444; }
-.feature-card:nth-child(6)::before { background: #14b8a6; }
+.feature-card:nth-child(6)::before { background: #2D8B57; }
 
 .feature-card:hover {
     transform: translateY(-8px);
@@ -555,7 +556,7 @@ img { max-width: 100%; }
     font-size: 22px;
     font-weight: 900;
     margin: 0 auto 20px;
-    box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+    box-shadow: 0 4px 14px rgba(26, 92, 58,0.4);
 }
 .step-title {
     font-size: 17px;
@@ -590,7 +591,7 @@ img { max-width: 100%; }
     transform: translateX(-50%);
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(26, 92, 58,0.08) 0%, transparent 70%);
     border-radius: 50%;
 }
 .cta-icon { font-size: 56px; margin-bottom: 20px; position: relative; }
@@ -618,7 +619,7 @@ img { max-width: 100%; }
 
 /* ─── Footer ─── */
 .landing-footer {
-    background: #0f172a;
+    background: #0F2A1D;
     color: rgba(255,255,255,0.7);
     padding: 60px 0 30px;
 }
@@ -678,7 +679,7 @@ img { max-width: 100%; }
 
 /* ─── Dark Mode ─── */
 body.dark-mode {
-    --bg: #0f172a;
+    --bg: #0F2A1D;
     --bg-secondary: #1e293b;
     --card: #1e293b;
     --text: #f1f5f9;

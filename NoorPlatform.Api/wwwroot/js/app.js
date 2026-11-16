@@ -109,37 +109,10 @@
         }
     }
 
-    // ─── إصلاح: تخزين بيانات المستخدم لتقليل الاستعلامات (Performance) ───
-    async function getCachedProfile() {
-        const cached = sessionStorage.getItem('noor_user_profile');
-        const cachedTime = sessionStorage.getItem('noor_user_profile_time');
-        const now = Date.now();
-        
-        // Cache valid for 5 minutes
-        if (cached && cachedTime && (now - parseInt(cachedTime)) < 5 * 60 * 1000) {
-            return JSON.parse(cached);
-        }
-        
-        try {
-            if (app.api && typeof app.api.apiFetch === 'function') {
-                const profile = await app.api.apiFetch('/auth/profile');
-                if (profile) {
-                    sessionStorage.setItem('noor_user_profile', JSON.stringify(profile));
-                    sessionStorage.setItem('noor_user_profile_time', now.toString());
-                    return profile;
-                }
-            }
-        } catch(e) {
-            log('Failed to fetch profile', e);
-        }
-        return null;
-    }
-
     app.loadSession = loadSession;
     app.saveSession = saveSession;
     app.clearSession = clearSession;
     app.isTokenExpired = isTokenExpired;
-    app.getCachedProfile = getCachedProfile;
 
     loadSession();
     initNetworkAwareness();

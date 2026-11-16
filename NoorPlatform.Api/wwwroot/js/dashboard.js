@@ -9,6 +9,7 @@
     const utils = () => (typeof global.getNoorUtils === 'function' ? global.getNoorUtils() : (global.NoorUtils || app().utils));
     const esc = (s) => utils().escapeHtml(s);
     const icon = (name, opts) => (global.Icon ? global.Icon(name, opts) : '');
+    const TARGET_LABELS = { All: 'الجميع', Teachers: 'المحفّظون', Students: 'الطلاب', Parents: 'أولياء الأمور' };
 
     let barChartInstance = null;
     let donutChartInstance = null;
@@ -63,7 +64,7 @@
                                 datasets: [{
                                     label: 'نسبة الحضور',
                                     data: values,
-                                    backgroundColor: values.map(v => v > 70 ? '#10b981' : '#cbd5e1'),
+                                    backgroundColor: values.map(v => v > 70 ? '#1A5C3A' : '#cbd5e1'),
                                     borderRadius: 6,
                                     barPercentage: 0.6
                                 }]
@@ -98,7 +99,7 @@
                                 labels: ['متقدم', 'متوسط', 'مبتدئ'],
                                 datasets: [{
                                     data: chartData,
-                                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                                    backgroundColor: ['#1A5C3A', '#3b82f6', '#f59e0b'],
                                     borderWidth: 0,
                                     hoverOffset: 4
                                 }]
@@ -122,7 +123,7 @@
                     if (!data.recentHifz.length) {
                         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد جلسات تسميع بعد</td></tr>';
                     } else {
-                        const gradients = ['linear-gradient(135deg,#10b981,#3b82f6)', 'linear-gradient(135deg,#14b8a6,#3b82f6)', 'linear-gradient(135deg,#8b5cf6,#3b82f6)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#ec4899,#8b5cf6)'];
+                        const gradients = ['linear-gradient(135deg,#1A5C3A,#2D8B57)', 'linear-gradient(135deg,#2D8B57,#B8860B)', 'linear-gradient(135deg,#B8860B,#DAA520)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#0F3D27,#1A5C3A)'];
                         tbody.innerHTML = data.recentHifz.map((r, i) => {
                             const evalClass = r.evaluation === 'ممتاز' ? 'status-excellent' : r.evaluation === 'جيد' ? 'status-good' : 'status-late';
                             const evalIconName = r.evaluation === 'ممتاز' ? 'star' : r.evaluation === 'جيد' ? 'thumbs-up' : 'refresh-cw';
@@ -199,11 +200,27 @@
               <div class="ann-card-content">
                 <div class="ann-card-top"><h4>${esc(a.title)}</h4><time>${utils().formatDateEnGb(a.createdAt)}</time></div>
                 <p>${esc(a.content)}</p>
-                <div class="ann-target" style="color:${esc(a.color)}">${icon('target', { size: 13 })} ${esc(a.target)}</div>
+                <div class="ann-target" style="color:${esc(a.color)};display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <span>${icon('target', { size: 13 })} ${esc(TARGET_LABELS[a.target] || a.target)}</span>
+                  <span style="color:var(--text-muted)">${icon('user', { size: 13 })} ${esc(a.authorName || 'إدارة المركز')}</span>
+                  ${a.canManage ? `<button type="button" class="btn btn-outline ann-delete" data-id="${Number(a.id)}" style="padding:2px 10px;font-size:11px;margin-inline-start:auto">حذف</button>` : ''}
+                </div>
               </div>
             </div>`).join('');
             list.querySelectorAll('.ann-card').forEach(card => {
                 card.addEventListener('click', () => app().ui.showToast(card.dataset.title, 'info'), { once: false });
+            });
+            list.querySelectorAll('.ann-delete').forEach(btn => {
+                btn.addEventListener('click', ev => {
+                    ev.stopPropagation();
+                    global.confirmDelete('حذف هذا الإعلان؟', async () => {
+                        try {
+                            await apiFetch(`/announcements/${btn.dataset.id}`, 'DELETE');
+                            app().ui.showToast('تم حذف الإعلان', 'success');
+                            fetchAnnouncements();
+                        } catch (err) { app().api.handleApiError(err); }
+                    });
+                });
             });
         } catch (e) {
             app().api.handleApiError(e);

@@ -30,7 +30,7 @@
             message = 'لا يوجد اتصال بالإنترنت أو الخادم غير متاح';
         }
 
-        if (!opts.silent && app().ui?.showToast) {
+        if (!opts.silent && !error?.mustChangePassword && app().ui?.showToast) {
             app().ui.showToast(message, 'error');
         }
         return message;
@@ -75,6 +75,11 @@
             const payload = await res.json().catch(() => ({}));
             const err = new Error(payload.message || 'عذراً، لا تملك صلاحية الوصول');
             err.status = 403;
+            // الخادم يفرض تغيير كلمة المرور المؤقتة: افتح نافذة التغيير بدل عرض خطأ صلاحيات
+            if (payload.code === 'MUST_CHANGE_PASSWORD') {
+                err.mustChangePassword = true;
+                app().ui?.openModal?.('changePasswordModal');
+            }
             throw err;
         }
 

@@ -1,41 +1,55 @@
 /* منصة نور — الأنماط الرئيسية (منقولة حرفياً من index.html) */
+        /* ═══ هوية منصة نور الموحّدة مع تطبيق الهاتف: أخضر غامق + ذهبي ═══ */
         :root {
-            --green: #10b981;
-            --green-dark: #059669;
-            --green-light: #d1fae5;
-            --blue: #3b82f6;
-            --blue-dark: #2563eb;
-            --blue-light: #dbeafe;
-            --teal: #14b8a6;
-            --bg: #f0fdf9;
-            --sidebar-bg: #0f172a;
+            --green: #1A5C3A;
+            --green-dark: #0F3D27;
+            --green-light: #E3F1E8;
+            --green-soft: #2D8B57;
+            --gold: #B8860B;
+            --gold-dark: #8B6508;
+            --gold-light: #F6EBD0;
+            --gold-bright: #DAA520;
+            --gradient-gold: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
+            --blue: #2563EB;
+            --blue-dark: #1D4ED8;
+            --blue-light: #DBEAFE;
+            --teal: #2D8B57;
+            --bg: #F7F5EE;
+            --sidebar-bg: #0F2A1D;
             --card: #ffffff;
-            --text: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 24px rgba(16, 185, 129, 0.08);
-            --shadow-lg: 0 12px 48px rgba(16, 185, 129, 0.15);
+            --text: #1A2E23;
+            --text-muted: #6B7280;
+            --border: #E7E2D3;
+            --shadow: 0 4px 20px rgba(26, 92, 58, 0.07);
+            --shadow-lg: 0 12px 40px rgba(26, 92, 58, 0.14);
             --radius: 16px;
             --radius-sm: 10px;
-            --gradient: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            --gradient: linear-gradient(135deg, #1A5C3A 0%, #2D8B57 100%);
             --sidebar-w: 260px;
-            --bg-secondary: #e8f5f0;
+            --bg-secondary: #EFEBDD;
             --surface: #ffffff;
             --amber-light: #fef3c7;
             --amber-dark: #b45309;
             --indigo-light: #e0e7ff;
             --indigo-dark: #4338ca;
+            --font-body: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+            --font-quran: 'Amiri', 'Traditional Arabic', serif;
         }
 
         body.dark-mode {
-            --bg: #0f172a;
-            --bg-secondary: #1e293b;
-            --sidebar-bg: #020617;
-            --card: #1e293b;
-            --surface: #1e293b;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --bg: #0F1A14;
+            --bg-secondary: #16261D;
+            --sidebar-bg: #0A120E;
+            --card: #1A2E23;
+            --surface: #1A2E23;
+            --text: #E8F5E9;
+            --text-muted: #9CB3A5;
+            --border: #2A3F33;
+            --green-light: #1F3A2B;
+            /* أخضر أفتح في الوضع الداكن ليبقى النص الأخضر مقروءاً على الخلفيات الداكنة */
+            --green: #3FA96E;
+            --green-dark: #2D8B57;
+            --gold-light: #3A2F12;
         }
 
         /* ===== LOGIN SCREEN ===== */
@@ -99,7 +113,7 @@
 
             .form-control:focus {
                 border-color: var(--green);
-                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+                box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1);
             }
 
         .login-footer {
@@ -164,13 +178,14 @@
             justify-content: center;
             font-size: 22px;
             flex-shrink: 0;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 4px 14px rgba(26, 92, 58, 0.4);
         }
 
         .noor-mark {
             width: 56px;
             height: 56px;
-            background: var(--gradient);
+            background: #FFFDF5;
+            border: 1px solid rgba(184, 134, 11, 0.35);
             border-radius: 16px;
             display: flex;
             align-items: center;
@@ -181,11 +196,31 @@
             font-weight: 700;
             line-height: 1;
             flex-shrink: 0;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 4px 14px rgba(26, 92, 58, 0.4);
             letter-spacing: 0;
         }
         .noor-mark-sm { width: 48px; height: 48px; font-size: 26px; border-radius: 14px; }
-        .noor-mark-lg { width: 72px; height: 72px; font-size: 40px; border-radius: 20px; margin-bottom: 12px; }
+        .noor-mark-lg { width: 84px; height: 84px; font-size: 40px; border-radius: 24px; margin-bottom: 12px; }
+        .noor-mark-img { width: 82%; height: 82%; display: block; }
+        .login-brand {
+            font-family: var(--font-quran);
+            font-weight: 700;
+            font-size: 30px;
+            color: var(--green);
+            text-align: center;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+        .login-brand::after {
+            content: '';
+            display: block;
+            width: 48px;
+            height: 3px;
+            margin: 6px auto 0;
+            border-radius: 3px;
+            background: var(--gradient-gold);
+        }
+
 
         .logo-text h1 {
             font-size: 20px;
@@ -206,8 +241,8 @@
         /* Role badge */
         .role-badge {
             margin: 16px 20px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: rgba(26, 92, 58, 0.1);
+            border: 1px solid rgba(26, 92, 58, 0.2);
             border-radius: 10px;
             padding: 10px 14px;
             display: flex;
@@ -302,7 +337,7 @@
             }
 
             .nav-item.active {
-                background: rgba(16, 185, 129, 0.15);
+                background: rgba(26, 92, 58, 0.15);
                 color: var(--green);
             }
 
@@ -332,7 +367,7 @@
         }
 
         .nav-item.active .nav-icon {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(26, 92, 58, 0.2);
         }
 
         .nav-badge {
@@ -450,7 +485,7 @@
 
             .search-box:focus-within {
                 border-color: var(--green);
-                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+                box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1);
             }
 
             .search-box input {
@@ -842,8 +877,8 @@
         }
 
             .status-badge.sb-paid {
-                background: rgba(16, 185, 129, 0.1);
-                color: #059669;
+                background: rgba(26, 92, 58, 0.1);
+                color: #0F3D27;
             }
 
             .status-badge.sb-unpaid {
@@ -947,12 +982,12 @@
         .btn-primary {
             background: var(--gradient);
             color: #fff;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+            box-shadow: 0 4px 14px rgba(26, 92, 58, 0.35);
         }
 
             .btn-primary:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+                box-shadow: 0 6px 20px rgba(26, 92, 58, 0.45);
             }
 
         .btn-outline {
@@ -1001,7 +1036,7 @@
 
             .filter-select:focus {
                 border-color: var(--green);
-                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+                box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1);
             }
 
         /* Cards grid */
@@ -1196,7 +1231,7 @@
                 background: var(--gradient);
                 color: #fff;
                 border-color: transparent;
-                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                box-shadow: 0 4px 12px rgba(26, 92, 58, 0.3);
             }
 
             .circle-chip:hover:not(.active) {
@@ -1431,7 +1466,7 @@
             justify-content: center;
             font-size: 22px;
             flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 12px rgba(26, 92, 58, 0.3);
         }
 
         .exam-info {
@@ -1666,7 +1701,7 @@
 
     .form-input:focus {
         border-color: var(--green);
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1);
     }
 
 .form-row {
@@ -1707,7 +1742,7 @@
     .role-tab.active {
         background: var(--gradient);
         color: #fff;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 4px 12px rgba(26, 92, 58, 0.3);
     }
 
     .role-tab:not(.active):hover {
@@ -1958,7 +1993,7 @@
     }
 
     .stat-card.green::after {
-        background: #10b981;
+        background: #1A5C3A;
     }
 
     .stat-card.blue::after {
@@ -1993,8 +2028,8 @@
 }
 
     .student-card:hover {
-        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
-        border-color: rgba(16, 185, 129, 0.2);
+        box-shadow: 0 8px 32px rgba(26, 92, 58, 0.15);
+        border-color: rgba(26, 92, 58, 0.2);
     }
 
 /* ── شريط البحث في صفحة الطلاب ── */
@@ -2217,7 +2252,7 @@
     background: var(--gradient);
     border: none;
     cursor: pointer;
-    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45);
+    box-shadow: 0 6px 24px rgba(26, 92, 58, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2229,7 +2264,7 @@
 
     .fab-btn:hover {
         transform: scale(1.08);
-        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.55);
+        box-shadow: 0 8px 32px rgba(26, 92, 58, 0.55);
     }
 
     .fab-btn.open {
@@ -2399,7 +2434,7 @@
     color: #fff;
     cursor: pointer;
     flex-shrink: 0;
-    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 10px rgba(26, 92, 58, 0.3);
 }
 
 /* ── Mobile Topbar تحسين ── */
@@ -2460,7 +2495,7 @@ body.dark-mode .daily-notif-box {
 }
 
 body.dark-mode .notif-dot {
-    background: rgba(16, 185, 129, 0.2);
+    background: rgba(26, 92, 58, 0.2);
 }
 
     body.dark-mode .notif-dot.nd-blue {
@@ -2477,7 +2512,7 @@ body.dark-mode .notif-dot {
 
 /* ─── الوضع الليلي ─── */
 body.dark-mode {
-    --bg: #0f172a;
+    --bg: #0F2A1D;
     --bg-secondary: #1e293b;
     --card: #1e293b;
     --text: #f1f5f9;
@@ -2640,7 +2675,7 @@ body.dark-mode .topbar {
 
 body.dark-mode .form-control,
 body.dark-mode .form-input {
-    background: #0f172a;
+    background: #0F2A1D;
     border-color: #334155;
     color: #f1f5f9;
 }
@@ -2664,7 +2699,7 @@ body.dark-mode input[type="time"] {
 }
 
 body.dark-mode .date-nav-dates input[type="text"] {
-    background: #0f172a !important;
+    background: #0F2A1D !important;
     color: #f1f5f9 !important;
     border-color: #334155;
 }
@@ -2713,7 +2748,7 @@ body.dark-mode .btn-outline {
         color: var(--green);
     }
 body.dark-mode .search-box {
-    background: #0f172a;
+    background: #0F2A1D;
     border-color: #334155;
 }
 
@@ -2734,7 +2769,7 @@ body.dark-mode .modal-footer {
 }
 
 body.dark-mode .filter-select {
-    background: #0f172a;
+    background: #0F2A1D;
     border-color: #334155;
     color: #f1f5f9;
 }
@@ -2744,7 +2779,7 @@ body.dark-mode .filter-select {
     position: fixed;
     inset: 0;
     z-index: 2000;
-    background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+    background: linear-gradient(135deg, #0F2A1D 0%, #064e3b 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2767,7 +2802,7 @@ body.dark-mode .filter-select {
     align-items: center;
     justify-content: center;
     font-size: 48px;
-    box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 12px 40px rgba(26, 92, 58, 0.4);
     animation: splashPulse 1.5s ease-in-out infinite;
 }
 
@@ -2792,7 +2827,7 @@ body.dark-mode .filter-select {
     width: 40px;
     height: 40px;
     border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: #10b981;
+    border-top-color: #1A5C3A;
     border-radius: 50%;
     margin-top: 32px;
     animation: spin 0.8s linear infinite;
@@ -2934,7 +2969,7 @@ body.dark-mode .bottom-nav {
 
 /* ─── Toast Improvements ─── */
 .toast.toast-success {
-    border-right-color: #10b981;
+    border-right-color: #1A5C3A;
 }
 
 .toast.toast-error {
@@ -3039,7 +3074,7 @@ body.dark-mode .bottom-nav {
     width: 52px;
     height: 52px;
     border: 4px solid rgba(255, 255, 255, 0.15);
-    border-top-color: #10b981;
+    border-top-color: #1A5C3A;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
 }
@@ -3060,8 +3095,8 @@ body.dark-mode .bottom-nav {
 
 .form-input.input-success,
 .form-control.input-success {
-    border-color: #10b981 !important;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+    border-color: #1A5C3A !important;
+    box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1) !important;
 }
 
 .error-msg {
@@ -3175,7 +3210,7 @@ body.dark-mode .bottom-nav {
 }
 
 .toast-success .toast-progress-fill {
-    background: #10b981;
+    background: #1A5C3A;
 }
 
 .toast-error .toast-progress-fill {
@@ -3240,7 +3275,7 @@ body.dark-mode .bottom-nav {
 
         /* ─── Login Enhancement ─── */
         .login-overlay {
-            background: linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #0f172a 100%);
+            background: linear-gradient(135deg, #0F2A1D 0%, #064e3b 50%, #0F2A1D 100%);
             background-size: 200% 200%;
             animation: loginBg 8s ease-in-out infinite;
         }
@@ -3323,7 +3358,7 @@ body.dark-mode .bottom-nav {
     padding: 22px 26px;
     margin-bottom: 20px;
     color: #fff;
-    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 8px 24px rgba(26, 92, 58, 0.25);
     flex-wrap: wrap;
 }
 .report-hero-icon {
@@ -3367,7 +3402,7 @@ body.dark-mode .bottom-nav {
     top: 0;
     bottom: 0;
     width: 4px;
-    background: var(--card-accent, var(--green, #10b981));
+    background: var(--card-accent, var(--green, #1A5C3A));
 }
 .report-stat-card:hover {
     transform: translateY(-2px);
@@ -3382,7 +3417,7 @@ body.dark-mode .bottom-nav {
     justify-content: center;
     flex-shrink: 0;
     color: #fff;
-    background: var(--card-accent, var(--green, #10b981));
+    background: var(--card-accent, var(--green, #1A5C3A));
 }
 .report-stat-info { min-width: 0; }
 .report-stat-label {
@@ -3400,11 +3435,11 @@ body.dark-mode .bottom-nav {
     line-height: 1.2;
 }
 
-.report-accent-green  { --card-accent: #10b981; }
+.report-accent-green  { --card-accent: #1A5C3A; }
 .report-accent-blue   { --card-accent: #3b82f6; }
 .report-accent-amber  { --card-accent: #f59e0b; }
 .report-accent-purple { --card-accent: #8b5cf6; }
-.report-accent-teal   { --card-accent: #14b8a6; }
+.report-accent-teal   { --card-accent: #2D8B57; }
 .report-accent-rose   { --card-accent: #f43f5e; }
 .report-accent-slate  { --card-accent: #64748b; }
 
@@ -3471,7 +3506,7 @@ body.dark-mode .bottom-nav {
     border-color: #a7f3d0;
 }
 .mem-surah-cell.done strong { color: #047857; }
-.mem-surah-cell.done span { color: #059669; }
+.mem-surah-cell.done span { color: #0F3D27; }
 
 .mem-surah-cell.partial {
     background: #fffbeb;
@@ -3509,7 +3544,7 @@ body.dark-mode .bottom-nav {
     border-radius: 4px;
     display: inline-block;
 }
-.mem-dot-done { background: #10b981; }
+.mem-dot-done { background: #1A5C3A; }
 .mem-dot-partial { background: #f59e0b; }
 .mem-dot-pending { background: #cbd5e1; }
 
@@ -3519,7 +3554,7 @@ body.dark-mode .bottom-nav {
 #page-memorization .filter-bar { margin-bottom: 14px; }
 #page-memorization #memStudentFilter { min-width: 280px; }
 
-body.dark-mode .mem-surah-cell.done { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); }
+body.dark-mode .mem-surah-cell.done { background: rgba(26, 92, 58,0.12); border-color: rgba(26, 92, 58,0.35); }
 body.dark-mode .mem-surah-cell.done strong { color: #34d399; }
 body.dark-mode .mem-surah-cell.partial { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
 body.dark-mode .mem-surah-cell.partial strong { color: #fbbf24; }
@@ -3569,3 +3604,24 @@ body.dark-mode .modal-inline-alert-warning {
     border-color: rgba(251, 191, 36, 0.4);
     color: #fcd34d;
 }
+
+
+/* ═══ هوية منصة نور — لمسات الشريط الجانبي (أخضر غامق + ذهبي) ═══ */
+.sidebar .sidebar-logo .logo-text h1 {
+    font-family: var(--font-quran);
+    letter-spacing: 0;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.sidebar .sidebar-logo .logo-text span { color: rgba(246, 235, 208, 0.75); }
+.sidebar .nav-section-label { color: rgba(218, 165, 32, 0.9); letter-spacing: 0; }
+.sidebar .nav-item.active {
+    background: rgba(218, 165, 32, 0.14);
+    color: #F6EBD0;
+}
+.sidebar .nav-item.active::before { background: var(--gold-bright); }
+.sidebar .nav-item.active .nav-icon { background: rgba(218, 165, 32, 0.22); color: var(--gold-bright); }
+.sidebar .nav-badge { background: var(--gold); }
+.sidebar .role-badge { background: rgba(218, 165, 32, 0.08); border-color: rgba(218, 165, 32, 0.18); }

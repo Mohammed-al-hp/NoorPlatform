@@ -7,11 +7,10 @@
     <meta name="keywords" content="تحفيظ القرآن, مراكز تحفيظ, حلقات قرآن, إدارة طلاب, منصة نور, حفظ القرآن">
     <meta name="author" content="منصة نور">
     <title>منصة نور — نظام إدارة مراكز تحفيظ القرآن الكريم</title>
-    <link rel="icon" href="/icon-192.png" type="image/png">
+    <link rel="icon" href="/img/logo-mark.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/icon-192.png" type="image/png">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css">
     <link rel="stylesheet" href="/css/landing.css">
     <script src="/js/icons.js"></script>
 </head>
@@ -65,7 +64,7 @@
 
             <div class="hero-visual">
                 <div class="floating-badge top-left">
-                    <span style="color:#10b981" class="badge-icon" data-icon="check-circle" data-icon-size="16"></span> تسميع ممتاز
+                    <span style="color:#1A5C3A" class="badge-icon" data-icon="check-circle" data-icon-size="16"></span> تسميع ممتاز
                 </div>
                 <div class="floating-badge bottom-right">
                     <span style="color:#3b82f6" class="badge-icon" data-icon="bar-chart" data-icon-size="16"></span> نسبة الحضور 96%
@@ -316,8 +315,8 @@
         var navLogoIcon = document.getElementById('navLogoIcon');
         var footerLogoIcon = document.getElementById('footerLogoIcon');
         if (window.Icon) {
-            navLogoIcon.innerHTML = window.Icon('mosque', { size: 24 });
-            footerLogoIcon.innerHTML = window.Icon('mosque', { size: 22 });
+            navLogoIcon.innerHTML = '<img src="/img/logo-mark.svg" alt="" style="width:80%;height:80%">';
+            footerLogoIcon.innerHTML = '<img src="/img/logo-mark.svg" alt="" style="width:80%;height:80%">';
             mobileToggleBtn.innerHTML = window.Icon('menu', { size: 22 });
             darkToggleBtn.innerHTML = window.Icon(
                 document.body.classList.contains('dark-mode') ? 'sun' : 'moon',

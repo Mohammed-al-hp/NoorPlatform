@@ -41,6 +41,9 @@ services:
       
       # Environment
       ASPNETCORE_ENVIRONMENT: Production
+
+      # CORS: النطاقات المسموح لها باستدعاء الـ API من المتصفح (واجهة الويب نفسها لا تحتاجها لأنها من نفس النطاق)
+      Cors__Origins__0: ${PUBLIC_ORIGIN:-https://noor.example.com}
       
       # Optional: WhatsApp Settings
       WhatsAppSettings__AccessToken: ${WHATSAPP_TOKEN:-}

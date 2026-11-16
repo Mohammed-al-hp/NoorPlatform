@@ -87,6 +87,9 @@
 
         // صفحات المتابعة الإدارية (حضور / تسميع / اختبارات) — للمحفّظ والمشرف فقط
         if (trackingNavSection) trackingNavSection.style.display = isStaff ? 'block' : 'none';
+        // قسم «الرئيسية» (لوحة التحكم) للمحفّظ والمشرف؛ الطالب وولي الأمر لهما رئيسية في بوابتهما
+        const homeNavSection = document.getElementById('homeNavSection');
+        if (homeNavSection) homeNavSection.style.display = isStaff ? 'block' : 'none';
 
         // ─── إصلاح: إخفاء أزرار الوسام/الشهادة الإدارية عن الطالب نفسه ───
         const quranMapActions = document.getElementById('quranMapAdminActions');

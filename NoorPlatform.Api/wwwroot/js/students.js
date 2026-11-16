@@ -44,7 +44,7 @@
             grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">${icon('graduation-cap', { size: 40 })}</div><div class="empty-state-title">لا يوجد طلاب</div></div>`;
             return;
         }
-        const gradients = ['linear-gradient(135deg,#10b981,#3b82f6)', 'linear-gradient(135deg,#8b5cf6,#3b82f6)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#14b8a6,#10b981)', 'linear-gradient(135deg,#ec4899,#8b5cf6)'];
+        const gradients = ['linear-gradient(135deg,#1A5C3A,#2D8B57)', 'linear-gradient(135deg,#B8860B,#DAA520)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#8B6508,#B8860B)', 'linear-gradient(135deg,#0F3D27,#1A5C3A)'];
         grid.innerHTML = data.map((s, i) => {
             const initials = esc((s.fullName || '').slice(0, 2));
             const grad = gradients[i % gradients.length];

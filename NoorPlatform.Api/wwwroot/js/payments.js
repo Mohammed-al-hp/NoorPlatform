@@ -74,10 +74,17 @@
 
         tbody.innerHTML = items.map((p, i) => {
             const statusClass = p.status === 'Paid' ? 'status-excellent' : p.status === 'Pending' ? 'status-good' : 'status-weak';
-            const statusText = p.status === 'Paid' ? 'مدفوعة' : p.status === 'Pending' ? 'بانتظار الدفع' : p.status === 'Overdue' ? 'متأخرة' : p.status;
-            const statusColor = p.status === 'Paid' ? '#22c55e' : p.status === 'Pending' ? '#f59e0b' : '#ef4444';
-            const actionBtn = p.status !== 'Paid'
-                ? `<button class="btn btn-primary" style="padding:6px 14px;font-size:12px" onclick="confirmReceived(${Number(p.id)})"><span data-icon="check" data-icon-size="12"></span> تأكيد الدفع</button>`
+            const statusText = p.status === 'Paid' ? 'مدفوعة' : p.status === 'Pending' ? 'بانتظار الدفع' : p.status === 'Overdue' ? 'متأخرة' : p.status === 'Cancelled' ? 'ملغاة' : p.status;
+            const statusColor = p.status === 'Paid' ? '#22c55e' : p.status === 'Pending' ? '#f59e0b' : p.status === 'Cancelled' ? '#94a3b8' : '#ef4444';
+            const isOpen = p.status === 'Pending' || p.status === 'Overdue';
+            const actionBtn = isOpen
+                ? `<div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn btn-primary" style="padding:6px 14px;font-size:12px" onclick="confirmReceived(${Number(p.id)})"><span data-icon="check" data-icon-size="12"></span> تأكيد الدفع</button>
+                    <button class="btn btn-outline" style="padding:6px 12px;font-size:12px" onclick="openInvoiceEdit(${Number(p.id)})" title="تعديل المبلغ أو الوصف أو التاريخ"><span data-icon="edit" data-icon-size="12"></span> تعديل</button>
+                    <button class="btn btn-outline" style="padding:6px 12px;font-size:12px" onclick="cancelInvoice(${Number(p.id)})" title="إلغاء فاتورة صدرت بالخطأ"><span data-icon="x" data-icon-size="12"></span> إلغاء</button>
+                  </div>`
+                : p.status === 'Cancelled'
+                ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
                 : `<span style="color:var(--text-muted);font-size:12px"><span data-icon="check-circle" data-icon-size="14" style="color:#22c55e"></span> تم</span>`;
 
             const rowNum = (paymentsPage - 1) * paymentsPageSize + i + 1;
@@ -217,7 +224,7 @@
             hint.textContent = 'هذا الطالب غير مرتبط بولي أمر — لا يمكن إصدار فاتورة حتى يتم الربط.';
             return;
         }
-        hint.style.background = 'rgba(16,185,129,0.08)';
+        hint.style.background = 'rgba(26, 92, 58,0.08)';
         hint.style.display = 'block';
         hint.textContent = `ولي الأمر: ${parentName || '—'} — الهاتف: ${parentPhone || '—'}`;
     }
@@ -282,7 +289,52 @@
         });
     }
 
+    function cancelInvoice(id) {
+        global.confirmDelete('إلغاء هذه الفاتورة؟ ستبقى في السجل ولن تظهر لولي الأمر.', async () => {
+            try {
+                await apiFetch(`/payments/${id}/cancel`, 'POST');
+                showToast('تم إلغاء الفاتورة', 'success');
+                fetchPayments();
+            } catch (err) { showToast(err.message, 'error'); }
+        });
+    }
+
+    function openInvoiceEdit(id) {
+        const p = allPayments.find(x => Number(x.id) === Number(id));
+        if (!p) return;
+        document.getElementById('editInvoiceId').value = String(p.id);
+        document.getElementById('editInvoiceDescription').value = p.description || '';
+        document.getElementById('editInvoiceAmount').value = p.amount;
+        document.getElementById('editInvoiceDueDate').value = (p.dueDate || '').slice(0, 10);
+        global.openModal('editInvoiceModal');
+    }
+
+    async function saveInvoiceEdit(btn) {
+        const id = document.getElementById('editInvoiceId').value;
+        const description = document.getElementById('editInvoiceDescription').value.trim();
+        const amount = parseFloat(document.getElementById('editInvoiceAmount').value);
+        const dueDate = document.getElementById('editInvoiceDueDate').value;
+        if (!description || !(amount > 0) || !dueDate) {
+            showToast('يرجى تعبئة الوصف والمبلغ وتاريخ الاستحقاق', 'error');
+            return;
+        }
+        try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
+            await apiFetch(`/payments/${id}`, 'PUT', { description, amount, dueDate });
+            global.closeModal('editInvoiceModal');
+            showToast('تم تعديل الفاتورة', 'success');
+            fetchPayments();
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false);
+        }
+    }
+
     global.confirmReceived = confirmReceived;
+    global.cancelInvoice = cancelInvoice;
+    global.openInvoiceEdit = openInvoiceEdit;
+    global.saveInvoiceEdit = saveInvoiceEdit;
     global.fetchPayments = fetchPayments;
     global.fetchParentFees = fetchParentFees;
     global.showNewInvoiceModal = showNewInvoiceModal;

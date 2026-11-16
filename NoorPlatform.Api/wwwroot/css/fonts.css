@@ -1,0 +1,7 @@
+/* خطوط منصة نور محمّلة محلياً (رخصة SIL OFL) — بدون اعتماد على Google Fonts */
+@font-face { font-family: 'Tajawal'; src: url('/fonts/Tajawal-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Tajawal'; src: url('/fonts/Tajawal-Medium.ttf') format('truetype'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Tajawal'; src: url('/fonts/Tajawal-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Tajawal'; src: url('/fonts/Tajawal-ExtraBold.ttf') format('truetype'); font-weight: 800 900; font-display: swap; }
+@font-face { font-family: 'Amiri'; src: url('/fonts/Amiri-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Amiri'; src: url('/fonts/Amiri-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }

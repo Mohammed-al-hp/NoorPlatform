@@ -18,7 +18,8 @@
         const btnNew = document.getElementById('btnNewMessage');
         if (!list) return;
 
-        if (btnNew) btnNew.style.display = 'inline-flex';
+        // إرسال رسالة جديدة متاح لولي الأمر فقط؛ المحفّظ والإدارة يردّون من صندوق الوارد
+        if (btnNew) btnNew.style.display = isParent() ? 'inline-flex' : 'none';
         if (btnNew && !btnNew.textContent.includes('إرسال')) btnNew.innerHTML = (window.Icon ? window.Icon('send', {size:14}) : '') + ' إرسال رسالة';
 
         list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:14}) : '') + '</span> جاري التحميل...</div>';
@@ -40,6 +41,7 @@
                             <span style="font-size:11px;color:var(--text-muted)">${utils().formatDateTimeEnGb(m.createdAt)}</span>
                         </div>
                         <p style="font-size:13px;color:var(--text)">${esc(m.content)}</p>
+                        ${renderReplies(m.replies)}
                     </div>`).join('');
             } else {
                 list.innerHTML = data.map(m => `
@@ -49,11 +51,57 @@
                             <span style="font-size:11px;color:var(--text-muted)">${utils().formatDateTimeEnGb(m.createdAt)}</span>
                         </div>
                         <p style="font-size:13px;color:var(--text)">${esc(m.content)}</p>
-                        ${!m.isRead ? `<button class="btn btn-outline" style="margin-top:8px;padding:4px 10px;font-size:11px" onclick="NoorMessages.markAsRead(${m.id})">${window.Icon ? window.Icon('check', {size:12}) : ''} تعليم كمقروءة</button>` : ''}
+                        ${renderReplies(m.replies)}
+                        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                            ${!m.isRead ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="NoorMessages.markAsRead(${Number(m.id)})">${window.Icon ? window.Icon('check', {size:12}) : ''} تعليم كمقروءة</button>` : ''}
+                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="NoorMessages.toggleReply(${Number(m.id)})">${window.Icon ? window.Icon('send', {size:12}) : ''} رد</button>
+                        </div>
+                        <div id="replyBox-${Number(m.id)}" style="display:none;margin-top:8px">
+                            <textarea class="form-input" rows="2" maxlength="2000" placeholder="اكتب ردك لولي الأمر..." style="width:100%"></textarea>
+                            <button class="btn btn-primary" style="margin-top:6px;padding:4px 14px;font-size:12px" onclick="NoorMessages.sendReply(${Number(m.id)}, this)">إرسال الرد</button>
+                        </div>
                     </div>`).join('');
             }
         } catch (e) {
             list.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">تعذر تحميل الرسائل</div>';
+        }
+    }
+
+    function renderReplies(replies) {
+        if (!Array.isArray(replies) || !replies.length) return '';
+        return replies.map(r => `
+            <div style="margin-top:8px;margin-inline-start:16px;padding:8px 12px;border-inline-start:3px solid var(--green);background:var(--bg-secondary);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
+                    <strong>رد: ${esc(r.senderName)}</strong>
+                    <span>${utils().formatDateTimeEnGb(r.createdAt)}</span>
+                </div>
+                <p style="font-size:13px;color:var(--text);margin:0">${esc(r.content)}</p>
+            </div>`).join('');
+    }
+
+    function toggleReply(id) {
+        const box = document.getElementById('replyBox-' + id);
+        if (!box) return;
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        if (box.style.display === 'block') box.querySelector('textarea')?.focus();
+    }
+
+    async function sendReply(id, btn) {
+        const box = document.getElementById('replyBox-' + id);
+        const content = box?.querySelector('textarea')?.value?.trim();
+        if (!content) {
+            app().ui.showToast('اكتب نص الرد أولاً', 'error');
+            return;
+        }
+        try {
+            if (global.setBtnLoading) global.setBtnLoading(btn, true);
+            await apiFetch(`/messages/${id}/reply`, 'POST', { content });
+            app().ui.showToast('تم إرسال الرد إلى ولي الأمر', 'success');
+            fetchMessages();
+        } catch (e) {
+            app().api.handleApiError(e);
+        } finally {
+            if (global.setBtnLoading) global.setBtnLoading(btn, false);
         }
     }
 
@@ -160,7 +208,7 @@
             hifzList.innerHTML = '<p style="text-align:center;padding:16px;color:#ef4444;font-size:13px">تعذر تحميل سجل التسميع</p>';
         }
     }
-    global.NoorMessages = { fetchMessages, markAsRead, openNewMessageModal, sendNewMessage, openChildDetails };
+    global.NoorMessages = { fetchMessages, markAsRead, toggleReply, sendReply, openNewMessageModal, sendNewMessage, openChildDetails };
     global.openNewMessageModal = openNewMessageModal;
     global.sendNewMessage = sendNewMessage;
 })(window);
