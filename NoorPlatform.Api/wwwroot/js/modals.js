@@ -22,6 +22,7 @@
         parents: ['إدارة أولياء الأمور', 'ربط الأبناء بالحسابات'],
         users: ['إدارة المستخدمين', 'جميع حسابات المنصة'],
         reports: ['التقارير', 'تقارير الأداء والحضور والحفظ'],
+        analytics: ['التحليلات والتوقعات', 'الإنذار المبكر ومقارنة الأداء'],
         settings: ['الإعدادات', 'إعدادات المنصة والنظام'],
         expenses: ['إدارة المصروفات', 'تسجيل المصروفات والعهد المالية'],
         evaluation: ['التقييم التربوي', 'متون · أهداف · فترات · لباس · صلاة'],
@@ -31,7 +32,7 @@
     };
 
     // مصدر موحّد — يستخدمه أيضاً auth.js عبر global.NoorStaffOnlyPages
-    const STAFF_ONLY_PAGES = ['attendance', 'memorization', 'evaluation', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents', 'expenses'];    global.NoorStaffOnlyPages = STAFF_ONLY_PAGES;
+    const STAFF_ONLY_PAGES = ['analytics', 'attendance', 'memorization', 'evaluation', 'students', 'teachers', 'circles', 'payments', 'reports', 'settings', 'users', 'parents', 'expenses'];    global.NoorStaffOnlyPages = STAFF_ONLY_PAGES;
 
     function navigate(page, el) {
         const role = global.NoorApp?.state?.user?.role;
@@ -45,7 +46,7 @@
         }
 
         // ─── إصلاح: صفحات حصرية للأدمن فقط دون المحفّظ ───
-        const ADMIN_ONLY_PAGES = ['users', 'parents', 'teachers', 'circles', 'payments', 'reports', 'settings', 'expenses'];
+        const ADMIN_ONLY_PAGES = ['analytics', 'users', 'parents', 'teachers', 'circles', 'payments', 'reports', 'settings', 'expenses'];
         if (role === 'Teacher' && ADMIN_ONLY_PAGES.includes(page)) {
             page = 'dashboard';
             el = document.querySelector('.nav-item');

@@ -1,0 +1,132 @@
+/* منصة نور — الميزات الذكية: جرس الإشعارات، مراجعة اليوم، الخريطة الحرارية، التحليلات، التقرير الشهري */
+
+/* ─── جرس الإشعارات ─── */
+.nf-bell-wrap { position: relative; display: inline-flex; }
+.nf-bell {
+    position: relative; width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--card); color: var(--green);
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: background .2s, transform .2s;
+}
+.nf-bell:hover { background: var(--green-light); }
+.nf-bell.nf-ring { animation: nf-ring .8s ease; }
+@keyframes nf-ring { 0%,100% { transform: rotate(0) } 20% { transform: rotate(14deg) } 40% { transform: rotate(-12deg) } 60% { transform: rotate(8deg) } 80% { transform: rotate(-4deg) } }
+.nf-badge {
+    position: absolute; top: -4px; left: -4px; min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 9px; background: var(--gold); color: #fff; font-size: 11px; font-weight: 800;
+    display: none; align-items: center; justify-content: center; border: 2px solid var(--card);
+    font-family: var(--font-body);
+}
+.nf-badge.show { display: inline-flex; }
+.nf-panel {
+    position: absolute; top: 46px; right: 0; width: 360px; max-width: calc(100vw - 32px);
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); z-index: 1200; display: none; overflow: hidden; text-align: right;
+}
+.nf-panel.open { display: block; }
+.nf-panel-head {
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+    background: var(--gradient); color: #fff;
+}
+.nf-panel-head h4 { margin: 0; font-size: 15px; }
+.nf-panel-head button { background: rgba(255,255,255,.16); color: #fff; border: 0; border-radius: 8px; padding: 4px 10px; font-family: inherit; font-size: 12px; cursor: pointer; }
+.nf-list { max-height: 420px; overflow-y: auto; }
+.nf-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+.nf-item:hover { background: var(--bg); }
+.nf-item.unread { background: var(--green-light); }
+.nf-item-icon { flex: 0 0 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--green); }
+.nf-item-icon.k-Absence { background: #b91c1c; }
+.nf-item-icon.k-Announcement { background: var(--gold); }
+.nf-item-icon.k-Message, .nf-item-icon.k-MessageReply { background: var(--blue); }
+.nf-item-icon.k-MonthlyReport { background: var(--gold-dark); }
+.nf-item-body { flex: 1; min-width: 0; }
+.nf-item-title { font-weight: 700; font-size: 13px; color: var(--text); display: flex; justify-content: space-between; gap: 8px; }
+.nf-item-text { font-size: 12px; color: var(--text-muted); margin-top: 3px; white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.nf-item-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; font-weight: 400; }
+.nf-empty { padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+/* ─── بطاقة عامة ─── */
+.sf-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+.sf-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.sf-card-head h3 { margin: 0; font-size: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.sf-card-head p { margin: 2px 0 0; font-size: 12px; color: var(--text-muted); }
+.sf-card-body { padding: 16px 18px; }
+.sf-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--green-light); color: var(--green); }
+.sf-chip.gold { background: var(--gold-light); color: var(--gold-dark); }
+.sf-chip.red { background: #fee2e2; color: #b91c1c; }
+.sf-muted { color: var(--text-muted); font-size: 13px; }
+.sf-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--green); background: var(--green); color: #fff; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.sf-btn.outline { background: transparent; color: var(--green); }
+.sf-btn.gold { background: var(--gold); border-color: var(--gold); }
+.sf-btn:disabled { opacity: .6; cursor: wait; }
+.sf-select { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: inherit; font-size: 13px; }
+
+/* ─── مراجعة اليوم ─── */
+.rv-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.rv-stat { background: var(--bg); border-radius: 12px; padding: 10px; text-align: center; }
+.rv-stat b { display: block; font-size: 20px; color: var(--green); }
+.rv-stat span { font-size: 12px; color: var(--text-muted); }
+.rv-list { display: grid; gap: 8px; }
+.rv-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); }
+.rv-rank { flex: 0 0 28px; height: 28px; border-radius: 50%; background: var(--gold-light); color: var(--gold-dark); font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.rv-name { flex: 1; font-family: var(--font-quran); font-size: 18px; color: var(--text); }
+.rv-meta { font-size: 11px; color: var(--text-muted); display: block; font-family: var(--font-body); }
+.rv-bar { flex: 0 0 90px; height: 8px; border-radius: 6px; background: var(--bg-secondary); overflow: hidden; }
+.rv-bar i { display: block; height: 100%; border-radius: 6px; background: var(--green); }
+.rv-done { text-align: center; padding: 18px; color: var(--green); font-weight: 700; }
+
+/* ─── الخريطة الحرارية ─── */
+.hm-legend { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+.hm-scale { flex: 0 0 160px; height: 10px; border-radius: 6px; background: linear-gradient(to left, #1A5C3A, #4C9A6E, #A8CDB6, #E8DCB5, #F6EBD0); }
+.hm-none-dot { width: 14px; height: 14px; border-radius: 4px; border: 1px dashed var(--border); background: var(--card); display: inline-block; }
+.hm-juz { display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px; margin-bottom: 14px; }
+.hm-juz-cell { aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+.hm-juz-cell.active { outline: 2px solid var(--gold); outline-offset: 1px; }
+.hm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.hm-cell { position: relative; border-radius: 10px; padding: 8px 6px; text-align: center; border: 1px solid transparent; min-height: 58px; display: flex; flex-direction: column; justify-content: center; transition: transform .15s; }
+.hm-cell:hover { transform: translateY(-2px); }
+.hm-cell strong { font-family: var(--font-quran); font-size: 15px; font-weight: 700; line-height: 1.3; }
+.hm-cell small { font-size: 10px; opacity: .85; }
+.hm-cell.none { background: var(--card); border: 1px dashed var(--border); color: var(--text-muted); }
+.hm-cell.overdue::after { content: ''; position: absolute; top: 5px; left: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+.hm-cell.dim { opacity: .25; }
+.hm-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* ─── التحليلات ─── */
+.an-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.an-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.an-table th { text-align: right; padding: 8px 10px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.an-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.an-score { display: inline-flex; min-width: 42px; justify-content: center; padding: 3px 8px; border-radius: 8px; font-weight: 800; color: #fff; }
+.an-score.high { background: #b91c1c; }
+.an-score.medium { background: var(--gold); }
+.an-score.low { background: var(--green); }
+.an-reasons { margin: 0; padding: 0 16px 0 0; color: var(--text-muted); font-size: 12px; }
+.an-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.an-kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.an-kpi b { display: block; font-size: 24px; color: var(--green); }
+.an-kpi.warn b { color: #b91c1c; }
+.an-kpi.gold b { color: var(--gold); }
+.an-kpi span { font-size: 12px; color: var(--text-muted); }
+.an-chart-wrap { position: relative; height: 280px; }
+.an-scroll { overflow-x: auto; }
+
+/* ─── نافذة بسيطة ─── */
+.sf-modal { position: fixed; inset: 0; background: rgba(15, 42, 29, .45); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.sf-modal-box { background: var(--card); border-radius: var(--radius); width: 560px; max-width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+.sf-modal-box header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.sf-modal-box header h3 { margin: 0; font-size: 16px; }
+.sf-modal-box header button { background: none; border: 0; font-size: 22px; cursor: pointer; color: var(--text-muted); }
+.sf-modal-box .sf-modal-body { padding: 16px 18px; overflow-y: auto; }
+.sf-pre { white-space: pre-wrap; background: var(--bg); border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.8; font-family: var(--font-body); }
+
+@media (max-width: 900px) {
+    .an-grid { grid-template-columns: 1fr; }
+    .an-kpis { grid-template-columns: repeat(2, 1fr); }
+    .hm-juz { grid-template-columns: repeat(10, 1fr); }
+}
+@media (max-width: 560px) {
+    .nf-panel { position: fixed; top: 64px; right: 16px; left: 16px; width: auto; }
+    .rv-bar { display: none; }
+    .hm-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+}

@@ -59,6 +59,9 @@
                     <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px" onclick="NoorMessages.openChildDetails(${c.id}, ${jsArg(c.fullName)})">
                         ${window.Icon ? window.Icon('clipboard-list', {size:14}) : ''} عرض التفاصيل الكاملة
                     </button>
+                    <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px;margin-top:6px" onclick="NoorSmart.openChildMastery(${c.id}, ${jsArg(c.fullName)})">
+                        ${window.Icon ? window.Icon('book-open', {size:14}) : ''} خريطة الإتقان ومراجعة اليوم
+                    </button>
                 </div>
             `).join('');
         } catch {
