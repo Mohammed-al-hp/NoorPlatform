@@ -57,10 +57,11 @@
         if (wrap) wrap.style.display = 'block';
         if (empty) empty.style.display = 'none';
 
+        const meIsSuper = !!global.NoorApp?.state?.user?.isSuperAdmin;
         tbody.innerHTML = items.map(u => `
             <tr>
                 <td><strong>${U().escapeHtml(u.fullName)}</strong></td>
-                <td>${roleAr(u.role)}</td>
+                <td>${u.isSuperAdmin && u.role === 'Admin' ? '<span class="status-badge status-excellent">مدير عام</span>' : roleAr(u.role)}</td>
                 <td dir="ltr">${U().escapeHtml(u.phone)}</td>
                 <td>${u.lastLoginAt ? U().formatDateTimeEnGb(u.lastLoginAt) : '—'}</td>
                 <td><span class="status-badge ${u.isActive ? 'status-present' : 'status-absent'}">${u.isActive ? 'نشط' : 'معطّل'}</span></td>
@@ -69,6 +70,7 @@
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.viewUser(${u.id})">عرض</button>
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.editUser(${u.id})">تعديل</button>
+                        ${meIsSuper && u.role === 'Admin' ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.openAdminAccess(${u.id})">الصلاحيات</button>` : ''}
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.toggleUser(${u.id})">${u.isActive ? 'تعطيل' : 'تفعيل'}</button>
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="NoorUsers.resetUserPassword(${u.id})" title="توليد كلمة مرور مؤقتة جديدة">إعادة تعيين كلمة المرور</button>
                         <button class="btn btn-outline" style="padding:4px 10px;font-size:12px;color:#ef4444" onclick="NoorUsers.deleteUser(${u.id})">حذف</button>
@@ -229,7 +231,57 @@
         }
     }
 
+    // ─── المدير العام: تحديد مستوى المشرف وصلاحياته ───
+    const PERMISSION_LABELS = {
+        ManageFinance: 'إدارة الشؤون المالية (الفواتير والمصروفات)',
+        DeleteRecords: 'الحذف والأرشفة (طلاب، محفّظون، حلقات، حسابات)',
+        ManageSettings: 'تعديل إعدادات النظام'
+    };
+
+    async function openAdminAccess(id) {
+        try {
+            const u = await global.apiFetch(`/users/${id}`);
+            const perms = u.adminPermissions || [];
+            const esc = U().escapeHtml;
+            global.setModalBody('userDetailBody', `
+                <p style="margin-bottom:12px"><strong>${esc(u.fullName)}</strong></p>
+                <label class="perm-row perm-row-super">
+                    <input type="checkbox" id="accessIsSuper" ${u.isSuperAdmin ? 'checked' : ''}
+                           onchange="document.getElementById('accessPermsBox').style.opacity=this.checked?0.5:1">
+                    <span><strong>مدير عام</strong><small>كل الصلاحيات بما فيها إدارة المشرفين</small></span>
+                </label>
+                <div id="accessPermsBox" style="opacity:${u.isSuperAdmin ? 0.5 : 1}">
+                    ${Object.keys(PERMISSION_LABELS).map(p => `
+                        <label class="perm-row">
+                            <input type="checkbox" class="access-perm" value="${p}" ${perms.includes(p) ? 'checked' : ''}>
+                            <span>${PERMISSION_LABELS[p]}</span>
+                        </label>`).join('')}
+                </div>
+                <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px"
+                        onclick="NoorUsers.saveAdminAccess(${u.id})">حفظ الصلاحيات</button>`,
+                (window.Icon ? window.Icon('lock', { size: 16 }) : '') + ' صلاحيات المشرف');
+            global.openModal('userDetailModal');
+        } catch (e) {
+            global.NoorApp.api.handleApiError(e, { skipLogout: true });
+        }
+    }
+
+    async function saveAdminAccess(id) {
+        const permissions = Array.from(document.querySelectorAll('.access-perm:checked')).map(c => c.value);
+        const isSuperAdmin = !!document.getElementById('accessIsSuper')?.checked;
+        try {
+            const res = await global.apiFetch(`/users/${id}/admin-access`, 'PUT', { isSuperAdmin, permissions });
+            global.showToast(res?.message || 'تم تحديث الصلاحيات', 'success');
+            global.closeModal('userDetailModal');
+            fetchUsers();
+        } catch (e) {
+            global.NoorApp.api.handleApiError(e, { skipLogout: true });
+        }
+    }
+
     global.NoorUsers = {
+        openAdminAccess,
+        saveAdminAccess,
         fetchUsers,
         searchUsers,
         filterUsersRole,

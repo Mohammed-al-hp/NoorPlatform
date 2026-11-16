@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-label="منصة نور — إدارة حلقات تحفيظ القرآن الكريم">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-label="منصة نور لإدارة مركز وحلقات تحفيظ القرآن الكريم">
   <defs>
     <linearGradient id="noorBg2" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#34d399"/>
@@ -29,6 +29,6 @@
   <text x="238" y="122" font-family="Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif"
         font-size="74" font-weight="800" fill="url(#wordGrad)" direction="rtl" text-anchor="end">نور</text>
   <text x="240" y="162" font-family="Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif"
-        font-size="23" font-weight="600" fill="#6b7280" direction="rtl" text-anchor="end">منصة تحفيظ القرآن الكريم</text>
+        font-size="19" font-weight="600" fill="#6b7280" direction="rtl" text-anchor="end">لإدارة مركز وحلقات تحفيظ القرآن الكريم</text>
   <line x1="238" y1="182" x2="700" y2="182" stroke="#10b981" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
 </svg>

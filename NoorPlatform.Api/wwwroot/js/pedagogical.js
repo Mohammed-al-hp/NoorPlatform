@@ -748,40 +748,61 @@
     // 6. Prayer — student + staff
     // ════════════════════════════════════════════════════════
 
+    // ─── نموذج الصلاة التفصيلي: كل صلاة باسمها (صلّاها؟ في المسجد؟ في وقتها؟) ───
+    const PRAYERS = [
+        { key: 'Fajr', name: 'الفجر' },
+        { key: 'Dhuhr', name: 'الظهر' },
+        { key: 'Asr', name: 'العصر' },
+        { key: 'Maghrib', name: 'المغرب' },
+        { key: 'Isha', name: 'العشاء' }
+    ];
+    const PRAYER_NAMES = Object.fromEntries(PRAYERS.map(p => [p.key, p.name]));
+    const _prayerChoices = {};
+
+    function prayerEntrySummary(e) {
+        if (!e.prayed) return '<span class="prayer-tag tag-missed">لم يصلّها</span>';
+        return `<span class="prayer-tag ${e.inMosque ? 'tag-mosque' : 'tag-home'}">${e.inMosque ? 'في المسجد' : 'مكان آخر'}</span>`
+            + `<span class="prayer-tag ${e.onTime ? 'tag-ontime' : 'tag-late'}">${e.onTime ? 'في وقتها' : 'قضاءً'}</span>`;
+    }
+
+    function prayerLogSummary(l) {
+        if (Array.isArray(l.entries) && l.entries.length) {
+            return l.entries.map(e => `<div class="prayer-log-line"><strong>${PRAYER_NAMES[e.prayer] || e.prayer}</strong> ${prayerEntrySummary(e)}</div>`).join('');
+        }
+        // سجل قديم بالنموذج الإجمالي
+        return `<span class="prayer-tag ${l.prayedInMosque ? 'tag-mosque' : 'tag-home'}">${l.prayedInMosque ? 'في المسجد' : 'خارج المسجد'}</span>`
+            + `<span class="prayer-tag ${l.onTime ? 'tag-ontime' : 'tag-late'}">${l.onTime ? 'في الوقت' : 'متأخر'}</span>`
+            + `<span class="prayer-tag">جماعة ×${l.mosquePrayerCount ?? 0}</span>`;
+    }
+
     async function renderStudentPrayerPage() {
         const form = document.getElementById('myPrayerForm');
         const list = document.getElementById('myPrayerList');
         if (form && !form.dataset.ready) {
             form.dataset.ready = '1';
             form.innerHTML = `
-                <div class="chart-card" style="margin-bottom:16px">
-                    <div class="card-header"><h3>تسجيل صلاة اليوم</h3></div>
-                    <div class="form-group">
-                        <label class="form-label">التاريخ</label>
-                        <input id="prayerMyDate" class="form-input" type="date" value="${todayYmd()}">
+                <div class="honesty-banner" role="note">
+                    <span class="honesty-icon">${global.Icon ? global.Icon('alert-triangle', { size: 22 }) : '!'}</span>
+                    <span class="honesty-text">اِنْتَبِهْ!! الْأَهَمُّ أَنْ تَكُونَ صَادِقاً.</span>
+                </div>
+                <div class="chart-card prayer-form-card">
+                    <div class="card-header prayer-form-head">
+                        <div>
+                            <h3>تسجيل صلاة اليوم</h3>
+                            <p id="prayerTimesCaption" class="prayer-caption">مواقيت الأذان بتوقيت مصراتة</p>
+                        </div>
+                        <input id="prayerMyDate" class="form-input prayer-date" type="date" value="${todayYmd()}" max="${todayYmd()}" onchange="NoorPrayerForm.reload()">
                     </div>
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                            <input type="checkbox" id="prayerMosque" checked> صليت في المسجد
-                        </label>
+                    <div id="prayerRows" class="prayer-rows"></div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label class="form-label">ملاحظة (اختياري)</label>
+                        <input id="prayerNote" class="form-input" type="text" maxlength="200">
                     </div>
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                            <input type="checkbox" id="prayerOnTime" checked> في الوقت
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">عدد الصلوات في المسجد (0–5)</label>
-                        <input id="prayerCount" class="form-input" type="number" min="0" max="5" value="5">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">ملاحظة</label>
-                        <input id="prayerNote" class="form-input" type="text">
-                    </div>
-                    <button class="btn btn-primary" onclick="saveMyPrayer()">إرسال التسجيل</button>
-                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px">بعد الإرسال يُقفل السجل ولا يمكن تعديله إلا عبر الشيخ.</p>
+                    <button class="btn btn-primary prayer-submit" onclick="saveMyPrayer()">${global.Icon ? global.Icon('check-circle', { size: 16 }) : ''} تسجيل الصلوات المحددة</button>
+                    <p class="prayer-hint">كل صلاة تُقفل بعد تسجيلها ولا يعدّلها إلا الشيخ. لا يمكن تسجيل صلاة قبل دخول وقت أذانها.</p>
                 </div>`;
         }
+        await loadPrayerRows();
         if (!list) return;
         try {
             const logs = await apiFetch('/pedagogical/prayer/my');
@@ -789,37 +810,133 @@
                 list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:24px">لا توجد سجلات بعد</p>';
                 return;
             }
-            list.innerHTML = logs.map(l => `
-                <div class="chart-card" style="margin-bottom:8px;padding:12px">
-                    <strong>${escapeHtml(l.date)}</strong>
-                    <span style="margin-right:10px">${l.prayedInMosque ? 'في المسجد' : 'خارج المسجد'}</span>
-                    <span>${l.onTime ? 'في الوقت' : 'متأخر'}</span>
-                    <span style="margin-right:10px">×${l.mosquePrayerCount ?? 0}</span>
-                    ${l.isLocked ? '<span class="status-badge status-good">مقفول</span>' : ''}
+            list.innerHTML = '<h3 class="section-title-sm">سجلّي السابق</h3>' + logs.map(l => `
+                <div class="chart-card prayer-log-card">
+                    <div class="prayer-log-head">
+                        <strong>${escapeHtml(l.date)}</strong>
+                        ${l.prayedCount != null ? `<span class="prayer-tag">صلّى ${l.prayedCount}/5 · جماعة ${l.mosquePrayerCount ?? 0}</span>` : ''}
+                    </div>
+                    <div class="prayer-log-body">${prayerLogSummary(l)}</div>
+                    ${l.sheikhOverrideNote ? `<div class="prayer-sheikh-note">ملاحظة الشيخ: ${escapeHtml(l.sheikhOverrideNote)}</div>` : ''}
                 </div>`).join('');
+            global._myPrayerLogs = logs;
         } catch (err) {
             handleApiError(err, { silent: true });
             list.innerHTML = '<p style="color:#dc2626">تعذر التحميل</p>';
         }
     }
 
+    async function loadPrayerRows() {
+        const rows = document.getElementById('prayerRows');
+        if (!rows) return;
+        const date = document.getElementById('prayerMyDate')?.value || todayYmd();
+        Object.keys(_prayerChoices).forEach(k => delete _prayerChoices[k]);
+        rows.innerHTML = '<div class="skeleton" style="height:220px;border-radius:16px"></div>';
+        try {
+            const [times, logs] = await Promise.all([
+                apiFetch(`/pedagogical/prayer-times?date=${encodeURIComponent(date)}`),
+                apiFetch('/pedagogical/prayer/my').catch(() => [])
+            ]);
+            const log = (logs || []).find(l => l.date === date);
+            const legacyLocked = log && (!log.entries || !log.entries.length) && log.isLocked;
+            const recorded = Object.fromEntries((log?.entries || []).map(e => [e.prayer, e]));
+            const caption = document.getElementById('prayerTimesCaption');
+            if (caption) caption.textContent = times?.next
+                ? `الصلاة القادمة: ${times.next.name} ${times.next.time} · بتوقيت ${times.city}`
+                : `مواقيت الأذان بتوقيت ${times?.city || 'مصراتة'}`;
+
+            rows.innerHTML = (times?.prayers || []).map(p => {
+                const done = recorded[p.prayer];
+                if (done || legacyLocked) {
+                    return `<div class="prayer-row is-locked">
+                        <div class="prayer-row-name"><strong>${p.name}</strong><small>${p.time}</small></div>
+                        <div class="prayer-row-state">${done ? prayerEntrySummary(done) : '<span class="prayer-tag">مسجّل سابقاً</span>'}
+                            <span class="prayer-lock">${global.Icon ? global.Icon('lock', { size: 13 }) : ''} مقفلة</span></div>
+                    </div>`;
+                }
+                if (!p.started) {
+                    return `<div class="prayer-row is-pending">
+                        <div class="prayer-row-name"><strong>${p.name}</strong><small>${p.time}</small></div>
+                        <div class="prayer-row-state"><span class="prayer-tag tag-pending">${global.Icon ? global.Icon('clock', { size: 12 }) : ''} لم يحن وقتها بعد — يؤذَّن ${p.time}</span></div>
+                    </div>`;
+                }
+                return `<div class="prayer-row" data-prayer="${p.prayer}">
+                    <div class="prayer-row-name"><strong>${p.name}</strong><small>${p.time}</small></div>
+                    <div class="prayer-row-controls">
+                        <div class="seg" data-field="prayed">
+                            <button type="button" data-v="1" onclick="NoorPrayerForm.pick('${p.prayer}','prayed',true,this)">صلّيتها</button>
+                            <button type="button" data-v="0" onclick="NoorPrayerForm.pick('${p.prayer}','prayed',false,this)">لم أصلّها</button>
+                        </div>
+                        <div class="prayer-details" hidden>
+                            <div class="seg" data-field="inMosque">
+                                <button type="button" data-v="1" onclick="NoorPrayerForm.pick('${p.prayer}','inMosque',true,this)">في المسجد</button>
+                                <button type="button" data-v="0" onclick="NoorPrayerForm.pick('${p.prayer}','inMosque',false,this)">مكان آخر</button>
+                            </div>
+                            <div class="seg" data-field="onTime">
+                                <button type="button" data-v="1" onclick="NoorPrayerForm.pick('${p.prayer}','onTime',true,this)">في وقتها</button>
+                                <button type="button" data-v="0" onclick="NoorPrayerForm.pick('${p.prayer}','onTime',false,this)">قضاءً</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch (err) {
+            handleApiError(err, { silent: true });
+            rows.innerHTML = '<p style="color:#dc2626">تعذر تحميل مواقيت الصلاة</p>';
+        }
+    }
+
+    function pickPrayer(prayer, field, value, btn) {
+        const c = _prayerChoices[prayer] = _prayerChoices[prayer] || { prayer, prayed: null, inMosque: false, onTime: true };
+        c[field] = value;
+        const seg = btn.closest('.seg');
+        seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+        const row = btn.closest('.prayer-row');
+        if (field === 'prayed') {
+            const details = row.querySelector('.prayer-details');
+            details.hidden = !value;
+            row.classList.toggle('is-missed', !value);
+            row.classList.toggle('is-chosen', true);
+            if (value) {
+                // افتراضياً: «مكان آخر» ما لم يؤشّر الطالب على المسجد (لا رصيد جماعة دون تأشير)
+                const mosqueSeg = row.querySelector('.seg[data-field="inMosque"]');
+                if (!mosqueSeg.querySelector('.active')) mosqueSeg.querySelector('[data-v="0"]').classList.add('active');
+                const timeSeg = row.querySelector('.seg[data-field="onTime"]');
+                if (!timeSeg.querySelector('.active')) timeSeg.querySelector('[data-v="1"]').classList.add('active');
+            } else {
+                c.inMosque = false;
+                c.onTime = false;
+            }
+        }
+    }
+
     async function saveMyPrayer() {
         const date = document.getElementById('prayerMyDate')?.value;
         if (!date) { showToast('حدد التاريخ', 'error'); return; }
+        const prayers = Object.values(_prayerChoices)
+            .filter(c => c.prayed !== null)
+            .map(c => ({ prayer: c.prayer, prayed: !!c.prayed, inMosque: !!c.prayed && !!c.inMosque, onTime: !!c.prayed && !!c.onTime }));
+        if (!prayers.length) { showToast('حدّد حالة صلاة واحدة على الأقل (صلّيتها / لم أصلّها)', 'warning'); return; }
+        const btn = document.querySelector('#myPrayerForm .prayer-submit');
         try {
-            await apiFetch('/pedagogical/prayer/my', 'POST', {
+            if (btn) btn.disabled = true;
+            const res = await apiFetch('/pedagogical/prayer/my', 'POST', {
                 date,
-                prayedInMosque: !!document.getElementById('prayerMosque')?.checked,
-                onTime: !!document.getElementById('prayerOnTime')?.checked,
-                mosquePrayerCount: parseInt(document.getElementById('prayerCount')?.value, 10) || 0,
+                prayers,
                 studentNote: document.getElementById('prayerNote')?.value?.trim() || null
             });
-            showToast('تم تسجيل الصلاة', 'success');
+            showToast(res?.message || 'تم تسجيل الصلاة', 'success');
+            const note = document.getElementById('prayerNote');
+            if (note) note.value = '';
             await renderStudentPrayerPage();
         } catch (err) {
             handleApiError(err);
+        } finally {
+            if (btn) btn.disabled = false;
         }
     }
+
+    global.NoorPrayerForm = { reload: loadPrayerRows, pick: pickPrayer };
 
     async function renderStaffPrayerSection() {
         const el = document.getElementById('pedagoPrayer');
@@ -855,7 +972,8 @@
                     <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
                         <div>
                             <strong>${escapeHtml(l.date)}</strong>
-                            · ${l.prayedInMosque ? 'مسجد' : 'خارج'} · ${l.onTime ? 'وقت' : 'متأخر'} · ×${l.mosquePrayerCount ?? 0}
+                            ${l.prayedCount != null ? `<span class="prayer-tag">صلّى ${l.prayedCount}/5 · جماعة ${l.mosquePrayerCount ?? 0} · في وقتها ${l.onTimeCount ?? 0}</span>` : ''}
+                            <div class="prayer-log-body">${prayerLogSummary(l)}</div>
                             ${l.studentNote ? `<div style="font-size:12px;color:var(--text-muted)">${escapeHtml(l.studentNote)}</div>` : ''}
                         </div>
                         <button class="btn btn-outline" style="font-size:11px;padding:4px 10px" onclick="overridePrayerLog(${l.id})">تعديل الشيخ</button>

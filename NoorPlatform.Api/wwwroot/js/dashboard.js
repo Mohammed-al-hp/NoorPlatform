@@ -334,6 +334,11 @@
                 }
             }
 
+            const otpSel = document.getElementById('settingsOtpChannel');
+            if (otpSel) otpSel.value = data.otpChannel || 'WhatsApp';
+            const remind = document.getElementById('settingsStudentReminders');
+            if (remind) remind.checked = data.studentRemindersEnabled !== false;
+
             const vis = document.getElementById('settingsEvalsVisible');
             if (vis && data.evaluationsVisibleToStudentsAndParents !== undefined) {
                 vis.checked = !!data.evaluationsVisibleToStudentsAndParents;
@@ -422,7 +427,9 @@
             hifzRatingTargetAge5To7: getVal('settingsHifzTarget5To7') ? parseInt(getVal('settingsHifzTarget5To7'), 10) : null,
             hifzRatingTargetAge8To10: getVal('settingsHifzTarget8To10') ? parseInt(getVal('settingsHifzTarget8To10'), 10) : null,
             hifzRatingTargetAge11Plus: getVal('settingsHifzTarget11Plus') ? parseInt(getVal('settingsHifzTarget11Plus'), 10) : null,
-            hifzRatingPassingEvaluations: getVal('settingsHifzPassingEvals') || null
+            hifzRatingPassingEvaluations: getVal('settingsHifzPassingEvals') || null,
+            otpChannel: document.getElementById('settingsOtpChannel')?.value || null,
+            studentRemindersEnabled: !!document.getElementById('settingsStudentReminders')?.checked
         };
 
         if (!payload.centerName) {
@@ -437,8 +444,8 @@
             app().ui.showToast('تم حفظ الإعدادات بنجاح', 'success');
             
             // تحديث اسم المركز في اللوجو الجانبي إن أمكن
-            const logoText = document.querySelector('.sidebar-header h2');
-            if (logoText && payload.centerName) logoText.textContent = payload.centerName;
+            if (global.NoorSetCenterName) global.NoorSetCenterName(payload.centerName);
+            if (global.NoorPublicSettings) global.NoorPublicSettings.centerName = payload.centerName;
             
         } catch (e) {
             app().api.handleApiError(e);

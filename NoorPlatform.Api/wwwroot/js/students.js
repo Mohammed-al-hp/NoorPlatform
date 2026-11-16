@@ -37,16 +37,25 @@
         }
     }
 
+    let lastRendered = [];
+    function applySort() {
+        renderStudentCards(lastRendered);
+    }
+
     function renderStudentCards(data) {
         const grid = document.getElementById('studentsGrid') || document.querySelector('#page-students .cards-grid');
         if (!grid) return;
+        lastRendered = data || [];
+        const sortMode = document.getElementById('studentSort')?.value;
+        if (sortMode && global.NoorListTools) data = global.NoorListTools.sort('students', data, sortMode);
         if (!data.length) {
             grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">${icon('graduation-cap', { size: 40 })}</div><div class="empty-state-title">لا يوجد طلاب</div></div>`;
             return;
         }
+        const isAdmin = app().state.user?.role === 'Admin';
         const gradients = ['linear-gradient(135deg,#1A5C3A,#2D8B57)', 'linear-gradient(135deg,#B8860B,#DAA520)', 'linear-gradient(135deg,#f59e0b,#ef4444)', 'linear-gradient(135deg,#8B6508,#B8860B)', 'linear-gradient(135deg,#0F3D27,#1A5C3A)'];
         grid.innerHTML = data.map((s, i) => {
-            const initials = esc((s.fullName || '').slice(0, 2));
+            const initials = esc((s.fullName || '').trim().charAt(0));
             const grad = gradients[i % gradients.length];
             const safeName = jsArg(s.fullName || '');
             return `<div class="student-card" style="animation-delay:${i * 0.04}s">
@@ -69,9 +78,9 @@
               <div class="student-card-actions">
                 ${st().archive ? `<button class="btn btn-primary" onclick="NoorStudents.restoreStudent(${s.id},${safeName})" style="flex:1">${icon('refresh-cw', { size: 14 })} استعادة</button>` : `
                   <button class="btn btn-view" onclick="viewStudentDetails(${s.id})">${icon('eye', { size: 14 })} عرض</button>
-                  <button class="btn btn-edit" onclick="editStudent(${s.id})">${icon('edit', { size: 14 })}</button>
+                  ${isAdmin ? `<button class="btn btn-edit" onclick="editStudent(${s.id})">${icon('edit', { size: 14 })} تعديل</button>` : ''}
                   <button class="btn-pdf" onclick="exportStudentPDF(${s.id})">${icon('file-text', { size: 14 })} PDF</button>
-                  <button class="btn btn-delete" onclick="NoorStudents.deleteStudent(${s.id},${safeName})">${icon('archive', { size: 14 })} أرشفة</button>`}
+                  ${isAdmin ? `<button class="btn btn-delete" onclick="NoorStudents.deleteStudent(${s.id},${safeName})">${icon('archive', { size: 14 })} أرشفة</button>` : ''}`}
               </div>
             </div>`;
         }).join('');
@@ -87,7 +96,8 @@
         st().filter = filter;
         st().archive = filter === 'archived';
         st().waitingMode = filter === 'waiting';
-        document.getElementById('btnAddStudent').style.display = st().waitingMode ? 'none' : 'inline-flex';
+        const isAdminUser = app().state.user?.role === 'Admin';
+        document.getElementById('btnAddStudent').style.display = (st().waitingMode || !isAdminUser) ? 'none' : 'inline-flex';
         document.getElementById('btnAddWaiting').style.display = st().waitingMode ? 'inline-flex' : 'none';
         document.getElementById('btnExportStudents').style.display = st().waitingMode ? 'none' : 'inline-flex';
         const searchBar = document.getElementById('studentSearchInput')?.closest('.students-search-bar');
@@ -135,6 +145,12 @@
               <h4>${esc(w.fullName)}</h4>
               <span>${icon('phone', { size: 13 })} ${esc(w.displayPhone || w.phone || 'غير متاح')}</span>
               <div style="font-size:12px;color:var(--text-muted);margin:8px 0">ولي الأمر: ${esc(w.parentName || '—')}</div>
+              <div class="chip-row">
+                <span class="info-chip">${esc(w.requestedLevel || 'مبتدئ')}</span>
+                ${w.preferredCircleName ? `<span class="info-chip chip-green">${icon('circle-dot', { size: 12 })} ${esc(w.preferredCircleName)}</span>` : ''}
+                ${w.preferredTime ? `<span class="info-chip">${icon('clock', { size: 12 })} ${esc(w.preferredTime)}</span>` : ''}
+                <span class="info-chip chip-gold">${esc(statusMap[w.status] || w.status || '')}</span>
+              </div>
               <div class="student-card-actions">
                 <button type="button" class="btn btn-primary btn-convert-waiting" data-id="${w.id}">${icon('graduation-cap', { size: 14 })} تحويل</button>
                 <button type="button" class="btn btn-outline btn-wa-waiting" data-phone="${esc(w.displayParentPhone || w.parentPhone || w.displayPhone || w.phone || '')}" data-name="${esc(w.fullName)}">${icon('message-circle', { size: 14 })}</button>
@@ -231,6 +247,7 @@
     global.NoorStudents = {
         fetchStudents,
         renderStudentCards,
+        applySort,
         filterStudentsLive,
         setStudentFilter,
         exitWaitingList,
@@ -249,11 +266,27 @@
     global.exitWaitingList = exitWaitingList;
     let _convertWaitingId = null;
 
+    /** تعبئة قائمة «الحلقة المفضلة» من الحلقات المتاحة (الرسمية فقط). */
+    async function fillPreferredCircleSelect(selectedId) {
+        const sel = document.getElementById('wlPreferredCircle');
+        if (!sel) return;
+        let circles = app().state.circles || window._circles || [];
+        if (!circles.length) {
+            try { circles = await apiFetch('/circles?extrasOnly=false'); } catch { circles = []; }
+        }
+        sel.innerHTML = '<option value="">— بدون تفضيل —</option>' + circles
+            .filter(c => !c.isExtra)
+            .map(c => `<option value="${c.id}">${esc(c.name)}${c.teacherName && c.teacherName !== 'لم يحدد' ? ' — ' + esc(c.teacherName) : ''}</option>`)
+            .join('');
+        sel.value = selectedId ? String(selectedId) : '';
+    }
+
     function openWaitingListModal() {
         document.getElementById('waitingListFormTitle').innerHTML = icon('clock', { size: 16 }) + ' إضافة لقائمة الانتظار';
         document.getElementById('waitingEntryId').value = '';
         document.getElementById('waitingListForm').reset();
         document.getElementById('wlStatusGroup').style.display = 'none';
+        fillPreferredCircleSelect(null);
         app().ui.openModal('waitingListFormModal');
     }
 
@@ -272,6 +305,7 @@
         document.getElementById('wlNotes').value = w.notes || '';
         document.getElementById('wlStatus').value = w.status || 'Pending';
         document.getElementById('wlStatusGroup').style.display = 'block';
+        fillPreferredCircleSelect(w.preferredCircleId);
         app().ui.openModal('waitingListFormModal');
     }
 
@@ -286,6 +320,8 @@
             age: parseInt(document.getElementById('wlAge').value, 10) || null,
             requestedLevel: document.getElementById('wlLevel').value,
             preferredTime: document.getElementById('wlPreferredTime').value.trim(),
+            // 0 في التعديل = إزالة التفضيل
+            preferredCircleId: parseInt(document.getElementById('wlPreferredCircle')?.value, 10) || (id ? 0 : null),
             notes: document.getElementById('wlNotes').value.trim(),
             status: document.getElementById('wlStatus').value
         };
@@ -327,6 +363,8 @@
         const sel = document.getElementById('convertCircleId');
         sel.innerHTML = (app().state.circles || []).map(c =>
             `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+        // الحلقة المفضلة لدى الطالب مختارة مسبقاً
+        if (w.preferredCircleId && sel.querySelector(`option[value="${w.preferredCircleId}"]`)) sel.value = String(w.preferredCircleId);
         app().ui.openModal('convertWaitingModal');
     }
 

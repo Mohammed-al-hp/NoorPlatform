@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-label="منصة نور لتحفيظ القرآن الكريم">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-label="منصة نور لإدارة مركز وحلقات تحفيظ القرآن الكريم">
   <!-- الشعار الكامل: العلامة + الاسم بالخط العربي (Amiri). يُفضَّل تضمينه داخل الصفحة (inline)
        لتطبيق خط Amiri المحمّل في الموقع؛ عند فتحه منفرداً يُستخدم أقرب خط عربي متاح. -->
   <defs>
@@ -44,5 +44,5 @@
   <text x="285" y="70" text-anchor="end" direction="rtl"
         font-family="Amiri, 'Traditional Arabic', 'Arabic Typesetting', serif" font-weight="700" font-size="58" fill="#1A5C3A">منصة نور</text>
   <text x="285" y="104" text-anchor="end" direction="rtl"
-        font-family="Tajawal, 'Segoe UI', Tahoma, sans-serif" font-weight="500" font-size="19" fill="#B8860B">لتحفيظ القرآن الكريم</text>
+        font-family="Tajawal, 'Segoe UI', Tahoma, sans-serif" font-weight="500" font-size="11.5" fill="#B8860B">لإدارة مركز وحلقات تحفيظ القرآن الكريم</text>
 </svg>

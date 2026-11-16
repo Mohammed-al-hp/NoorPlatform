@@ -426,22 +426,36 @@
         };
     }
 
-    function toggleFab() {
+    function setFabOpen(isOpen) {
         const btn = document.getElementById('fabBtn');
         const menu = document.getElementById('fabMenu');
         if (!btn || !menu) return;
-        const isOpen = menu.classList.toggle('open');
+        menu.classList.toggle('open', isOpen);
         btn.classList.toggle('open', isOpen);
         btn.innerHTML = window.Icon ? window.Icon(isOpen ? 'x' : 'menu', {size:20}) : '';
+        // طمس الخلفية خلف القائمة العائمة
+        document.getElementById('fabBackdrop')?.classList.toggle('open', isOpen);
+        document.body.classList.toggle('fab-open', isOpen);
     }
+
+    function toggleFab() {
+        const menu = document.getElementById('fabMenu');
+        if (!menu) return;
+        setFabOpen(!menu.classList.contains('open'));
+    }
+
+    /** تمييز القسم الحالي في القائمة العائمة. */
+    function markActiveFab(page) {
+        document.querySelectorAll('#fabMenu .fab-menu-item').forEach(item => {
+            const onclick = item.getAttribute('onclick') || '';
+            item.classList.toggle('active', onclick.includes("navigate('" + page + "'"));
+        });
+    }
+    window.NoorMarkActiveFab = markActiveFab;
 
     document.addEventListener('click', (e) => {
         const fab = document.getElementById('fabContainer');
-        if (fab && !fab.contains(e.target)) {
-            document.getElementById('fabMenu')?.classList.remove('open');
-            const btn = document.getElementById('fabBtn');
-            if (btn) { btn.classList.remove('open'); btn.innerHTML = window.Icon ? window.Icon('menu', {size:20}) : ''; }
-        }
+        if (fab && !fab.contains(e.target)) setFabOpen(false);
     });
 
     (function setTopbarDate() {
@@ -463,7 +477,10 @@
                 const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
                     day: 'numeric', month: 'long', year: 'numeric'
                 });
-                hijriEl.innerHTML = (window.Icon ? window.Icon('calendar', {size:14}) : '') + ' ' + hijriFormatter.format(now);
+                const hijri = hijriFormatter.format(now);
+                hijriEl.innerHTML = (window.Icon ? window.Icon('calendar', {size:14}) : '') + ' '
+                    + '<span class="hijri-weekday">' + days[now.getDay()] + '، </span>' + hijri;
+                hijriEl.title = 'التاريخ الهجري';
             } catch (e) {
                 hijriEl.textContent = '';
             }

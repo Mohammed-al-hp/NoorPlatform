@@ -6,6 +6,7 @@
 
     const PAGE_TITLES = {
         dashboard: ['لوحة التحكم', 'نظرة عامة على المركز'],
+        // المحفّظ يرى عنواناً خاصاً بحلقته (انظر titleFor)
         messages: ['الرسائل', 'التواصل مع الإدارة والمحفظين'],
         students: ['إدارة الطلاب', 'الطلاب المسجلون'],
         teachers: ['إدارة المحفظين', 'فريق التحفيظ'],
@@ -57,7 +58,9 @@
         if (target) target.classList.add('active');
         if (el) el.classList.add('active');
 
-        const titles = PAGE_TITLES[page];
+        const titles = (role === 'Teacher' && page === 'dashboard')
+            ? ['بوابة المحفّظ', 'نظرة عامة على حلقتي']
+            : PAGE_TITLES[page];
         if (titles) {
             const pt = document.getElementById('pageTitle');
             const ps = document.getElementById('pageSubtitle');
@@ -65,6 +68,7 @@
             if (ps) ps.textContent = titles[1];
         }
 
+        if (typeof global.NoorMarkActiveFab === 'function') global.NoorMarkActiveFab(page);
         if (typeof global._onNavigatePage === 'function') global._onNavigatePage(page);
         if (history.pushState) history.pushState({ page }, '', '#' + page);
         global.NoorApp?.ui?.closeSidebar();

@@ -15,6 +15,16 @@
 
     let _teacherSearch = '';
 
+    let _teachersData = [];
+    function renderTeachersSorted() {
+        const grid = document.getElementById('teachersGrid');
+        if (!grid || !_teachersData.length) return;
+        const mode = document.getElementById('teacherSort')?.value;
+        const list = mode && global.NoorListTools ? global.NoorListTools.sort('teachers', _teachersData, mode) : _teachersData;
+        grid.innerHTML = list.map(t => renderTeacherCard(t)).join('');
+    }
+    global.NoorTeachersSort = { applyTeachers: renderTeachersSorted };
+
     async function fetchTeachers(search) {
         if (search !== undefined) _teacherSearch = search;
         const grid = document.getElementById('teachersGrid');
@@ -36,7 +46,8 @@
                 return;
             }
 
-            grid.innerHTML = data.map(t => renderTeacherCard(t)).join('');
+            _teachersData = data;
+            renderTeachersSorted();
         } catch (e) {
             grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#ef4444">تعذر تحميل المحفظين</div>`;
             global.NoorApp.api.handleApiError(e);
@@ -235,7 +246,7 @@
                 return;
             }
 
-            grid.innerHTML = data.map(c => renderCircleCard(c)).join('');
+            filterCircles(document.getElementById('circleSearchInput')?.value || '');
             populateCircleDropdowns(data);
         } catch (e) {
             grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#ef4444">تعذر تحميل الحلقات</div>`;
@@ -532,7 +543,9 @@
         const q = (query || '').trim();
         const grid = document.getElementById('circlesGrid');
         if (!grid || !circles.length) return;
-        const filtered = q ? circles.filter(c => (c.name || '').includes(q) || (c.teacherName || '').includes(q)) : circles;
+        let filtered = q ? circles.filter(c => (c.name || '').includes(q) || (c.teacherName || '').includes(q)) : circles;
+        const mode = document.getElementById('circleSort')?.value;
+        if (mode && global.NoorListTools) filtered = global.NoorListTools.sort('circles', filtered, mode);
         grid.innerHTML = filtered.length ? filtered.map(c => renderCircleCard(c)).join('') : '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">لا توجد نتائج</div>';
     }
     global.filterCircles = filterCircles;

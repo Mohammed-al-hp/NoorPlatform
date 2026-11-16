@@ -38,6 +38,11 @@
         if (loginScreen) loginScreen.style.display = 'none';
         updateUserInfo();
         applyRoleUI();
+        applyAdminPermissionUI();
+        refreshCurrentUser();
+        loadCenterName();
+        // تذكيرات الطالب (الورد اليومي وأوقات الصلاة) — reminders.js يُحمَّل بعد هذا الملف
+        setTimeout(() => global.NoorReminders?.start?.(), 0);
 
         const role = state.user.role;
         if (role === 'Admin' || role === 'Teacher') {
@@ -102,7 +107,24 @@
         // ─── إخفاء عناصر الداشبورد العامة عن الطالب وولي الأمر ───
         const dashStatGrid = document.querySelector('#page-dashboard .stat-grid');
         if (dashStatGrid) dashStatGrid.style.display = (isStudent || isParent) ? 'none' : 'grid';
-        
+
+        // ─── بوابة المحفّظ: لا تظهر له بطاقة «المحفظون النشطون» (لا تخصه) ───
+        const teachersCard = document.getElementById('dashTeachersCard');
+        if (teachersCard) teachersCard.style.display = isTeacher ? 'none' : '';
+        if (dashStatGrid) dashStatGrid.classList.toggle('stat-grid-3', isTeacher);
+        const dashStudentsLabel = document.querySelector('#dashStudents + .stat-label');
+        if (dashStudentsLabel) dashStudentsLabel.textContent = isTeacher ? 'طلاب حلقتي' : 'إجمالي الطلاب';
+        const dashCirclesLabel = document.querySelector('#dashCircles + .stat-label');
+        if (dashCirclesLabel) dashCirclesLabel.textContent = isTeacher ? 'حلقاتي' : 'الحلقات الفعالة';
+        const dashNavLabel = document.querySelector('#homeNavSection .nav-item span');
+        if (dashNavLabel) dashNavLabel.textContent = isTeacher ? 'بوابة المحفّظ' : 'لوحة التحكم والإحصائيات';
+        // تسجيل الطلاب وتعديل بياناتهم للمشرفين فقط
+        document.querySelectorAll('[onclick*="openModal(\'addStudentModal\')"], #btnAddStudent, #btnAddStudentHeader').forEach(b => {
+            b.style.display = isAdmin ? '' : 'none';
+        });
+        document.body.classList.toggle('role-teacher', isTeacher);
+        document.body.classList.toggle('role-admin', isAdmin);
+
         const dashLeaderboard = document.querySelector('#leaderboardWrap')?.closest('.table-card');
         if (dashLeaderboard) dashLeaderboard.style.display = (isStudent || isParent) ? 'none' : 'block';
         
@@ -156,7 +178,8 @@
         document.querySelectorAll('#fabMenu .fab-menu-item').forEach(item => {
             const onclick = item.getAttribute('onclick') || '';
             const isAdminFab = /navigate\('(students|attendance|memorization|circles)'/.test(onclick);
-            if (isAdminFab) item.style.display = isStaff ? '' : 'none';
+            const isAdminOnlyFab = /navigate\('circles'/.test(onclick);
+            if (isAdminFab) item.style.display = (isAdminOnlyFab ? isAdmin : isStaff) ? '' : 'none';
         });
 
         if (isStudent) {
@@ -196,13 +219,84 @@
         }
     }
 
+    // ─── تسميات الأدوار بالعربية (لا تظهر Admin/Teacher في الواجهة) ───
+    const ROLE_LABELS = { Admin: 'مشرف', Teacher: 'محفّظ', Student: 'طالب', Parent: 'ولي أمر' };
+    function roleLabelFor(user) {
+        if (!user) return '';
+        if (user.role === 'Admin' && user.isSuperAdmin) return 'مدير عام';
+        return user.roleLabel || ROLE_LABELS[user.role] || '';
+    }
+
+    /** هل يملك المشرف الحالي صلاحية معينة؟ (المدير العام يملك الكل) */
+    function hasAdminPermission(perm) {
+        const user = app().state.user || {};
+        if (user.role !== 'Admin') return false;
+        if (user.isSuperAdmin) return true;
+        // جلسة قديمة بلا قائمة صلاحيات: لا نخفي شيئاً — الخادم هو المرجع
+        if (!Array.isArray(user.adminPermissions)) return true;
+        return user.adminPermissions.includes(perm);
+    }
+
+    /** يحدّث المستوى الإداري والصلاحيات وتسمية الدور من الخادم (تتغير دون إعادة الدخول). */
+    async function refreshCurrentUser() {
+        try {
+            const me = await apiFetch('/auth/me');
+            if (!me || !me.role) return;
+            const current = app().state.user || {};
+            app().saveSession(app().state.token, Object.assign({}, current, {
+                fullName: me.fullName || current.fullName,
+                role: me.role,
+                roleLabel: me.roleLabel,
+                isSuperAdmin: !!me.isSuperAdmin,
+                adminPermissions: me.adminPermissions || []
+            }));
+            updateUserInfo();
+            applyAdminPermissionUI();
+        } catch { /* غير متصل — تبقى البيانات المخزنة */ }
+    }
+
+    /** اسم المركز الفعلي من الإعدادات بدل النص الثابت (الشريط الجانبي وشاشة الدخول). */
+    async function loadCenterName() {
+        try {
+            const res = await fetch(app().state.apiUrl + '/settings/public');
+            if (!res.ok) return;
+            const data = await res.json();
+            global.NoorPublicSettings = data;
+            setCenterName(data.centerName);
+        } catch { /* يبقى النص الافتراضي */ }
+    }
+    function setCenterName(name) {
+        if (!name) return;
+        const side = document.getElementById('sidebarCenterName');
+        if (side) side.textContent = name;
+        const login = document.getElementById('loginCenterName');
+        if (login) login.textContent = name;
+    }
+
+    /** إخفاء ما لا يملك المشرف صلاحيته (الخادم يرفضه أصلاً — هذا لتنظيف الواجهة). */
+    function applyAdminPermissionUI() {
+        const user = app().state.user || {};
+        const isAdmin = user.role === 'Admin';
+        document.body.classList.toggle('is-super-admin', isAdmin && !!user.isSuperAdmin);
+        if (!isAdmin) return;
+        const finance = hasAdminPermission('ManageFinance');
+        document.querySelectorAll('[onclick*="navigate(\'payments\'"], [onclick*="navigate(\'expenses\'"]').forEach(el => {
+            el.style.display = finance ? '' : 'none';
+        });
+        document.querySelectorAll('.super-admin-only').forEach(el => {
+            el.style.display = user.isSuperAdmin ? '' : 'none';
+        });
+        const settingsSave = document.getElementById('btnSaveSettings');
+        if (settingsSave) settingsSave.disabled = !hasAdminPermission('ManageSettings');
+    }
+
     function updateUserInfo() {
         const user = app().state.user;
         const roleName = document.getElementById('roleName');
         const roleEmail = document.getElementById('roleEmail');
         const roleAvatar = document.getElementById('roleAvatar');
         if (roleName) roleName.textContent = user.fullName || '';
-        if (roleEmail) roleEmail.textContent = user.role || '';
+        if (roleEmail) roleEmail.textContent = roleLabelFor(user);
         if (roleAvatar) {
             if (window.Icon) {
                 var iconName = user.role === 'Admin' ? 'user' : user.role === 'Teacher' ? 'user-check' : 'graduation-cap';
@@ -253,6 +347,9 @@
             app().saveSession(data.token, {
                 fullName: data.user?.fullName || data.fullName,
                 role: data.user?.role || data.role,
+                roleLabel: data.user?.roleLabel,
+                isSuperAdmin: !!data.user?.isSuperAdmin,
+                adminPermissions: data.user?.adminPermissions || [],
                 phone: data.user?.phone
             });
 
@@ -312,6 +409,21 @@
         }
     }
 
+    /** قنوات رمز التحقق المفعّلة في الإعدادات: قناة واحدة = زر مباشر، قناتان = اختيار. */
+    function applyOtpChannelOptions() {
+        const channels = global.NoorPublicSettings?.otpChannels || ['WhatsApp'];
+        const group = document.getElementById('fpChannelGroup');
+        const btn = document.getElementById('fpSendBtn');
+        if (group) group.style.display = channels.length > 1 ? '' : 'none';
+        document.querySelectorAll('input[name="fpChannel"]').forEach(r => {
+            r.closest('label').style.display = channels.includes(r.value) ? '' : 'none';
+            r.checked = r.value === channels[0];
+        });
+        if (btn) btn.textContent = channels.length > 1
+            ? 'إرسال رمز التحقق'
+            : (channels[0] === 'Sms' ? 'إرسال رمز التحقق برسالة نصية' : 'إرسال رمز التحقق عبر واتساب');
+    }
+
     function openForgotPasswordHelp() {
         const contactEl = document.getElementById('forgotPasswordContact');
         const btnsWrap = document.getElementById('forgotPasswordWhatsappBtns');
@@ -332,6 +444,7 @@
         const loginPhone = document.getElementById('loginPhone')?.value?.trim() || '';
         const fpPhone = document.getElementById('fpPhone');
         if (fpPhone && /^[0-9٠-٩]{10}$/.test(loginPhone)) fpPhone.value = loginPhone;
+        applyOtpChannelOptions();
         fpGoToStep(1);
         ui().openModal('forgotPasswordModal');
     }
@@ -406,8 +519,10 @@
 
         const btn = isResend ? document.getElementById('fpResendBtn') : document.querySelector('#fpStep1 .btn-primary');
         if (!isResend) ui().btnLoading(btn, true);
+        const channel = document.querySelector('input[name="fpChannel"]:checked')?.value
+            || (global.NoorPublicSettings?.otpChannels || ['WhatsApp'])[0];
         try {
-            const data = await fpPost('/auth/forgot-password', { phone });
+            const data = await fpPost('/auth/forgot-password', { phone, channel });
             fp.phone = phone;
             fpGoToStep(2);
             fpShowInfo(data.message);
@@ -478,10 +593,21 @@
         handleLogin,
         submitChangePassword,
         logout,
-        openForgotPasswordHelp
+        openForgotPasswordHelp,
+        roleLabelFor,
+        hasAdminPermission,
+        refreshCurrentUser,
+        loadCenterName,
+        setCenterName
     };
 
     app().auth = auth;
+    global.NoorRoleLabel = roleLabelFor;
+    global.NoorHasAdminPermission = hasAdminPermission;
+    global.NoorSetCenterName = setCenterName;
+    // شاشة الدخول تعرض اسم المركز قبل تسجيل الدخول
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadCenterName);
+    else loadCenterName();
     global.checkAuth = checkAuth;
     global.applyRoleUI = applyRoleUI;
     global.handleLogin = handleLogin;
