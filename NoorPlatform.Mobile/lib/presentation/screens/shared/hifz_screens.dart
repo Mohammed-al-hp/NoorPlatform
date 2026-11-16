@@ -45,30 +45,12 @@ class HifzLogScreen extends StatelessWidget {
                   context.read<HifzCubit>().loadForStudent(studentId!);
                 }
               },
-              child: ListView.separated(
-                padding: const EdgeInsets.all(NoorTheme.spacingMd),
-                itemCount: state.records.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, i) {
-                  final r = state.records[i];
-                  final typeLabel =
-                      r.isMemorization ? 'حفظ جديد' : 'مراجعة';
-                  return ListTile(
-                    leading: Icon(
-                      r.isMemorization ? Icons.fiber_new : Icons.replay,
-                      color: NoorTheme.primaryGreen,
-                    ),
-                    title: Text(
-                      r.toSurahName != null && r.toSurahName!.isNotEmpty
-                          ? '${r.surahName} ← ${r.toSurahName}'
-                          : r.surahName,
-                    ),
-                    subtitle: Text(
-                      '${Formatters.displayDate(r.date)} · $typeLabel · ${r.verses}',
-                    ),
-                    trailing: Text(r.evaluation.isEmpty ? '—' : r.evaluation),
-                  );
-                },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(NoorTheme.spacingMd, 4, NoorTheme.spacingMd, NoorTheme.spacingXl),
+                children: [
+                  _HifzSummary(records: state.records),
+                  for (final r in state.records) _HifzSessionCard(record: r),
+                ],
               ),
             );
           },
@@ -227,6 +209,157 @@ class _Legend extends StatelessWidget {
         Container(width: 14, height: 14, color: color),
         const SizedBox(width: 6),
         Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
+    );
+  }
+}
+
+
+/// ملخص أعلى سجل التسميع: عدد جلسات الحفظ والمراجعة ومجموع الآيات.
+class _HifzSummary extends StatelessWidget {
+  final List<HifzRecordModel> records;
+  const _HifzSummary({required this.records});
+
+  @override
+  Widget build(BuildContext context) {
+    final mem = records.where((r) => r.isMemorization).toList();
+    final verses = mem.fold<int>(0, (sum, r) => sum + (r.verseCount > 0 ? r.verseCount : 0));
+    Widget metric(String label, String value) => Expanded(
+          child: Column(
+            children: [
+              Text(value, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            ],
+          ),
+        );
+    return Container(
+      margin: const EdgeInsets.only(bottom: NoorTheme.spacingMd),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+      decoration: BoxDecoration(
+        gradient: NoorTheme.headerGradient,
+        borderRadius: BorderRadius.circular(NoorTheme.radiusXl),
+        boxShadow: NoorTheme.elevatedShadow,
+      ),
+      child: Row(
+        children: [
+          metric('جلسات حفظ', '${mem.length}'),
+          Container(width: 1, height: 34, color: Colors.white24),
+          metric('جلسات مراجعة', '${records.length - mem.length}'),
+          Container(width: 1, height: 34, color: Colors.white24),
+          metric('آيات محفوظة', '$verses'),
+        ],
+      ),
+    );
+  }
+}
+
+/// بطاقة جلسة تسميع: نوع الجلسة بلون مميز، اسم السورة بخط Amiri، التاريخ والآيات والتقييم.
+class _HifzSessionCard extends StatelessWidget {
+  final HifzRecordModel record;
+  const _HifzSessionCard({required this.record});
+
+  Color _evalColor(String e) {
+    if (e.contains('ممتاز')) return NoorTheme.success;
+    if (e.contains('جيد')) return NoorTheme.primaryGreenLight;
+    if (e.contains('ضعيف')) return NoorTheme.warning;
+    if (e.isEmpty) return NoorTheme.textSecondary;
+    return NoorTheme.error;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final r = record;
+    final isMem = r.isMemorization;
+    final typeColor = isMem ? theme.colorScheme.primary : NoorTheme.accentGold;
+    final title = r.toSurahName != null && r.toSurahName!.isNotEmpty && r.toSurahName != r.surahName
+        ? '${r.surahName} ← ${r.toSurahName}'
+        : r.surahName;
+    final evalColor = _evalColor(r.evaluation);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(NoorTheme.radiusLg + 2),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.7)),
+        boxShadow: NoorTheme.cardShadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: typeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(NoorTheme.radiusMd),
+              ),
+              child: Icon(isMem ? Icons.auto_stories_rounded : Icons.replay_rounded, color: typeColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(title,
+                            style: NoorTheme.quran(size: 19, color: theme.colorScheme.onSurface).copyWith(height: 1.3)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: evalColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(NoorTheme.radiusFull),
+                        ),
+                        child: Text(r.evaluation.isEmpty ? '—' : r.evaluation,
+                            style: TextStyle(color: evalColor, fontSize: 12, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    children: [
+                      _Meta(icon: Icons.label_outline_rounded, text: isMem ? 'حفظ جديد' : 'مراجعة', color: typeColor),
+                      if (r.verses.isNotEmpty) _Meta(icon: Icons.format_list_numbered_rtl_rounded, text: 'الآيات ${r.verses}'),
+                      _Meta(icon: Icons.calendar_today_rounded, text: Formatters.displayDate(r.date)),
+                    ],
+                  ),
+                  if (r.notes != null && r.notes!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(r.notes!, style: theme.textTheme.bodySmall),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Meta extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color? color;
+  const _Meta({required this.icon, required this.text, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? Theme.of(context).textTheme.bodySmall?.color;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: c),
+        const SizedBox(width: 4),
+        Text(text, style: TextStyle(fontSize: 12, color: c, fontWeight: FontWeight.w500)),
       ],
     );
   }

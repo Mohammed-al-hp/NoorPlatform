@@ -56,6 +56,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           if (state is StudentDashboardLoading ||
               state is StudentDashboardInitial) {
             return const AsyncBody(
+              pullToRefresh: false,
               isLoading: true,
               isEmpty: false,
               child: SizedBox.shrink(),
@@ -63,6 +64,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           }
           if (state is StudentDashboardError) {
             return AsyncBody(
+              pullToRefresh: false,
               isLoading: false,
               isEmpty: false,
               errorMessage: state.message,

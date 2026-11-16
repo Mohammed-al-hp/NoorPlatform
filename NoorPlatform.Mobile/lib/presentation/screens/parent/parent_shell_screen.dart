@@ -68,22 +68,22 @@ class _ParentShellScreenState extends State<ParentShellScreen> {
               destinations: [
                 const NavigationDestination(
                   icon: Icon(Icons.family_restroom_outlined),
-                  selectedIcon: Icon(Icons.family_restroom),
+                  selectedIcon: Icon(Icons.family_restroom_rounded),
                   label: 'الأبناء',
                 ),
                 const NavigationDestination(
                   icon: Icon(Icons.payments_outlined),
-                  selectedIcon: Icon(Icons.payments),
+                  selectedIcon: Icon(Icons.payments_rounded),
                   label: 'الرسوم',
                 ),
                 const NavigationDestination(
-                  icon: Icon(Icons.mail_outline),
-                  selectedIcon: Icon(Icons.mail),
+                  icon: Icon(Icons.mail_outline_rounded),
+                  selectedIcon: Icon(Icons.mail_rounded),
                   label: 'الرسائل',
                 ),
                 NavigationDestination(
-                  icon: _badgeIcon(Icons.menu, unread),
-                  selectedIcon: _badgeIcon(Icons.menu_open, unread),
+                  icon: _badgeIcon(Icons.grid_view_outlined, unread),
+                  selectedIcon: _badgeIcon(Icons.grid_view_rounded, unread),
                   label: 'المزيد',
                 ),
               ],

@@ -5,7 +5,11 @@ import '../../../config/theme.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/teacher_models.dart';
+import '../../../core/utils/file_open_helper.dart';
+import '../../../di/injection_container.dart';
+import '../../../domain/repositories/portal_repository.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/noor_widgets.dart';
 import 'teacher_ui.dart';
 
 const _relationships = <String, String>{
@@ -569,21 +573,67 @@ class TeacherStudentDetailsScreen extends StatelessWidget {
                 ]),
               );
           return ListView(
-            padding: const EdgeInsets.all(NoorTheme.spacingMd),
+            padding: const EdgeInsets.fromLTRB(NoorTheme.spacingMd, 4, NoorTheme.spacingMd, NoorTheme.spacingXl),
             children: [
+              // ── بطاقة الطالب: الاسم والحلقة والمستوى وأبرز الأرقام ──
+              GradientHeader(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(shape: BoxShape.circle, gradient: NoorTheme.goldGradient),
+                          child: InitialsAvatar(name: s.fullName, radius: 28),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(s.fullName,
+                                  style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
+                              const SizedBox(height: 6),
+                              Wrap(spacing: 6, runSpacing: 6, children: [
+                                HeaderPill(icon: Icons.mosque_outlined, text: s.circleName),
+                                HeaderPill(icon: Icons.school_outlined, text: s.level),
+                              ]),
+                            ],
+                          ),
+                        ),
+                        IconButton.filledTonal(
+                          tooltip: 'تعديل البيانات',
+                          style: IconButton.styleFrom(backgroundColor: Colors.white24, foregroundColor: Colors.white),
+                          icon: const Icon(Icons.edit_rounded),
+                          onPressed: () async {
+                            final changed = await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(builder: (_) => StudentFormScreen(student: s)));
+                            if (changed == true) reload();
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: _ProfileMetric(label: 'الحضور', value: '${s.attendance}%', progress: s.attendance / 100)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _ProfileMetric(
+                            label: 'نسبة الحفظ',
+                            value: '${Formatters.number(s.progress, fractionDigits: 1)}%',
+                            progress: s.progress / 100,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               SectionCard(
-                title: s.fullName,
-                actions: [
-                  IconButton(
-                    tooltip: 'تعديل',
-                    icon: const Icon(Icons.edit),
-                    onPressed: () async {
-                      final changed = await Navigator.of(context).push<bool>(
-                          MaterialPageRoute(builder: (_) => StudentFormScreen(student: s)));
-                      if (changed == true) reload();
-                    },
-                  ),
-                ],
+                title: 'البيانات الأساسية',
+                icon: Icons.badge_outlined,
                 child: Column(children: [
                   row('الحلقة', s.circleName),
                   row('المستوى', s.level),
@@ -596,15 +646,6 @@ class TeacherStudentDetailsScreen extends StatelessWidget {
                   row('السكن', s.residence),
                 ]),
               ),
-              Wrap(spacing: 8, runSpacing: 8, children: [
-                StatChip(label: 'الحضور', value: '${s.attendance}%', icon: Icons.fact_check),
-                StatChip(
-                    label: 'الحفظ',
-                    value: '${Formatters.number(s.progress, fractionDigits: 1)}%',
-                    icon: Icons.menu_book,
-                    color: NoorTheme.accentGold),
-              ]),
-              const SizedBox(height: NoorTheme.spacingMd),
               if (rating != null) MonthlyRatingCard(rating: rating),
               if (pos != null)
                 SectionCard(
@@ -613,9 +654,10 @@ class TeacherStudentDetailsScreen extends StatelessWidget {
                       ? 'آخر حفظ: ${pos.lastSurahName ?? '—'} حتى الآية ${pos.lastVerse} (${Formatters.displayDate(pos.lastSessionDate)})\nالمقترح: ${pos.surahName ?? '—'} من الآية ${pos.nextVerse}'
                       : 'لا توجد جلسات حفظ سابقة'),
                 ),
-              SectionCard(
-                child: Column(children: [
+              const SectionTitle('متابعة الطالب'),
+              Column(children: [
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.add_task,
                     title: 'تسجيل جلسة حفظ/مراجعة',
                     onTap: () async {
@@ -624,42 +666,56 @@ class TeacherStudentDetailsScreen extends StatelessWidget {
                     },
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.history_edu,
                     title: 'تقدم الحفظ والمراجعة',
                     onTap: () => context.push('/teacher/student/${s.id}/hifz'),
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.map_outlined,
                     title: 'خريطة الحفظ',
                     onTap: () => context.push('/teacher/student/${s.id}/quran-map'),
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.quiz_outlined,
                     title: 'الاختبارات والنتائج',
                     onTap: () => context.push('/teacher/student/${s.id}/exams'),
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.auto_stories_outlined,
                     title: 'سجل المتون',
                     onTap: () => context.push('/teacher/evaluation?tab=0&studentId=${s.id}'),
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.flag_outlined,
                     title: 'الأهداف الشهرية',
                     onTap: () => context.push('/teacher/evaluation?tab=1&studentId=${s.id}'),
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.mosque_outlined,
                     title: 'سجل الصلاة',
                     onTap: () => context.push('/teacher/evaluation?tab=4&studentId=${s.id}'),
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
+                    icon: Icons.picture_as_pdf_outlined,
+                    title: 'التقرير الشهري (PDF)',
+                    onTap: () => _downloadMonthlyReport(context, s.id),
+                  ),
+                  MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.event_available,
                     title: 'سجل الحضور (30 يوماً)',
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => _StudentAttendanceHistory(studentId: s.id, name: s.fullName))),
                   ),
                   MoreMenuTile(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     icon: Icons.notifications_active_outlined,
                     title: 'إرسال إشعار غياب لولي الأمر',
                     onTap: () async {
@@ -670,10 +726,44 @@ class TeacherStudentDetailsScreen extends StatelessWidget {
                     },
                   ),
                 ]),
-              ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// رقم بارز مع شريط تقدم داخل بطاقة الطالب.
+class _ProfileMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final double progress;
+  const _ProfileMetric({required this.label, required this.value, required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(NoorTheme.radiusMd),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress.clamp(0, 1).toDouble(),
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(6),
+            color: NoorTheme.accentGoldLight,
+            backgroundColor: Colors.white24,
+          ),
+        ],
       ),
     );
   }
@@ -709,4 +799,51 @@ class _StudentAttendanceHistory extends StatelessWidget {
       ),
     );
   }
+}
+
+const _arabicMonths = [
+  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+];
+
+/// اختيار الشهر (آخر 6 أشهر) ثم تنزيل التقرير الشهري للطالب وفتحه.
+Future<void> _downloadMonthlyReport(BuildContext context, int studentId) async {
+  final now = DateTime.now();
+  final months = List.generate(6, (i) => DateTime(now.year, now.month - i));
+  final picked = await showModalBottomSheet<DateTime>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text('اختر شهر التقرير', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          ),
+          for (final m in months)
+            ListTile(
+              leading: const Icon(Icons.calendar_month_outlined),
+              title: Text('${_arabicMonths[m.month - 1]} ${m.year}'),
+              onTap: () => Navigator.pop(ctx, m),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (picked == null || !context.mounted) return;
+
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(const SnackBar(content: Text('جارٍ تجهيز التقرير...')));
+  final result = await sl<PortalRepository>().downloadMonthlyReport(studentId, picked.year, picked.month);
+  messenger.hideCurrentSnackBar();
+  await result.fold(
+    (f) async => messenger.showSnackBar(SnackBar(content: Text(f.message), backgroundColor: NoorTheme.error)),
+    (path) async {
+      await FileOpenHelper.openResult(path);
+      messenger.showSnackBar(SnackBar(
+        content: Text(FileOpenHelper.isBrowserDownload(path) ? 'بدأ تنزيل التقرير' : 'تم فتح التقرير'),
+      ));
+    },
+  );
 }

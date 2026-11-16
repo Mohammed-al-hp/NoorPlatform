@@ -29,7 +29,7 @@ dependencies:
   get_it: ^7.7.0
 
   # UI
-  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10
   fl_chart: ^0.68.0
   shimmer: ^3.0.0
   percent_indicator: ^4.2.3
@@ -68,3 +68,22 @@ flutter:
 
   assets:
     - assets/images/
+
+  # الخطوط مضمّنة محلياً (رخصة SIL OFL) — موحّدة مع منصة الويب
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Tajawal-ExtraBold.ttf
+          weight: 800
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Amiri-Bold.ttf
+          weight: 700

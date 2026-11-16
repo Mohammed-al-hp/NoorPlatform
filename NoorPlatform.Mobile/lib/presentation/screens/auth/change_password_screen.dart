@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app_router.dart';
 import '../../../config/theme.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../di/injection_container.dart';
@@ -57,13 +58,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final user = await sl<SecureStorage>().getUserJson();
     final role = user?['role'] as String?;
     if (!mounted) return;
-    if (role == 'Student') {
-      context.go('/student');
-    } else if (role == 'Parent') {
-      context.go('/parent');
-    } else {
-      context.go('/login');
-    }
+    // كان المحفّظ يُعاد لشاشة الدخول بعد تغيير كلمة المرور — الآن كل دور إلى صفحته الرئيسية
+    context.go(role == null ? '/login' : AppRouter.homeFor(role));
   }
 
   @override

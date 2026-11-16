@@ -68,22 +68,22 @@ class _StudentShellScreenState extends State<StudentShellScreen> {
               destinations: [
                 const NavigationDestination(
                   icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
+                  selectedIcon: Icon(Icons.home_rounded),
                   label: 'الرئيسية',
                 ),
                 const NavigationDestination(
                   icon: Icon(Icons.fact_check_outlined),
-                  selectedIcon: Icon(Icons.fact_check),
+                  selectedIcon: Icon(Icons.fact_check_rounded),
                   label: 'الحضور',
                 ),
                 const NavigationDestination(
                   icon: Icon(Icons.mosque_outlined),
-                  selectedIcon: Icon(Icons.mosque),
+                  selectedIcon: Icon(Icons.mosque_rounded),
                   label: 'الصلاة',
                 ),
                 NavigationDestination(
-                  icon: _badgeIcon(Icons.menu, unread),
-                  selectedIcon: _badgeIcon(Icons.menu_open, unread),
+                  icon: _badgeIcon(Icons.grid_view_outlined, unread),
+                  selectedIcon: _badgeIcon(Icons.grid_view_rounded, unread),
                   label: 'المزيد',
                 ),
               ],

@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- نسخ التطوير فقط: السماح بـ HTTP للاتصال بخادم الشبكة المحلية (مثل http://192.168.x.x:5032).
+         نسخة الإصدار (release) تتطلب HTTPS. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
+import '../../widgets/noor_widgets.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../di/injection_container.dart' as di;
 
@@ -42,6 +43,8 @@ class _SplashScreenState extends State<SplashScreen> {
       context.go('/parent');
     } else if (role == 'Teacher') {
       context.go('/teacher');
+    } else if (role == 'Admin') {
+      context.go('/admin');
     } else {
       // دور غير معروف — نفس معالجة app_router.dart لأدوار غير صالحة.
       await secureStorage.clearAll();
@@ -53,9 +56,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: NoorTheme.primaryDark,
-      body: Center(
-        child: CircularProgressIndicator(color: NoorTheme.accentGold),
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: NoorTheme.darkGradient),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NoorLogo(size: 96, vertical: true, onDark: true),
+              SizedBox(height: 32),
+              SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(color: NoorTheme.accentGoldLight, strokeWidth: 2.5),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -16,7 +16,8 @@ ServerException mapDioErrorToException(DioException e, {String? fallbackMessage}
     if (data is Map<String, dynamic> && data['message'] is String) {
       return data['message'] as String;
     }
-    if (data is String && data.isNotEmpty) {
+    // نص قصير فقط — صفحات HTML (من الخادم الوسيط مثلاً) أو أخطاء تقنية طويلة لا تُعرض للمستخدم
+    if (data is String && data.isNotEmpty && data.length <= 200 && !data.trimLeft().startsWith('<')) {
       return data;
     }
     return defaultMsg;
@@ -44,6 +45,18 @@ ServerException mapDioErrorToException(DioException e, {String? fallbackMessage}
       return ServerException(
         message: extractServerMessage('بيانات غير صحيحة'),
         statusCode: 400,
+      );
+    case 429:
+      return ServerException(
+        message: extractServerMessage('طلبات كثيرة جداً، انتظر قليلاً ثم حاول مجدداً'),
+        statusCode: 429,
+      );
+    case 500:
+    case 502:
+    case 504:
+      return ServerException(
+        message: 'حدث خطأ في الخادم، حاول مرة أخرى لاحقاً',
+        statusCode: statusCode,
       );
     case 503:
       return const ServerException(

@@ -46,6 +46,7 @@ abstract class PortalRemoteDataSource {
   Future<List<LibraryItemModel>> getLibrary({String? search, String? category});
   Future<String> downloadLibraryFile(int id, String title);
   Future<String> downloadCertificate(int studentId);
+  Future<String> downloadMonthlyReport(int studentId, int year, int month);
   Future<List<AnnouncementModel>> getAnnouncements();
   Future<List<OralExamModel>> getOralExams(int studentId);
 }
@@ -306,6 +307,13 @@ class PortalRemoteDataSourceImpl implements PortalRemoteDataSource {
         ApiConfig.certificate(studentId),
         'certificate-$studentId.pdf',
         'فشل تنزيل الشهادة',
+      );
+
+  @override
+  Future<String> downloadMonthlyReport(int studentId, int year, int month) => _downloadPdf(
+        '${ApiConfig.monthlyReport(studentId)}?year=$year&month=$month',
+        'monthly-report-$studentId-$year-${month.toString().padLeft(2, '0')}.pdf',
+        'فشل تنزيل التقرير الشهري',
       );
 
   @override

@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'presentation/screens/admin/admin_web_only_screen.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/change_password_screen.dart';
 import 'presentation/screens/auth/forgot_password_screen.dart';
@@ -33,7 +34,8 @@ class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier() {
     _subscription = interceptor.AuthEventBus().stream.listen((event) {
       if (event == interceptor.AuthEvent.tokenExpired ||
-          event == interceptor.AuthEvent.forceLogout) {
+          event == interceptor.AuthEvent.forceLogout ||
+          event == interceptor.AuthEvent.mustChangePassword) {
         notifyListeners();
       }
     });
@@ -52,18 +54,19 @@ class AppRouter {
 
   AppRouter(this.secureStorage);
 
-  static const _validRoles = {'Student', 'Parent', 'Teacher'};
+  static const _validRoles = {'Student', 'Parent', 'Teacher', 'Admin'};
 
   /// الصفحة الرئيسية لكل دور.
   static String homeFor(String role) => switch (role) {
         'Student' => '/student',
         'Parent' => '/parent',
+        'Admin' => '/admin',
         _ => '/teacher',
       };
 
   late final GoRouter router = GoRouter(
     initialLocation: '/',
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: kDebugMode,
     refreshListenable: _refreshNotifier,
     redirect: (context, state) async {
       final loc = state.matchedLocation;
@@ -104,7 +107,11 @@ class AppRouter {
               ? 'Parent'
               : loc.startsWith('/teacher')
                   ? 'Teacher'
-                  : null;
+                  : loc.startsWith('/admin')
+                      ? 'Admin'
+                      : null;
+      // المشرف: شاشة «لوحة التحكم عبر الويب» فقط (وتغيير كلمة المرور)
+      if (role == 'Admin' && routeRole != 'Admin' && !isChangePassword) return '/admin';
       if (routeRole != null && routeRole != role) return homeFor(role);
 
       return null;
@@ -112,6 +119,7 @@ class AppRouter {
     routes: [
       GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/admin', builder: (_, __) => const AdminWebOnlyScreen()),
       GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
 
       // Teacher (المحفّظ)

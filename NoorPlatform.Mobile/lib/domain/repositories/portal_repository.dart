@@ -49,6 +49,7 @@ abstract class PortalRepository {
   });
   Future<Either<Failure, String>> downloadLibraryFile(int id, String title);
   Future<Either<Failure, String>> downloadCertificate(int studentId);
+  Future<Either<Failure, String>> downloadMonthlyReport(int studentId, int year, int month);
   Future<Either<Failure, List<AnnouncementModel>>> getAnnouncements();
   Future<Either<Failure, List<OralExamModel>>> getOralExams(int studentId);
 }

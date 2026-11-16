@@ -101,6 +101,7 @@ class LoadView<T> extends StatelessWidget {
           final cubit = context.read<LoadCubit<T>>();
           final data = state.data;
           return AsyncBody(
+              pullToRefresh: false,
             isLoading: state.isLoading && data == null,
             errorMessage: data == null ? state.error : null,
             onRetry: cubit.load,

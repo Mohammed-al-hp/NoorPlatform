@@ -9,7 +9,9 @@ class ApiResponseHelper {
     if (data is Map && data['message'] is String) {
       return data['message'] as String;
     }
-    if (data is String && data.isNotEmpty) return data;
+    if (data is String && data.isNotEmpty && data.length <= 200 && !data.trimLeft().startsWith('<')) {
+      return data;
+    }
     return fallback;
   }
 

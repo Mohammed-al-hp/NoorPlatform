@@ -14,7 +14,7 @@ class AuthEventBus {
   void dispose() => _controller.close();
 }
 
-enum AuthEvent { tokenExpired, forbidden, forceLogout }
+enum AuthEvent { tokenExpired, forbidden, forceLogout, mustChangePassword }
 
 /// Dio interceptor: JWT attach + global 401/403 handling.
 ///
@@ -62,7 +62,7 @@ class ApiInterceptor extends Interceptor {
     }
 
     if (code == 403) {
-      AuthEventBus().emit(AuthEvent.forbidden);
+      await _emitForbidden(response.data);
     }
 
     handler.next(response);
@@ -76,10 +76,21 @@ class ApiInterceptor extends Interceptor {
     if (statusCode == 401 && !path.contains('/auth/login')) {
       await _emitUnauthorized();
     } else if (statusCode == 403) {
-      AuthEventBus().emit(AuthEvent.forbidden);
+      await _emitForbidden(err.response?.data);
     }
 
     handler.next(err);
+  }
+
+  /// الخادم يفرض تغيير كلمة المرور المؤقتة (code = MUST_CHANGE_PASSWORD):
+  /// نحفظ الحالة ليحوّل الموجّه المستخدم إلى شاشة تغيير كلمة المرور.
+  Future<void> _emitForbidden(dynamic data) async {
+    if (data is Map && data['code'] == 'MUST_CHANGE_PASSWORD') {
+      await _secureStorage.setMustChangePassword(true);
+      AuthEventBus().emit(AuthEvent.mustChangePassword);
+      return;
+    }
+    AuthEventBus().emit(AuthEvent.forbidden);
   }
 
   Future<void> _emitUnauthorized() async {

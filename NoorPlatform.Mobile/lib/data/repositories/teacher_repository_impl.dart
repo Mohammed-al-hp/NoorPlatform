@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/errors/failures.dart';
@@ -30,7 +31,8 @@ class TeacherRepositoryImpl implements TeacherRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('حدث خطأ غير متوقع: $e'));
+      debugPrint('repository error: $e');
+      return const Left(ServerFailure('حدث خطأ غير متوقع، حاول مرة أخرى'));
     }
   }
 
@@ -119,6 +121,10 @@ class TeacherRepositoryImpl implements TeacherRepository {
   @override
   Future<Either<Failure, String>> deleteHifzRecord(int id) =>
       _run(() => remote.deleteHifzRecord(id));
+
+  @override
+  Future<Either<Failure, String>> updateHifzRecord(int id, Map<String, dynamic> body) =>
+      _run(() => remote.updateHifzRecord(id, body));
 
   @override
   Future<Either<Failure, List<RecentHifzModel>>> getRecentHifz({int count = 20}) =>

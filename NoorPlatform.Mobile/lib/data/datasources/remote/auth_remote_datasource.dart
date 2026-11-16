@@ -8,7 +8,8 @@ import '../../models/auth_models.dart';
 
 abstract class AuthRemoteDataSource {
   Future<AuthResponseModel> login(LoginRequestModel request);
-  Future<void> changePassword(ChangePasswordRequestModel request);
+  /// يعيد التوكن الجديد: الخادم يُبطل التوكن القديم بعد تغيير كلمة المرور.
+  Future<String?> changePassword(ChangePasswordRequestModel request);
   Future<(String, int)> requestPasswordOtp(String phone);
   Future<void> verifyPasswordOtp(String phone, String code);
   Future<String> resetPasswordWithOtp(String phone, String code, String newPassword);
@@ -88,7 +89,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> changePassword(ChangePasswordRequestModel request) async {
+  Future<String?> changePassword(ChangePasswordRequestModel request) async {
     try {
       final response = await apiClient.post(
         ApiConfig.changePassword,
@@ -98,6 +99,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         response,
         fallback: 'فشل تغيير كلمة المرور',
       );
+      final data = response.data;
+      final token = data is Map ? data['token'] : null;
+      return token is String && token.isNotEmpty ? token : null;
     } on DioException catch (e) {
       throw mapDioErrorToException(
         e,

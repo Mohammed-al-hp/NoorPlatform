@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/errors/failures.dart';
@@ -29,7 +30,8 @@ class PortalRepositoryImpl implements PortalRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('حدث خطأ غير متوقع: $e'));
+      debugPrint('repository error: $e');
+      return const Left(ServerFailure('حدث خطأ غير متوقع، حاول مرة أخرى'));
     }
   }
 
@@ -147,6 +149,10 @@ class PortalRepositoryImpl implements PortalRepository {
   @override
   Future<Either<Failure, String>> downloadCertificate(int studentId) =>
       _run(() => remote.downloadCertificate(studentId));
+
+  @override
+  Future<Either<Failure, String>> downloadMonthlyReport(int studentId, int year, int month) =>
+      _run(() => remote.downloadMonthlyReport(studentId, year, month));
 
   @override
   Future<Either<Failure, List<AnnouncementModel>>> getAnnouncements() =>

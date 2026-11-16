@@ -38,6 +38,7 @@ abstract class TeacherRemoteDataSource {
   Future<LastPositionModel> getLastPosition(int studentId, {bool sequential = false});
   Future<String> addHifzRecord(Map<String, dynamic> body);
   Future<String> deleteHifzRecord(int id);
+  Future<String> updateHifzRecord(int id, Map<String, dynamic> body);
   Future<List<RecentHifzModel>> getRecentHifz({int count = 20});
   Future<String> sendHifzPraise(Map<String, dynamic> body);
   Future<String> createOralExam(Map<String, dynamic> body);
@@ -280,6 +281,11 @@ class TeacherRemoteDataSourceImpl implements TeacherRemoteDataSource {
   @override
   Future<String> deleteHifzRecord(int id) =>
       _send('DELETE', ApiConfig.hifzRecord(id), 'تم حذف السجل', 'فشل حذف السجل');
+
+  @override
+  Future<String> updateHifzRecord(int id, Map<String, dynamic> body) => _send(
+      'PUT', ApiConfig.hifzRecord(id), 'تم تعديل جلسة التسميع', 'فشل تعديل الجلسة',
+      data: body);
 
   @override
   Future<List<RecentHifzModel>> getRecentHifz({int count = 20}) => _getList(

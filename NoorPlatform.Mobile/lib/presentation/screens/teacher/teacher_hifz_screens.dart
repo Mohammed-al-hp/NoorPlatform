@@ -77,6 +77,14 @@ class _TeacherHifzHubScreenState extends State<TeacherHifzHubScreen> {
                               'verses': r.verses,
                               'evaluation': r.evaluation,
                             }));
+                  } else if (v == 'edit') {
+                    final changed = await showModalBottomSheet<bool>(
+                      context: context,
+                      isScrollControlled: true,
+                      showDragHandle: true,
+                      builder: (_) => _EditHifzSheet(record: r),
+                    );
+                    if (changed == true) reload();
                   } else if (v == 'delete') {
                     if (!await confirmDialog(context, 'حذف سجل التسميع؟', confirmText: 'حذف')) return;
                     if (!context.mounted) return;
@@ -85,12 +93,118 @@ class _TeacherHifzHubScreenState extends State<TeacherHifzHubScreen> {
                 },
                 itemBuilder: (_) => const [
                   PopupMenuItem(value: 'student', child: Text('ملف الطالب')),
+                  PopupMenuItem(value: 'edit', child: Text('تعديل الجلسة')),
                   PopupMenuItem(value: 'praise', child: Text('إرسال رسالة مديح لولي الأمر')),
                   PopupMenuItem(value: 'delete', child: Text('حذف السجل')),
                 ],
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// نموذج تعديل جلسة تسميع (تصحيح خطأ إدخال) — الخادم يعيد حساب النقاط حسب التقييم الجديد.
+class _EditHifzSheet extends StatefulWidget {
+  final RecentHifzModel record;
+  const _EditHifzSheet({required this.record});
+
+  @override
+  State<_EditHifzSheet> createState() => _EditHifzSheetState();
+}
+
+class _EditHifzSheetState extends State<_EditHifzSheet> {
+  late String _type = widget.record.type == 'Revision' ? 'Revision' : 'Memorization';
+  late final _surah = TextEditingController(text: widget.record.surahName);
+  late final _toSurah = TextEditingController(text: widget.record.toSurahName ?? '');
+  late final _verses = TextEditingController(text: widget.record.verses);
+  late final _notes = TextEditingController(text: widget.record.notes);
+  late String _evaluation = widget.record.evaluation;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _surah.dispose();
+    _toSurah.dispose();
+    _verses.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_surah.text.trim().isEmpty) {
+      showSnack(context, 'اسم السورة مطلوب', error: true);
+      return;
+    }
+    setState(() => _saving = true);
+    final ok = await runAction(
+      context,
+      () => teacherRepo.updateHifzRecord(widget.record.id, {
+        'type': _type,
+        'surahName': _surah.text.trim(),
+        'toSurahName': _toSurah.text.trim().isEmpty ? null : _toSurah.text.trim(),
+        'verses': _verses.text.trim(),
+        'evaluation': _evaluation,
+        'notes': _notes.text.trim(),
+      }),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (ok) Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final evals = {...kEvaluationOptions, if (_evaluation.isNotEmpty) _evaluation}.toList();
+    if (_evaluation.isEmpty) _evaluation = evals.first;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('تعديل جلسة التسميع', style: Theme.of(context).textTheme.titleLarge),
+            Text(widget.record.studentName, style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 16),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'Memorization', label: Text('حفظ جديد'), icon: Icon(Icons.auto_stories_rounded)),
+                ButtonSegment(value: 'Revision', label: Text('مراجعة'), icon: Icon(Icons.replay_rounded)),
+              ],
+              selected: {_type},
+              onSelectionChanged: (v) => setState(() => _type = v.first),
+            ),
+            const SizedBox(height: 12),
+            TextField(controller: _surah, decoration: const InputDecoration(labelText: 'السورة *')),
+            const SizedBox(height: 12),
+            TextField(controller: _toSurah, decoration: const InputDecoration(labelText: 'إلى سورة (اختياري)')),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _verses,
+              textDirection: TextDirection.ltr,
+              decoration: const InputDecoration(labelText: 'الآيات (مثال: 1-10)'),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _evaluation,
+              decoration: const InputDecoration(labelText: 'التقييم *'),
+              items: evals.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (v) => setState(() => _evaluation = v ?? _evaluation),
+            ),
+            const SizedBox(height: 12),
+            TextField(controller: _notes, maxLines: 2, decoration: const InputDecoration(labelText: 'ملاحظة')),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.check_rounded),
+              label: const Text('حفظ التعديل'),
+            ),
+          ],
         ),
       ),
     );

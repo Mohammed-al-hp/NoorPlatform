@@ -35,6 +35,7 @@ abstract class TeacherRepository {
       {bool sequential = false});
   Future<Either<Failure, String>> addHifzRecord(Map<String, dynamic> body);
   Future<Either<Failure, String>> deleteHifzRecord(int id);
+  Future<Either<Failure, String>> updateHifzRecord(int id, Map<String, dynamic> body);
   Future<Either<Failure, List<RecentHifzModel>>> getRecentHifz({int count = 20});
   Future<Either<Failure, String>> sendHifzPraise(Map<String, dynamic> body);
   Future<Either<Failure, String>> createOralExam(Map<String, dynamic> body);

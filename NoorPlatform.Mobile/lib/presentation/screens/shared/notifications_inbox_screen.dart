@@ -47,6 +47,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
         body: BlocBuilder<NotificationsCubit, NotificationsState>(
           builder: (context, state) {
             return AsyncBody(
+              pullToRefresh: false,
               isLoading: state.status == NotificationsStatus.loading ||
                   state.status == NotificationsStatus.initial,
               isEmpty: state.status == NotificationsStatus.loaded &&

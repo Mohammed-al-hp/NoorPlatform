@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/errors/failures.dart';
@@ -42,7 +43,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('الخطأ: $e'));
+      debugPrint('login error: $e');
+      return const Left(ServerFailure('تعذّر تسجيل الدخول، حاول مرة أخرى'));
     }
   }
 
@@ -54,7 +56,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(NetworkFailure());
     }
     try {
-      await remoteDataSource.changePassword(request);
+      final newToken = await remoteDataSource.changePassword(request);
+      // ضروري: الخادم يبطل التوكن القديم (SecurityStamp) بعد تغيير كلمة المرور
+      if (newToken != null) await secureStorage.saveToken(newToken);
       await secureStorage.setMustChangePassword(false);
       return const Right(unit);
     } on ServerException catch (e) {

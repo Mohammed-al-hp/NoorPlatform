@@ -90,6 +90,8 @@ class RecentHifzModel {
   final String type;
   final String evaluation;
   final String date;
+  final String? toSurahName;
+  final String notes;
 
   const RecentHifzModel({
     required this.id,
@@ -101,6 +103,8 @@ class RecentHifzModel {
     required this.type,
     required this.evaluation,
     required this.date,
+    this.toSurahName,
+    this.notes = '',
   });
 
   factory RecentHifzModel.fromJson(Map<String, dynamic> j) => RecentHifzModel(
@@ -113,6 +117,8 @@ class RecentHifzModel {
         type: toStr(j['type'], 'Memorization'),
         evaluation: toStr(j['evaluation']),
         date: toStr(j['date']),
+        toSurahName: j['toSurahName'] as String?,
+        notes: toStr(j['notes']),
       );
 }
 

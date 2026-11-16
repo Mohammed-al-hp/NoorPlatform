@@ -184,6 +184,7 @@ class _MessagesView extends StatelessWidget {
         },
         builder: (context, state) {
           return AsyncBody(
+              pullToRefresh: false,
             isLoading: state.status == PortalLoadStatus.loading ||
                 state.status == PortalLoadStatus.initial,
             isEmpty: state.status == PortalLoadStatus.loaded &&
@@ -193,29 +194,84 @@ class _MessagesView extends StatelessWidget {
             errorMessage:
                 state.status == PortalLoadStatus.error ? state.error : null,
             onRetry: () => context.read<MessagesCubit>().load(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(NoorTheme.spacingMd),
-              itemCount: state.messages.length,
-              itemBuilder: (context, i) {
-                final m = state.messages[i];
-                return SectionCard(
-                  title: m.recipientName,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(m.content),
-                      const SizedBox(height: 8),
-                      Text(
-                        Formatters.displayDateTime(m.createdAt),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                );
-              },
+            child: RefreshIndicator(
+              onRefresh: () => context.read<MessagesCubit>().load(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(NoorTheme.spacingMd),
+                itemCount: state.messages.length,
+                itemBuilder: (context, i) {
+                  final m = state.messages[i];
+                  return SectionCard(
+                    title: m.recipientName,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(m.content),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              Formatters.displayDateTime(m.createdAt),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const Spacer(),
+                            if (m.replies.isEmpty)
+                              Text(
+                                m.isRead ? 'تمت القراءة' : 'بانتظار الرد',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                          ],
+                        ),
+                        for (final r in m.replies) _ReplyBubble(reply: r),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// فقاعة الرد من المحفّظ/الإدارة أسفل رسالة ولي الأمر.
+class _ReplyBubble extends StatelessWidget {
+  final MessageReplyModel reply;
+  const _ReplyBubble({required this.reply});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsetsDirectional.only(top: 10, start: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: NoorTheme.primaryGreen.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(NoorTheme.radiusMd),
+        // حدّ موحّد اللون: Flutter لا يسمح بـ borderRadius مع حدود غير موحّدة
+        border: Border.all(color: NoorTheme.accentGold.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.reply_rounded, size: 16, color: NoorTheme.primaryGreen),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text('رد: ${reply.senderName}',
+                    style: theme.textTheme.labelLarge?.copyWith(color: NoorTheme.primaryGreen)),
+              ),
+              Text(Formatters.displayDateTime(reply.createdAt), style: theme.textTheme.bodySmall),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(reply.content),
+        ],
       ),
     );
   }

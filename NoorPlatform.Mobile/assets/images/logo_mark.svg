@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="شعار منصة نور">
+  <!-- شعار منصة نور: نجمة ثُمانية (ربع الحزب) يشعّ منها النور فوق مصحف مفتوح -->
+  <defs>
+    <linearGradient id="noorGreen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2D8B57"/>
+      <stop offset="1" stop-color="#1A5C3A"/>
+    </linearGradient>
+    <linearGradient id="noorGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E3B341"/>
+      <stop offset="1" stop-color="#B8860B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- أشعة النور -->
+  <g stroke="url(#noorGold)" stroke-width="2.6" stroke-linecap="round" opacity="0.9">
+    <line x1="60" y1="4" x2="60" y2="10"/>
+    <line x1="32" y1="14" x2="36.5" y2="18.5"/>
+    <line x1="88" y1="14" x2="83.5" y2="18.5"/>
+    <line x1="22" y1="40" x2="28" y2="40"/>
+    <line x1="98" y1="40" x2="92" y2="40"/>
+  </g>
+
+  <!-- النجمة الثُمانية -->
+  <g transform="translate(60 40)">
+    <rect x="-17" y="-17" width="34" height="34" rx="2.5" fill="url(#noorGold)"/>
+    <rect x="-17" y="-17" width="34" height="34" rx="2.5" fill="url(#noorGold)" transform="rotate(45)"/>
+    <circle r="11" fill="#FFFDF5"/>
+    <circle r="6" fill="url(#noorGreen)"/>
+  </g>
+
+  <!-- المصحف المفتوح -->
+  <path d="M58 70 Q40 61 16 65 V101 Q40 97 58 106 Z" fill="url(#noorGreen)"/>
+  <path d="M62 70 Q80 61 104 65 V101 Q80 97 62 106 Z" fill="url(#noorGreen)"/>
+  <!-- أسطر الصفحات -->
+  <g fill="none" stroke="#E3B341" stroke-width="1.8" stroke-linecap="round" opacity="0.85">
+    <path d="M24 75 Q38 72.5 51 77"/>
+    <path d="M24 83 Q38 80.5 51 85"/>
+    <path d="M24 91 Q38 88.5 51 93"/>
+    <path d="M96 75 Q82 72.5 69 77"/>
+    <path d="M96 83 Q82 80.5 69 85"/>
+    <path d="M96 91 Q82 88.5 69 93"/>
+  </g>
+  <!-- كعب المصحف -->
+  <path d="M60 71 V107" stroke="url(#noorGold)" stroke-width="3" stroke-linecap="round"/>
+</svg>
