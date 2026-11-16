@@ -36,6 +36,8 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<PrayerDailyLog> PrayerDailyLogs => Set<PrayerDailyLog>();
     public DbSet<PrayerEntry> PrayerEntries => Set<PrayerEntry>();
     public DbSet<ParentHomeFeedback> ParentHomeFeedbacks => Set<ParentHomeFeedback>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<MonthlyParentReport> MonthlyParentReports => Set<MonthlyParentReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -447,5 +449,35 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasIndex(f => new { f.StudentId, f.WeekStartDate })
             .IsUnique()
             .HasDatabaseName("IX_ParentHome_Student_Week");
+        // ─── الإشعارات داخل التطبيق: القراءة دائماً بالمستخدم ثم الأحدث ───
+        modelBuilder.Entity<UserNotification>(e =>
+        {
+            e.Property(n => n.Kind).HasMaxLength(30);
+            e.Property(n => n.Title).HasMaxLength(150);
+            e.Property(n => n.Body).HasMaxLength(1000);
+            e.Property(n => n.Link).HasMaxLength(100);
+            e.HasIndex(n => new { n.UserId, n.IsRead, n.CreatedAt }).HasDatabaseName("IX_UserNotification_User_Read_Created");
+            e.HasOne(n => n.User).WithMany().HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── سجل التقارير الشهرية لأولياء الأمور: تقرير واحد تلقائي لكل طالب وشهر ───
+        modelBuilder.Entity<MonthlyParentReport>(e =>
+        {
+            e.Property(r => r.Phone).HasMaxLength(30);
+            e.Property(r => r.Status).HasMaxLength(20);
+            e.Property(r => r.Trigger).HasMaxLength(10);
+            e.Property(r => r.Content).HasMaxLength(4000);
+            e.HasIndex(r => new { r.StudentId, r.Year, r.Month }).HasDatabaseName("IX_MonthlyParentReport_Student_Month");
+            e.HasOne(r => r.Student).WithMany().HasForeignKey(r => r.StudentId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── المزامنة دون اتصال: معرّف العملية فريد عند وجوده ───
+        modelBuilder.Entity<HifzRecord>()
+            .Property(h => h.ClientRequestId).HasMaxLength(64);
+        modelBuilder.Entity<HifzRecord>()
+            .HasIndex(h => h.ClientRequestId)
+            .IsUnique()
+            .HasFilter("[ClientRequestId] IS NOT NULL")
+            .HasDatabaseName("IX_HifzRecord_ClientRequestId");
     }
 }

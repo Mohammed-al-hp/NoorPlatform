@@ -43,6 +43,13 @@ builder.Services.Configure<IISServerOptions>(options =>
 builder.Services.AddScoped<AccountProvisioningService>();
 builder.Services.AddScoped<StudentRestorationService>();
 builder.Services.AddScoped<MonthlyHifzRatingService>();
+builder.Services.AddScoped<ReviewScheduleService>();        // جدول المراجعة المتباعدة + الخريطة الحرارية
+builder.Services.AddScoped<InAppNotificationService>();     // مركز الإشعارات داخل التطبيق
+builder.Services.AddScoped<MonthlyParentReportService>();   // التقرير الشهري لولي الأمر
+builder.Services.AddSingleton<WhatsAppMessenger>();
+// الإرسال التلقائي للتقارير الشهرية (معطّل في الاختبارات أو بالإعداد MonthlyReports:AutoSend=false)
+if (!builder.Environment.IsEnvironment("Testing") && builder.Configuration.GetValue("MonthlyReports:AutoSend", true))
+    builder.Services.AddHostedService<MonthlyParentReportBackgroundService>();
 
 // رموز التحقق لاستعادة كلمة المرور — في الذاكرة فقط (بدون جداول إضافية)
 builder.Services.AddMemoryCache();

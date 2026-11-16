@@ -19,10 +19,12 @@ namespace NoorPlatform.Api.Controllers;
 public class AttendanceController : ControllerBase
 {
     private readonly NoorDbContext _context;
+    private readonly NoorPlatform.Api.Services.InAppNotificationService _notifications;
 
-    public AttendanceController(NoorDbContext context)
+    public AttendanceController(NoorDbContext context, NoorPlatform.Api.Services.InAppNotificationService notifications)
     {
         _context = context;
+        _notifications = notifications;
     }
 
     // GET /api/attendance/circle/{circleId}?date=2026-05-16
@@ -212,6 +214,8 @@ public class AttendanceController : ControllerBase
             return NotFound(new { message = "الطالب غير موجود" });
         var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
 
+        var becameAbsent = parsedStatus == AttendanceStatus.UnexcusedAbsence &&
+                           (record == null || record.Status != AttendanceStatus.UnexcusedAbsence);
         if (record != null)
         {
             record.Status = parsedStatus;
@@ -242,6 +246,8 @@ public class AttendanceController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+        if (becameAbsent)
+            await _notifications.NotifyAbsencesAsync(new[] { record.StudentId }, record.Date);
         return Ok(new
         {
             message = "تم تسجيل الحضور",
@@ -399,12 +405,15 @@ public class AttendanceController : ControllerBase
         var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
         var students = await _context.Students.Where(s => studentIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id);
 
+        var newlyAbsent = new List<int>();
         foreach (var record in parsedRecords)
         {
             var status = record.Status;
             var student = students[record.StudentId];
             var points = PointsLedger.ForAttendance(status, settings);
             var att = existing.FirstOrDefault(a => a.StudentId == record.StudentId);
+            if (status == AttendanceStatus.UnexcusedAbsence && att?.Status != AttendanceStatus.UnexcusedAbsence)
+                newlyAbsent.Add(record.StudentId);
             if (att != null)
             {
                 att.Status = status;
@@ -440,6 +449,7 @@ public class AttendanceController : ControllerBase
         });
 
         await _context.SaveChangesAsync();
+        await _notifications.NotifyAbsencesAsync(newlyAbsent, targetDate);
 
         var resultMessage = invalid > 0
             ? $"تم حفظ {parsedRecords.Count} سجل حضور، وتم تجاهل {invalid} سجل بحالة غير صالحة"

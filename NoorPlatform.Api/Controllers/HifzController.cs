@@ -17,11 +17,60 @@ public class HifzController : ControllerBase
 {
     private readonly NoorDbContext _context;
     private readonly MonthlyHifzRatingService _monthlyRating;
+    private readonly ReviewScheduleService _reviews;
+    private readonly InAppNotificationService _notifications;
 
-    public HifzController(NoorDbContext context, MonthlyHifzRatingService monthlyRating)
+    public HifzController(NoorDbContext context, MonthlyHifzRatingService monthlyRating,
+        ReviewScheduleService reviews, InAppNotificationService notifications)
     {
         _context = context;
         _monthlyRating = monthlyRating;
+        _reviews = reviews;
+        _notifications = notifications;
+    }
+
+    // ─── جدول المراجعة المتباعدة والخريطة الحرارية ───
+
+    // GET /api/hifz/review-schedule/my — السور التي حان وقت مراجعتها للطالب الحالي
+    [HttpGet("review-schedule/my")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> GetMyReviewSchedule([FromQuery] int max = 10)
+    {
+        var studentId = await CurrentStudentIdAsync();
+        if (studentId == null) return NotFound(new { message = "لم يُعثر على بيانات الطالب" });
+        return Ok(await _reviews.GetScheduleAsync(studentId.Value, max));
+    }
+
+    // GET /api/hifz/review-schedule/{studentId}
+    [HttpGet("review-schedule/{studentId:int}")]
+    public async Task<IActionResult> GetReviewSchedule(int studentId, [FromQuery] int max = 10)
+    {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId)) return Forbid();
+        return Ok(await _reviews.GetScheduleAsync(studentId, max));
+    }
+
+    // GET /api/hifz/heatmap/my
+    [HttpGet("heatmap/my")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> GetMyHeatmap()
+    {
+        var studentId = await CurrentStudentIdAsync();
+        if (studentId == null) return NotFound(new { message = "لم يُعثر على بيانات الطالب" });
+        return Ok(await _reviews.GetHeatmapAsync(studentId.Value));
+    }
+
+    // GET /api/hifz/heatmap/{studentId}
+    [HttpGet("heatmap/{studentId:int}")]
+    public async Task<IActionResult> GetHeatmap(int studentId)
+    {
+        if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, studentId)) return Forbid();
+        return Ok(await _reviews.GetHeatmapAsync(studentId));
+    }
+
+    private async Task<int?> CurrentStudentIdAsync()
+    {
+        var userId = AuthorizationHelpers.GetUserId(User);
+        return await _context.Students.Where(s => s.UserId == userId).Select(s => (int?)s.Id).FirstOrDefaultAsync();
     }
 
     // GET /api/hifz/monthly-rating/my?year=&month= — تقييم الطالب الشهري بحسب جلسات الحفظ الجديد الناجحة
@@ -365,7 +414,28 @@ public class HifzController : ControllerBase
         if (validationError != null)
             return BadRequest(new { message = validationError });
 
-        var record = new HifzRecord { StudentId = request.StudentId };
+        // إعادة إرسال من طابور العمل دون اتصال: نفس المعرّف = نفس الجلسة، فلا تُكرَّر ولا تُضاعف النقاط
+        var clientRequestId = string.IsNullOrWhiteSpace(request.ClientRequestId) ? null : request.ClientRequestId.Trim();
+        if (clientRequestId is { Length: > 64 })
+            return BadRequest(new { message = "معرّف العملية غير صالح" });
+        if (clientRequestId != null)
+        {
+            var existing = await _context.HifzRecords.AsNoTracking()
+                .FirstOrDefaultAsync(r => r.ClientRequestId == clientRequestId);
+            if (existing != null)
+            {
+                if (existing.StudentId != request.StudentId)
+                    return Conflict(new { message = "معرّف العملية مستخدم لطالب آخر" });
+                return Ok(new
+                {
+                    message = "الجلسة محفوظة مسبقاً",
+                    existing.Id, existing.StudentId, existing.SurahName, existing.Verses, existing.VerseCount,
+                    Type = existing.Type.ToString(), existing.Evaluation, existing.Date, duplicate = true
+                });
+            }
+        }
+
+        var record = new HifzRecord { StudentId = request.StudentId, ClientRequestId = clientRequestId };
         ApplyRequest(record, request, recordType);
         record.Date = request.Date ?? DateTime.UtcNow;
 
@@ -389,6 +459,16 @@ public class HifzController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+        if (student != null)
+        {
+            var kind = recordType == RecordType.Revision ? "مراجعة" : "تسميع";
+            var range = string.IsNullOrEmpty(record.Verses) ? "" : $" ({record.Verses})";
+            await _notifications.NotifyStudentAndGuardianAsync(student.Id, NotificationKinds.Hifz,
+                $"جلسة {kind} جديدة",
+                $"{student.User.FullName}: {kind} سورة {record.SurahName}{range} — التقييم: {record.Evaluation}",
+                "memorization");
+        }
 
         return Ok(new
         {
@@ -529,4 +609,6 @@ public class AddHifzRecordRequest
     public string Evaluation { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public DateTime? Date { get; set; }
+    /// <summary>معرّف يولّده العميل (تطبيق المحفّظ دون اتصال) لمنع تكرار الجلسة عند إعادة الإرسال.</summary>
+    public string? ClientRequestId { get; set; }
 }

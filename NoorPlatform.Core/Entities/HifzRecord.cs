@@ -32,6 +32,9 @@ public class HifzRecord
     /// <summary>النقاط الممنوحة فعلياً لهذه الجلسة — تُسحب عند الحذف وتُعاد حسابها عند التعديل.</summary>
     public int PointsAwarded { get; set; }
 
+    /// <summary>معرّف العملية من العميل (المزامنة دون اتصال) — فريد عند وجوده لمنع تكرار الجلسة.</summary>
+    public string? ClientRequestId { get; set; }
+
     // Helper: يحسب VerseCount من نص مثل "1-10" أو "5" أو "كاملة"
     public static int ParseVerseCount(string verses)
     {

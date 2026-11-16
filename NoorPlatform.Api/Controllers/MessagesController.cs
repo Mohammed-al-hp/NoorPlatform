@@ -13,10 +13,12 @@ namespace NoorPlatform.Api.Controllers;
 public class MessagesController : ControllerBase
 {
     private readonly NoorDbContext _context;
+    private readonly NoorPlatform.Api.Services.InAppNotificationService _notifications;
 
-    public MessagesController(NoorDbContext context)
+    public MessagesController(NoorDbContext context, NoorPlatform.Api.Services.InAppNotificationService notifications)
     {
         _context = context;
+        _notifications = notifications;
     }
 
     // POST /api/messages — إرسال رسالة (ولي الأمر فقط حاليًا)
@@ -79,6 +81,15 @@ public class MessagesController : ControllerBase
 
         _context.Messages.Add(message);
         await _context.SaveChangesAsync();
+
+        // إشعار المستلم: المحفّظ المحدد أو جميع المشرفين
+        var recipients = recipientTeacher != null
+            ? new List<int> { recipientTeacher.UserId }
+            : await _context.Users.AsNoTracking()
+                .Where(u => u.Role == UserRole.Admin && u.IsActive).Select(u => u.Id).ToListAsync();
+        var senderName = await _context.Users.Where(u => u.Id == userId).Select(u => u.FullName).FirstOrDefaultAsync() ?? "ولي أمر";
+        await _notifications.NotifyUsersAsync(recipients, NoorPlatform.Api.Services.NotificationKinds.Message,
+            $"رسالة جديدة من {senderName}", message.Content, "messages");
 
         return Ok(new { message = "تم إرسال الرسالة بنجاح", messageId = message.Id });
     }
@@ -218,6 +229,9 @@ public class MessagesController : ControllerBase
         });
         original.IsRead = true;
         await _context.SaveChangesAsync();
+        await _notifications.NotifyUsersAsync(new[] { original.SenderUserId },
+            NoorPlatform.Api.Services.NotificationKinds.MessageReply,
+            "رد جديد على رسالتك", request.Content.Trim(), "messages");
         return Ok(new { message = "تم إرسال الرد إلى ولي الأمر" });
     }
 

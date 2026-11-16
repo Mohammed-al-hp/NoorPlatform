@@ -14,10 +14,12 @@ namespace NoorPlatform.Api.Controllers;
 public class AnnouncementsController : ControllerBase
 {
     private readonly NoorDbContext _context;
+    private readonly NoorPlatform.Api.Services.InAppNotificationService _notifications;
 
-    public AnnouncementsController(NoorDbContext context)
+    public AnnouncementsController(NoorDbContext context, NoorPlatform.Api.Services.InAppNotificationService notifications)
     {
         _context = context;
+        _notifications = notifications;
     }
 
     // GET /api/announcements
@@ -118,6 +120,7 @@ public class AnnouncementsController : ControllerBase
 
         _context.Announcements.Add(announcement);
         await _context.SaveChangesAsync();
+        await _notifications.NotifyAnnouncementAsync(announcement);
 
         return Ok(new
         {
