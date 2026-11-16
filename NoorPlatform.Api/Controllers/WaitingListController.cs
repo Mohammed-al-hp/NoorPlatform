@@ -27,7 +27,7 @@ public class WaitingListController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? status)
     {
-        var query = _context.WaitingListEntries.AsQueryable();
+        var query = _context.WaitingListEntries.AsNoTracking().Include(e => e.PreferredCircle).AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<WaitingListStatus>(status, true, out var st))
             query = query.Where(e => e.Status == st);
@@ -47,7 +47,7 @@ public class WaitingListController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var entry = await _context.WaitingListEntries.FindAsync(id);
+        var entry = await _context.WaitingListEntries.Include(e => e.PreferredCircle).FirstOrDefaultAsync(e => e.Id == id);
         if (entry == null)
             return NotFound(new { message = "السجل غير موجود" });
 
@@ -77,6 +77,14 @@ public class WaitingListController : ControllerBase
                 return BadRequest(new { message = "يوجد حساب مسجل بهذا الرقم" });
         }
 
+        Circle? preferredCircle = null;
+        if (request.PreferredCircleId is > 0)
+        {
+            preferredCircle = await _context.Circles.FirstOrDefaultAsync(c => c.Id == request.PreferredCircleId.Value);
+            if (preferredCircle == null)
+                return BadRequest(new { message = "الحلقة المختارة غير موجودة" });
+        }
+
         var entry = new WaitingListEntry
         {
             FullName = request.FullName.Trim(),
@@ -86,6 +94,8 @@ public class WaitingListController : ControllerBase
             Age = request.Age,
             RequestedLevel = request.RequestedLevel ?? "مبتدئ",
             PreferredTime = request.PreferredTime?.Trim() ?? string.Empty,
+            PreferredCircleId = preferredCircle?.Id,
+            PreferredCircle = preferredCircle,
             Notes = request.Notes?.Trim() ?? string.Empty,
             Status = WaitingListStatus.Pending,
             RegistrationDate = DateTime.UtcNow,
@@ -102,7 +112,7 @@ public class WaitingListController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpsertWaitingListRequest request)
     {
-        var entry = await _context.WaitingListEntries.FindAsync(id);
+        var entry = await _context.WaitingListEntries.Include(e => e.PreferredCircle).FirstOrDefaultAsync(e => e.Id == id);
         if (entry == null)
             return NotFound(new { message = "السجل غير موجود" });
 
@@ -134,6 +144,22 @@ public class WaitingListController : ControllerBase
             entry.PreferredTime = request.PreferredTime.Trim();
         if (request.Notes != null)
             entry.Notes = request.Notes.Trim();
+        if (request.PreferredCircleId.HasValue)
+        {
+            if (request.PreferredCircleId.Value <= 0)
+            {
+                entry.PreferredCircleId = null;
+                entry.PreferredCircle = null;
+            }
+            else
+            {
+                var circle = await _context.Circles.FirstOrDefaultAsync(c => c.Id == request.PreferredCircleId.Value);
+                if (circle == null)
+                    return BadRequest(new { message = "الحلقة المختارة غير موجودة" });
+                entry.PreferredCircleId = circle.Id;
+                entry.PreferredCircle = circle;
+            }
+        }
         if (!string.IsNullOrEmpty(request.Status) &&
             Enum.TryParse<WaitingListStatus>(request.Status, true, out var status))
             entry.Status = status;
@@ -148,7 +174,7 @@ public class WaitingListController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var entry = await _context.WaitingListEntries.FindAsync(id);
+        var entry = await _context.WaitingListEntries.Include(e => e.PreferredCircle).FirstOrDefaultAsync(e => e.Id == id);
         if (entry == null)
             return NotFound(new { message = "السجل غير موجود" });
 
@@ -164,7 +190,7 @@ public class WaitingListController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ConvertToStudent(int id, [FromBody] ConvertWaitingListRequest request)
     {
-        var entry = await _context.WaitingListEntries.FindAsync(id);
+        var entry = await _context.WaitingListEntries.Include(e => e.PreferredCircle).FirstOrDefaultAsync(e => e.Id == id);
         if (entry == null)
             return NotFound(new { message = "السجل غير موجود" });
 
@@ -393,6 +419,8 @@ public class WaitingListController : ControllerBase
         e.Age,
         e.RequestedLevel,
         e.PreferredTime,
+        e.PreferredCircleId,
+        PreferredCircleName = e.PreferredCircle != null ? e.PreferredCircle.Name : null,
         e.Notes,
         Status = e.Status.ToString(),
         e.RegistrationDate,
@@ -414,6 +442,8 @@ public class UpsertWaitingListRequest
     public int? Age { get; set; }
     public string? RequestedLevel { get; set; }
     public string? PreferredTime { get; set; }
+    /// <summary>الحلقة المفضلة (اختيارية). 0 في التعديل = إزالة الاختيار.</summary>
+    public int? PreferredCircleId { get; set; }
     public string? Notes { get; set; }
     public string? Status { get; set; }
 }

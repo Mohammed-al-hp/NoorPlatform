@@ -11,6 +11,9 @@ public class WaitingListEntry
     public int? Age { get; set; }
     public string RequestedLevel { get; set; } = "مبتدئ";
     public string PreferredTime { get; set; } = string.Empty;
+    /// <summary>الحلقة المفضلة/المطلوبة — اختيارية.</summary>
+    public int? PreferredCircleId { get; set; }
+    public Circle? PreferredCircle { get; set; }
     public string Notes { get; set; } = string.Empty;
     public WaitingListStatus Status { get; set; } = WaitingListStatus.Pending;
     public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;

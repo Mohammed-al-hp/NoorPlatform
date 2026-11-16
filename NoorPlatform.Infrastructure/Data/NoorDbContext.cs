@@ -34,6 +34,7 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<StudentPeriodEvaluation> StudentPeriodEvaluations => Set<StudentPeriodEvaluation>();
     public DbSet<DressRecord> DressRecords => Set<DressRecord>();
     public DbSet<PrayerDailyLog> PrayerDailyLogs => Set<PrayerDailyLog>();
+    public DbSet<PrayerEntry> PrayerEntries => Set<PrayerEntry>();
     public DbSet<ParentHomeFeedback> ParentHomeFeedbacks => Set<ParentHomeFeedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -402,6 +403,28 @@ public class NoorDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             .HasIndex(p => new { p.StudentId, p.Date })
             .IsUnique()
             .HasDatabaseName("IX_Prayer_Student_Date");
+
+        modelBuilder.Entity<PrayerEntry>()
+            .HasOne(e => e.PrayerDailyLog)
+            .WithMany(l => l.Entries)
+            .HasForeignKey(e => e.PrayerDailyLogId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // سجل واحد لكل صلاة في يوم الطالب
+        modelBuilder.Entity<PrayerEntry>()
+            .HasIndex(e => new { e.PrayerDailyLogId, e.Prayer })
+            .IsUnique()
+            .HasDatabaseName("IX_PrayerEntry_Log_Prayer");
+
+        modelBuilder.Entity<WaitingListEntry>()
+            .HasOne(e => e.PreferredCircle)
+            .WithMany()
+            .HasForeignKey(e => e.PreferredCircleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<PlatformSettings>()
+            .Property(s => s.OtpChannel)
+            .HasMaxLength(16);
 
         modelBuilder.Entity<ParentHomeFeedback>()
             .HasOne(f => f.Student)

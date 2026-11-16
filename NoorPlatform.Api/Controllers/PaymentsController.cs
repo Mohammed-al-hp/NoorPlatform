@@ -1,3 +1,4 @@
+using NoorPlatform.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace NoorPlatform.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[RequireAdminPermission(AdminPermission.ManageFinance)]
 public class PaymentsController : ControllerBase
 {
     private readonly NoorDbContext _context;

@@ -176,6 +176,7 @@ public class TeachersController : ControllerBase
     // DELETE /api/teachers/{id}
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
+    [RequireAdminPermission(AdminPermission.DeleteRecords)]
     public async Task<IActionResult> Delete(int id)
     {
         var teacher = await _context.Teachers

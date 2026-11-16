@@ -74,5 +74,13 @@ public class PlatformSettings
     /// <summary>قيم التقييم (Evaluation) التي تُعدّ الجلسة بها ناجحة — مفصولة بفواصل.</summary>
     public string HifzRatingPassingEvaluations { get; set; } = "ممتاز,جيد جداً,جيد,ضعيف";
 
+    // ─── قناة إرسال رمز التحقق (OTP) ───
+    /// <summary>القناة المفعّلة: WhatsApp أو Sms أو Both (يختار المستخدم عند الطلب).</summary>
+    public string OtpChannel { get; set; } = "WhatsApp";
+
+    // ─── التذكيرات ───
+    /// <summary>تفعيل تذكير الطالب بالورد اليومي وأوقات الصلاة.</summary>
+    public bool StudentRemindersEnabled { get; set; } = true;
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

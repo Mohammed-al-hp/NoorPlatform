@@ -626,10 +626,10 @@ public class PedagogicalController : ControllerBase
         // Prayer advisory: مسجد + وقت + عدد
         var prayerLogs = await _context.PrayerDailyLogs.AsNoTracking()
             .Where(p => p.StudentId == studentId && p.Date >= start && p.Date < endExclusive)
-            .Select(p => new { p.PrayedInMosque, p.OnTime, p.MosquePrayerCount })
+            .Select(p => new { p.PrayedInMosque, p.OnTime, p.MosquePrayerCount, p.PrayedCount, p.OnTimeCount })
             .ToListAsync();
-        double? prayerAdvisory = PedagogicalGrading.PrayerAdvisoryFromLogs(
-            prayerLogs.Select(p => (p.PrayedInMosque, p.OnTime, p.MosquePrayerCount)));
+        double? prayerAdvisory = PedagogicalGrading.PrayerAdvisoryFromDetailedLogs(
+            prayerLogs.Select(p => (p.PrayedInMosque, p.OnTime, p.MosquePrayerCount, p.PrayedCount, p.OnTimeCount)));
 
         // Parent home advisory
         var homeRatings = await _context.ParentHomeFeedbacks.AsNoTracking()
@@ -879,6 +879,44 @@ public class PedagogicalController : ControllerBase
     // الصلاة
     // ════════════════════════════════════════════════════════
 
+    /// <summary>مواقيت الأذان في مصراتة ليوم معيّن (افتراضياً اليوم بتوقيت ليبيا) وما دخل وقته منها.</summary>
+    [HttpGet("prayer-times")]
+    public IActionResult GetPrayerTimes([FromQuery] string? date)
+    {
+        var now = LibyaTime.Now;
+        var day = LibyaTime.Today;
+        if (!string.IsNullOrWhiteSpace(date))
+        {
+            if (!DateOnly.TryParse(date, out var parsed))
+                return BadRequest(new { message = "صيغة التاريخ يجب أن تكون yyyy-MM-dd" });
+            day = parsed.ToDateTime(TimeOnly.MinValue);
+        }
+
+        var times = PrayerTimes.ForDate(day);
+        var prayers = times.Select(t => new
+        {
+            prayer = t.Key.ToString(),
+            name = PrayerTimes.ArabicNames[t.Key],
+            time = t.Value.ToString("HH:mm"),
+            started = PrayerTimes.HasStarted(t.Key, day, now)
+        }).ToList();
+        var next = times.Where(t => t.Value > now).OrderBy(t => t.Value).Select(t => new
+        {
+            prayer = t.Key.ToString(),
+            name = PrayerTimes.ArabicNames[t.Key],
+            time = t.Value.ToString("HH:mm")
+        }).FirstOrDefault();
+
+        return Ok(new
+        {
+            city = "مصراتة",
+            date = day.ToString("yyyy-MM-dd"),
+            now = now.ToString("yyyy-MM-ddTHH:mm:ss"),
+            prayers,
+            next
+        });
+    }
+
     [HttpGet("prayer/my")]
     [Authorize(Roles = "Student")]
     public async Task<IActionResult> GetMyPrayerLogs()
@@ -898,6 +936,7 @@ public class PedagogicalController : ControllerBase
         var logs = await _context.PrayerDailyLogs.AsNoTracking()
             .Where(p => p.StudentId == studentId.Value)
             .OrderByDescending(p => p.Date)
+            .Take(120)
             .Select(p => new
             {
                 p.Id,
@@ -905,16 +944,29 @@ public class PedagogicalController : ControllerBase
                 p.PrayedInMosque,
                 p.OnTime,
                 p.MosquePrayerCount,
+                p.PrayedCount,
+                p.OnTimeCount,
                 p.IsLocked,
                 p.StudentNote,
                 p.SheikhOverrideNote,
-                p.SubmittedAt
+                p.SubmittedAt,
+                Entries = p.Entries.OrderBy(e => e.Prayer).Select(e => new
+                {
+                    Prayer = e.Prayer.ToString(),
+                    e.Prayed,
+                    e.InMosque,
+                    e.OnTime
+                }).ToList()
             })
             .ToListAsync();
 
         return Ok(logs);
     }
 
+    /// <summary>
+    /// يسجّل الطالب صلوات يومه صلاةً صلاة. كل صلاة تُقفل بعد تسجيلها، ويمكن إضافة الصلوات الباقية
+    /// لاحقاً بعد دخول وقتها. يرفض الخادم أي صلاة لم يدخل وقت أذانها في مصراتة لحظة التسجيل.
+    /// </summary>
     [HttpPost("prayer/my")]
     [Authorize(Roles = "Student")]
     public async Task<IActionResult> SubmitMyPrayerLog([FromBody] StudentPrayerLogRequest request)
@@ -934,42 +986,91 @@ public class PedagogicalController : ControllerBase
         if (!DateOnly.TryParse(request.Date, out var day))
             return BadRequest(new { message = "صيغة التاريخ يجب أن تكون yyyy-MM-dd" });
 
+        var now = LibyaTime.Now;
+        var libyaDay = day.ToDateTime(TimeOnly.MinValue);
+        if (libyaDay > now.Date)
+            return BadRequest(new { message = "لا يمكن تسجيل صلاة ليوم لم يأتِ بعد." });
+
+        if (request.Prayers == null || request.Prayers.Count == 0)
+            return BadRequest(new { message = "حدّد صلاة واحدة على الأقل من الصلوات الخمس." });
+
+        var parsed = new List<(PrayerName Prayer, PrayerItemRequest Item)>();
+        foreach (var item in request.Prayers)
+        {
+            if (!Enum.TryParse<PrayerName>(item.Prayer, true, out var prayer) || !Enum.IsDefined(prayer))
+                return BadRequest(new { message = "اسم الصلاة غير صالح." });
+            if (parsed.Any(p => p.Prayer == prayer))
+                return BadRequest(new { message = $"صلاة {PrayerTimes.ArabicNames[prayer]} مكررة في الطلب." });
+            parsed.Add((prayer, item));
+        }
+
+        // ─── التحقق الصارم من دخول وقت الأذان في مصراتة ───
+        var times = PrayerTimes.ForDate(libyaDay);
+        var notYet = parsed.Where(p => !PrayerTimes.HasStarted(p.Prayer, libyaDay, now)).OrderBy(p => p.Prayer).ToList();
+        if (notYet.Count > 0)
+        {
+            var first = notYet[0].Prayer;
+            var names = string.Join("، ", notYet.Select(p => PrayerTimes.ArabicNames[p.Prayer]));
+            return BadRequest(new
+            {
+                code = "PRAYER_NOT_YET_DUE",
+                message = $"لا يمكن تسجيل صلاة لم يحن وقتها بعد ({names}). يؤذَّن لصلاة {PrayerTimes.ArabicNames[first]} الساعة {times[first]:HH:mm} بتوقيت مصراتة."
+            });
+        }
+
         var dayStart = day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var dayEnd = dayStart.AddDays(1);
 
-        var existing = await _context.PrayerDailyLogs
+        var log = await _context.PrayerDailyLogs
+            .Include(p => p.Entries)
             .FirstOrDefaultAsync(p => p.StudentId == studentId.Value && p.Date >= dayStart && p.Date < dayEnd);
 
-        if (existing != null && existing.IsLocked)
+        if (log != null && log.Entries.Count == 0 && log.IsLocked)
             return BadRequest(new { message = "لا يمكن تعديل سجل الصلاة بعد الإرسال — تواصل مع الشيخ للتعديل" });
 
-        if (existing != null)
+        if (log == null)
         {
-            existing.PrayedInMosque = request.PrayedInMosque;
-            existing.OnTime = request.OnTime;
-            existing.MosquePrayerCount = request.MosquePrayerCount ?? existing.MosquePrayerCount;
-            existing.StudentNote = request.StudentNote;
-            existing.IsLocked = true;
-            existing.SubmittedAt = DateTime.UtcNow;
-        }
-        else
-        {
-            existing = new PrayerDailyLog
-            {
-                StudentId = studentId.Value,
-                Date = dayStart,
-                PrayedInMosque = request.PrayedInMosque,
-                OnTime = request.OnTime,
-                MosquePrayerCount = Math.Clamp(request.MosquePrayerCount ?? 0, 0, 5),
-                StudentNote = request.StudentNote,
-                IsLocked = true,
-                SubmittedAt = DateTime.UtcNow
-            };
-            _context.PrayerDailyLogs.Add(existing);
+            log = new PrayerDailyLog { StudentId = studentId.Value, Date = dayStart };
+            _context.PrayerDailyLogs.Add(log);
         }
 
+        var already = parsed.Where(p => log.Entries.Any(e => e.Prayer == p.Prayer)).ToList();
+        if (already.Count > 0)
+        {
+            var names = string.Join("، ", already.Select(p => PrayerTimes.ArabicNames[p.Prayer]));
+            return BadRequest(new { message = $"تم تسجيل صلاة {names} مسبقاً ولا يمكن تعديلها — تواصل مع الشيخ للتعديل." });
+        }
+
+        foreach (var (prayer, item) in parsed)
+        {
+            log.Entries.Add(new PrayerEntry
+            {
+                Prayer = prayer,
+                Prayed = item.Prayed,
+                // صلاة لم تُؤدَّ لا تكون في المسجد ولا في وقتها — منعاً للتناقض
+                InMosque = item.Prayed && item.InMosque,
+                OnTime = item.Prayed && item.OnTime,
+                RecordedAt = DateTime.UtcNow
+            });
+        }
+
+        log.RecalculateTotals();
+        if (!string.IsNullOrWhiteSpace(request.StudentNote))
+            log.StudentNote = request.StudentNote.Trim();
+        log.IsLocked = true;
+        log.SubmittedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
-        return Ok(new { message = "تم تسجيل الصلاة", id = existing.Id });
+        return Ok(new
+        {
+            message = parsed.Count == 1
+                ? $"تم تسجيل صلاة {PrayerTimes.ArabicNames[parsed[0].Prayer]}"
+                : $"تم تسجيل {parsed.Count} صلوات",
+            id = log.Id,
+            log.PrayedCount,
+            log.MosquePrayerCount,
+            log.OnTimeCount
+        });
     }
 
     [HttpPut("prayer/{id}/override")]
@@ -1024,12 +1125,21 @@ public class PedagogicalController : ControllerBase
                 p.PrayedInMosque,
                 p.OnTime,
                 p.MosquePrayerCount,
+                p.PrayedCount,
+                p.OnTimeCount,
                 p.IsLocked,
                 p.StudentNote,
                 p.SheikhOverrideNote,
                 p.OverriddenByUserId,
                 p.OverriddenAt,
-                p.SubmittedAt
+                p.SubmittedAt,
+                Entries = p.Entries.OrderBy(e => e.Prayer).Select(e => new
+                {
+                    Prayer = e.Prayer.ToString(),
+                    e.Prayed,
+                    e.InMosque,
+                    e.OnTime
+                }).ToList()
             })
             .ToListAsync();
 
@@ -1315,10 +1425,18 @@ public class DressRecordItem
 public class StudentPrayerLogRequest
 {
     public string Date { get; set; } = string.Empty;
-    public bool PrayedInMosque { get; set; }
-    public bool OnTime { get; set; }
-    public int? MosquePrayerCount { get; set; }
+    /// <summary>الصلوات المراد تسجيلها (واحدة أو أكثر) — كل صلاة باسمها.</summary>
+    public List<PrayerItemRequest>? Prayers { get; set; }
     public string? StudentNote { get; set; }
+}
+
+public class PrayerItemRequest
+{
+    /// <summary>Fajr | Dhuhr | Asr | Maghrib | Isha</summary>
+    public string Prayer { get; set; } = string.Empty;
+    public bool Prayed { get; set; }
+    public bool InMosque { get; set; }
+    public bool OnTime { get; set; }
 }
 
 public class OverridePrayerLogRequest

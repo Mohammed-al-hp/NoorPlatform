@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoorPlatform.Api.Security;
 using NoorPlatform.Api.Services;
 using NoorPlatform.Core.Entities;
 using NoorPlatform.Infrastructure.Data;
@@ -63,6 +64,8 @@ public class UsersController : ControllerBase
                 phone = AccountProvisioningService.ToDisplayPhone(u.UserName ?? ""),
                 u.Email,
                 role = u.Role.ToString(),
+                u.IsSuperAdmin,
+                adminPermissions = u.Role == UserRole.Admin ? AdminAccess.ToNames(u.IsSuperAdmin, u.AdminPermissions) : Array.Empty<string>(),
                 u.IsActive,
                 u.MustChangePassword,
                 u.LastLoginAt,
@@ -87,6 +90,8 @@ public class UsersController : ControllerBase
             phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? ""),
             user.Email,
             role = user.Role.ToString(),
+            user.IsSuperAdmin,
+            adminPermissions = user.Role == UserRole.Admin ? AdminAccess.ToNames(user.IsSuperAdmin, user.AdminPermissions) : Array.Empty<string>(),
             user.IsActive,
             user.MustChangePassword,
             user.LastLoginAt,
@@ -100,6 +105,9 @@ public class UsersController : ControllerBase
         var user = await _userManager.FindByIdAsync(id.ToString());
         if (user == null)
             return NotFound(new { message = "المستخدم غير موجود" });
+
+        var denied = await DenyIfAdminTargetAsync(user);
+        if (denied != null) return denied;
 
         if (!string.IsNullOrWhiteSpace(request.FullName))
             user.FullName = request.FullName.Trim();
@@ -210,9 +218,14 @@ public class UsersController : ControllerBase
         if (user == null)
             return NotFound(new { message = "المستخدم غير موجود" });
 
+        var denied = await DenyIfAdminTargetAsync(user);
+        if (denied != null) return denied;
+
         if (user.IsActive && user.Role == UserRole.Admin &&
     await _context.Users.CountAsync(u => u.Role == UserRole.Admin && u.IsActive) <= 1)
             return BadRequest(new { message = "لا يمكن تعطيل آخر مشرف نشط" });
+        if (user.IsActive && await IsLastActiveSuperAdminAsync(user))
+            return BadRequest(new { message = "لا يمكن تعطيل آخر مدير عام نشط" });
         user.IsActive = !user.IsActive;
 
         // إصلاح: إبطال JWT tokens النشطة فوراً عند تعطيل الحساب
@@ -224,11 +237,18 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequireAdminPermission(AdminPermission.DeleteRecords)]
     public async Task<IActionResult> Delete(int id)
     {
         var user = await _userManager.FindByIdAsync(id.ToString());
         if (user == null)
             return NotFound(new { message = "المستخدم غير موجود" });
+
+        var denied = await DenyIfAdminTargetAsync(user);
+        if (denied != null) return denied;
+
+        if (await IsLastActiveSuperAdminAsync(user))
+            return BadRequest(new { message = "لا يمكن حذف آخر مدير عام نشط" });
 
         if (user.Role == UserRole.Admin)
         {
@@ -254,6 +274,9 @@ public class UsersController : ControllerBase
         var user = await _userManager.FindByIdAsync(id.ToString());
         if (user == null)
             return NotFound(new { message = "المستخدم غير موجود" });
+
+        var denied = await DenyIfAdminTargetAsync(user);
+        if (denied != null) return denied;
 
         var tempPassword = AccountProvisioningService.GenerateSecurePassword();
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -289,8 +312,77 @@ public class UsersController : ControllerBase
         });
     }
 
-    // POST /api/users/admin — إنشاء مشرف جديد (Admin فقط، محمي بشكل صارم)
+    // ─── المدير العام والصلاحيات ───
+
+    /// <summary>المشرف العادي لا يدير حسابات المشرفين الآخرين (تعديل/تعطيل/حذف/إعادة تعيين) — للمدير العام فقط.</summary>
+    private async Task<IActionResult?> DenyIfAdminTargetAsync(User target)
+    {
+        if (target.Role != UserRole.Admin) return null;
+        var callerId = AuthorizationHelpers.GetUserId(User);
+        if (callerId == null) return Forbid();
+        if (callerId.Value == target.Id && Request.Method == HttpMethods.Put) return null; // تعديل بياناته الشخصية
+        if (await AdminAccess.IsSuperAdminAsync(_context, callerId.Value)) return null;
+        return StatusCode(StatusCodes.Status403Forbidden,
+            new { message = "إدارة حسابات المشرفين متاحة للمدير العام فقط" });
+    }
+
+    private async Task<bool> IsLastActiveSuperAdminAsync(User target) =>
+        target.Role == UserRole.Admin && target.IsSuperAdmin &&
+        await _context.Users.CountAsync(u => u.Role == UserRole.Admin && u.IsSuperAdmin && u.IsActive) <= 1;
+
+    // PUT /api/users/{id}/admin-access — تحديد مستوى المشرف وصلاحياته (المدير العام فقط)
+    [HttpPut("{id}/admin-access")]
+    [RequireSuperAdmin]
+    public async Task<IActionResult> UpdateAdminAccess(int id, [FromBody] UpdateAdminAccessRequest request)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user == null)
+            return NotFound(new { message = "المستخدم غير موجود" });
+        if (user.Role != UserRole.Admin)
+            return BadRequest(new { message = "الصلاحيات الإدارية تخص حسابات المشرفين فقط" });
+
+        if (request.IsSuperAdmin.HasValue && request.IsSuperAdmin.Value != user.IsSuperAdmin)
+        {
+            if (!request.IsSuperAdmin.Value && await IsLastActiveSuperAdminAsync(user))
+                return BadRequest(new { message = "يجب أن يبقى مدير عام واحد نشط على الأقل" });
+            user.IsSuperAdmin = request.IsSuperAdmin.Value;
+        }
+
+        if (request.Permissions != null)
+        {
+            var perms = AdminPermission.None;
+            foreach (var name in request.Permissions)
+            {
+                if (!Enum.TryParse<AdminPermission>(name, true, out var p) ||
+                    p is AdminPermission.None or AdminPermission.Default or AdminPermission.All)
+                    return BadRequest(new { message = "صلاحية غير معروفة" });
+                perms |= p;
+            }
+            user.AdminPermissions = perms;
+        }
+
+        await _userManager.UpdateAsync(user);
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "System",
+            Action = AuditAction.Update,
+            EntityName = nameof(Core.Entities.User),
+            EntityId = user.Id.ToString(),
+            NewValues = $"{{\"Event\":\"AdminAccessChanged\",\"IsSuperAdmin\":{user.IsSuperAdmin.ToString().ToLowerInvariant()},\"Permissions\":{(int)user.AdminPermissions}}}"
+        });
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "تم تحديث صلاحيات المشرف",
+            user.IsSuperAdmin,
+            adminPermissions = AdminAccess.ToNames(user.IsSuperAdmin, user.AdminPermissions)
+        });
+    }
+
+    // POST /api/users/admin — إنشاء مشرف جديد (المدير العام فقط)
     [HttpPost("admin")]
+    [RequireSuperAdmin]
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone))
@@ -301,6 +393,12 @@ public class UsersController : ControllerBase
 
         if (err != null)
             return BadRequest(new { message = err });
+
+        if (request.IsSuperAdmin)
+        {
+            user.IsSuperAdmin = true;
+            await _userManager.UpdateAsync(user);
+        }
 
         return Ok(new
         {
@@ -321,6 +419,15 @@ public class CreateAdminRequest
 {
     public string FullName { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    /// <summary>إنشاء الحساب كمدير عام مباشرة.</summary>
+    public bool IsSuperAdmin { get; set; }
+}
+
+public class UpdateAdminAccessRequest
+{
+    public bool? IsSuperAdmin { get; set; }
+    /// <summary>ManageFinance | DeleteRecords | ManageSettings</summary>
+    public List<string>? Permissions { get; set; }
 }
 public class UpdateUserRequest
 {

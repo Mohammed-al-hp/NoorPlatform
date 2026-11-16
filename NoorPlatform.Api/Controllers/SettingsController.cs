@@ -1,3 +1,5 @@
+using NoorPlatform.Api.Services;
+using NoorPlatform.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -104,11 +106,35 @@ public class SettingsController : ControllerBase
             settings.HifzRatingTargetAge5To7,
             settings.HifzRatingTargetAge8To10,
             settings.HifzRatingTargetAge11Plus,
-            settings.HifzRatingPassingEvaluations
+            settings.HifzRatingPassingEvaluations,
+            settings.OtpChannel,
+            settings.StudentRemindersEnabled
+        });
+    }
+
+    /// <summary>
+    /// إعدادات عامة غير حساسة: اسم المركز (للشريط الجانبي وشاشة الدخول)، قنوات رمز التحقق، وتفعيل التذكيرات.
+    /// متاحة دون تسجيل دخول لأن شاشة «نسيت كلمة المرور» تحتاج القنوات المتاحة.
+    /// </summary>
+    [HttpGet("public")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPublic()
+    {
+        var s = await _context.PlatformSettings.AsNoTracking()
+            .Select(x => new { x.CenterName, x.OtpChannel, x.StudentRemindersEnabled })
+            .FirstOrDefaultAsync();
+        var centerName = string.IsNullOrWhiteSpace(s?.CenterName) ? "مركز تحفيظ القرآن الكريم" : s!.CenterName;
+        return Ok(new
+        {
+            centerName,
+            tagline = "لإدارة مركز وحلقات تحفيظ القرآن الكريم",
+            otpChannels = OtpChannels.Available(s?.OtpChannel),
+            studentRemindersEnabled = s?.StudentRemindersEnabled ?? true
         });
     }
 
     [HttpPut]
+    [RequireAdminPermission(AdminPermission.ManageSettings)]
     public async Task<IActionResult> Update([FromBody] UpdateSettingsRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.CenterName))
@@ -185,6 +211,14 @@ public class SettingsController : ControllerBase
                 return BadRequest(new { message = "حدد تقييماً واحداً على الأقل يُعدّ ناجحاً" });
             settings.HifzRatingPassingEvaluations = passing;
         }
+        if (request.OtpChannel != null)
+        {
+            if (!OtpChannels.IsValidSetting(request.OtpChannel))
+                return BadRequest(new { message = "قناة رمز التحقق غير صالحة (واتساب، SMS، أو كلاهما)" });
+            settings.OtpChannel = request.OtpChannel;
+        }
+        if (request.StudentRemindersEnabled.HasValue)
+            settings.StudentRemindersEnabled = request.StudentRemindersEnabled.Value;
         settings.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -259,4 +293,7 @@ public class UpdateSettingsRequest
     public int? HifzRatingTargetAge8To10 { get; set; }
     public int? HifzRatingTargetAge11Plus { get; set; }
     public string? HifzRatingPassingEvaluations { get; set; }
+    /// <summary>WhatsApp | Sms | Both</summary>
+    public string? OtpChannel { get; set; }
+    public bool? StudentRemindersEnabled { get; set; }
 }

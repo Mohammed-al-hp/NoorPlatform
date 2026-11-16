@@ -70,16 +70,45 @@ public class AuthController : ControllerBase
         {
             token,
             mustChangePassword = user.MustChangePassword,
-            user = new
-            {
-                user.Id,
-                user.FullName,
-                phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? user.PhoneNumber ?? request.Phone),
-                user.Email,
-                role = user.Role.ToString()
-            }
+            user = BuildUserDto(user, request.Phone)
         });
     }
+
+    // GET /api/auth/me — بيانات المستخدم الحالي (المستوى الإداري والصلاحيات وتسمية الدور)
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> Me()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = userId == null ? null : await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return NotFound(new { message = "المستخدم غير موجود" });
+        return Ok(BuildUserDto(user, null));
+    }
+
+    /// <summary>تسمية الدور بالعربية للواجهات.</summary>
+    public static string RoleLabel(User user) => user.Role switch
+    {
+        UserRole.Admin => user.IsSuperAdmin ? "مدير عام" : "مشرف",
+        UserRole.Teacher => "محفّظ",
+        UserRole.Student => "طالب",
+        UserRole.Parent => "ولي أمر",
+        _ => ""
+    };
+
+    private static object BuildUserDto(User user, string? fallbackPhone) => new
+    {
+        user.Id,
+        user.FullName,
+        phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? user.PhoneNumber ?? fallbackPhone ?? ""),
+        user.Email,
+        role = user.Role.ToString(),
+        roleLabel = RoleLabel(user),
+        isSuperAdmin = user.Role == UserRole.Admin && user.IsSuperAdmin,
+        adminPermissions = user.Role == UserRole.Admin
+            ? NoorPlatform.Api.Security.AdminAccess.ToNames(user.IsSuperAdmin, user.AdminPermissions)
+            : Array.Empty<string>()
+    };
 
     // POST /api/auth/change-password — إجباري عند أول دخول
     [HttpPost("change-password")]
@@ -133,6 +162,10 @@ public class AuthController : ControllerBase
             return StatusCode(429, new { message = msg, retryAfterSeconds = issued.RetryAfterSeconds });
         }
 
+        var channelSetting = await _context.PlatformSettings.AsNoTracking()
+            .Select(s => s.OtpChannel).FirstOrDefaultAsync();
+        var channel = OtpChannels.Resolve(channelSetting, request.Channel);
+
         var user = await FindActiveUserByPhoneAsync(phone);
         if (user != null && !await IsArchivedStudentAsync(user))
         {
@@ -141,14 +174,17 @@ public class AuthController : ControllerBase
             // الإرسال في الخلفية حتى لا يكشف زمن الاستجابة وجود الحساب
             _ = Task.Run(async () =>
             {
-                if (!await _otpSender.SendAsync(phone, code))
-                    _logger.LogWarning("تعذر إرسال رمز التحقق للمستخدم {UserId}", userId);
+                if (!await _otpSender.SendAsync(phone, code, channel))
+                    _logger.LogWarning("تعذر إرسال رمز التحقق للمستخدم {UserId} عبر {Channel}", userId, channel);
             });
         }
 
         return Ok(new
         {
-            message = "إذا كان الرقم مسجلاً لدينا فستصلك رسالة واتساب برمز التحقق خلال لحظات.",
+            message = channel == OtpChannels.Sms
+                ? "إذا كان الرقم مسجلاً لدينا فستصلك رسالة نصية (SMS) برمز التحقق خلال لحظات."
+                : "إذا كان الرقم مسجلاً لدينا فستصلك رسالة واتساب برمز التحقق خلال لحظات.",
+            channel,
             expiresInSeconds = (int)OtpService.Lifetime.TotalSeconds,
             resendAfterSeconds = (int)OtpService.ResendCooldown.TotalSeconds
         });
@@ -304,6 +340,8 @@ public class ForgotPasswordRequest
 {
     [Required]
     public string Phone { get; set; } = string.Empty;
+    /// <summary>القناة المفضلة: WhatsApp أو Sms (تُحترم إن كانت مفعّلة في الإعدادات).</summary>
+    public string? Channel { get; set; }
 }
 
 public class VerifyOtpRequest

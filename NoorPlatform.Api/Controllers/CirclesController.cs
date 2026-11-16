@@ -1,3 +1,4 @@
+using NoorPlatform.Api.Security;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -248,6 +249,7 @@ public class CirclesController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
+    [RequireAdminPermission(AdminPermission.DeleteRecords)]
     public async Task<IActionResult> Delete(int id)
     {
         var circle = await _context.Circles

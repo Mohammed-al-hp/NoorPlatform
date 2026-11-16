@@ -149,6 +149,32 @@ double threshold6 = 0.375, double threshold4 = 0.25)
         return Math.Round(dayScores.Average(), 1);
     }
 
+    /// <summary>
+    /// مؤشر الصلاة (0–100) مع دعم النموذج التفصيلي لكل صلاة:
+    /// أداء الصلوات 40، صلاة الجماعة في المسجد 30، أداؤها في وقتها 30 (نسبةً إلى الخمس).
+    /// السجلات القديمة (PrayedCount = null) تُحسب بالمعادلة الإجمالية السابقة.
+    /// </summary>
+    public static double? PrayerAdvisoryFromDetailedLogs(
+        IEnumerable<(bool PrayedInMosque, bool OnTime, int MosquePrayerCount, int? PrayedCount, int? OnTimeCount)> logs)
+    {
+        var list = logs.ToList();
+        if (list.Count == 0) return null;
+
+        var dayScores = list.Select(p =>
+        {
+            if (p.PrayedCount is null)
+                return (p.PrayedInMosque ? 40.0 : 0) + (p.OnTime ? 30.0 : 0)
+                       + Math.Clamp(p.MosquePrayerCount, 0, 5) / 5.0 * 30.0;
+
+            var prayed = Math.Clamp(p.PrayedCount.Value, 0, 5) / 5.0 * 40.0;
+            var jamaah = Math.Clamp(p.MosquePrayerCount, 0, 5) / 5.0 * 30.0;
+            var timely = Math.Clamp(p.OnTimeCount ?? 0, 0, 5) / 5.0 * 30.0;
+            return prayed + jamaah + timely;
+        });
+
+        return Math.Round(dayScores.Average(), 1);
+    }
+
     /// <summary>متوسط موزون للأبعاد الأساسية (+ الاسترشادي اختيارياً).</summary>
     public static double ComputeWeightedOverall(
         IEnumerable<(double Score, double Weight)> coreDimensions,

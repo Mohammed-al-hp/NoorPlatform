@@ -3,13 +3,17 @@ using Microsoft.Extensions.Options;
 namespace NoorPlatform.Api.Services;
 
 /// <summary>
-/// قناة إرسال رمز التحقق (OTP) — واتساب حالياً، ويمكن استبدالها بـ SMS لاحقاً
-/// بتسجيل تطبيق آخر في Program.cs دون تعديل منطق OtpService.
+/// إرسال رمز التحقق (OTP). التطبيق المسجّل هو OtpDispatcher الذي يوجّه الرمز
+/// إلى واتساب أو SMS حسب إعداد النظام واختيار المستخدم.
 /// </summary>
 public interface IOtpSender
 {
     /// <param name="normalizedPhone">الرقم بصيغة التخزين 2189XXXXXXXX</param>
     Task<bool> SendAsync(string normalizedPhone, string code, CancellationToken ct = default);
+
+    /// <summary>الإرسال عبر قناة محددة (WhatsApp | Sms). التطبيقات البسيطة تتجاهل القناة.</summary>
+    Task<bool> SendAsync(string normalizedPhone, string code, string channel, CancellationToken ct = default) =>
+        SendAsync(normalizedPhone, code, ct);
 }
 
 /// <summary>إرسال رمز التحقق عبر WhatsApp Cloud API باستخدام WhatsAppSettings الموجودة.</summary>

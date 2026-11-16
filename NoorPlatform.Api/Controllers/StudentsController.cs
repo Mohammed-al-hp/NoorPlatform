@@ -54,8 +54,17 @@ public class StudentsController : ControllerBase
      + AttendanceScore.ExcusedWeight * s.Attendances.Count(a => a.Status == AttendanceStatus.ExcusedAbsence))
     / (double)s.Attendances.Count * 100)
                 : 0,
-            HifzRecordsList = s.HifzRecords.Select(r => new { r.Type, r.VerseCount, r.Verses })
-        }).ToListAsync();
+            s.DateOfBirth,
+            // أداء: جمع عدد الآيات في قاعدة البيانات بدل تحميل كل سجلات التسميع لكل طالب،
+            // ولا يُحمَّل نص الآيات إلا للسجلات القديمة التي لا تحمل VerseCount
+            MemorizedVerseSum = s.HifzRecords
+                .Where(r => r.Type == RecordType.Memorization && r.VerseCount > 0)
+                .Sum(r => (int?)r.VerseCount) ?? 0,
+            LegacyVerses = s.HifzRecords
+                .Where(r => r.Type == RecordType.Memorization && r.VerseCount <= 0)
+                .Select(r => r.Verses)
+                .ToList()
+        }).AsSplitQuery().ToListAsync();
 
         var result = rawResult.Select(s => new
         {
@@ -71,10 +80,9 @@ public class StudentsController : ControllerBase
             s.teacherName,
             s.Level,
             s.attendance,
+            dateOfBirth = s.DateOfBirth.HasValue ? s.DateOfBirth.Value.ToString("yyyy-MM-dd") : null,
             progress = Math.Min(100.0, Math.Round(
-                (double)s.HifzRecordsList
-                    .Where(r => r.Type == RecordType.Memorization)
-                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses)) / 6236.0 * 100, 1))
+                (double)(s.MemorizedVerseSum + s.LegacyVerses.Sum(HifzRecord.ParseVerseCount)) / 6236.0 * 100, 1))
         });
 
         return Ok(result);
@@ -137,7 +145,7 @@ public class StudentsController : ControllerBase
 
     // POST /api/students
     [HttpPost]
-    [Authorize(Roles = "Admin,Teacher")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
     {
         // ─── إصلاح: إن أُرسل ParentId جاهز، لا حاجة لبيانات ولي أمر جديد ───
@@ -420,7 +428,7 @@ public class StudentsController : ControllerBase
 
     // PUT /api/students/{id}
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Teacher")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentRequest request)
     {
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, id))
@@ -532,6 +540,7 @@ public class StudentsController : ControllerBase
     // DELETE /api/students/{id}
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
+    [RequireAdminPermission(AdminPermission.DeleteRecords)]
     public async Task<IActionResult> Delete(int id)
     {
         var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);

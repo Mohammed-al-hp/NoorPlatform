@@ -32,6 +32,21 @@ public static class DbInitializer
             await EnsureTestLoginAccountsAsync(userManager, roleManager);
         }
 
+        // قواعد موجودة قبل إضافة «المدير العام»: يُرقّى أقدم مشرف نشط ليبقى للنظام مدير عام واحد على الأقل
+        if (context.Users.Any(u => u.Role == UserRole.Admin) &&
+            !context.Users.Any(u => u.Role == UserRole.Admin && u.IsSuperAdmin && u.IsActive))
+        {
+            var firstAdmin = context.Users
+                .Where(u => u.Role == UserRole.Admin && u.IsActive)
+                .OrderBy(u => u.Id)
+                .FirstOrDefault();
+            if (firstAdmin != null)
+            {
+                firstAdmin.IsSuperAdmin = true;
+                await context.SaveChangesAsync();
+            }
+        }
+
         if (context.Users.Any()) return;
 
         if (isProduction)
@@ -44,6 +59,7 @@ public static class DbInitializer
                 PhoneNumber = Environment.GetEnvironmentVariable("NOOR_ADMIN_PHONE") ?? "218900000000",
                 FullName = "المشرف العام",
                 Role = UserRole.Admin,
+                IsSuperAdmin = true,
                 EmailConfirmed = true,
                 MustChangePassword = true,
                 IsActive = true
@@ -60,6 +76,7 @@ public static class DbInitializer
             PhoneNumber = "218912345678",
             FullName = "المشرف العام",
             Role = UserRole.Admin,
+            IsSuperAdmin = true,
             EmailConfirmed = true,
             MustChangePassword = false,
             IsActive = true

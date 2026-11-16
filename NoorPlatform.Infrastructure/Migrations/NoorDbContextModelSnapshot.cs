@@ -1012,6 +1012,11 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<double>("OralOpeningPenalty")
                         .HasColumnType("float");
 
+                    b.Property<string>("OtpChannel")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
                     b.Property<int>("PointsAttendancePresent")
                         .HasColumnType("int");
 
@@ -1035,6 +1040,9 @@ namespace NoorPlatform.Infrastructure.Migrations
 
                     b.Property<double>("ProgressThreshold9")
                         .HasColumnType("float");
+
+                    b.Property<bool>("StudentRemindersEnabled")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1094,10 +1102,16 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<bool>("OnTime")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("OnTimeCount")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("OverriddenAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("OverriddenByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PrayedCount")
                         .HasColumnType("int");
 
                     b.Property<bool>("PrayedInMosque")
@@ -1122,6 +1136,41 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .HasDatabaseName("IX_Prayer_Student_Date");
 
                     b.ToTable("PrayerDailyLogs");
+                });
+
+            modelBuilder.Entity("NoorPlatform.Core.Entities.PrayerEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("InMosque")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("OnTime")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("Prayed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Prayer")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PrayerDailyLogId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrayerDailyLogId", "Prayer")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PrayerEntry_Log_Prayer");
+
+                    b.ToTable("PrayerEntries");
                 });
 
             modelBuilder.Entity("NoorPlatform.Core.Entities.Student", b =>
@@ -1356,6 +1405,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<int>("AdminPermissions")
+                        .HasColumnType("int");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -1375,6 +1427,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSuperAdmin")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastLoginAt")
@@ -1471,6 +1526,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("PreferredCircleId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PreferredTime")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1492,6 +1550,8 @@ namespace NoorPlatform.Infrastructure.Migrations
 
                     b.HasIndex("Phone")
                         .HasDatabaseName("IX_WaitingList_Phone");
+
+                    b.HasIndex("PreferredCircleId");
 
                     b.HasIndex("RegistrationDate")
                         .HasDatabaseName("IX_WaitingList_RegistrationDate");
@@ -1817,6 +1877,17 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("NoorPlatform.Core.Entities.PrayerEntry", b =>
+                {
+                    b.HasOne("NoorPlatform.Core.Entities.PrayerDailyLog", "PrayerDailyLog")
+                        .WithMany("Entries")
+                        .HasForeignKey("PrayerDailyLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PrayerDailyLog");
+                });
+
             modelBuilder.Entity("NoorPlatform.Core.Entities.Student", b =>
                 {
                     b.HasOne("NoorPlatform.Core.Entities.Circle", "Circle")
@@ -1883,6 +1954,16 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NoorPlatform.Core.Entities.WaitingListEntry", b =>
+                {
+                    b.HasOne("NoorPlatform.Core.Entities.Circle", "PreferredCircle")
+                        .WithMany()
+                        .HasForeignKey("PreferredCircleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PreferredCircle");
+                });
+
             modelBuilder.Entity("NoorPlatform.Core.Entities.Circle", b =>
                 {
                     b.Navigation("Enrollments");
@@ -1903,6 +1984,11 @@ namespace NoorPlatform.Infrastructure.Migrations
             modelBuilder.Entity("NoorPlatform.Core.Entities.Parent", b =>
                 {
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("NoorPlatform.Core.Entities.PrayerDailyLog", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("NoorPlatform.Core.Entities.Student", b =>

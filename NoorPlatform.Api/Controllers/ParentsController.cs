@@ -1,3 +1,4 @@
+using NoorPlatform.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -232,6 +233,7 @@ public class ParentsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequireAdminPermission(AdminPermission.DeleteRecords)]
     public async Task<IActionResult> Delete(int id)
     {
         var parent = await _context.Parents

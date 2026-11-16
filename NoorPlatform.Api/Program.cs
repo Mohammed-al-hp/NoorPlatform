@@ -48,7 +48,11 @@ builder.Services.AddScoped<MonthlyHifzRatingService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<OtpService>();
-builder.Services.AddSingleton<IOtpSender, WhatsAppOtpSender>(); // للتبديل إلى SMS: سجّل تطبيقاً آخر لـ IOtpSender
+builder.Services.AddSingleton<WhatsAppOtpSender>();
+builder.Services.AddSingleton<SmsOtpSender>();
+builder.Services.AddSingleton<IOtpSender, OtpDispatcher>(); // واتساب أو SMS حسب «قناة التحقق» في الإعدادات
+builder.Services.Configure<SmsSettings>(builder.Configuration.GetSection(SmsSettings.SectionName));
+builder.Services.AddHttpClient("Sms", client => client.Timeout = TimeSpan.FromSeconds(10));
 
 // إعدادات واتساب — تُقرأ مرة واحدة عبر IOptions لتجنب تسرب التوكن في Memory traces
 builder.Services.Configure<NoorPlatform.Api.Services.WhatsAppSettings>(
@@ -58,6 +62,17 @@ builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.MimeTypes = Microsoft.AspNetCore.ResponseCompression.ResponseCompressionDefaults.MimeTypes
+        .Concat(new[] { "image/svg+xml", "application/manifest+json" });
+});
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(o =>
+    o.Level = System.IO.Compression.CompressionLevel.Fastest);
 builder.Services.AddSingleton<AuditInterceptor>();
 
 // قاعدة البيانات
@@ -211,6 +226,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// أداء: ضغط استجابات JSON والملفات الثابتة (index.html و app.css و JS) لتسريع فتح الصفحات خاصة على شبكات الجوال
+app.UseResponseCompression();
 
 // Seed
 using (var scope = app.Services.CreateScope())
