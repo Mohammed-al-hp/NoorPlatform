@@ -1,5 +1,5 @@
 // sw.js — Service Worker لمنصة نور (v10)
-const CACHE_NAME = 'noor-v18'; // v18: بطاقات الجوال، الصلاة التفصيلية، المدير العام، التذكيرات
+const CACHE_NAME = 'noor-v19'; // v18: بطاقات الجوال، الصلاة التفصيلية، المدير العام، التذكيرات
 const STATIC_ASSETS = ['/', '/landing.html', '/index.html', '/manifest.json', '/css/landing.css', '/css/fonts.css', '/img/logo-mark.svg', '/icon-192.png', '/icon-512.png', '/css/app.css', '/css/enhancements.css', '/css/responsive.css', '/js/asset-loader.js', '/js/app.js', '/js/utils.js', '/js/api.js', '/js/ui.js', '/js/app-ui-extensions.js', '/js/page-controller.js', '/js/attendance.js', '/js/parents.js', '/js/hifz.js', '/js/students.js', '/js/dashboard.js', '/js/payments.js', '/js/teachers.js', '/js/users.js', '/js/reports.js', '/js/modals.js', '/js/pedagogical.js', '/js/monthly-rating.js', '/js/list-tools.js', '/js/reminders.js', '/lib/html2pdf.bundle.min.js'];
 const FONT_CACHE = 'noor-fonts-v1';
 const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];

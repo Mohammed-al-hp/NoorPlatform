@@ -269,8 +269,6 @@
         if (!name) return;
         const side = document.getElementById('sidebarCenterName');
         if (side) side.textContent = name;
-        const login = document.getElementById('loginCenterName');
-        if (login) login.textContent = name;
     }
 
     /** إخفاء ما لا يملك المشرف صلاحيته (الخادم يرفضه أصلاً — هذا لتنظيف الواجهة). */
@@ -605,7 +603,7 @@
     global.NoorRoleLabel = roleLabelFor;
     global.NoorHasAdminPermission = hasAdminPermission;
     global.NoorSetCenterName = setCenterName;
-    // شاشة الدخول تعرض اسم المركز قبل تسجيل الدخول
+    // الإعدادات العامة (قنوات رمز التحقق) مطلوبة في شاشة الدخول؛ اسم المركز يظهر في الشريط الجانبي فقط بعد الدخول
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadCenterName);
     else loadCenterName();
     global.checkAuth = checkAuth;
