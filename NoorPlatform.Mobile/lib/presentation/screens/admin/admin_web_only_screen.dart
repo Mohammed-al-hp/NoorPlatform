@@ -1,3 +1,4 @@
+import '../../widgets/today_date_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -27,6 +28,7 @@ class AdminWebOnlyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      bottomNavigationBar: const SafeArea(top: false, child: TodayDateBar()),
       body: Container(
         decoration: const BoxDecoration(gradient: NoorTheme.darkGradient),
         child: SafeArea(

@@ -55,6 +55,7 @@ dependencies:
   file_picker: ^8.1.2
   flutter_localizations:
     sdk: flutter
+  hijri: ^3.0.1
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +69,8 @@ flutter:
 
   assets:
     - assets/images/
+    # نص قالون (مجمع الملك فهد، العدّ المدني) وفهرس صفحات مصحف أمانة التعليم — يعملان دون إنترنت
+    - assets/quran/
 
   # الخطوط مضمّنة محلياً (رخصة SIL OFL) — موحّدة مع منصة الويب
   fonts:
@@ -87,3 +90,7 @@ flutter:
           weight: 400
         - asset: assets/fonts/Amiri-Bold.ttf
           weight: 700
+    # خط مصحف المدينة برواية قالون (مجمع الملك فهد) — لازم لعرض علامات الضبط في نص قالون
+    - family: UthmanicQaloun
+      fonts:
+        - asset: assets/fonts/UthmanicQaloun.ttf

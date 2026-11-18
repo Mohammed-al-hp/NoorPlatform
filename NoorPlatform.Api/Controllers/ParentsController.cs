@@ -114,7 +114,6 @@ public class ParentsController : ControllerBase
             fullName = parent.User.FullName,
             phone = AccountProvisioningService.ToDisplayPhone(parent.Phone),
             accountPhone = AccountProvisioningService.ToDisplayPhone(parent.User.UserName ?? parent.Phone),
-            parent.User.Email,
             parent.User.IsActive,
             parent.User.MustChangePassword,
             children = parent.Children.Where(c => !c.IsDeleted).Select(c => new

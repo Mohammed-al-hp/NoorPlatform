@@ -64,6 +64,9 @@ class ApiConfig {
   // Messages
   static const String messages = '/api/messages';
   static const String messagesSent = '/api/messages/sent';
+  /// محادثات ولي الأمر: ما أرسله وما بدأه المحفّظ/الإدارة معه، مع كل الردود.
+  static const String messagesThreads = '/api/messages/threads';
+  static String messageParentReply(int id) => '/api/messages/$id/parent-reply';
   static const String messagesRecipients = '/api/messages/available-recipients';
 
   // Announcements
@@ -122,6 +125,9 @@ class ApiConfig {
   static String prayerOverride(int id) => '/api/pedagogical/prayer/$id/override';
   static const String messagesInbox = '/api/messages/inbox';
   static String messageRead(int id) => '/api/messages/$id/read';
+  static String messageReply(int id) => '/api/messages/$id/reply';
+  static const String messagesParentRecipients = '/api/messages/parent-recipients';
+  static const String messagesToParent = '/api/messages/to-parent';
   static const String libraryUpload = '/api/library/upload';
   static String libraryItem(int id) => '/api/library/$id';
 }

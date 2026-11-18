@@ -227,11 +227,39 @@
         }
     }
 
+    // نطاق المتصدرين للمحفّظ: «طلابي» افتراضياً، أو «المركز» (أول عشرة في المركز). الإدارة ترى المركز دائماً.
+    const LEADERBOARD_SCOPE_KEY = 'noor_leaderboard_scope';
+
+    function leaderboardScope() {
+        try { return localStorage.getItem(LEADERBOARD_SCOPE_KEY) === 'center' ? 'center' : 'mine'; }
+        catch (e) { return 'mine'; }
+    }
+
+    function setLeaderboardScope(scope) {
+        try { localStorage.setItem(LEADERBOARD_SCOPE_KEY, scope === 'center' ? 'center' : 'mine'); } catch (e) { /* تخزين غير متاح */ }
+        fetchLeaderboard();
+    }
+
     async function fetchLeaderboard() {
         const wrap = document.getElementById('leaderboardWrap');
         if (!wrap) return;
+        const isTeacher = app().state?.user?.role === 'Teacher';
+        const scope = isTeacher ? leaderboardScope() : 'center';
+        const scopeBox = document.getElementById('leaderboardScope');
+        if (scopeBox) {
+            scopeBox.style.display = isTeacher ? 'inline-flex' : 'none';
+            scopeBox.querySelectorAll('[data-scope]').forEach(b => {
+                const on = b.dataset.scope === scope;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+        }
+        const sub = document.getElementById('leaderboardSubtitle');
+        if (sub) sub.textContent = isTeacher && scope === 'mine'
+            ? 'أفضل عشرة من طلاب حلقاتك بمجموع النقاط'
+            : 'أفضل عشرة طلاب في المركز بمجموع النقاط';
         try {
-            const data = await apiFetch('/dashboard/leaderboard');
+            const data = await apiFetch('/dashboard/leaderboard?scope=' + scope);
             if (!data?.length) {
                 wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد طلاب لعرضهم</div>';
                 return;
@@ -240,9 +268,10 @@
                 const rankDisplay = s.rank <= 3
                     ? `<span class="rank-medal rank-${s.rank}">${icon('medal-gold', { size: 22 })}</span>`
                     : `<span style="font-weight:bold">#${s.rank}</span>`;
-                return `<div style="display:flex;align-items:center;gap:15px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px">
+                const mine = isTeacher && scope === 'center' && s.isMine;
+                return `<div style="display:flex;align-items:center;gap:15px;padding:12px;background:${mine ? 'var(--green-light)' : 'var(--card)'};border:1px solid var(--border);border-radius:12px">
                     <div style="width:40px;text-align:center">${rankDisplay}</div>
-                    <div style="flex:1"><div style="font-weight:700">${esc(s.fullName)}</div><div style="font-size:12px;color:var(--text-muted)">${esc(s.circleName)} • حضور: ${s.attendanceRate}%</div></div>
+                    <div style="flex:1"><div style="font-weight:700">${esc(s.fullName)}</div><div style="font-size:12px;color:var(--text-muted)">${esc(s.circleName)} • حضور: ${s.attendanceRate}%${mine ? ' • من طلابك' : ''}</div></div>
                     <div style="font-weight:800;color:var(--green)">${s.points} نقطة</div>
                 </div>`;
             }).join('');
@@ -287,15 +316,95 @@
     });
 
     startPolling();
+
+    /** رسالة ثابتة أعلى صفحة الإعدادات (نتيجة الحفظ أو تنبيه الصلاحية) — أوضح من Toast عابر. */
+    function setSettingsStatus(kind, msg) {
+        const box = document.getElementById('settingsStatus');
+        if (!box) return;
+        if (!msg) { box.style.display = 'none'; box.textContent = ''; return; }
+        box.className = 'settings-status settings-status-' + kind;
+        box.textContent = msg;
+        box.style.display = 'block';
+    }
+
+    function canEditSettings() {
+        return typeof global.NoorHasAdminPermission === 'function'
+            ? global.NoorHasAdminPermission('ManageSettings')
+            : true;
+    }
+
+    function applySettingsEditability(canEdit, reason) {
+        const btn = document.getElementById('btnSaveSettings');
+        if (btn) btn.disabled = !canEdit;
+        if (!canEdit) {
+            setSettingsStatus('warning', reason ||
+                'لديك صلاحية عرض إعدادات النظام فقط. لتعديلها اطلب من المدير العام منحك صلاحية «إعدادات النظام» من صفحة المشرفين والحسابات.');
+        }
+    }
+
+    function toPercent(v) {
+        if (v === undefined || v === null || v === '') return null;
+        return Math.round(Number(v) * 1000) / 10; // 0.625 → 62.5
+    }
+
+    function fromPercent(v) {
+        if (v === undefined || v === null || v === '') return null;
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? Math.round(n * 10) / 1000 : null; // 62.5 → 0.625
+    }
+
+    function intOrNull(id) {
+        const raw = document.getElementById(id)?.value?.trim();
+        if (raw === undefined || raw === '') return null;
+        const n = parseInt(raw, 10);
+        return Number.isFinite(n) ? n : null;
+    }
+
+    /** يخفّف عرض الإعدادات المرتبطة بعنصر تقييم معطّل (مثل نقاط المتون ووزن اللباس). */
+    function refreshDependentSettings() {
+        const map = { matn: 'settingsEnableMatn', dress: 'settingsEnableDress' };
+        document.querySelectorAll('#page-settings [data-requires]').forEach(el => {
+            const toggle = document.getElementById(map[el.dataset.requires]);
+            el.classList.toggle('is-disabled-element', !!toggle && !toggle.checked);
+        });
+    }
+
+    const SETTINGS_TAB_KEY = 'noor_settings_tab';
+
+    function showTab(name) {
+        const panels = document.querySelectorAll('#page-settings .settings-panel');
+        if (![...panels].some(p => p.dataset.settingsPanel === name)) name = 'center';
+        panels.forEach(p => p.classList.toggle('active', p.dataset.settingsPanel === name));
+        document.querySelectorAll('#page-settings .settings-nav-item').forEach(b => {
+            const on = b.dataset.settingsTab === name;
+            b.classList.toggle('active', on);
+            b.setAttribute('aria-current', on ? 'page' : 'false');
+        });
+        try { localStorage.setItem(SETTINGS_TAB_KEY, name); } catch (e) { /* تخزين غير متاح */ }
+    }
+
+    function initSettingsPage() {
+        const page = document.getElementById('page-settings');
+        if (!page || page.dataset.settingsInit) return;
+        page.dataset.settingsInit = '1';
+        ['settingsEnableMatn', 'settingsEnableDress'].forEach(id =>
+            document.getElementById(id)?.addEventListener('change', refreshDependentSettings));
+        let saved = 'center';
+        try { saved = localStorage.getItem(SETTINGS_TAB_KEY) || 'center'; } catch (e) { /* تخزين غير متاح */ }
+        showTab(saved);
+    }
+
     async function fetchSettings() {
+        initSettingsPage();
+        setSettingsStatus(null);
+        applySettingsEditability(canEditSettings());
         try {
             const data = await apiFetch('/settings');
-            
+
             // تعبئة البيانات في الحقول
             const fields = {
                 'settingsCenterName': data.centerName,
                 'settingsContactPhone': data.contactPhone,
-                'settingsEmail': data.email,
                 'settingsAddress': data.address,
                 'settingsWorkDays': data.workDays,
                 'settingsWorkStartTime': data.workStartTime,
@@ -307,11 +416,12 @@
                 'settingsOralAlert': data.oralAlertPenalty,
                 'settingsOralOpening': data.oralOpeningPenalty,
                 'settingsDefaultAthman': data.defaultMonthlyAthmanTarget,
-                'settingsPT10': data.progressThreshold10,
-                'settingsPT9': data.progressThreshold9,
-                'settingsPT8': data.progressThreshold8,
-                'settingsPT6': data.progressThreshold6,
-                'settingsPT4': data.progressThreshold4,
+                // النسب مخزنة كقيمة من 1 وتُعرض كنسبة مئوية
+                'settingsPT10': toPercent(data.progressThreshold10),
+                'settingsPT9': toPercent(data.progressThreshold9),
+                'settingsPT8': toPercent(data.progressThreshold8),
+                'settingsPT6': toPercent(data.progressThreshold6),
+                'settingsPT4': toPercent(data.progressThreshold4),
                 'settingsWAtt': data.weightAttendance,
                 'settingsWHifz': data.weightHifz,
                 'settingsWRev': data.weightRevision,
@@ -321,10 +431,18 @@
                 'settingsPointsAttendance': data.pointsAttendancePresent,
                 'settingsPointsHifzMemorization': data.pointsHifzMemorization,
                 'settingsPointsHifzRevision': data.pointsHifzRevision,
+                'settingsPointsLate': data.pointsAttendanceLate,
+                'settingsPointsExcused': data.pointsAttendanceExcused,
+                'settingsPointsUnexcused': data.pointsAttendanceUnexcused,
+                'settingsPointsMemVeryGood': data.pointsHifzMemVeryGood,
+                'settingsPointsMemGood': data.pointsHifzMemGood,
+                'settingsPointsRevVeryGood': data.pointsHifzRevVeryGood,
+                'settingsPointsRevGood': data.pointsHifzRevGood,
+                'settingsPointsRevAcceptable': data.pointsHifzRevAcceptable,
+                'settingsPointsMatn': data.pointsMatnMemorization,
                 'settingsHifzTarget5To7': data.hifzRatingTargetAge5To7,
                 'settingsHifzTarget8To10': data.hifzRatingTargetAge8To10,
-                'settingsHifzTarget11Plus': data.hifzRatingTargetAge11Plus,
-                'settingsHifzPassingEvals': data.hifzRatingPassingEvaluations
+                'settingsHifzTarget11Plus': data.hifzRatingTargetAge11Plus
             };
             
             for (const [id, value] of Object.entries(fields)) {
@@ -338,6 +456,18 @@
             if (otpSel) otpSel.value = data.otpChannel || 'WhatsApp';
             const remind = document.getElementById('settingsStudentReminders');
             if (remind) remind.checked = data.studentRemindersEnabled !== false;
+
+            const toggles = {
+                settingsEnableMatn: data.enableMatn,
+                settingsEnableDress: data.enableDress,
+                settingsEnablePrayer: data.enablePrayer,
+                settingsEnableParentHome: data.enableParentHome
+            };
+            for (const [id, value] of Object.entries(toggles)) {
+                const el = document.getElementById(id);
+                if (el) el.checked = value !== false;
+            }
+            refreshDependentSettings();
 
             const vis = document.getElementById('settingsEvalsVisible');
             if (vis && data.evaluationsVisibleToStudentsAndParents !== undefined) {
@@ -397,7 +527,6 @@
         const payload = {
             centerName: getVal('settingsCenterName'),
             contactPhone: getVal('settingsContactPhone'),
-            email: getVal('settingsEmail'),
             address: getVal('settingsAddress'),
             workDays: getVal('settingsWorkDays'),
             workStartTime: getVal('settingsWorkStartTime'),
@@ -409,11 +538,11 @@
             oralAlertPenalty: getVal('settingsOralAlert') ? parseFloat(getVal('settingsOralAlert')) : null,
             oralOpeningPenalty: getVal('settingsOralOpening') ? parseFloat(getVal('settingsOralOpening')) : null,
             defaultMonthlyAthmanTarget: getVal('settingsDefaultAthman') ? parseInt(getVal('settingsDefaultAthman'), 10) : null,
-            progressThreshold10: getVal('settingsPT10') ? parseFloat(getVal('settingsPT10')) : null,
-            progressThreshold9: getVal('settingsPT9') ? parseFloat(getVal('settingsPT9')) : null,
-            progressThreshold8: getVal('settingsPT8') ? parseFloat(getVal('settingsPT8')) : null,
-            progressThreshold6: getVal('settingsPT6') ? parseFloat(getVal('settingsPT6')) : null,
-            progressThreshold4: getVal('settingsPT4') ? parseFloat(getVal('settingsPT4')) : null,
+            progressThreshold10: fromPercent(getVal('settingsPT10')),
+            progressThreshold9: fromPercent(getVal('settingsPT9')),
+            progressThreshold8: fromPercent(getVal('settingsPT8')),
+            progressThreshold6: fromPercent(getVal('settingsPT6')),
+            progressThreshold4: fromPercent(getVal('settingsPT4')),
             weightAttendance: getVal('settingsWAtt') ? parseFloat(getVal('settingsWAtt')) : null,
             weightHifz: getVal('settingsWHifz') ? parseFloat(getVal('settingsWHifz')) : null,
             weightRevision: getVal('settingsWRev') ? parseFloat(getVal('settingsWRev')) : null,
@@ -421,19 +550,39 @@
             weightMatn: getVal('settingsWMatn') ? parseFloat(getVal('settingsWMatn')) : null,
             weightDress: getVal('settingsWDress') ? parseFloat(getVal('settingsWDress')) : null,
             evaluationsVisibleToStudentsAndParents: !!document.getElementById('settingsEvalsVisible')?.checked,
-            pointsAttendancePresent: getVal('settingsPointsAttendance') ? parseInt(getVal('settingsPointsAttendance'), 10) : 10,
-            pointsHifzMemorization: getVal('settingsPointsHifzMemorization') ? parseInt(getVal('settingsPointsHifzMemorization'), 10) : 50,
-            pointsHifzRevision: getVal('settingsPointsHifzRevision') ? parseInt(getVal('settingsPointsHifzRevision'), 10) : 20,
+            pointsAttendancePresent: intOrNull('settingsPointsAttendance'),
+            pointsHifzMemorization: intOrNull('settingsPointsHifzMemorization'),
+            pointsHifzRevision: intOrNull('settingsPointsHifzRevision'),
             hifzRatingTargetAge5To7: getVal('settingsHifzTarget5To7') ? parseInt(getVal('settingsHifzTarget5To7'), 10) : null,
             hifzRatingTargetAge8To10: getVal('settingsHifzTarget8To10') ? parseInt(getVal('settingsHifzTarget8To10'), 10) : null,
             hifzRatingTargetAge11Plus: getVal('settingsHifzTarget11Plus') ? parseInt(getVal('settingsHifzTarget11Plus'), 10) : null,
-            hifzRatingPassingEvaluations: getVal('settingsHifzPassingEvals') || null,
+            pointsAttendanceLate: intOrNull('settingsPointsLate'),
+            pointsAttendanceExcused: intOrNull('settingsPointsExcused'),
+            pointsAttendanceUnexcused: intOrNull('settingsPointsUnexcused'),
+            pointsHifzMemVeryGood: intOrNull('settingsPointsMemVeryGood'),
+            pointsHifzMemGood: intOrNull('settingsPointsMemGood'),
+            pointsHifzRevVeryGood: intOrNull('settingsPointsRevVeryGood'),
+            pointsHifzRevGood: intOrNull('settingsPointsRevGood'),
+            pointsHifzRevAcceptable: intOrNull('settingsPointsRevAcceptable'),
+            pointsMatnMemorization: intOrNull('settingsPointsMatn'),
+            enableMatn: !!document.getElementById('settingsEnableMatn')?.checked,
+            enableDress: !!document.getElementById('settingsEnableDress')?.checked,
+            enablePrayer: !!document.getElementById('settingsEnablePrayer')?.checked,
+            enableParentHome: !!document.getElementById('settingsEnableParentHome')?.checked,
             otpChannel: document.getElementById('settingsOtpChannel')?.value || null,
             studentRemindersEnabled: !!document.getElementById('settingsStudentReminders')?.checked
         };
 
         if (!payload.centerName) {
+            showTab('center');
+            setSettingsStatus('error', 'اسم المركز مطلوب');
             app().ui.showToast('اسم المركز مطلوب', 'error');
+            return;
+        }
+        const pts = [payload.progressThreshold10, payload.progressThreshold9, payload.progressThreshold8, payload.progressThreshold6, payload.progressThreshold4];
+        if (pts.some(v => v == null || v <= 0 || v > 1) || pts.some((v, i) => i > 0 && v > pts[i - 1])) {
+            showTab('monthly');
+            setSettingsStatus('error', 'نسب الهدف الشهري يجب أن تكون بين 1% و100% وتتناقص من درجة 10 إلى درجة 4');
             return;
         }
 
@@ -442,15 +591,20 @@
             if (global.setBtnLoading) global.setBtnLoading(btn, true, 'جارِ الحفظ...');
             await apiFetch('/settings', 'PUT', payload);
             app().ui.showToast('تم حفظ الإعدادات بنجاح', 'success');
-            
+            setSettingsStatus('success', 'تم حفظ الإعدادات بنجاح — ' +
+                new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }));
+
             // تحديث اسم المركز في اللوجو الجانبي إن أمكن
             if (global.NoorSetCenterName) global.NoorSetCenterName(payload.centerName);
             if (global.NoorPublicSettings) global.NoorPublicSettings.centerName = payload.centerName;
             
         } catch (e) {
             app().api.handleApiError(e);
+            if (e?.status === 403) applySettingsEditability(false, e.message);
+            else setSettingsStatus('error', 'لم تُحفظ الإعدادات: ' + (e?.message || 'حدث خطأ غير متوقع'));
         } finally {
             if (global.setBtnLoading) global.setBtnLoading(btn, false, icon('save', { size: 16 }) + ' حفظ التغييرات');
+            if (btn && !canEditSettings()) btn.disabled = true;
         }
     }
 
@@ -502,7 +656,7 @@
         }
     }
 
-    global.NoorSettings = { addMatn, toggleMatn, loadMatnsSettingsList };
+    global.NoorSettings = { addMatn, toggleMatn, loadMatnsSettingsList, showTab };
 
     async function changePassword() {
         const currentPass = document.getElementById('settingsCurrentPass')?.value;
@@ -513,7 +667,7 @@
             return;
         }
         if (newPass.length < 8) {
-            app().ui.showToast('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل', 'warning');
+            app().ui.showToast('كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل', 'warning');
             return;
         }
 
@@ -559,7 +713,7 @@
     }
 
     global.NoorDashboard = { 
-        fetchStats, fetchActivities, fetchAnnouncements, fetchLeaderboard, 
+        fetchStats, fetchActivities, fetchAnnouncements, fetchLeaderboard, setLeaderboardScope,
         startPolling, stopPolling, fetchSettings, changePassword, 
         changeFontSize, savePref, exportData, clearCache 
     };

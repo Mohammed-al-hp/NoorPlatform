@@ -71,22 +71,49 @@ public class PedagogicalController : ControllerBase
         if (userId == null)
             return Unauthorized();
 
+        var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
+        if (settings is { EnableMatn: false })
+            return BadRequest(new { message = "المتون غير مفعّلة في إعدادات المركز" });
+
+        var matnName = request.MatnName?.Trim() ?? string.Empty;
+        if (matnName.Length == 0)
+            return BadRequest(new { message = "اسم المتن مطلوب" });
+        var portion = request.Portion?.Trim() ?? string.Empty;
+        var date = request.Date?.Date ?? LibyaTime.Today;
+
+        // منع احتساب الجزء نفسه مرتين (يمكن تسجيل المتن من نافذة التسميع ومن صفحة التقييم التربوي):
+        // الحفظ: الجزء نفسه من المتن نفسه لا يُسجَّل حفظه مرتين. المراجعة: لا تُكرر في اليوم نفسه.
+        var duplicate = await FindDuplicateMatnAsync(request.StudentId, matnName, portion, type, date);
+        if (duplicate != null)
+        {
+            return Conflict(new
+            {
+                code = "DUPLICATE_MATN",
+                message = type == MatnRecordType.Memorization
+                    ? $"هذا الجزء من «{matnName}» مسجَّل حفظه مسبقاً بتاريخ {duplicate.Date:yyyy-MM-dd} — لم يُحتسب مرة أخرى"
+                    : $"مراجعة هذا الجزء من «{matnName}» مسجّلة مسبقاً في اليوم نفسه — لم تُحتسب مرة أخرى",
+                existingId = duplicate.Id
+            });
+        }
+
+        var student = await _context.Students.FirstAsync(s => s.Id == request.StudentId);
         var record = new MatnRecord
         {
             StudentId = request.StudentId,
-            Date = request.Date?.Date ?? LibyaTime.Today,
-            MatnName = request.MatnName?.Trim() ?? string.Empty,
-            Portion = request.Portion?.Trim() ?? string.Empty,
+            Date = date,
+            MatnName = matnName,
+            Portion = portion,
             Type = type,
             Evaluation = request.Evaluation?.Trim() ?? string.Empty,
             Notes = request.Notes,
             RecordedByUserId = userId.Value
         };
 
+        record.PointsAwarded = PointsLedger.Apply(student, 0, PointsLedger.ForMatn(type, record.Evaluation, settings));
         _context.MatnRecords.Add(record);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "تم تسجيل المتن بنجاح", id = record.Id });
+        return Ok(new { message = "تم تسجيل المتن بنجاح", id = record.Id, pointsAwarded = record.PointsAwarded });
     }
 
     [HttpDelete("matn/{id}")]
@@ -100,9 +127,32 @@ public class PedagogicalController : ControllerBase
         if (!await AuthorizationHelpers.CanAccessStudentAsync(_context, User, record.StudentId))
             return Forbid();
 
+        if (record.PointsAwarded != 0)
+        {
+            var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == record.StudentId);
+            if (student != null) PointsLedger.Apply(student, record.PointsAwarded, 0);
+        }
         _context.MatnRecords.Remove(record);
         await _context.SaveChangesAsync();
         return Ok(new { message = "تم حذف سجل المتن" });
+    }
+
+    /// <summary>توحيد نص الجزء للمقارنة: إزالة التشكيل والمسافات الزائدة وتوحيد الهمزات.</summary>
+    private static string NormalizePortion(string? value) =>
+        MonthlyHifzRating.NormalizeEvaluation(value).Replace("–", "-").Replace("—", "-");
+
+    private async Task<MatnRecord?> FindDuplicateMatnAsync(int studentId, string matnName, string portion, MatnRecordType type, DateTime date)
+    {
+        var candidates = await _context.MatnRecords.AsNoTracking()
+            .Where(m => m.StudentId == studentId && m.Type == type)
+            .Where(m => type == MatnRecordType.Memorization || m.Date == date)
+            .ToListAsync();
+        var name = NormalizePortion(matnName);
+        var part = NormalizePortion(portion);
+        return candidates.FirstOrDefault(m =>
+            NormalizePortion(m.MatnName) == name &&
+            // جزء غير محدد يُقارن باليوم فقط حتى لا يمنع تسجيلات مختلفة بلا وصف
+            (part.Length == 0 ? m.Date == date && NormalizePortion(m.Portion).Length == 0 : NormalizePortion(m.Portion) == part));
     }
 
     // ════════════════════════════════════════════════════════
@@ -245,7 +295,9 @@ public class PedagogicalController : ControllerBase
         var settings = await _context.PlatformSettings.AsNoTracking().FirstOrDefaultAsync();
         return Ok(new
         {
-            evaluationsVisible = settings?.EvaluationsVisibleToStudentsAndParents ?? true
+            evaluationsVisible = settings?.EvaluationsVisibleToStudentsAndParents ?? true,
+            enablePrayer = settings?.EnablePrayer ?? true,
+            enableParentHome = settings?.EnableParentHome ?? true
         });
     }
 
@@ -261,7 +313,13 @@ public class PedagogicalController : ControllerBase
             oralAlertPenalty = settings?.OralAlertPenalty ?? 5,
             oralOpeningPenalty = settings?.OralOpeningPenalty ?? 15,
             oralHesitationPenalty = settings?.OralHesitationPenalty ?? 2,
-            defaultMonthlyAthmanTarget = settings?.DefaultMonthlyAthmanTarget ?? 8
+            defaultMonthlyAthmanTarget = settings?.DefaultMonthlyAthmanTarget ?? 8,
+            enableMatn = settings?.EnableMatn ?? true,
+            enableDress = settings?.EnableDress ?? true,
+            enablePrayer = settings?.EnablePrayer ?? true,
+            enableParentHome = settings?.EnableParentHome ?? true,
+            memorizationGrades = GradeScale.MemorizationGrades,
+            revisionGrades = GradeScale.RevisionGrades
         });
     }
 
@@ -1269,8 +1327,11 @@ public class PedagogicalController : ControllerBase
         var wHifz = settings?.WeightHifz ?? 1;
         var wRev = settings?.WeightRevision ?? 1;
         var wProg = settings?.WeightProgress ?? 1;
-        var wMatn = settings?.WeightMatn ?? 1;
-        var wDress = settings?.WeightDress ?? 1;
+        // العناصر الاختيارية غير المفعّلة في الإعدادات لا تدخل في التقييم
+        var wMatn = settings is { EnableMatn: false } ? 0 : settings?.WeightMatn ?? 1;
+        var wDress = settings is { EnableDress: false } ? 0 : settings?.WeightDress ?? 1;
+        if (settings is { EnablePrayer: false }) prayerAdvisory = null;
+        if (settings is { EnableParentHome: false }) parentHomeAdvisory = null;
 
         return PedagogicalGrading.ComputeWeightedOverall(
             new[]

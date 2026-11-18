@@ -62,7 +62,6 @@ public class AccountProvisioningService
         string phone,
         string fullName,
         UserRole role,
-       string? emailOverride = null,
         string? usernameOverride = null)
     {
         var normalized = usernameOverride ?? NormalizePhone(phone);
@@ -72,18 +71,13 @@ public class AccountProvisioningService
         if (await _userManager.FindByNameAsync(normalized) != null)
             return (null!, string.Empty, "رقم الهاتف مستخدم بالفعل");
 
-        // إصلاح: إضافة GUID مختصر للإيميل لضمان التفرد حتى لو تشابهت الأرقام
-        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
-        var email = emailOverride ?? $"{normalized}.{uniqueSuffix}@noor.local";
-
         var user = new User
         {
             UserName = normalized,
-            Email = email,
+            // لا بريد إلكتروني: الدخول برقم الهاتف الليبي، أو باسم المستخدم للطالب الذي لا يملك هاتفاً
             PhoneNumber = usernameOverride == null ? normalized : null,
             FullName = fullName.Trim(),
             Role = role,
-            EmailConfirmed = true,
             MustChangePassword = true,
             IsActive = true
         };

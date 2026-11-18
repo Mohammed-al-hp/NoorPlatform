@@ -28,11 +28,25 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// رقم هاتف ليبي من 10 أرقام (09XXXXXXXX) لكل المستخدمين، أو اسم المستخدم stXXXXXX للطالب الذي لا يملك هاتفاً.
+  static final _loginPattern = RegExp(
+    r'^(st\d{6}|[0٠][9٩][0-9٠-٩]{8}|(\+|00)?218[9٩][0-9٠-٩]{8})$',
+    caseSensitive: false,
+  );
+
   void _submitLogin() {
     if (_phoneController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء إدخال رقم الهاتف وكلمة المرور')),
+        const SnackBar(content: Text('الرجاء إدخال رقم الهاتف أو اسم المستخدم وكلمة المرور')),
+      );
+      return;
+    }
+    if (!_loginPattern.hasMatch(_phoneController.text.replaceAll(' ', ''))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('أدخل رقم هاتف ليبي من 10 أرقام يبدأ بـ 09، أو اسم المستخدم للطالب (مثل st123456)'),
+        ),
       );
       return;
     }
@@ -114,11 +128,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextField(
                                 controller: _phoneController,
                                 decoration: const InputDecoration(
-                                  labelText: 'رقم الهاتف',
-                                  hintText: 'أدخل رقم الهاتف',
-                                  prefixIcon: Icon(Icons.phone_iphone_rounded),
+                                  labelText: 'رقم الهاتف أو اسم المستخدم',
+                                  hintText: '09xxxxxxxx — أو اسم المستخدم للطالب',
+                                  prefixIcon: Icon(Icons.person_outline_rounded),
                                 ),
-                                keyboardType: TextInputType.phone,
+                                // نص لا أرقام فقط: الطالب بلا هاتف يدخل باسم المستخدم (stXXXXXX)
+                                keyboardType: TextInputType.text,
+                                autocorrect: false,
+                                textDirection: TextDirection.ltr,
                                 enabled: state is! AuthLoading,
                               ),
                               const SizedBox(height: NoorTheme.spacingMd),

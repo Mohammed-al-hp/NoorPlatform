@@ -12,8 +12,49 @@ export '../../widgets/monthly_rating_card.dart';
 
 TeacherRepository get teacherRepo => sl<TeacherRepository>();
 
-/// قيم التقييم بنفس صيغة واجهة الويب (hifz.js evalMap).
-const kEvaluationOptions = ['ممتاز', 'جيد جدًا', 'جيد', 'ضعيف', 'يحتاج مراجعة'];
+/// سلّم التقديرات المعتمد (مطابق للخادم GradeScale وواجهة الويب):
+/// ممتاز 85–100٪، جيد جداً 75–84٪، جيد 65–74٪، مقبول 50–64٪ (للمراجعة فقط)،
+/// ضعيف ويحتاج مراجعة 49٪ فأقل — جلسة راسبة لا تُحتسب ولا تمنح نقاطاً.
+const kGradeWeak = 'ضعيف ويحتاج مراجعة';
+const kMemorizationGrades = ['ممتاز', 'جيد جداً', 'جيد', kGradeWeak];
+const kRevisionGrades = ['ممتاز', 'جيد جداً', 'جيد', 'مقبول', kGradeWeak];
+
+/// التقديرات المتاحة حسب نوع الجلسة (الحفظ الجديد بلا «مقبول»).
+List<String> gradesFor({required bool revision}) => revision ? kRevisionGrades : kMemorizationGrades;
+
+/// يوحّد التقديرات القديمة («ضعيف»، «يحتاج مراجعة»، «جيد جدًا») إلى الاسم المعتمد.
+String normalizeGrade(String value) {
+  final e = value.replaceAll(RegExp('[\u064B-\u065F\u0670]'), '').trim();
+  if (e.isEmpty) return '';
+  if (e.contains('ضعيف') || e.contains('يحتاج مراجع')) return kGradeWeak;
+  if (e.contains('ممتاز')) return 'ممتاز';
+  if (e.startsWith('جيد جدا')) return 'جيد جداً';
+  if (e.contains('مقبول')) return 'مقبول';
+  if (e == 'جيد') return 'جيد';
+  return value;
+}
+
+/// التقدير من النسبة المئوية حسب نوع الجلسة.
+String gradeFromPercent(double p, {required bool revision}) {
+  if (p >= 85) return 'ممتاز';
+  if (p >= 75) return 'جيد جداً';
+  if (p >= 65) return 'جيد';
+  if (p >= 50 && revision) return 'مقبول';
+  return kGradeWeak;
+}
+
+/// قيمة صالحة لقائمة التقديرات: يُوحَّد التقدير، وإن لم يكن ضمن قائمة النوع يُستبدل بأول تقدير.
+String gradeForList(String value, {required bool revision}) {
+  final g = normalizeGrade(value);
+  final list = gradesFor(revision: revision);
+  return list.contains(g) ? g : list.first;
+}
+
+/// عنصر قائمة التقدير مع النطاق، وتمييز الجلسة الراسبة.
+DropdownMenuItem<String> gradeMenuItem(String g) => DropdownMenuItem(
+      value: g,
+      child: Text(g == kGradeWeak ? '$g — جلسة راسبة' : g),
+    );
 
 const kLevels = ['مبتدئ', 'متوسط', 'متقدم'];
 
@@ -227,3 +268,10 @@ class _CircleDropdownState extends State<CircleDropdown> {
   }
 }
 
+
+/// الوقت الحالي بتوقيت ليبيا (UTC+2) دون لاحقة Z: يحفظه الخادم كما هو،
+/// فلا تنتقل جلسة مسجّلة بعد منتصف الليل في ليبيا إلى اليوم السابق.
+String libyaNowIso() {
+  final t = DateTime.now().toUtc().add(const Duration(hours: 2));
+  return DateTime(t.year, t.month, t.day, t.hour, t.minute, t.second).toIso8601String();
+}

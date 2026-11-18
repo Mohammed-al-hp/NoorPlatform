@@ -1,3 +1,6 @@
+import '../../../core/quran/quran_text.dart';
+import '../../widgets/verse_picker.dart';
+import '../shared/mushaf_viewer_screen.dart';
 import 'dart:convert';
 
 import 'package:dartz/dartz.dart' show Either;
@@ -158,8 +161,9 @@ class _EditHifzSheetState extends State<_EditHifzSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final evals = {...kEvaluationOptions, if (_evaluation.isNotEmpty) _evaluation}.toList();
-    if (_evaluation.isEmpty) _evaluation = evals.first;
+    final revision = _type == 'Revision';
+    final evals = gradesFor(revision: revision);
+    _evaluation = gradeForList(_evaluation, revision: revision);
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 20),
       child: SingleChildScrollView(
@@ -190,9 +194,10 @@ class _EditHifzSheetState extends State<_EditHifzSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              key: ValueKey('edit-grade-$_type'),
               initialValue: _evaluation,
-              decoration: const InputDecoration(labelText: 'التقييم *'),
-              items: evals.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              decoration: const InputDecoration(labelText: 'التقدير *'),
+              items: evals.map(gradeMenuItem).toList(),
               onChanged: (v) => setState(() => _evaluation = v ?? _evaluation),
             ),
             const SizedBox(height: 12),
@@ -242,7 +247,7 @@ class _HifzSessionFormScreenState extends State<HifzSessionFormScreen> {
   final _toVerse = TextEditingController(text: '10');
   final _startText = TextEditingController();
   final _endText = TextEditingController();
-  String _evaluation = kEvaluationOptions.first;
+  String _evaluation = kMemorizationGrades.first;
   final _notes = TextEditingController();
 
   bool _includeMatn = false;
@@ -260,6 +265,7 @@ class _HifzSessionFormScreenState extends State<HifzSessionFormScreen> {
   @override
   void initState() {
     super.initState();
+    _fillVerseTexts();
     teacherRepo.getMatns().then((r) => r.fold((_) {}, (v) {
           if (mounted) setState(() => _matns = v);
         }));
@@ -273,6 +279,30 @@ class _HifzSessionFormScreenState extends State<HifzSessionFormScreen> {
 
   int _verseCount(String surah) =>
       kQuranSurahs.firstWhere((s) => s.name == surah, orElse: () => kQuranSurahs.first).verseCount;
+
+  int get _fromVerseNo => (int.tryParse(_fromVerse.text) ?? 1).clamp(1, _verseCount(_fromSurah));
+  String get _endSurah => _toSurah ?? _fromSurah;
+  int get _toVerseNo => (int.tryParse(_toVerse.text) ?? _fromVerseNo).clamp(1, _verseCount(_endSurah));
+
+  /// نص آيتي البداية والنهاية من مصحف قالون المضمّن (دون إنترنت).
+  Future<void> _fillVerseTexts() async {
+    final start = await QuranText.verse(_fromSurah, _fromVerseNo);
+    final end = await QuranText.verse(_endSurah, _toVerseNo);
+    if (!mounted) return;
+    setState(() {
+      _startText.text = start;
+      _endText.text = end;
+    });
+  }
+
+  void _setVerses({int? from, int? to}) {
+    if (from != null) _fromVerse.text = '$from';
+    if (to != null) _toVerse.text = '$to';
+    // في السورة الواحدة: النهاية لا تسبق البداية
+    if (_toSurah == null && _toVerseNo < _fromVerseNo) _toVerse.text = '$_fromVerseNo';
+    setState(() {});
+    _fillVerseTexts();
+  }
 
   /// اقتراح نقطة البداية من آخر موضع (GET /api/hifz/last-position).
   Future<void> _prefill() async {
@@ -294,6 +324,7 @@ class _HifzSessionFormScreenState extends State<HifzSessionFormScreen> {
         _positionHint =
             'آخر جلسة: ${p.lastSurahName} حتى الآية ${p.lastVerse} — المقترح: ${p.surahName} من الآية $next';
       });
+      _fillVerseTexts();
     });
   }
 
@@ -345,11 +376,11 @@ class _HifzSessionFormScreenState extends State<HifzSessionFormScreen> {
       final body = <String, dynamic>{
         'studentId': id,
         'type': _kind == _SessionKind.memorization ? 'Memorization' : 'Revision',
-        'evaluation': _evaluation,
+        'evaluation': gradeForList(_evaluation, revision: _kind != _SessionKind.memorization),
         'notes': notes,
-        'date': DateTime.now().toUtc().toIso8601String(),
+        'date': libyaNowIso(),
         'surahName': _fromSurah,
-        'verses': '${_fromVerse.text.trim()}-${_toVerse.text.trim()}',
+        'verses': '$_fromVerseNo-$_toVerseNo',
         'startVerseText': _startText.text.trim(),
         'endVerseText': _endText.text.trim(),
       };
@@ -460,33 +491,56 @@ class _HifzSessionFormScreenState extends State<HifzSessionFormScreen> {
             ),
           const SizedBox(height: 12),
           if (!isQuestions) ...[
-            _surahDropdown(_kind == _SessionKind.sequential ? 'من سورة' : 'السورة', _fromSurah,
-                (v) => setState(() => _fromSurah = v ?? _fromSurah)),
-            _surahDropdown(_kind == _SessionKind.sequential ? 'إلى سورة' : 'إلى سورة (اختياري)', _toSurah,
-                (v) => setState(() => _toSurah = v), optional: true),
-            Row(children: [
-              Expanded(
-                child: TextField(
-                  controller: _fromVerse,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'من الآية'),
+            _surahDropdown(_kind == _SessionKind.sequential ? 'من سورة' : 'السورة', _fromSurah, (v) {
+              setState(() => _fromSurah = v ?? _fromSurah);
+              _setVerses(from: 1, to: _toSurah == null ? 1 : null);
+            }),
+            _surahDropdown(_kind == _SessionKind.sequential ? 'إلى سورة' : 'إلى سورة', _toSurah, (v) {
+              setState(() => _toSurah = v);
+              _setVerses(to: v == null ? _fromVerseNo : 1);
+            }, optional: true),
+            const SizedBox(height: 8),
+            // اختيار الآية بنصّها (رقمها وأول كلماتها) — دون حفظ الأرقام ودون إنترنت
+            VersePickerField(
+              label: 'من الآية',
+              surahName: _fromSurah,
+              verse: _fromVerseNo,
+              onChanged: (n) => _setVerses(from: n),
+            ),
+            const SizedBox(height: 8),
+            VersePickerField(
+              label: 'إلى الآية (يبدأ ما بعدها في الجلسة القادمة)',
+              surahName: _endSurah,
+              verse: _toVerseNo,
+              onChanged: (n) => _setVerses(to: n),
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                onPressed: () => MushafViewerScreen.open(
+                  context,
+                  surah: QuranText.surahNumber(_fromSurah),
+                  verse: _fromVerseNo,
                 ),
+                icon: const Icon(Icons.menu_book_rounded),
+                label: const Text('عرض في المصحف'),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _toVerse,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'إلى الآية'),
-                ),
-              ),
-            ]),
-            TextField(controller: _startText, decoration: const InputDecoration(labelText: 'بداية المقطع (اختياري)')),
-            TextField(controller: _endText, decoration: const InputDecoration(labelText: 'نهاية المقطع (اختياري)')),
+            ),
+            TextField(
+              controller: _startText,
+              style: const TextStyle(fontFamily: QuranText.fontFamily, fontSize: 18),
+              decoration: const InputDecoration(labelText: 'نص آية البداية'),
+            ),
+            TextField(
+              controller: _endText,
+              style: const TextStyle(fontFamily: QuranText.fontFamily, fontSize: 18),
+              decoration: const InputDecoration(labelText: 'نص آية النهاية'),
+            ),
             DropdownButtonFormField<String>(
-              initialValue: _evaluation,
-              decoration: const InputDecoration(labelText: 'التقييم'),
-              items: kEvaluationOptions.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              key: ValueKey('grade-${_kind.name}'),
+              initialValue: gradeForList(_evaluation, revision: _kind != _SessionKind.memorization),
+              decoration: const InputDecoration(labelText: 'التقدير'),
+              items: gradesFor(revision: _kind != _SessionKind.memorization).map(gradeMenuItem).toList(),
               onChanged: (v) => setState(() => _evaluation = v ?? _evaluation),
             ),
           ],

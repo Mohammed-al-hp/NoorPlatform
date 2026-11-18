@@ -121,7 +121,7 @@
         try {
             const circles = await apiFetch('/circles');
             const list = officialOnly ? (circles || []).filter(c => !c.isExtra) : (circles || []);
-            const keep = sel.options[0]?.outerHTML || '<option value="">— اختياري —</option>';
+            const keep = sel.options[0]?.outerHTML || '<option value="">— بدون —</option>';
             sel.innerHTML = keep + list.map(c =>
                 `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
         } catch (e) {
@@ -133,7 +133,54 @@
     // Tabs / page entry
     // ════════════════════════════════════════════════════════
 
+    // ════════════════════════════════════════════════════════
+    // عناصر التقييم الاختيارية (المتون، اللباس، الصلاة، متابعة البيت) — من إعدادات المركز
+    // ════════════════════════════════════════════════════════
+    let _features = null;
+    let _featuresAt = 0;
+
+    async function loadFeatures() {
+        if (_features && Date.now() - _featuresAt < 60000) return _features;
+        const role = currentUserRole();
+        const endpoint = role === 'Admin' || role === 'Teacher' ? '/pedagogical/grading-defaults'
+            : role === 'Student' || role === 'Parent' ? '/pedagogical/portal-config' : null;
+        if (!endpoint) return { enableMatn: true, enableDress: true, enablePrayer: true, enableParentHome: true };
+        try {
+            const d = await apiFetch(endpoint);
+            _features = {
+                enableMatn: d?.enableMatn !== false,
+                enableDress: d?.enableDress !== false,
+                enablePrayer: d?.enablePrayer !== false,
+                enableParentHome: d?.enableParentHome !== false
+            };
+            _featuresAt = Date.now();
+        } catch (e) {
+            _features = { enableMatn: true, enableDress: true, enablePrayer: true, enableParentHome: true };
+        }
+        return _features;
+    }
+
+    async function applyFeatureToggles() {
+        if (!global.NoorApp?.state?.token) return null;
+        const f = await loadFeatures();
+        const tabEnabled = { matn: f.enableMatn, dress: f.enableDress, prayer: f.enablePrayer };
+        document.querySelectorAll('.pedago-tab-btn').forEach(btn => {
+            const on = tabEnabled[btn.dataset.tab] !== false;
+            btn.style.display = on ? '' : 'none';
+        });
+        document.querySelectorAll('[onclick*="navigate(\'myPrayer\'"]').forEach(el => { el.style.display = f.enablePrayer ? '' : 'none'; });
+        document.querySelectorAll('[onclick*="navigate(\'parentHome\'"]').forEach(el => { el.style.display = f.enableParentHome ? '' : 'none'; });
+        return f;
+    }
+
+    function firstEnabledTab(name, f) {
+        const disabled = { matn: !f.enableMatn, dress: !f.enableDress, prayer: !f.enablePrayer };
+        if (!disabled[name]) return name;
+        return ['matn', 'targets', 'periods', 'dress', 'prayer'].find(t => !disabled[t]) || 'targets';
+    }
+
     function showPedagoTab(name) {
+        if (_features) name = firstEnabledTab(name || 'matn', _features);
         _activeTab = name || 'matn';
         document.querySelectorAll('.pedago-tab-btn').forEach(btn => {
             const on = btn.dataset.tab === _activeTab;
@@ -159,7 +206,8 @@
             await renderMyEvaluationsPage();
             return;
         }
-        showPedagoTab(tab || 'matn');
+        const f = await applyFeatureToggles();
+        showPedagoTab(f ? firstEnabledTab(tab || 'matn', f) : (tab || 'matn'));
     }
 
     function loadPedagoTab(name) {
@@ -210,16 +258,14 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">النوع</label>
-                            <select id="matnType" class="form-input">
+                            <select id="matnType" class="form-input" onchange="window.NoorGrades && NoorGrades.fillSelect(document.getElementById('matnEval'), this.value)">
                                 <option value="Memorization">حفظ</option>
                                 <option value="Revision">مراجعة</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">التقييم</label>
-                            <select id="matnEval" class="form-input">
-                                <option>ممتاز</option><option>جيد جداً</option><option>جيد</option><option>مقبول</option><option>ضعيف</option>
-                            </select>
+                            <select id="matnEval" class="form-input"></select>
                         </div>
                     </div>
                     <div class="form-group">
@@ -228,7 +274,9 @@
                     </div>
                     <button class="btn btn-primary" onclick="saveMatnRecord()">${window.Icon ? window.Icon('save', { size: 14 }) : ''} حفظ</button>
                 </div>
-                <div id="matnList"></div>`;
+                <div id="matnList"></div>
+                <p class="settings-hint" style="margin-top:8px">الجزء نفسه من المتن يُحتسب مرة واحدة فقط — إن سُجّل حفظه من نافذة التسميع فلن يُحتسب مرة أخرى هنا.</p>`;
+            if (global.NoorGrades) global.NoorGrades.fillSelect(document.getElementById('matnEval'), 'Memorization');
             await loadStudentOptions('matnStudentId');
         }
         await loadMatnList();
@@ -795,7 +843,7 @@
                     </div>
                     <div id="prayerRows" class="prayer-rows"></div>
                     <div class="form-group" style="margin-top:12px">
-                        <label class="form-label">ملاحظة (اختياري)</label>
+                        <label class="form-label">ملاحظة</label>
                         <input id="prayerNote" class="form-input" type="text" maxlength="200">
                     </div>
                     <button class="btn btn-primary prayer-submit" onclick="saveMyPrayer()">${global.Icon ? global.Icon('check-circle', { size: 16 }) : ''} تسجيل الصلوات المحددة</button>
@@ -985,7 +1033,7 @@
     }
 
     async function overridePrayerLog(id) {
-        const note = prompt('ملاحظة التعديل (اختياري):') ?? '';
+        const note = prompt('ملاحظة التعديل:') ?? '';
         const mosque = confirm('هل صلى الطالب في المسجد؟ (موافق = نعم)');
         const onTime = confirm('هل كانت الصلاة في الوقت؟ (موافق = نعم)');
         try {
@@ -1166,7 +1214,18 @@
         }
     }
 
+    // تطبيق إخفاء العناصر المعطّلة عند كل تنقل (روابط الصلاة ومتابعة البيت في القائمة الجانبية)
+    global.addEventListener('load', () => {
+        const prev = global._onNavigatePage;
+        global._onNavigatePage = function (page) {
+            if (typeof prev === 'function') prev(page);
+            applyFeatureToggles();
+        };
+        applyFeatureToggles();
+    });
+
     // Exports
+    global.NoorApplyFeatureToggles = applyFeatureToggles;
     global.fetchPedagogicalPage = fetchPedagogicalPage;
     global.showPedagoTab = showPedagoTab;
     global.loadMatnList = loadMatnList;

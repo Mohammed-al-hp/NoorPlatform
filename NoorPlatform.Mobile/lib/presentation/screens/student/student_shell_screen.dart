@@ -1,3 +1,4 @@
+import '../../widgets/today_date_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -63,29 +64,35 @@ class _StudentShellScreenState extends State<StudentShellScreen> {
           final unread = notif.unreadCount;
           return Scaffold(
             body: IndexedStack(index: _index, children: pages),
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: [
-                const NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home_rounded),
-                  label: 'الرئيسية',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.fact_check_outlined),
-                  selectedIcon: Icon(Icons.fact_check_rounded),
-                  label: 'الحضور',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.mosque_outlined),
-                  selectedIcon: Icon(Icons.mosque_rounded),
-                  label: 'الصلاة',
-                ),
-                NavigationDestination(
-                  icon: _badgeIcon(Icons.grid_view_outlined, unread),
-                  selectedIcon: _badgeIcon(Icons.grid_view_rounded, unread),
-                  label: 'المزيد',
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const TodayDateBar(),
+                NavigationBar(
+                  selectedIndex: _index,
+                  onDestinationSelected: (i) => setState(() => _index = i),
+                  destinations: [
+                    const NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: 'الرئيسية',
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.fact_check_outlined),
+                      selectedIcon: Icon(Icons.fact_check_rounded),
+                      label: 'الحضور',
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.mosque_outlined),
+                      selectedIcon: Icon(Icons.mosque_rounded),
+                      label: 'الصلاة',
+                    ),
+                    NavigationDestination(
+                      icon: _badgeIcon(Icons.grid_view_outlined, unread),
+                      selectedIcon: _badgeIcon(Icons.grid_view_rounded, unread),
+                      label: 'المزيد',
+                    ),
+                  ],
                 ),
               ],
             ),

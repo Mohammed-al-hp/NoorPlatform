@@ -1,3 +1,4 @@
+import '../shared/mushaf_viewer_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -170,6 +171,12 @@ class StudentMoreScreen extends StatelessWidget {
                 title: 'الإعدادات',
                 subtitle: 'المظهر والمعلومات',
                 onTap: () => context.push('/student/settings'),
+              ),
+              MoreMenuTile(
+                icon: Icons.menu_book_rounded,
+                title: 'المصحف',
+                subtitle: 'مصحف أمانة التعليم — رواية قالون',
+                onTap: () => MushafViewerScreen.open(context),
               ),
               MoreMenuTile(
                 icon: Icons.lock_outline,

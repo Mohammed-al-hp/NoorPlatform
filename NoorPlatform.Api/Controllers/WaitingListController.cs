@@ -232,7 +232,7 @@ public class WaitingListController : ControllerBase
         // بدون رقم للطالب: يُولَّد اسم دخول مثل st123456 (نفس سلوك إضافة طالب)
         var (studentUser, tempPassword, err) = studentPhone == null
             ? await _accounts.CreateUserAsync("", entry.FullName, UserRole.Student,
-                null, await _accounts.GenerateStudentUsernameAsync())
+                usernameOverride: await _accounts.GenerateStudentUsernameAsync())
             : await _accounts.CreateUserAsync(studentPhone, entry.FullName, UserRole.Student);
 
         if (err != null)

@@ -282,6 +282,18 @@ class TeacherRepositoryImpl implements TeacherRepository {
       });
 
   @override
+  Future<Either<Failure, String>> replyToMessage(int id, String content) =>
+      _run(() => remote.replyToMessage(id, content));
+
+  @override
+  Future<Either<Failure, List<ParentContactModel>>> getParentRecipients() =>
+      _run(remote.getParentRecipients);
+
+  @override
+  Future<Either<Failure, String>> sendToParent(int parentUserId, String content) =>
+      _run(() => remote.sendToParent(parentUserId, content));
+
+  @override
   Future<Either<Failure, String>> createAnnouncement({
     required String title,
     required String content,

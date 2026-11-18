@@ -69,6 +69,9 @@ abstract class TeacherRepository {
 
   Future<Either<Failure, List<InboxMessageModel>>> getInbox();
   Future<Either<Failure, Unit>> markMessageRead(int id);
+  Future<Either<Failure, String>> replyToMessage(int id, String content);
+  Future<Either<Failure, List<ParentContactModel>>> getParentRecipients();
+  Future<Either<Failure, String>> sendToParent(int parentUserId, String content);
 
   Future<Either<Failure, String>> createAnnouncement({
     required String title,

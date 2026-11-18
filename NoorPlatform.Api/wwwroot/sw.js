@@ -1,7 +1,9 @@
 // sw.js — Service Worker لمنصة نور (v10)
-const CACHE_NAME = 'noor-v20'; // v20: الإشعارات، مراجعة اليوم، الخريطة الحرارية، التحليلات، التقرير الشهري
-const STATIC_ASSETS = ['/', '/landing.html', '/index.html', '/manifest.json', '/css/landing.css', '/css/fonts.css', '/img/logo-mark.svg', '/icon-192.png', '/icon-512.png', '/css/app.css', '/css/enhancements.css', '/css/responsive.css', '/js/asset-loader.js', '/js/app.js', '/js/utils.js', '/js/api.js', '/js/ui.js', '/js/app-ui-extensions.js', '/js/page-controller.js', '/js/attendance.js', '/js/parents.js', '/js/hifz.js', '/js/students.js', '/js/dashboard.js', '/js/payments.js', '/js/teachers.js', '/js/users.js', '/js/reports.js', '/js/modals.js', '/js/pedagogical.js', '/js/monthly-rating.js', '/js/list-tools.js', '/js/reminders.js', '/js/smart-features.js', '/css/smart-features.css', '/lib/html2pdf.bundle.min.js'];
+const CACHE_NAME = 'noor-v27'; // v27: نص قالون دون إنترنت، اختيار الآيات بنصّها، عارض المصحف، العدّ المدني؛ v26: صفحة متابعة الأبناء، المحفوظ بالترتيب العكسي؛ v25: إزالة البريد، الدخول بالهاتف أو اسم المستخدم، نطاق المتصدرين؛ v24: صفحة الإعدادات بتبويبات، سلّم التقديرات، نقاط الحضور والتقديرات، عناصر التقييم الاختيارية؛ v23: قائمة الحساب، تاريخ جلسة التسميع، محادثات الرسائل، تنبيه صلاحية الإعدادات؛ v22: تحسينات الهاتف (mobile.css)؛ v21: أيقونة الآيفون وفتح التطبيق المثبّت على index.html؛ v20: الإشعارات، مراجعة اليوم، الخريطة الحرارية، التحليلات، التقرير الشهري
+const STATIC_ASSETS = ['/', '/landing.html', '/index.html', '/manifest.json', '/css/landing.css', '/css/fonts.css', '/img/logo-mark.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/css/app.css', '/css/enhancements.css', '/css/responsive.css', '/js/asset-loader.js', '/js/app.js', '/js/utils.js', '/js/api.js', '/js/ui.js', '/js/app-ui-extensions.js', '/js/page-controller.js', '/js/attendance.js', '/js/parents.js', '/js/hifz.js', '/js/students.js', '/js/dashboard.js', '/js/payments.js', '/js/teachers.js', '/js/users.js', '/js/reports.js', '/js/modals.js', '/js/pedagogical.js', '/js/monthly-rating.js', '/js/list-tools.js', '/js/reminders.js', '/js/smart-features.js', '/js/account-menu.js', '/js/messages.js', '/js/quran-text.js', '/js/mushaf-viewer.js', '/fonts/UthmanicQaloun.woff2', '/css/smart-features.css', '/css/mobile.css', '/lib/html2pdf.bundle.min.js'];
 const FONT_CACHE = 'noor-fonts-v1';
+// صفحات المصحف ونص قالون: ذاكرة مستقلة لا تُمسح مع تحديثات المنصة (تعمل دون إنترنت بعد أول عرض)
+const QURAN_CACHE = 'noor-quran-v1';
 const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -17,7 +19,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(keys =>
       Promise.all(
         keys
-          .filter(k => k !== CACHE_NAME && k !== FONT_CACHE)
+          .filter(k => k !== CACHE_NAME && k !== FONT_CACHE && k !== QURAN_CACHE)
           .map(k => caches.delete(k))
       )
     ).then(() => self.clients.matchAll({ type: 'window' }))
@@ -47,6 +49,21 @@ self.addEventListener('fetch', event => {
   if (FONT_ORIGINS.some(origin => url.href.startsWith(origin))) {
     event.respondWith(
       caches.open(FONT_CACHE).then(cache =>
+        cache.match(event.request).then(cached => {
+          if (cached) return cached;
+          return fetch(event.request).then(response => {
+            if (response.ok && event.request.method === 'GET') cache.put(event.request, response.clone());
+            return response;
+          });
+        })
+      )
+    );
+    return;
+  }
+
+  if (url.pathname.startsWith('/mushaf/') || url.pathname.startsWith('/data/')) {
+    event.respondWith(
+      caches.open(QURAN_CACHE).then(cache =>
         cache.match(event.request).then(cached => {
           if (cached) return cached;
           return fetch(event.request).then(response => {

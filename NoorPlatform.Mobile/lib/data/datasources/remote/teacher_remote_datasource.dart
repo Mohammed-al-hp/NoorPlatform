@@ -71,6 +71,9 @@ abstract class TeacherRemoteDataSource {
 
   Future<List<InboxMessageModel>> getInbox();
   Future<void> markMessageRead(int id);
+  Future<String> replyToMessage(int id, String content);
+  Future<List<ParentContactModel>> getParentRecipients();
+  Future<String> sendToParent(int parentUserId, String content);
 
   Future<String> createAnnouncement({
     required String title,
@@ -457,6 +460,20 @@ class TeacherRemoteDataSourceImpl implements TeacherRemoteDataSource {
   @override
   Future<void> markMessageRead(int id) =>
       _send('PATCH', ApiConfig.messageRead(id), 'تم', 'تعذر تحديث الرسالة');
+
+  @override
+  Future<String> replyToMessage(int id, String content) => _send(
+      'POST', ApiConfig.messageReply(id), 'تم إرسال الرد', 'فشل إرسال الرد',
+      data: {'content': content});
+
+  @override
+  Future<List<ParentContactModel>> getParentRecipients() => _getList(
+      ApiConfig.messagesParentRecipients, ParentContactModel.fromJson, 'فشل تحميل أولياء الأمور');
+
+  @override
+  Future<String> sendToParent(int parentUserId, String content) => _send(
+      'POST', ApiConfig.messagesToParent, 'تم إرسال الرسالة', 'فشل إرسال الرسالة',
+      data: {'parentUserId': parentUserId, 'content': content});
 
   // ── الإعلانات والمكتبة ──
   @override

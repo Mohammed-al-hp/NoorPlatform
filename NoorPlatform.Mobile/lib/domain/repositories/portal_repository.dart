@@ -42,6 +42,7 @@ abstract class PortalRepository {
   Future<Either<Failure, List<SentMessageModel>>> getSentMessages();
   Future<Either<Failure, List<MessageRecipientModel>>> getMessageRecipients();
   Future<Either<Failure, Unit>> sendMessage(SendMessageRequest request);
+  Future<Either<Failure, Unit>> replyToThread(int threadId, String content);
   Future<Either<Failure, List<PaymentModel>>> getParentPayments();
   Future<Either<Failure, List<LibraryItemModel>>> getLibrary({
     String? search,

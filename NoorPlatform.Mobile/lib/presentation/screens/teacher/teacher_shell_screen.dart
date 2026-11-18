@@ -1,3 +1,5 @@
+import '../shared/mushaf_viewer_screen.dart';
+import '../../widgets/today_date_bar.dart';
 import 'package:dartz/dartz.dart' hide State;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,34 +60,40 @@ class _TeacherShellScreenState extends State<TeacherShellScreen> {
       },
       child: Scaffold(
         body: IndexedStack(index: _index, children: pages),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.space_dashboard_outlined),
-              selectedIcon: Icon(Icons.space_dashboard_rounded),
-              label: 'الرئيسية',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.school_outlined),
-              selectedIcon: Icon(Icons.school_rounded),
-              label: 'الطلاب',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.fact_check_outlined),
-              selectedIcon: Icon(Icons.fact_check_rounded),
-              label: 'الحضور',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.menu_book_outlined),
-              selectedIcon: Icon(Icons.menu_book_rounded),
-              label: 'تقدم الحفظ',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view_rounded),
-              label: 'المزيد',
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const TodayDateBar(),
+            NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (i) => setState(() => _index = i),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.space_dashboard_outlined),
+                  selectedIcon: Icon(Icons.space_dashboard_rounded),
+                  label: 'الرئيسية',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.school_outlined),
+                  selectedIcon: Icon(Icons.school_rounded),
+                  label: 'الطلاب',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.fact_check_outlined),
+                  selectedIcon: Icon(Icons.fact_check_rounded),
+                  label: 'الحضور',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.menu_book_outlined),
+                  selectedIcon: Icon(Icons.menu_book_rounded),
+                  label: 'تقدم الحفظ',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.grid_view_outlined),
+                  selectedIcon: Icon(Icons.grid_view_rounded),
+                  label: 'المزيد',
+                ),
+              ],
             ),
           ],
         ),
@@ -100,7 +108,12 @@ class _DashboardData {
   final List<LeaderboardEntryModel> leaderboard;
   final List<ActivityModel> activities;
 
-  const _DashboardData(this.stats, this.circles, this.leaderboard, this.activities);
+  const _DashboardData(
+    this.stats,
+    this.circles,
+    this.leaderboard,
+    this.activities,
+  );
 }
 
 Future<Either<Failure, _DashboardData>> _loadDashboard() async {
@@ -117,12 +130,14 @@ Future<Either<Failure, _DashboardData>> _loadDashboard() async {
   final activities = await activitiesF;
 
   // الإحصائيات أساسية؛ بقية الأقسام تُعرض فارغة عند فشلها بدل إيقاف اللوحة كاملة
-  return stats.map((s) => _DashboardData(
-        s,
-        circles.fold((_) => const <CircleModel>[], (v) => v),
-        leaderboard.fold((_) => const <LeaderboardEntryModel>[], (v) => v),
-        activities.fold((_) => const <ActivityModel>[], (v) => v),
-      ));
+  return stats.map(
+    (s) => _DashboardData(
+      s,
+      circles.fold((_) => const <CircleModel>[], (v) => v),
+      leaderboard.fold((_) => const <LeaderboardEntryModel>[], (v) => v),
+      activities.fold((_) => const <ActivityModel>[], (v) => v),
+    ),
+  );
 }
 
 /// لوحة المحفّظ: إحصائيات حلقاته، حضور اليوم والأسبوع، آخر الجلسات، لوحة الشرف، النشاطات.
@@ -146,26 +161,57 @@ class TeacherDashboardScreen extends StatelessWidget {
           final s = d.stats;
           final theme = Theme.of(context);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(NoorTheme.spacingMd, 4, NoorTheme.spacingMd, NoorTheme.spacingXl),
+            padding: const EdgeInsets.fromLTRB(
+              NoorTheme.spacingMd,
+              4,
+              NoorTheme.spacingMd,
+              NoorTheme.spacingXl,
+            ),
             children: [
               // ── الرأس: تحية + أبرز أرقام اليوم ──
               GradientHeader(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('السلام عليكم ورحمة الله',
-                        style: TextStyle(color: NoorTheme.goldSoft, fontSize: 14, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'السلام عليكم ورحمة الله',
+                      style: TextStyle(
+                        color: NoorTheme.goldSoft,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text('لوحة المحفّظ',
-                        style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
+                    Text(
+                      'لوحة المحفّظ',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     const SizedBox(height: 14),
                     Row(
                       children: [
-                        Expanded(child: _HeaderMetric(label: 'حضور اليوم', value: s.attendanceToday)),
+                        Expanded(
+                          child: _HeaderMetric(
+                            label: 'حضور اليوم',
+                            value: s.attendanceToday,
+                          ),
+                        ),
                         Container(width: 1, height: 36, color: Colors.white24),
-                        Expanded(child: _HeaderMetric(label: 'حضور 30 يوماً', value: '${s.attendanceLast30}%')),
+                        Expanded(
+                          child: _HeaderMetric(
+                            label: 'حضور 30 يوماً',
+                            value: '${s.attendanceLast30}%',
+                          ),
+                        ),
                         Container(width: 1, height: 36, color: Colors.white24),
-                        Expanded(child: _HeaderMetric(label: 'طلابي', value: '${s.students}')),
+                        Expanded(
+                          child: _HeaderMetric(
+                            label: 'طلابي',
+                            value: '${s.students}',
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -173,32 +219,53 @@ class TeacherDashboardScreen extends StatelessWidget {
               ),
 
               // ── شبكة الإحصائيات ──
-              LayoutBuilder(builder: (context, c) {
-                final w = (c.maxWidth - 10) / 2;
-                Widget tile(Widget child) => SizedBox(width: w, child: child);
-                return Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    tile(StatChip(label: 'حلقاتي', value: '${s.circles}', icon: Icons.groups_rounded, color: NoorTheme.info)),
-                    tile(StatChip(
-                        label: 'آيات/طالب أسبوعياً',
-                        value: Formatters.number(s.hifzVelocity, fractionDigits: 1),
-                        icon: Icons.speed_rounded,
-                        color: NoorTheme.accentGold)),
-                    tile(StatChip(
-                        label: 'جدد هذا الشهر',
-                        value: '${s.studentsThisMonth}',
-                        icon: Icons.person_add_alt_1_rounded,
-                        color: NoorTheme.success)),
-                    tile(StatChip(
-                        label: 'متقدمون',
-                        value: '${s.levelAdvanced}',
-                        icon: Icons.workspace_premium_rounded,
-                        color: NoorTheme.primaryGreenLight)),
-                  ],
-                );
-              }),
+              LayoutBuilder(
+                builder: (context, c) {
+                  final w = (c.maxWidth - 10) / 2;
+                  Widget tile(Widget child) => SizedBox(width: w, child: child);
+                  return Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      tile(
+                        StatChip(
+                          label: 'حلقاتي',
+                          value: '${s.circles}',
+                          icon: Icons.groups_rounded,
+                          color: NoorTheme.info,
+                        ),
+                      ),
+                      tile(
+                        StatChip(
+                          label: 'آيات/طالب أسبوعياً',
+                          value: Formatters.number(
+                            s.hifzVelocity,
+                            fractionDigits: 1,
+                          ),
+                          icon: Icons.speed_rounded,
+                          color: NoorTheme.accentGold,
+                        ),
+                      ),
+                      tile(
+                        StatChip(
+                          label: 'جدد هذا الشهر',
+                          value: '${s.studentsThisMonth}',
+                          icon: Icons.person_add_alt_1_rounded,
+                          color: NoorTheme.success,
+                        ),
+                      ),
+                      tile(
+                        StatChip(
+                          label: 'متقدمون',
+                          value: '${s.levelAdvanced}',
+                          icon: Icons.workspace_premium_rounded,
+                          color: NoorTheme.primaryGreenLight,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
               const SizedBox(height: NoorTheme.spacingMd),
 
               SectionCard(
@@ -217,20 +284,42 @@ class TeacherDashboardScreen extends StatelessWidget {
                                     width: 42,
                                     height: 42,
                                     decoration: BoxDecoration(
-                                      color: (c.isExtra ? NoorTheme.accentGold : NoorTheme.primaryGreen).withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(NoorTheme.radiusMd),
+                                      color:
+                                          (c.isExtra
+                                                  ? NoorTheme.accentGold
+                                                  : NoorTheme.primaryGreen)
+                                              .withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(
+                                        NoorTheme.radiusMd,
+                                      ),
                                     ),
-                                    child: Icon(c.isExtra ? Icons.add_circle_outline : Icons.mosque_outlined,
-                                        color: c.isExtra ? NoorTheme.accentGold : theme.colorScheme.primary),
+                                    child: Icon(
+                                      c.isExtra
+                                          ? Icons.add_circle_outline
+                                          : Icons.mosque_outlined,
+                                      color: c.isExtra
+                                          ? NoorTheme.accentGold
+                                          : theme.colorScheme.primary,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(c.isExtra ? '${c.name} (إضافية)' : c.name, style: theme.textTheme.titleSmall),
-                                        Text([c.time, c.location].where((e) => e.isNotEmpty).join(' · '),
-                                            style: theme.textTheme.bodySmall),
+                                        Text(
+                                          c.isExtra
+                                              ? '${c.name} (إضافية)'
+                                              : c.name,
+                                          style: theme.textTheme.titleSmall,
+                                        ),
+                                        Text(
+                                          [c.time, c.location]
+                                              .where((e) => e.isNotEmpty)
+                                              .join(' · '),
+                                          style: theme.textTheme.bodySmall,
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -252,7 +341,13 @@ class TeacherDashboardScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 5),
                         child: Row(
                           children: [
-                            SizedBox(width: 70, child: Text(w.dayName, style: theme.textTheme.labelLarge)),
+                            SizedBox(
+                              width: 70,
+                              child: Text(
+                                w.dayName,
+                                style: theme.textTheme.labelLarge,
+                              ),
+                            ),
                             Expanded(
                               child: LinearProgressIndicator(
                                 value: w.percentage / 100,
@@ -261,15 +356,18 @@ class TeacherDashboardScreen extends StatelessWidget {
                                 color: w.percentage >= 80
                                     ? NoorTheme.success
                                     : w.percentage >= 50
-                                        ? NoorTheme.accentGold
-                                        : NoorTheme.error,
+                                    ? NoorTheme.accentGold
+                                    : NoorTheme.error,
                               ),
                             ),
                             const SizedBox(width: 10),
                             SizedBox(
                               width: 44,
-                              child: Text(w.total == 0 ? '—' : '${w.percentage}%',
-                                  textAlign: TextAlign.end, style: theme.textTheme.labelLarge),
+                              child: Text(
+                                w.total == 0 ? '—' : '${w.percentage}%',
+                                textAlign: TextAlign.end,
+                                style: theme.textTheme.labelLarge,
+                              ),
                             ),
                           ],
                         ),
@@ -283,11 +381,29 @@ class TeacherDashboardScreen extends StatelessWidget {
                 icon: Icons.stacked_bar_chart_rounded,
                 child: Row(
                   children: [
-                    Expanded(child: _LevelBox(label: 'مبتدئ', value: s.levelBeginner, color: NoorTheme.info)),
+                    Expanded(
+                      child: _LevelBox(
+                        label: 'مبتدئ',
+                        value: s.levelBeginner,
+                        color: NoorTheme.info,
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _LevelBox(label: 'متوسط', value: s.levelIntermediate, color: NoorTheme.accentGold)),
+                    Expanded(
+                      child: _LevelBox(
+                        label: 'متوسط',
+                        value: s.levelIntermediate,
+                        color: NoorTheme.accentGold,
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _LevelBox(label: 'متقدم', value: s.levelAdvanced, color: NoorTheme.success)),
+                    Expanded(
+                      child: _LevelBox(
+                        label: 'متقدم',
+                        value: s.levelAdvanced,
+                        color: NoorTheme.success,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -302,7 +418,9 @@ class TeacherDashboardScreen extends StatelessWidget {
                           for (final l in d.leaderboard)
                             _LeaderRow(
                               entry: l,
-                              onTap: () => context.push('/teacher/student/${l.studentId}'),
+                              onTap: () => context.push(
+                                '/teacher/student/${l.studentId}',
+                              ),
                             ),
                         ],
                       ),
@@ -320,19 +438,29 @@ class TeacherDashboardScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               child: Row(
                                 children: [
-                                  InitialsAvatar(name: r.studentName, radius: 18),
+                                  InitialsAvatar(
+                                    name: r.studentName,
+                                    radius: 18,
+                                  ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(r.studentName, style: theme.textTheme.titleSmall),
-                                        Text('${r.surahName} (${r.verses}) · ${r.circleName}',
-                                            style: theme.textTheme.bodySmall),
+                                        Text(
+                                          r.studentName,
+                                          style: theme.textTheme.titleSmall,
+                                        ),
+                                        Text(
+                                          '${r.surahName} (${r.verses}) · ${r.circleName}',
+                                          style: theme.textTheme.bodySmall,
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  if (r.evaluation.isNotEmpty) _EvalBadge(r.evaluation),
+                                  if (r.evaluation.isNotEmpty)
+                                    _EvalBadge(r.evaluation),
                                 ],
                               ),
                             ),
@@ -361,15 +489,28 @@ class TeacherDashboardScreen extends StatelessWidget {
                                       color: theme.colorScheme.primaryContainer,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: Text(a.icon, style: const TextStyle(fontSize: 16)),
+                                    child: Text(
+                                      a.icon,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(a.description, style: theme.textTheme.bodyLarge?.copyWith(fontSize: 14)),
-                                        Text(Formatters.displayDateTime(a.createdAt), style: theme.textTheme.bodySmall),
+                                        Text(
+                                          a.description,
+                                          style: theme.textTheme.bodyLarge
+                                              ?.copyWith(fontSize: 14),
+                                        ),
+                                        Text(
+                                          Formatters.displayDateTime(
+                                            a.createdAt,
+                                          ),
+                                          style: theme.textTheme.bodySmall,
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -396,10 +537,19 @@ class _HeaderMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value,
-            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
       ],
     );
   }
@@ -409,7 +559,11 @@ class _LevelBox extends StatelessWidget {
   final String label;
   final int value;
   final Color color;
-  const _LevelBox({required this.label, required this.value, required this.color});
+  const _LevelBox({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -421,7 +575,14 @@ class _LevelBox extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text('$value', style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.w800)),
+          Text(
+            '$value',
+            style: TextStyle(
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
@@ -435,7 +596,11 @@ class _LeaderRow extends StatelessWidget {
   final VoidCallback onTap;
   const _LeaderRow({required this.entry, required this.onTap});
 
-  static const _medals = [Color(0xFFDAA520), Color(0xFF9CA3AF), Color(0xFFB87333)];
+  static const _medals = [
+    Color(0xFFDAA520),
+    Color(0xFF9CA3AF),
+    Color(0xFFB87333),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -463,7 +628,11 @@ class _LeaderRow extends StatelessWidget {
                 color: medal ?? theme.colorScheme.surfaceContainerHigh,
               ),
               child: top
-                  ? const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 18)
+                  ? const Icon(
+                      Icons.emoji_events_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    )
                   : Text('${entry.rank}', style: theme.textTheme.labelLarge),
             ),
             const SizedBox(width: 12),
@@ -490,8 +659,14 @@ class _LeaderRow extends StatelessWidget {
                 children: [
                   const Icon(Icons.star_rounded, size: 14, color: Colors.white),
                   const SizedBox(width: 3),
-                  Text('${entry.points}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+                  Text(
+                    '${entry.points}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -516,7 +691,10 @@ class _EvalBadge extends StatelessWidget {
         color: c.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(NoorTheme.radiusFull),
       ),
-      child: Text(evaluation, style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w700)),
+      child: Text(
+        evaluation,
+        style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w700),
+      ),
     );
   }
 }
@@ -538,6 +716,12 @@ class TeacherMoreScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('المزيد')),
       body: ListView(
         children: [
+          MoreMenuTile(
+            icon: Icons.menu_book_rounded,
+            title: 'المصحف',
+            subtitle: 'مصحف أمانة التعليم — رواية قالون',
+            onTap: () => MushafViewerScreen.open(context),
+          ),
           MoreMenuTile(
             icon: Icons.mail_outline,
             title: 'الرسائل الواردة',

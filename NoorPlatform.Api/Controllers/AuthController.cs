@@ -45,8 +45,13 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(new { message = "بيانات تسجيل الدخول غير صالحة" });
 
+        // الدخول برقم هاتف ليبي (09XXXXXXXX) لكل المستخدمين، أو باسم المستخدم (stXXXXXX) للطالب الذي لا يملك هاتفاً
+        var isStudentUserName = IsStudentUserName(request.Phone);
+        if (!isStudentUserName && !LibyanPhone.IsValid(request.Phone))
+            return BadRequest(new { message = "أدخل رقم هاتف ليبي من 10 أرقام يبدأ بـ 09، أو اسم المستخدم للطالب (مثل st123456)" });
+
         var user = await FindActiveUserByPhoneAsync(request.Phone);
-        if (user == null)
+        if (user == null || (isStudentUserName && user.Role != UserRole.Student))
             return Unauthorized(new { message = "رقم الهاتف أو كلمة المرور غير صحيحة" });
 
         var check = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
@@ -101,7 +106,6 @@ public class AuthController : ControllerBase
         user.Id,
         user.FullName,
         phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? user.PhoneNumber ?? fallbackPhone ?? ""),
-        user.Email,
         role = user.Role.ToString(),
         roleLabel = RoleLabel(user),
         isSuperAdmin = user.Role == UserRole.Admin && user.IsSuperAdmin,
@@ -266,6 +270,10 @@ public class AuthController : ControllerBase
         user.Role == UserRole.Student &&
         await _context.Students.IgnoreQueryFilters().AnyAsync(s => s.UserId == user.Id && s.IsDeleted);
 
+    private static bool IsStudentUserName(string? value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), @"^st\d{6}$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
     /// <summary>البحث عن حساب نشط بكل أشكال الرقم المحتملة (نفس منطق تسجيل الدخول).</summary>
     private async Task<User?> FindActiveUserByPhoneAsync(string phone)
     {
@@ -308,7 +316,6 @@ public class AuthController : ControllerBase
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email ?? ""),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Role, user.Role.ToString()) ,        
                 new Claim("stamp", user.SecurityStamp ?? "")

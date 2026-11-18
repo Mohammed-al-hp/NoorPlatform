@@ -6,6 +6,8 @@
 // تولّد:
 //   - أيقونات أندرويد: android/app/src/main/res/mipmap-*/ic_launcher.png
 //   - أيقونات الويب (PWA): ../NoorPlatform.Api/wwwroot/icon-192.png, icon-512.png, icon-maskable-512.png
+//   - أيقونات نسخة الويب من تطبيق الهاتف: web/favicon.png, web/icons/*
+//   - أيقونات تطبيق iOS: ios/Runner/Assets.xcassets/AppIcon.appiconset/*
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -76,6 +78,31 @@ void main() {
       await render('$web/icon-192.png', 192);
       await render('$web/icon-512.png', 512);
       await render('$web/icon-maskable-512.png', 512, markRatio: 0.58, rounded: false);
+      // iOS يقصّ الزوايا بنفسه ويملأ الشفافية بالأسود، لذا الخلفية مربعة كاملة
+      await render('$web/apple-touch-icon.png', 180, markRatio: 0.7, rounded: false);
+
+      // نسخة الويب من تطبيق الهاتف (flutter run -d web-server / flutter build web)
+      await render('web/favicon.png', 32);
+      await render('web/icons/Icon-192.png', 192);
+      await render('web/icons/Icon-512.png', 512);
+      await render('web/icons/Icon-maskable-192.png', 192, markRatio: 0.58, rounded: false);
+      await render('web/icons/Icon-maskable-512.png', 512, markRatio: 0.58, rounded: false);
+      // iOS يقصّ الزوايا بنفسه، لذا الخلفية مربعة كاملة بدون إطار
+      await render('web/icons/apple-touch-icon.png', 180, markRatio: 0.7, rounded: false);
+
+      // أيقونات تطبيق iOS (iOS يقصّ الزوايا بنفسه)
+      const ios = 'ios/Runner/Assets.xcassets/AppIcon.appiconset';
+      const iosIcons = {
+        '20x20@1x': 20, '20x20@2x': 40, '20x20@3x': 60,
+        '29x29@1x': 29, '29x29@2x': 58, '29x29@3x': 87,
+        '40x40@1x': 40, '40x40@2x': 80, '40x40@3x': 120,
+        '60x60@2x': 120, '60x60@3x': 180,
+        '76x76@1x': 76, '76x76@2x': 152, '83.5x83.5@2x': 167,
+        '1024x1024@1x': 1024,
+      };
+      for (final e in iosIcons.entries) {
+        await render('$ios/Icon-App-${e.key}.png', e.value, markRatio: 0.7, rounded: false);
+      }
     });
   });
 }

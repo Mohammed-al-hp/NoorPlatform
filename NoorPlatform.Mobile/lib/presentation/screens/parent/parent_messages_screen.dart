@@ -153,6 +153,54 @@ class _MessagesView extends StatelessWidget {
     contentCtrl.dispose();
   }
 
+  Future<void> _reply(BuildContext context, SentMessageModel thread) async {
+    final cubit = context.read<MessagesCubit>();
+    final ctrl = TextEditingController();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('رد إلى: ${thread.recipientName}', style: Theme.of(ctx).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              maxLines: 4,
+              maxLength: 2000,
+              decoration: const InputDecoration(labelText: 'نص الرد'),
+            ),
+            const SizedBox(height: 8),
+            BlocBuilder<MessagesCubit, MessagesState>(
+              bloc: cubit,
+              builder: (ctx2, st) => ElevatedButton.icon(
+                onPressed: st.submitting
+                    ? null
+                    : () async {
+                        final text = ctrl.text.trim();
+                        if (text.isEmpty) return;
+                        final ok = await cubit.reply(thread.id, text);
+                        if (ok && ctx.mounted) Navigator.pop(ctx);
+                      },
+                icon: const Icon(Icons.send_rounded),
+                label: const Text('إرسال الرد'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    ctrl.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -189,7 +237,7 @@ class _MessagesView extends StatelessWidget {
                 state.status == PortalLoadStatus.initial,
             isEmpty: state.status == PortalLoadStatus.loaded &&
                 state.messages.isEmpty,
-            emptyTitle: 'لا توجد رسائل مرسلة',
+            emptyTitle: 'لا توجد رسائل بعد',
             emptySubtitle: 'اضغط زر التحرير لإرسال رسالة',
             errorMessage:
                 state.status == PortalLoadStatus.error ? state.error : null,
@@ -203,7 +251,7 @@ class _MessagesView extends StatelessWidget {
                 itemBuilder: (context, i) {
                   final m = state.messages[i];
                   return SectionCard(
-                    title: m.recipientName,
+                    title: '${m.isIncoming ? 'من' : 'إلى'}: ${m.recipientName}',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -216,14 +264,19 @@ class _MessagesView extends StatelessWidget {
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             const Spacer(),
-                            if (m.replies.isEmpty)
-                              Text(
-                                m.isRead ? 'تمت القراءة' : 'بانتظار الرد',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
+                            if (m.hasUnread)
+                              const Icon(Icons.mark_email_unread_rounded, size: 18, color: NoorTheme.primaryGreen),
                           ],
                         ),
                         for (final r in m.replies) _ReplyBubble(reply: r),
+                        Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: TextButton.icon(
+                            onPressed: state.submitting ? null : () => _reply(context, m),
+                            icon: const Icon(Icons.reply_rounded, size: 18),
+                            label: const Text('رد'),
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -237,7 +290,7 @@ class _MessagesView extends StatelessWidget {
   }
 }
 
-/// فقاعة الرد من المحفّظ/الإدارة أسفل رسالة ولي الأمر.
+/// فقاعة رد داخل المحادثة: ردود ولي الأمر نفسه بلون مختلف عن ردود المحفّظ/الإدارة.
 class _ReplyBubble extends StatelessWidget {
   final MessageReplyModel reply;
   const _ReplyBubble({required this.reply});
@@ -250,7 +303,9 @@ class _ReplyBubble extends StatelessWidget {
       margin: const EdgeInsetsDirectional.only(top: 10, start: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: NoorTheme.primaryGreen.withValues(alpha: 0.07),
+        color: reply.isMine
+            ? NoorTheme.accentGold.withValues(alpha: 0.08)
+            : NoorTheme.primaryGreen.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(NoorTheme.radiusMd),
         // حدّ موحّد اللون: Flutter لا يسمح بـ borderRadius مع حدود غير موحّدة
         border: Border.all(color: NoorTheme.accentGold.withValues(alpha: 0.45)),
@@ -263,7 +318,7 @@ class _ReplyBubble extends StatelessWidget {
               const Icon(Icons.reply_rounded, size: 16, color: NoorTheme.primaryGreen),
               const SizedBox(width: 4),
               Expanded(
-                child: Text('رد: ${reply.senderName}',
+                child: Text(reply.isMine ? 'ردك' : 'رد: ${reply.senderName}',
                     style: theme.textTheme.labelLarge?.copyWith(color: NoorTheme.primaryGreen)),
               ),
               Text(Formatters.displayDateTime(reply.createdAt), style: theme.textTheme.bodySmall),

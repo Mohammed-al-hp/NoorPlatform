@@ -339,7 +339,9 @@ public class DashboardController : ControllerBase
         var parent = await _context.Parents.AsNoTracking()
             .Include(p => p.Children).ThenInclude(c => c.User)
             .Include(p => p.Children).ThenInclude(c => c.HifzRecords)
-.Include(p => p.Children).ThenInclude(c => c.Attendances)
+            .Include(p => p.Children).ThenInclude(c => c.Attendances)
+            .Include(p => p.Children).ThenInclude(c => c.Circle).ThenInclude(ci => ci!.Teacher).ThenInclude(t => t!.User)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (parent == null)
@@ -348,11 +350,54 @@ public class DashboardController : ControllerBase
         var (rYear, rMonth) = MonthlyHifzRatingService.ResolveMonth(null, null);
         var ratings = await _monthlyRating.GetForStudentsAsync(parent.Children.Select(c => c.Id), rYear, rMonth);
 
-        var childrenData = parent.Children.Select(c => new
+        var today = LibyaTime.Today;
+        var weekStart = today.AddDays(-6);
+        var childrenData = parent.Children.Select(c =>
+        {
+            var position = HifzProgressCalculator.CurrentPosition(c.HifzRecords);
+            var current = position?.CurrentSurah;
+            return new
         {
             c.Id,
             fullName = c.User.FullName,
+            circleName = c.Circle?.Name ?? "بدون حلقة",
+            teacherName = c.Circle?.Teacher?.User?.FullName,
             progress = HifzProgressCalculator.Calculate(c.HifzRecords),
+            memorizedVerses = HifzProgressCalculator.MemorizedVerses(c.HifzRecords),
+            // موضع الحفظ الجديد الحالي: السورة التي يحفظ فيها الآن وآخر آية وصل إليها
+            currentPosition = position == null ? null : new
+            {
+                surahName = position.SurahName,
+                lastVerse = position.LastVerse,
+                verseCount = position.VerseCount,
+                surahCompleted = position.SurahCompleted,
+                currentSurahName = current?.Name,
+                description = position.Describe()
+            },
+            // آخر الجلسات (حفظ جديد ومراجعة) لعرضها في الصفحة
+            recentSessions = c.HifzRecords
+                .OrderByDescending(r => r.Date)
+                .Take(4)
+                .Select(r => new
+                {
+                    r.Date,
+                    type = r.Type.ToString(),
+                    r.SurahName,
+                    r.ToSurahName,
+                    r.Verses,
+                    evaluation = r.Evaluation,
+                    passed = GradeScale.Parse(r.Evaluation) != SessionGrade.Weak
+                })
+                .ToList(),
+            // حضور آخر 7 أيام (يوم بلا سجل = null)
+            weekAttendance = Enumerable.Range(0, 7)
+                .Select(i => weekStart.AddDays(i))
+                .Select(d => new
+                {
+                    date = d.ToString("yyyy-MM-dd"),
+                    status = c.Attendances.Where(a => a.Date.Date == d).Select(a => a.Status.ToString()).FirstOrDefault()
+                })
+                .ToList(),
             monthlyHifzRating = ratings.TryGetValue(c.Id, out var mr) ? MonthlyHifzRatingService.ToDto(mr) : null,
             attendance = AttendanceScore.Percent(c.Attendances.Select(a => a.Status)),
             points = c.Points,
@@ -360,7 +405,8 @@ public class DashboardController : ControllerBase
             lastNote = c.HifzRecords
                             .OrderByDescending(r => r.Date)
                             .FirstOrDefault()?.Notes ?? "لا توجد ملاحظات"
-        });
+        };
+        }).ToList();
 
         // جلب الفواتير المتأخرة وغير المدفوعة
         var overduePayments = await _context.Payments.AsNoTracking().IgnoreQueryFilters()
@@ -425,22 +471,22 @@ public class DashboardController : ControllerBase
         return Ok(activities);
     }
 
-    // GET /api/dashboard/leaderboard
+    // GET /api/dashboard/leaderboard?scope=mine|center
+    // الإدارة: المركز كاملاً. المحفّظ: طلاب حلقاته افتراضياً، ويمكنه التبديل لعرض أول عشرة في المركز (معلومة عامة تحفيزية).
     [HttpGet("leaderboard")]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> GetLeaderboard()
+    public async Task<IActionResult> GetLeaderboard([FromQuery] string? scope = null)
     {
         var leaderboardQuery = _context.Students.AsNoTracking().AsQueryable();
 
-        // ─── إصلاح: تقييد المحفّظ برؤية طلاب حلقته فقط ───
-        var isTeacherLeaderboard = User.IsInRole("Teacher") && !User.IsInRole("Admin");
-        if (isTeacherLeaderboard)
-        {
-            var userId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
-            leaderboardQuery = leaderboardQuery.Where(s => s.Circle != null
-                                                         && s.Circle.Teacher != null
-                                                         && s.Circle.Teacher.UserId == userId);
-        }
+        var isTeacher = User.IsInRole("Teacher") && !User.IsInRole("Admin");
+        var centerWide = !isTeacher || string.Equals(scope, "center", StringComparison.OrdinalIgnoreCase);
+        // طلاب المحفّظ (حلقاته الرسمية والإضافية) لتمييزهم في عرض المركز
+        var myStudentIds = isTeacher
+            ? await StudentQueryHelper.ScopeForUser(_context, User).Select(s => s.Id).ToListAsync()
+            : new List<int>();
+        if (!centerWide)
+            leaderboardQuery = leaderboardQuery.Where(s => myStudentIds.Contains(s.Id));
 
         var leaderboardRaw = await leaderboardQuery
             .OrderByDescending(s => s.Points)
@@ -458,7 +504,9 @@ public class DashboardController : ControllerBase
     + AttendanceScore.ExcusedWeight * s.Attendances.Count(a => a.Status == AttendanceStatus.ExcusedAbsence))
     / (double)s.Attendances.Count * 100, 1)
                     : 0.0,
-                HifzRecordsList = s.HifzRecords.Select(r => new { r.Type, r.VerseCount, r.Verses })
+                HifzRecordsList = s.HifzRecords
+                    .Where(r => r.Type == RecordType.Memorization)
+                    .Select(r => new { r.SurahName, r.ToSurahName, r.Verses, r.Evaluation })
             })
             .ToListAsync();
 
@@ -471,11 +519,15 @@ public class DashboardController : ControllerBase
             s.points,
             s.badges,
             s.attendanceRate,
-            hifzProgress = Math.Min((int)Math.Round(
-                (double)s.HifzRecordsList
-                    .Where(r => r.Type == RecordType.Memorization)
-                    .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses))
-                / 6236.0 * 100), 100)
+            isMine = myStudentIds.Contains(s.studentId),
+            hifzProgress = (int)Math.Round(HifzProgressCalculator.Calculate(s.HifzRecordsList.Select(r => new HifzRecord
+            {
+                Type = RecordType.Memorization,
+                SurahName = r.SurahName,
+                ToSurahName = r.ToSurahName,
+                Verses = r.Verses,
+                Evaluation = r.Evaluation
+            })))
         });
 
         return Ok(leaderboard);
@@ -483,6 +535,6 @@ public class DashboardController : ControllerBase
 
     // ─────────────────────────────────────────────────
     // Helper: حساب تقدم الحفظ الحقيقي من VerseCount
-    // القرآن الكريم = 6236 آية
+    // القرآن الكريم = 6214 آية (العدّ المدني الأول — رواية قالون)
     // ─────────────────────────────────────────────────
 }

@@ -2,70 +2,137 @@
 (function(global) {
     'use strict';
 
-    // بوابة ولي الأمر
+    // ═══ بوابة ولي الأمر: بطاقة لكل ابن (موضع الحفظ الحالي، المحفوظ، الحضور) + عمود جانبي بآخر الجلسات ═══
+    const PARENT_DAY_NAMES = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+    const ATT_LABELS = { Present: 'حاضر', Late: 'متأخر', ExcusedAbsence: 'غائب بإذن', UnexcusedAbsence: 'غائب دون إذن' };
+    const pIcon = (n, s) => (window.Icon ? window.Icon(n, { size: s || 14 }) : '');
+
+    function gradeClass(ev) {
+        const e = String(ev || '');
+        if (!e) return 'neutral';
+        if (e.includes('ضعيف') || e.includes('يحتاج')) return 'fail';
+        if (e.includes('مقبول')) return 'warn';
+        return 'pass';
+    }
+
+    function sessionRange(s) {
+        const surah = s.toSurahName && s.toSurahName !== s.surahName
+            ? `${escapeHtml(s.surahName)} ← ${escapeHtml(s.toSurahName)}`
+            : escapeHtml(s.surahName || '');
+        return s.verses ? `${surah} <span dir="ltr">(${escapeHtml(s.verses)})</span>` : surah;
+    }
+
+    function renderCurrentPosition(c) {
+        const p = c.currentPosition;
+        if (!p) {
+            return `<div class="parent-now parent-now-empty">
+                <span class="parent-now-label">${pIcon('book-open')} الحفظ الجديد</span>
+                <p>لم تُسجَّل جلسات حفظ جديد بعد.</p>
+            </div>`;
+        }
+        if (!p.currentSurahName) {
+            return `<div class="parent-now"><span class="parent-now-label">${pIcon('award')} الحفظ الجديد</span>
+                <div class="parent-now-surah">أتمّ حفظ القرآن الكريم</div></div>`;
+        }
+        const inSurah = !p.surahCompleted;
+        const pct = inSurah ? Math.round(p.lastVerse / p.verseCount * 100) : 0;
+        return `<div class="parent-now">
+            <span class="parent-now-label">${pIcon('book-open')} يحفظ الآن</span>
+            <div class="parent-now-surah">سورة ${escapeHtml(p.currentSurahName)}</div>
+            ${inSurah
+                ? `<div class="parent-now-meta">وصل إلى الآية ${p.lastVerse} من ${p.verseCount}</div>
+                   <div class="progress-bar parent-now-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`
+                : `<div class="parent-now-meta">أتمّ سورة ${escapeHtml(p.surahName)} — يبدأ الجلسة القادمة بسورة ${escapeHtml(p.currentSurahName)}</div>`}
+        </div>`;
+    }
+
+    function renderWeekAttendance(c) {
+        const days = c.weekAttendance || [];
+        if (!days.length) return '';
+        return `<div class="parent-week" aria-label="حضور آخر سبعة أيام">
+            ${days.map(d => {
+                const day = PARENT_DAY_NAMES[new Date(d.date + 'T12:00:00').getDay()];
+                const cls = d.status ? 'att-' + d.status : 'att-none';
+                const title = d.status ? ATT_LABELS[d.status] || d.status : 'لا يوجد تسجيل';
+                return `<div class="parent-week-day" title="${escapeHtml(d.date)}: ${escapeHtml(title)}">
+                    <span class="parent-week-dot ${cls}"></span><small>${day}</small></div>`;
+            }).join('')}
+        </div>`;
+    }
+
+    function renderChildCard(c) {
+        const meta = [c.circleName, c.teacherName ? 'المحفّظ: ' + c.teacherName : null].filter(Boolean).map(escapeHtml).join(' • ');
+        const progressTitle = c.memorizedVerses ? `${c.memorizedVerses} آية من 6214` : '';
+        return `<div class="parent-child-card">
+            <div class="parent-child-head">
+                <div class="student-avatar-lg" style="background:var(--gradient)">${escapeHtml(c.fullName).slice(0, 2)}</div>
+                <div><h3>${escapeHtml(c.fullName)}</h3><p>${meta}</p></div>
+            </div>
+            ${renderCurrentPosition(c)}
+            <div class="student-card-stats parent-child-stats">
+                <div class="mini-stat" title="${progressTitle}"><label>المحفوظ من القرآن</label><p>${c.progress}%</p></div>
+                <div class="mini-stat"><label>الحضور</label><p>${c.attendance}%</p></div>
+                <div class="mini-stat"><label>النقاط</label><p style="color:var(--amber-dark)">${pIcon('star')} ${c.points || 0}</p></div>
+                ${window.NoorMonthlyRating ? window.NoorMonthlyRating.miniStatHtml(c.monthlyHifzRating) : ''}
+            </div>
+            <div class="parent-section-label">حضور آخر سبعة أيام</div>
+            ${renderWeekAttendance(c)}
+            ${c.lastNote && c.lastNote !== 'لا توجد ملاحظات'
+                ? `<div class="parent-note">${pIcon('message-circle')} <strong>آخر ملاحظة من المحفّظ:</strong> ${escapeHtml(c.lastNote)}</div>`
+                : ''}
+            <div class="parent-child-actions">
+                <button class="btn btn-outline" onclick="NoorMessages.openChildDetails(${c.id}, ${jsArg(c.fullName)})">${pIcon('clipboard-list')} السجل الكامل</button>
+                <button class="btn btn-outline" onclick="NoorSmart.openChildMastery(${c.id}, ${jsArg(c.fullName)})">${pIcon('book-open')} خريطة الإتقان</button>
+            </div>
+        </div>`;
+    }
+
+    function renderParentTimeline(children) {
+        const items = [];
+        children.forEach(c => (c.recentSessions || []).forEach(s => items.push({ child: c.fullName, ...s })));
+        items.sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (!items.length) return '<p class="parent-empty">لا توجد جلسات مسجلة بعد</p>';
+        const multi = children.length > 1;
+        return items.slice(0, 8).map(s => `
+            <div class="parent-timeline-item">
+                <span class="parent-timeline-type ${s.type === 'Revision' ? 'rev' : 'mem'}">${s.type === 'Revision' ? 'مراجعة' : 'حفظ جديد'}</span>
+                <div class="parent-timeline-body">
+                    <div>${sessionRange(s)}</div>
+                    <small>${multi ? escapeHtml(s.child) + ' • ' : ''}${typeof formatDateEnGb === 'function' ? formatDateEnGb(s.date) : escapeHtml(String(s.date).slice(0, 10))}</small>
+                </div>
+                ${s.evaluation ? `<span class="parent-grade ${gradeClass(s.evaluation)}">${escapeHtml(s.evaluation)}</span>` : ''}
+            </div>`).join('');
+    }
+
     async function fetchParentView() {
         const grid = document.getElementById('parentChildrenGrid');
         if (!grid) return;
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:16}) : '') + '</span> جاري تحميل بيانات الأبناء...</div>';
+        const alertsEl = document.getElementById('parentAlerts');
+        const timeline = document.getElementById('parentTimeline');
+        grid.innerHTML = '<div class="parent-empty"><span class="spin-icon">' + pIcon('loader', 16) + '</span> جاري تحميل بيانات الأبناء...</div>';
         try {
             const response = await apiFetch('/dashboard/parent-summary');
             const children = response.children || response;
             const alerts = response.alerts || [];
 
-            let alertsHtml = '';
-            if (alerts.length > 0) {
-                alertsHtml = `<div style="grid-column:1/-1; margin-bottom: 10px;">
-                    ${alerts.map(a => `
-                        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:12px; padding:14px 18px; margin-bottom:8px; display:flex; align-items:center; gap:10px; font-size:14px; color:#dc2626;">
-                            <span>${window.Icon ? window.Icon('alert-triangle', {size:20}) : ''}</span>
-                            <span style="flex:1">${escapeHtml(a.message)}</span>
-                            <button class="btn" style="background:#dc2626;color:#fff;padding:6px 14px;border-radius:8px;font-size:12px" onclick="navigate('parentFees', null)">عرض الفاتورة</button>
-                        </div>
-                    `).join('')}
-                </div>`;
+            if (alertsEl) {
+                alertsEl.innerHTML = alerts.map(a => `
+                    <div class="parent-alert">
+                        <span>${pIcon('alert-triangle', 20)}</span>
+                        <span style="flex:1">${escapeHtml(a.message)}</span>
+                        <button class="btn" onclick="navigate('parentFees', null)">عرض الفاتورة</button>
+                    </div>`).join('');
             }
 
             if (!children.length) {
-                grid.innerHTML = alertsHtml + '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">لا يوجد أبناء مسجلون لحسابك</div>';
+                grid.innerHTML = '<div class="parent-empty">لا يوجد أبناء مسجلون لحسابك</div>';
+                if (timeline) timeline.innerHTML = '';
                 return;
             }
-            grid.innerHTML = alertsHtml + children.map(c => `
-                    <div class="student-card">
-                        <div class="student-card-top">
-                            <div class="student-avatar-lg" style="background:var(--gradient)">${escapeHtml(c.fullName).slice(0, 2)}</div>
-                            <div class="student-card-info">
-                                <h4>${escapeHtml(c.fullName)}</h4>
-                                <span class="status-badge status-excellent" style="margin-top:4px;display:inline-flex">تقدم الحفظ: ${c.progress}%</span>
-                            </div>
-                        </div>
-                        <div class="student-card-stats">
-                            <div class="mini-stat"><label>الحفظ</label><p>${c.progress}%</p></div>
-                            <div class="mini-stat"><label>الحضور</label><p>${c.attendance}%</p></div>
-                            <div class="mini-stat"><label>النقاط</label><p style="color:var(--amber-dark)">${window.Icon ? window.Icon('star', {size:14}) : ''} ${c.points || 0}</p></div>
-                            ${window.NoorMonthlyRating ? window.NoorMonthlyRating.miniStatHtml(c.monthlyHifzRating) : ''}
-                        </div>
-                        <div style="font-size:12px; margin-bottom: 10px; display: flex; gap: 4px; flex-wrap: wrap;">
-                            ${c.badges ? c.badges.split(',').map(b => b.trim() ? `<span style="background:var(--amber-light); color:var(--amber-dark); padding: 2px 6px; border-radius: 4px;">${window.Icon ? window.Icon('medal-gold', {size:12}) : ''} ${escapeHtml(b.trim())}</span>` : '').join('') : ''}
-                        </div>
-                        <div class="progress-wrap" style="margin-bottom:14px">
-                            <div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%"></div></div>
-                            <span class="progress-pct">${c.progress}%</span>
-                        </div>
-                       ${c.lastNote && c.lastNote !== 'لا توجد ملاحظات'
-                    ? `<div style="background:var(--green-light);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--green-dark);margin-bottom:10px">
-                        ${window.Icon ? window.Icon('message-circle', {size:14}) : ''} <strong>آخر ملاحظة:</strong> ${escapeHtml(c.lastNote)}
-                       </div>`
-                    : ''}
-                    <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px" onclick="NoorMessages.openChildDetails(${c.id}, ${jsArg(c.fullName)})">
-                        ${window.Icon ? window.Icon('clipboard-list', {size:14}) : ''} عرض التفاصيل الكاملة
-                    </button>
-                    <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px;margin-top:6px" onclick="NoorSmart.openChildMastery(${c.id}, ${jsArg(c.fullName)})">
-                        ${window.Icon ? window.Icon('book-open', {size:14}) : ''} خريطة الإتقان ومراجعة اليوم
-                    </button>
-                </div>
-            `).join('');
+            grid.innerHTML = children.map(renderChildCard).join('');
+            if (timeline) timeline.innerHTML = renderParentTimeline(children);
         } catch {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#dc2626">' + (window.Icon ? window.Icon('x-circle', {size:16}) : '') + ' تعذر تحميل البيانات. تأكد من تسجيل الدخول كولي أمر.</div>';
+            grid.innerHTML = '<div class="parent-empty" style="color:#dc2626">' + pIcon('x-circle', 16) + ' تعذر تحميل البيانات. تأكد من تسجيل الدخول كولي أمر.</div>';
         }
     }
 

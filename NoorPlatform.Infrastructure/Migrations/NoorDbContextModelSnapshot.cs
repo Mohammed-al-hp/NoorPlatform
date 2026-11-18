@@ -672,6 +672,9 @@ namespace NoorPlatform.Infrastructure.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PointsAwarded")
+                        .HasColumnType("int");
+
                     b.Property<string>("Portion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1044,6 +1047,18 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("EnableDress")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnableMatn")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnableParentHome")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnablePrayer")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("EvaluationsVisibleToStudentsAndParents")
                         .HasColumnType("bit");
 
@@ -1077,13 +1092,40 @@ namespace NoorPlatform.Infrastructure.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
+                    b.Property<int>("PointsAttendanceExcused")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsAttendanceLate")
+                        .HasColumnType("int");
+
                     b.Property<int>("PointsAttendancePresent")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsAttendanceUnexcused")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsHifzMemGood")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsHifzMemVeryGood")
                         .HasColumnType("int");
 
                     b.Property<int>("PointsHifzMemorization")
                         .HasColumnType("int");
 
+                    b.Property<int>("PointsHifzRevAcceptable")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsHifzRevGood")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsHifzRevVeryGood")
+                        .HasColumnType("int");
+
                     b.Property<int>("PointsHifzRevision")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PointsMatnMemorization")
                         .HasColumnType("int");
 
                     b.Property<double>("ProgressThreshold10")

@@ -13,18 +13,16 @@ public enum HifzAgeBand
 public record MonthlyHifzRatingConfig(int TargetAge5To7, int TargetAge8To10, int TargetAge11Plus, IReadOnlyList<string> PassingEvaluations)
 {
     public static readonly MonthlyHifzRatingConfig Default =
-        new(4, 6, 8, new[] { "ممتاز", "جيد جداً", "جيد", "ضعيف" });
+        new(4, 6, 8, GradeScale.PassingGrades);
 
     public static MonthlyHifzRatingConfig From(PlatformSettings? s)
     {
         if (s == null) return Default;
-        var passing = (s.HifzRatingPassingEvaluations ?? string.Empty)
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return new MonthlyHifzRatingConfig(
             s.HifzRatingTargetAge5To7 > 0 ? s.HifzRatingTargetAge5To7 : Default.TargetAge5To7,
             s.HifzRatingTargetAge8To10 > 0 ? s.HifzRatingTargetAge8To10 : Default.TargetAge8To10,
             s.HifzRatingTargetAge11Plus > 0 ? s.HifzRatingTargetAge11Plus : Default.TargetAge11Plus,
-            passing.Length > 0 ? passing : Default.PassingEvaluations);
+            GradeScale.PassingGrades);
     }
 }
 
@@ -118,7 +116,7 @@ public static class MonthlyHifzRating
         var memorization = records
             .Where(r => r.Type == RecordType.Memorization && r.Date >= start && r.Date < end)
             .ToList();
-        var successful = memorization.Count(r => IsPassing(r.Evaluation, cfg.PassingEvaluations));
+        var successful = memorization.Count(r => GradeScale.IsPassing(r.Evaluation));
 
         var age = AgeOn(dateOfBirth, end.AddDays(-1));
         var band = BandFor(age);

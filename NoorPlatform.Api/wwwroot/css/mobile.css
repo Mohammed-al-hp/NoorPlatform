@@ -1,0 +1,135 @@
+/* منصة نور — تحسينات الهاتف (تُحمَّل أخيراً لتعلو على ما قبلها)
+   1) منع التمرير الأفقي الناتج عن القائمة الجانبية المخفية خارج الشاشة (يظهر في Safari على الآيفون)
+   2) شريط علوي مرتّب: الأزرار والعنوان في سطر، والتاريخ في سطر صغير تحته
+   3) رأس الصفحة: العنوان ثم الأزرار بعرض كامل بدل تزاحمهما في سطر واحد */
+
+@media (max-width: 768px) {
+    /* ── 1) لا تمرير أفقي ── */
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    @supports (overflow: clip) {
+        html,
+        body {
+            overflow-x: clip;
+        }
+    }
+
+    .main {
+        min-width: 0;
+        max-width: 100vw;
+    }
+
+    /* القائمة المغلقة لا تُرسم ولا تُحسب في عرض الصفحة */
+    .sidebar:not(.open) {
+        visibility: hidden;
+    }
+
+    .sidebar {
+        transition: transform .3s ease, visibility 0s linear .3s;
+    }
+
+    .sidebar.open {
+        transition: transform .3s ease, visibility 0s;
+    }
+
+    /* ── 2) الشريط العلوي ── */
+    .topbar {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 56px;
+        padding: 8px 12px calc(6px) !important;
+        padding-top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+        gap: 4px 10px;
+        row-gap: 2px;
+    }
+
+    .topbar > * {
+        flex-shrink: 0;
+    }
+
+    .topbar .topbar-title {
+        flex: 1 1 0 !important;
+        min-width: 0;
+        order: 0;
+    }
+
+    .topbar .topbar-title h2 {
+        font-size: 17px !important;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* التاريخ ينزل لسطر مستقل صغير تحت العنوان */
+    .topbar .topbar-date {
+        order: 10;
+        flex: 1 0 100%;
+        background: none;
+        border: none;
+        padding: 0 !important;
+        line-height: 1.4 !important;
+    }
+
+    .topbar #topbarDateHijri {
+        font-size: 11.5px !important;
+        font-weight: 600;
+        color: var(--text-muted) !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .topbar #topbarDateHijri svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .topbar .menu-toggle {
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ── 3) رأس الصفحة ── */
+    .page-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .page-header h2 {
+        font-size: 20px;
+        line-height: 1.35;
+    }
+
+    .page-header > div:last-child:not(:first-child) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .page-header > div:last-child:not(:first-child) > .btn {
+        flex: 1 1 calc(50% - 4px);
+        justify-content: center;
+        white-space: nowrap;
+        min-height: 44px;
+    }
+
+    /* الأزرار عموماً: النص في سطر واحد */
+    .btn {
+        white-space: nowrap;
+    }
+
+    /* مساحة كافية أسفل المحتوى حتى لا يغطيه زر القائمة العائم والشريط السفلي */
+    .content {
+        padding-bottom: 120px !important;
+    }
+}

@@ -48,6 +48,20 @@ class MessagesCubit extends Cubit<MessagesState> {
       },
     );
   }
+
+  /// رد ولي الأمر داخل محادثة (يُوجَّه تلقائياً للمحفّظ أو الإدارة).
+  Future<bool> reply(int threadId, String content) async {
+    emit(state.copyWith(submitting: true, clearError: true, clearMsg: true));
+    final result = await repository.replyToThread(threadId, content);
+    final error = result.fold((f) => f.message, (_) => null);
+    if (error != null) {
+      emit(state.copyWith(submitting: false, error: error));
+      return false;
+    }
+    emit(state.copyWith(submitting: false, successMessage: 'تم إرسال الرد'));
+    await load();
+    return true;
+  }
 }
 
 class MessagesState {

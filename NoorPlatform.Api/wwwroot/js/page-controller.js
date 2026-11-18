@@ -140,10 +140,10 @@
                 <p><strong>المحفظ:</strong> ${escapeHtml(s.teacherName || '—')}</p>
                 <p><strong>هاتف الطالب:</strong> <span dir="ltr">${escapeHtml(s.studentPhone || '—')}</span></p>
                 <p><strong>ولي الأمر:</strong> ${escapeHtml(s.parentName || '—')} — <span dir="ltr">${escapeHtml(s.parentPhone || '')}</span></p>
-                <p><strong>بريد حساب الدخول:</strong> ${escapeHtml(s.email || 'لا يوجد — الدخول برقم الهاتف')}</p>
+                <p><strong>اسم الدخول:</strong> <span dir="ltr">${escapeHtml(s.loginName || '—')}</span></p>
             </div>
                         <div class="student-card-stats" style="margin-bottom:16px">
-                <div class="mini-stat"><label>الحفظ</label><p>${s.progress ?? 0}%</p></div>
+                <div class="mini-stat" title="نسبة ما أتمّه من القرآن بالترتيب من سورة الناس حتى موضعه الحالي في الحفظ الجديد"><label>المحفوظ</label><p>${s.progress ?? 0}%</p></div>
                 <div class="mini-stat"><label>الحضور</label><p>${s.attendance ?? 0}%</p></div>
                 <div class="mini-stat"><label>المستوى</label><p>${escapeHtml(s.level || '—')}</p></div>
             </div>
@@ -375,14 +375,8 @@
         document.getElementById('editHifzToSurah').value = r.toSurahName || '';
         document.getElementById('editHifzVerses').value = r.verses || '';
         const evalSelect = document.getElementById('editHifzEvaluation');
-        const ev = (r.evaluation || '').trim();
-        // إضافة التقييم الحالي إن لم يكن ضمن الخيارات (بيانات قديمة)
-        if (ev && ![...evalSelect.options].some(o => o.value === ev)) {
-            const opt = document.createElement('option');
-            opt.value = ev; opt.textContent = ev;
-            evalSelect.appendChild(opt);
-        }
-        evalSelect.value = ev || 'جيد';
+        // خيارات التقدير حسب نوع الجلسة (الحفظ الجديد بلا «مقبول»)، والقيم القديمة تُوحَّد للاسم المعتمد
+        if (global.NoorGrades) global.NoorGrades.fillSelect(evalSelect, r.type === 'Revision' ? 'Revision' : 'Memorization', (r.evaluation || '').trim());
         document.getElementById('editHifzNotes').value = r.notes || '';
         global.openModal('editHifzModal');
     }

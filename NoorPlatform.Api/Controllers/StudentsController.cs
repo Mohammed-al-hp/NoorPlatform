@@ -38,7 +38,7 @@ public class StudentsController : ControllerBase
         {
             s.Id,
             fullName = s.User.FullName,
-            s.User.Email,
+            loginUserName = s.User.UserName,
             s.ParentPhone,
             s.GuardianName,
             s.ParentId,
@@ -55,14 +55,10 @@ public class StudentsController : ControllerBase
     / (double)s.Attendances.Count * 100)
                 : 0,
             s.DateOfBirth,
-            // أداء: جمع عدد الآيات في قاعدة البيانات بدل تحميل كل سجلات التسميع لكل طالب،
-            // ولا يُحمَّل نص الآيات إلا للسجلات القديمة التي لا تحمل VerseCount
-            MemorizedVerseSum = s.HifzRecords
-                .Where(r => r.Type == RecordType.Memorization && r.VerseCount > 0)
-                .Sum(r => (int?)r.VerseCount) ?? 0,
-            LegacyVerses = s.HifzRecords
-                .Where(r => r.Type == RecordType.Memorization && r.VerseCount <= 0)
-                .Select(r => r.Verses)
+            // المحفوظ يُحسب من موضع الحفظ الجديد بالترتيب العكسي — تُحمَّل الحقول اللازمة فقط
+            MemRecords = s.HifzRecords
+                .Where(r => r.Type == RecordType.Memorization)
+                .Select(r => new { r.SurahName, r.ToSurahName, r.Verses, r.Evaluation })
                 .ToList()
         }).AsSplitQuery().ToListAsync();
 
@@ -70,7 +66,8 @@ public class StudentsController : ControllerBase
         {
             s.Id,
             s.fullName,
-            s.Email,
+            // اسم الدخول: رقم الهاتف، أو اسم المستخدم (stXXXXXX) للطالب الذي لا يملك هاتفاً
+            loginName = AccountProvisioningService.ToDisplayPhone(s.loginUserName ?? ""),
             s.ParentPhone,
             s.GuardianName,
             s.ParentId,
@@ -81,8 +78,14 @@ public class StudentsController : ControllerBase
             s.Level,
             s.attendance,
             dateOfBirth = s.DateOfBirth.HasValue ? s.DateOfBirth.Value.ToString("yyyy-MM-dd") : null,
-            progress = Math.Min(100.0, Math.Round(
-                (double)(s.MemorizedVerseSum + s.LegacyVerses.Sum(HifzRecord.ParseVerseCount)) / 6236.0 * 100, 1))
+            progress = HifzProgressCalculator.Calculate(s.MemRecords.Select(r => new HifzRecord
+            {
+                Type = RecordType.Memorization,
+                SurahName = r.SurahName,
+                ToSurahName = r.ToSurahName,
+                Verses = r.Verses,
+                Evaluation = r.Evaluation
+            }))
         });
 
         return Ok(result);
@@ -118,7 +121,7 @@ public class StudentsController : ControllerBase
         {
             student.Id,
             fullName = student.User.FullName,
-            student.User.Email,
+            loginName = AccountProvisioningService.ToDisplayPhone(student.User.UserName ?? ""),
             student.Level,
             teacherName = student.Circle?.Teacher?.User?.FullName ?? "—",
             circleName = student.Circle?.Name ?? "بدون حلقة",
@@ -136,6 +139,7 @@ public class StudentsController : ControllerBase
                ? (int)Math.Round(AttendanceScore.Percent(student.Attendances.Select(a => a.Status)))
                 : 0,
             progress = HifzProgressCalculator.Calculate(student.HifzRecords),
+            currentPosition = HifzProgressCalculator.CurrentPosition(student.HifzRecords)?.Describe(),
             recentHifz = student.HifzRecords
                                 .OrderByDescending(r => r.Date)
                                 .Take(5)
@@ -216,7 +220,7 @@ public class StudentsController : ControllerBase
         await using var tx = await _context.Database.BeginTransactionAsync();
         var (user, tempPassword, err) = string.IsNullOrWhiteSpace(request.Phone)
     ? await _accounts.CreateUserAsync("", request.FullName.Trim(), UserRole.Student,
-        null, await _accounts.GenerateStudentUsernameAsync())
+        usernameOverride: await _accounts.GenerateStudentUsernameAsync())
     : await _accounts.CreateUserAsync(request.Phone, request.FullName.Trim(), UserRole.Student);
 
         if (err != null)

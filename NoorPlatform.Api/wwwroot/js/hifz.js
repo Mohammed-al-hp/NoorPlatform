@@ -23,12 +23,84 @@
         resetHifzForm();
     }
 
+    /**
+     * سلّم التقديرات المعتمد: ممتاز 85–100، جيد جداً 75–84، جيد 65–74، مقبول 50–64 (للمراجعة فقط)،
+     * ضعيف ويحتاج مراجعة 49 فأقل (جلسة راسبة تُعاد). الحفظ الجديد بلا «مقبول».
+     */
+    const Grades = (function () {
+        const EXCELLENT = 'ممتاز', VERY_GOOD = 'جيد جداً', GOOD = 'جيد', ACCEPTABLE = 'مقبول', WEAK = 'ضعيف ويحتاج مراجعة';
+        const MEMO = [EXCELLENT, VERY_GOOD, GOOD, WEAK];
+        const REV = [EXCELLENT, VERY_GOOD, GOOD, ACCEPTABLE, WEAK];
+        const RANGES = { [EXCELLENT]: '85–100%', [VERY_GOOD]: '75–84%', [GOOD]: '65–74%', [ACCEPTABLE]: '50–64%' };
+
+        function list(type) { return type === 'Revision' ? REV : MEMO; }
+
+        function fromPercent(p, type) {
+            if (p >= 85) return EXCELLENT;
+            if (p >= 75) return VERY_GOOD;
+            if (p >= 65) return GOOD;
+            if (p >= 50 && type === 'Revision') return ACCEPTABLE;
+            return WEAK;
+        }
+
+        /** يحوّل التقديرات القديمة («ضعيف»، «يحتاج مراجعة»، «جيد جدًا») إلى الاسم المعتمد. */
+        function normalize(ev) {
+            const e = (ev || '').replace(/[\u064B-\u065F\u0670]/g, '').trim();
+            if (!e) return '';
+            if (e.includes('ضعيف') || e.includes('يحتاج مراجع')) return WEAK;
+            if (e.includes('ممتاز')) return EXCELLENT;
+            if (e.startsWith('جيد جدا')) return VERY_GOOD;
+            if (e.includes('مقبول')) return ACCEPTABLE;
+            if (e === 'جيد') return GOOD;
+            return ev;
+        }
+
+        function fillSelect(select, type, current) {
+            if (!select) return;
+            const keep = normalize(current !== undefined ? current : select.value);
+            const items = list(type).slice();
+            if (keep && !items.includes(keep)) items.push(keep); // قيمة قديمة غير معتمدة لهذا النوع
+            select.innerHTML = items.map(g =>
+                `<option value="${g}">${g}${RANGES[g] ? ' (' + RANGES[g] + ')' : g === WEAK ? ' — جلسة راسبة' : ''}</option>`).join('');
+            select.value = keep && items.includes(keep) ? keep : EXCELLENT;
+        }
+
+        function applyPercent() {
+            const input = document.getElementById('hifzPercent');
+            const select = document.getElementById('hifzEvaluation');
+            const hint = document.getElementById('hifzGradeHint');
+            if (!input || !select) return;
+            const raw = input.value.trim();
+            if (raw === '') { if (hint) hint.textContent = ''; return; }
+            const p = Math.max(0, Math.min(100, parseFloat(raw)));
+            if (!Number.isFinite(p)) return;
+            const g = fromPercent(p, sessionType);
+            select.value = g;
+            if (hint) {
+                hint.textContent = g === WEAK
+                    ? 'جلسة راسبة: لا تُحتسب ولا تمنح نقاطاً، ويُعيدها الطالب لاحقاً'
+                    : 'التقدير: ' + g;
+                hint.classList.toggle('is-fail', g === WEAK);
+            }
+        }
+
+        return { MEMO, REV, EXCELLENT, VERY_GOOD, GOOD, ACCEPTABLE, WEAK, list, fromPercent, normalize, fillSelect, applyPercent };
+    })();
+    global.NoorGrades = Grades;
+
     async function loadOralMaxOpenings() {
         try {
             const d = await global.apiFetch('/pedagogical/grading-defaults');
             _oralMaxOpenings = d?.oralMaxOpeningsBeforeFail ?? 1;
             const field = document.getElementById('hifzOralMaxOpenings');
             if (field) field.value = _oralMaxOpenings;
+            // المتون غير مفعّلة في إعدادات المركز ← يختفي خيار تسجيل المتن مع الجلسة
+            const matnGroup = document.getElementById('hifzMatnGroup');
+            if (matnGroup) matnGroup.style.display = d?.enableMatn === false ? 'none' : '';
+            if (d?.enableMatn === false) {
+                const cb = document.getElementById('hifzIncludeMatn');
+                if (cb) cb.checked = false;
+            }
         } catch (e) {
             _oralMaxOpenings = 1;
         }
@@ -103,19 +175,122 @@
             });
         }
 
-        // ─── جلب نص الآيات تلقائيًا (رواية قالون) عند اختيار السورة/الآيات ───
+        // ─── اختيار الآيات بنصّها (رواية قالون، دون إنترنت) ───
         const memFromSurah = document.getElementById('hifzFromSurah');
+        const memToSurah = document.getElementById('hifzToSurah');
         const memFromVerse = document.getElementById('hifzFromVerse');
         const memToVerse = document.getElementById('hifzToVerse');
-        [memFromSurah, memFromVerse, memToVerse].forEach(el => {
-            if (el) el.addEventListener('change', autoFillVerseText);
+        if (memFromSurah) memFromSurah.addEventListener('change', () => populateMemVerseSelects(1, null));
+        if (memToSurah) memToSurah.addEventListener('change', () => populateMemVerseSelects(memFromVerse?.value, null));
+        if (showTo) showTo.addEventListener('change', () => populateMemVerseSelects(memFromVerse?.value, null));
+        if (memFromVerse) memFromVerse.addEventListener('change', () => {
+            // في السورة الواحدة: النهاية لا تسبق البداية
+            if (!isMultiSurah() && memToVerse && parseInt(memToVerse.value, 10) < parseInt(memFromVerse.value, 10))
+                memToVerse.value = memFromVerse.value;
+            clearUserEdited();
+            autoFillVerseText();
         });
+        if (memToVerse) memToVerse.addEventListener('change', () => { clearUserEdited(); autoFillVerseText(); });
+        const search = document.getElementById('hifzVerseSearch');
+        if (search) {
+            let t = null;
+            search.addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderVerseSearch, 200); });
+        }
 
         // تتبع التعديل اليدوي: إن كتب المحفّظ بنفسه بهذين الحقلين، لا نستبدل ما كتبه لاحقًا
         const startInput = document.getElementById('hifzStartText');
         const endInput = document.getElementById('hifzEndText');
         if (startInput) startInput.addEventListener('input', () => { startInput.dataset.userEdited = '1'; });
         if (endInput) endInput.addEventListener('input', () => { endInput.dataset.userEdited = '1'; });
+    }
+
+    // ════════════ اختيار الآيات بنصّها ════════════
+    function isMultiSurah() {
+        return !!document.getElementById('hifzShowToSurah')?.checked;
+    }
+
+    function surahVerseCount(surahName) {
+        const surah = U().SURAHS.find(s => s.name === surahName);
+        return surah ? surah.v : 1;
+    }
+
+    function clearUserEdited() {
+        ['hifzStartText', 'hifzEndText'].forEach(id => { const el = document.getElementById(id); if (el) delete el.dataset.userEdited; });
+    }
+
+    /** خيارات الآيات «رقم — أول كلمات الآية»؛ وإن تعذّر تحميل النص فبالأرقام فقط. */
+    async function verseOptions(surahName, selected) {
+        let html = global.NoorQuranText ? await global.NoorQuranText.verseOptionsHtml(surahName, selected) : '';
+        if (!html) {
+            const total = surahVerseCount(surahName);
+            for (let i = 1; i <= total; i++) html += `<option value="${i}"${String(i) === String(selected) ? ' selected' : ''}>آية ${i}</option>`;
+        }
+        return html;
+    }
+
+    /** يملأ قائمتي «من آية» و«إلى آية» حسب السورة (وإلى سورة عند تعدد السور). */
+    async function populateMemVerseSelects(fromVerse, toVerse) {
+        const fromSurah = document.getElementById('hifzFromSurah')?.value;
+        const fromSel = document.getElementById('hifzFromVerse');
+        const toSel = document.getElementById('hifzToVerse');
+        if (!fromSurah || !fromSel || !toSel) return;
+        const toSurah = isMultiSurah() ? (document.getElementById('hifzToSurah')?.value || fromSurah) : fromSurah;
+        const from = Math.min(parseInt(fromVerse, 10) || 1, surahVerseCount(fromSurah));
+        let to = parseInt(toVerse, 10);
+        if (!to) to = toSurah === fromSurah ? from : 1;
+        to = Math.min(to, surahVerseCount(toSurah));
+        fromSel.innerHTML = await verseOptions(fromSurah, from);
+        toSel.innerHTML = await verseOptions(toSurah, to);
+        fromSel.value = String(from);
+        toSel.value = String(to);
+        clearUserEdited();
+        autoFillVerseText();
+    }
+
+    /** البحث بكلمة في السورة المختارة (و«إلى سورة» عند تعدد السور) مع زرين: بداية / نهاية. */
+    async function renderVerseSearch() {
+        const box = document.getElementById('hifzVerseResults');
+        const q = document.getElementById('hifzVerseSearch')?.value || '';
+        if (!box) return;
+        if (!q.trim() || !global.NoorQuranText) { box.innerHTML = ''; return; }
+        const fromSurah = document.getElementById('hifzFromSurah')?.value;
+        const toSurah = isMultiSurah() ? document.getElementById('hifzToSurah')?.value : null;
+        const groups = [];
+        groups.push({ surah: fromSurah, items: await global.NoorQuranText.searchInSurah(fromSurah, q) });
+        if (toSurah && toSurah !== fromSurah) groups.push({ surah: toSurah, items: await global.NoorQuranText.searchInSurah(toSurah, q) });
+        const esc = U().escapeHtml;
+        const rows = [];
+        groups.forEach(g => g.items.slice(0, 8).forEach(v => {
+            const canStart = g.surah === fromSurah;
+            const canEnd = g.surah === (toSurah || fromSurah);
+            rows.push(`<div class="verse-result">
+                <span class="verse-result-num">${groups.length > 1 ? esc(g.surah) + ' ' : ''}${v.number}</span>
+                <span class="verse-result-text quran-text">${esc(v.text)}</span>
+                <span class="verse-result-actions">
+                    ${canStart ? `<button type="button" class="btn btn-outline" onclick="NoorHifz.pickVerse('from', ${v.number})">بداية</button>` : ''}
+                    ${canEnd ? `<button type="button" class="btn btn-outline" onclick="NoorHifz.pickVerse('to', ${v.number})">نهاية</button>` : ''}
+                </span>
+            </div>`);
+        }));
+        box.innerHTML = rows.length ? rows.join('') : '<div class="verse-result-empty">لا توجد آية بهذه الكلمة في السورة المختارة</div>';
+    }
+
+    function pickVerse(which, number) {
+        const sel = document.getElementById(which === 'from' ? 'hifzFromVerse' : 'hifzToVerse');
+        if (!sel) return;
+        sel.value = String(number);
+        sel.dispatchEvent(new Event('change'));
+        global.showToast(which === 'from' ? `تم اختيار آية البداية: ${number}` : `تم اختيار آية النهاية: ${number}`, 'success');
+    }
+
+    /** فتح صفحة المصحف عند السورة والآية المختارتين. */
+    function openMushafAtSelection(mode) {
+        if (!global.NoorMushaf) return;
+        const ids = mode === 'seq' ? ['hifzSeqFromSurah', 'hifzSeqFromVerse'] : ['hifzFromSurah', 'hifzFromVerse'];
+        const surahName = document.getElementById(ids[0])?.value;
+        const verse = parseInt(document.getElementById(ids[1])?.value, 10) || 1;
+        const surah = U().SURAHS.find(s => s.name === surahName);
+        global.NoorMushaf.open({ surah: surah ? surah.n : 1, verse });
     }
 
     async function autoFillVerseText() {
@@ -125,6 +300,7 @@
         if (!global.NoorQuranText) return; // المصدر غير محمّل بالصفحة
 
         const surahName = document.getElementById('hifzFromSurah')?.value;
+        const endSurahName = isMultiSurah() ? (document.getElementById('hifzToSurah')?.value || surahName) : surahName;
         const fromVerse = document.getElementById('hifzFromVerse')?.value;
         const toVerse = document.getElementById('hifzToVerse')?.value || fromVerse;
         if (!surahName || !fromVerse) return;
@@ -138,7 +314,7 @@
             }
             if (endInput && !endInput.dataset.userEdited) {
                 endInput.placeholder = 'جاري جلب النص...';
-                const endText = await global.NoorQuranText.fetchVerseTextByName(surahName, toVerse);
+                const endText = await global.NoorQuranText.fetchVerseTextByName(endSurahName, toVerse);
                 if (endText) endInput.value = endText;
                 endInput.placeholder = '...إلى قوله';
             }
@@ -212,14 +388,10 @@
             }
 
             const fromSurahSel = document.getElementById('hifzFromSurah');
-            const fromVerseInput = document.getElementById('hifzFromVerse');
-
             if (fromSurahSel && pos.surahName) {
                 fromSurahSel.value = pos.surahName;
             }
-            if (fromVerseInput && pos.nextVerse) {
-                fromVerseInput.value = pos.nextVerse;
-            }
+            await populateMemVerseSelects(pos.nextVerse || 1, pos.nextVerse || 1);
 
             if (hintEl) {
                 const crossedSurah = pos.lastSurahName !== pos.surahName;
@@ -228,8 +400,6 @@
                     : `آخر توقف: سورة ${pos.lastSurahName} — الآية ${pos.lastVerse} (بتاريخ ${pos.lastSessionDate}). تم اقتراح البدء من الآية ${pos.nextVerse}.`;
             }
 
-            // تحديث نص الآية تلقائيًا بناءً على الموضع الجديد المقترح
-            autoFillVerseText();
         } catch (e) {
             if (hintEl) hintEl.textContent = '';
             console.warn('تعذر جلب آخر موضع حفظ للطالب:', e);
@@ -268,18 +438,11 @@
         }
     }
 
-    function populateSeqVerseSelect(suggestedVerse) {
+    async function populateSeqVerseSelect(suggestedVerse) {
         const surahName = document.getElementById('hifzSeqFromSurah')?.value;
         const verseSel = document.getElementById('hifzSeqFromVerse');
         if (!verseSel || !surahName) return;
-
-        const surah = U().SURAHS.find(s => s.name === surahName);
-        const total = surah ? surah.v : 286;
-        let options = '';
-        for (let i = 1; i <= total; i++) {
-            options += `<option value="${i}">آية ${i}</option>`;
-        }
-        verseSel.innerHTML = options;
+        verseSel.innerHTML = await verseOptions(surahName, suggestedVerse || 1);
         if (suggestedVerse) verseSel.value = String(suggestedVerse);
         autoFillSeqVerseText();
     }
@@ -307,19 +470,14 @@
             console.warn('تعذر جلب نص آية بداية المراجعة:', e);
         }
     }
-    function populateSeqToVerseSelect() {
+    async function populateSeqToVerseSelect() {
         const surahName = document.getElementById('hifzSeqToSurah')?.value;
         const verseSel = document.getElementById('hifzSeqToVerse');
         if (!verseSel || !surahName) return;
-
-        const surah = U().SURAHS.find(s => s.name === surahName);
-        const total = surah ? surah.v : 286;
-        let options = '';
-        for (let i = 1; i <= total; i++) {
-            options += `<option value="${i}">آية ${i}</option>`;
-        }
-        verseSel.innerHTML = options;
-        verseSel.value = String(total); // افتراضيًا: آخر آية بالسورة (يمكن تغييرها لو توقف بالمنتصف)
+        const total = surahVerseCount(surahName);
+        // افتراضيًا: آخر آية بالسورة (يمكن تغييرها لو توقف بالمنتصف)
+        verseSel.innerHTML = await verseOptions(surahName, total);
+        verseSel.value = String(total);
         autoFillSeqEndVerseText();
     }
 
@@ -353,6 +511,9 @@
         btn.classList.remove('btn-outline');
         btn.classList.add('btn-primary');
         sessionType = type === 'Revision' ? 'Revision' : 'Memorization';
+
+        Grades.fillSelect(document.getElementById('hifzEvaluation'), sessionType);
+        Grades.applyPercent();
 
         const revPanel = document.getElementById('hifzRevisionPanel');
         const memPanel = document.getElementById('hifzMemorizationPanel');
@@ -411,7 +572,7 @@
                 <input class="form-input hifz-q-open" type="number" min="0" value="0">
             </div>
             <div class="form-group full">
-                <label class="form-label">درجة % (اختياري — تلقائي لو تُرك فارغًا)</label>
+                <label class="form-label">درجة % (تُحسب تلقائياً إن تُركت فارغة)</label>
                 <input class="form-input hifz-q-score" type="number" min="0" max="100" placeholder="تلقائي">
             </div>
             <div class="form-group full" style="text-align:left">
@@ -456,8 +617,33 @@
             : '<span style="color:var(--text-muted);font-size:12px">اختر من وإلى سورة</span>';
     }
 
+    /** اليوم بتوقيت ليبيا بصيغة YYYY-MM-DD. */
+    function libyaTodayYmd() {
+        const d = new Date(Date.now() + 2 * 3600 * 1000);
+        return d.toISOString().slice(0, 10);
+    }
+
+    function setSessionDate(ymd) {
+        const el = document.getElementById('hifzSessionDate');
+        if (!el) return;
+        el.max = libyaTodayYmd();
+        if (el._flatpickr) { el._flatpickr.set('maxDate', el.max); el._flatpickr.setDate(ymd, false); }
+        else el.value = ymd;
+    }
+
+    /** تاريخ الجلسة المختار: اليوم = الوقت الحالي، وتاريخ سابق = منتصف ذلك اليوم (تجنّباً لانزياح المنطقة الزمنية). */
+    function readSessionDate() {
+        const ymd = document.getElementById('hifzSessionDate')?.value;
+        const today = libyaTodayYmd();
+        // الوقت الحالي بتوقيت ليبيا دون لاحقة Z — يُخزَّن كما هو فلا تنتقل جلسة ما بعد منتصف الليل لليوم السابق
+        if (!ymd || ymd === today) return { iso: new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 19), ymd: today };
+        if (ymd > today) return { error: 'لا يمكن تسجيل جلسة بتاريخ مستقبلي' };
+        return { iso: ymd + 'T12:00:00', ymd };
+    }
+
     function resetHifzForm() {
         questionCounter = 0;
+        setSessionDate(libyaTodayYmd());
         const qList = document.getElementById('hifzQuestionsList');
         if (qList) qList.innerHTML = '';
         const opts = U().surahOptionsHtml();
@@ -479,6 +665,13 @@
         if (matnFields) matnFields.style.display = 'none';
         const matnPortion = document.getElementById('hifzMatnPortion');
         if (matnPortion) matnPortion.value = '';
+        const verseSearch = document.getElementById('hifzVerseSearch');
+        if (verseSearch) verseSearch.value = '';
+        const verseResults = document.getElementById('hifzVerseResults');
+        if (verseResults) verseResults.innerHTML = '';
+        populateMemVerseSelects(1, 1);
+        const pct = document.getElementById('hifzPercent');
+        if (pct) pct.value = '';
         selectSessionTypeBtn(document.querySelector('#addMemModal [data-session-type="Memorization"]'), 'Memorization');
         const revBtn = document.querySelector('[data-revision-mode="Sequential"]');
         if (revBtn) selectRevisionMode(revBtn, 'Sequential');
@@ -492,13 +685,18 @@
             return;
         }
 
-        const evalMap = { excellent: 'ممتاز', veryGood: 'جيد جدًا', good: 'جيد', weak: 'ضعيف', review: 'يحتاج مراجعة' };
-        const evaluation = evalMap[document.getElementById('hifzEvaluation')?.value] || 'جيد';
+        const sessionDate = readSessionDate();
+        if (sessionDate.error) {
+            global.showToast(sessionDate.error, 'error');
+            return;
+        }
+
+        const evaluation = document.getElementById('hifzEvaluation')?.value || Grades.GOOD;
         const notes = document.getElementById('hifzNotes')?.value?.trim() || '';
 
         // وضع "الأسئلة" يُحفظ بمسار منفصل تمامًا (/oral-exams) — يخرج مبكرًا هنا
         if (sessionType === 'Revision' && revisionSubMode === 'Questions') {
-            await saveOralExamFromHifzModal(studentId, notes);
+            await saveOralExamFromHifzModal(studentId, notes, sessionDate.ymd);
             return;
         }
 
@@ -507,7 +705,7 @@
             type: sessionType,
             evaluation,
             notes,
-            date: new Date().toISOString()
+            date: sessionDate.iso
         };
 
         if (sessionType === 'Memorization') {
@@ -584,7 +782,10 @@
                         });
                     } catch (matnErr) {
                         console.warn('تعذر حفظ سجل المتن:', matnErr);
-                        global.showToast('تم حفظ التسميع، لكن تعذر حفظ سجل المتن', 'warning');
+                        const dup = matnErr?.status === 409;
+                        global.showToast(dup
+                            ? 'تم حفظ التسميع. ' + matnErr.message
+                            : 'تم حفظ التسميع، لكن تعذر حفظ سجل المتن', 'warning');
                     }
                 }
             }
@@ -600,7 +801,7 @@
         }
     }
 
-    async function saveOralExamFromHifzModal(studentId, notes) {
+    async function saveOralExamFromHifzModal(studentId, notes, dateYmd) {
         const kind = document.getElementById('hifzOralKind')?.value || 'AthmanSampling';
         const maxOpenings = parseInt(document.getElementById('hifzOralMaxOpenings')?.value, 10) || 1;
         const scopeLabel = document.getElementById('hifzOralScope')?.value?.trim() || '';
@@ -632,6 +833,7 @@
                 scopeLabel,
                 maxOpeningsBeforeFail: maxOpenings,
                 circleId,
+                date: dateYmd || null,
                 notes: notes || null,
                 questions
             });
@@ -771,6 +973,8 @@
 
     global.NoorHifz = {
         initHifzModal,
+        pickVerse,
+        openMushafAtSelection,
         saveSession,
         populateMemorizationFilter,
         filterStudentById,

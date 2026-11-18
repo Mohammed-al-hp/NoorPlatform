@@ -1,5 +1,7 @@
 /**
- * منصة نور — نظام الرسائل (ولي الأمر ↔ المحفّظ/الإدارة)
+ * منصة نور — نظام الرسائل (محادثات بين ولي الأمر والمحفّظ/الإدارة)
+ * ولي الأمر: يبدأ رسالة لمحفّظ أبنائه أو للإدارة، ويرد داخل أي محادثة.
+ * المحفّظ/الإدارة: يبدأ رسالة لولي أمر (أولياء طلابه للمحفّظ)، ويرد داخل المحادثة.
  */
 (function (global) {
     'use strict';
@@ -8,6 +10,7 @@
     const apiFetch = (e, m, b) => app().api.apiFetch(e, m, b);
     const utils = () => (typeof global.getNoorUtils === 'function' ? global.getNoorUtils() : (global.NoorUtils || app().utils));
     const esc = (s) => utils().escapeHtml(s);
+    const ic = (n, s) => (window.Icon ? window.Icon(n, { size: s || 12 }) : '');
 
     function isParent() {
         return app().state.user?.role === 'Parent';
@@ -18,65 +21,72 @@
         const btnNew = document.getElementById('btnNewMessage');
         if (!list) return;
 
-        // إرسال رسالة جديدة متاح لولي الأمر فقط؛ المحفّظ والإدارة يردّون من صندوق الوارد
-        if (btnNew) btnNew.style.display = isParent() ? 'inline-flex' : 'none';
-        if (btnNew && !btnNew.textContent.includes('إرسال')) btnNew.innerHTML = (window.Icon ? window.Icon('send', {size:14}) : '') + ' إرسال رسالة';
+        if (btnNew) {
+            btnNew.style.display = 'inline-flex';
+            btnNew.innerHTML = ic('send', 14) + ' إرسال رسالة';
+        }
+        const subtitle = document.getElementById('messagesSubtitle');
+        if (subtitle) {
+            subtitle.textContent = isParent()
+                ? 'التواصل مع الإدارة ومحفّظي أبنائك'
+                : 'التواصل مع أولياء الأمور — ابدأ رسالة جديدة أو رد على المحادثات';
+        }
 
-        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon">' + (window.Icon ? window.Icon('loader', {size:14}) : '') + '</span> جاري التحميل...</div>';
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spin-icon">' + ic('loader', 14) + '</span> جاري التحميل...</div>';
 
         try {
-            const endpoint = isParent() ? '/messages/sent' : '/messages/inbox';
-            const data = await apiFetch(endpoint);
-
-            if (!data.length) {
-                list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد رسائل بعد</div>';
+            const data = await apiFetch(isParent() ? '/messages/threads' : '/messages/inbox');
+            if (!data || !data.length) {
+                list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد رسائل بعد — اضغط «إرسال رسالة» لبدء محادثة</div>';
                 return;
             }
-
-            if (isParent()) {
-                list.innerHTML = data.map(m => `
-                    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                            <strong style="font-size:13px">إلى: ${esc(m.recipientName)}</strong>
-                            <span style="font-size:11px;color:var(--text-muted)">${utils().formatDateTimeEnGb(m.createdAt)}</span>
-                        </div>
-                        <p style="font-size:13px;color:var(--text)">${esc(m.content)}</p>
-                        ${renderReplies(m.replies)}
-                    </div>`).join('');
-            } else {
-                list.innerHTML = data.map(m => `
-                    <div style="padding:16px 20px;border-bottom:1px solid var(--border);${m.isRead ? '' : 'background:var(--green-light)'}" data-msg-id="${m.id}">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                            <strong style="font-size:13px">من: ${esc(m.senderName)}</strong>
-                            <span style="font-size:11px;color:var(--text-muted)">${utils().formatDateTimeEnGb(m.createdAt)}</span>
-                        </div>
-                        <p style="font-size:13px;color:var(--text)">${esc(m.content)}</p>
-                        ${renderReplies(m.replies)}
-                        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-                            ${!m.isRead ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="NoorMessages.markAsRead(${Number(m.id)})">${window.Icon ? window.Icon('check', {size:12}) : ''} تعليم كمقروءة</button>` : ''}
-                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="NoorMessages.toggleReply(${Number(m.id)})">${window.Icon ? window.Icon('send', {size:12}) : ''} رد</button>
-                        </div>
-                        <div id="replyBox-${Number(m.id)}" style="display:none;margin-top:8px">
-                            <textarea class="form-input" rows="2" maxlength="2000" placeholder="اكتب ردك لولي الأمر..." style="width:100%"></textarea>
-                            <button class="btn btn-primary" style="margin-top:6px;padding:4px 14px;font-size:12px" onclick="NoorMessages.sendReply(${Number(m.id)}, this)">إرسال الرد</button>
-                        </div>
-                    </div>`).join('');
-            }
+            list.innerHTML = data.map(renderThread).join('');
         } catch (e) {
             list.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">تعذر تحميل الرسائل</div>';
         }
     }
 
-    function renderReplies(replies) {
+    function renderThread(m) {
+        const id = Number(m.id);
+        const parent = isParent();
+        const outgoing = m.direction === 'out';
+        const counterpart = m.counterpartName || m.recipientName || m.senderName || '';
+        const unread = parent ? !!m.hasUnread : m.isRead === false;
+        const header = outgoing ? 'إلى: ' + esc(counterpart) : 'من: ' + esc(counterpart);
+        const placeholder = parent ? 'اكتب ردك...' : 'اكتب ردك لولي الأمر...';
+        return `
+            <div class="msg-thread${unread ? ' msg-thread-unread' : ''}" data-msg-id="${id}">
+                <div class="msg-thread-head">
+                    <strong>${header}</strong>
+                    <span>${utils().formatDateTimeEnGb(m.createdAt)}</span>
+                </div>
+                <p class="msg-thread-body">${esc(m.content)}</p>
+                ${renderReplies(m.replies, parent)}
+                <div class="msg-thread-actions">
+                    ${!parent && unread ? `<button class="btn btn-outline" onclick="NoorMessages.markAsRead(${id})">${ic('check')} تعليم كمقروءة</button>` : ''}
+                    <button class="btn btn-outline" onclick="NoorMessages.toggleReply(${id})">${ic('message-circle')} رد</button>
+                </div>
+                <div id="replyBox-${id}" class="msg-reply-box" style="display:none">
+                    <textarea class="form-input" rows="2" maxlength="2000" placeholder="${placeholder}"></textarea>
+                    <button class="btn btn-primary" onclick="NoorMessages.sendReply(${id}, this)">${ic('send')} إرسال الرد</button>
+                </div>
+            </div>`;
+    }
+
+    function renderReplies(replies, parent) {
         if (!Array.isArray(replies) || !replies.length) return '';
-        return replies.map(r => `
-            <div style="margin-top:8px;margin-inline-start:16px;padding:8px 12px;border-inline-start:3px solid var(--green);background:var(--bg-secondary);border-radius:8px">
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
-                    <strong>رد: ${esc(r.senderName)}</strong>
+        return replies.map(r => {
+            // «رد مني» يُميَّز بلون مختلف ليسهل تتبع المحادثة
+            const mine = parent ? !!r.isMine : r.fromParent === false;
+            return `
+            <div class="msg-reply${mine ? ' msg-reply-mine' : ''}">
+                <div class="msg-reply-head">
+                    <strong>${esc(r.senderName)}</strong>
                     <span>${utils().formatDateTimeEnGb(r.createdAt)}</span>
                 </div>
-                <p style="font-size:13px;color:var(--text);margin:0">${esc(r.content)}</p>
-            </div>`).join('');
+                <p>${esc(r.content)}</p>
+            </div>`;
+        }).join('');
     }
 
     function toggleReply(id) {
@@ -95,8 +105,9 @@
         }
         try {
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
-            await apiFetch(`/messages/${id}/reply`, 'POST', { content });
-            app().ui.showToast('تم إرسال الرد إلى ولي الأمر', 'success');
+            const endpoint = isParent() ? `/messages/${id}/parent-reply` : `/messages/${id}/reply`;
+            await apiFetch(endpoint, 'POST', { content });
+            app().ui.showToast('تم إرسال الرد', 'success');
             fetchMessages();
         } catch (e) {
             app().api.handleApiError(e);
@@ -117,13 +128,29 @@
     async function openNewMessageModal() {
         const sel = document.getElementById('msgRecipientSelect');
         if (sel) {
-            sel.innerHTML = '<option value="Admin|">إدارة المركز</option>';
-            try {
-                const teachers = await apiFetch('/messages/available-recipients');
-                teachers.forEach(t => {
-                    sel.innerHTML += `<option value="Teacher|${t.id}">${esc(t.fullName)}</option>`;
-                });
-            } catch (e) { /* صامت — يبقى خيار الإدارة متاحًا على الأقل */ }
+            if (isParent()) {
+                sel.innerHTML = '<option value="Admin|">إدارة المركز</option>';
+                try {
+                    const teachers = await apiFetch('/messages/available-recipients');
+                    (teachers || []).forEach(t => {
+                        sel.innerHTML += `<option value="Teacher|${Number(t.id)}">${esc(t.fullName)}</option>`;
+                    });
+                } catch (e) { /* يبقى خيار الإدارة متاحًا على الأقل */ }
+            } else {
+                sel.innerHTML = '<option value="">— اختر ولي الأمر —</option>';
+                try {
+                    const parents = await apiFetch('/messages/parent-recipients');
+                    if (!parents || !parents.length) {
+                        sel.innerHTML = '<option value="">لا يوجد أولياء أمور مرتبطون بطلابك</option>';
+                    }
+                    (parents || []).forEach(p => {
+                        const kids = (p.children || []).join('، ');
+                        sel.innerHTML += `<option value="Parent|${Number(p.userId)}">${esc(p.fullName)}${kids ? ' — ولي أمر: ' + esc(kids) : ''}</option>`;
+                    });
+                } catch (e) {
+                    sel.innerHTML = '<option value="">تعذر تحميل أولياء الأمور</option>';
+                }
+            }
         }
         document.getElementById('msgContent').value = '';
         app().ui.openModal('newMessageModal');
@@ -133,21 +160,28 @@
         const sel = document.getElementById('msgRecipientSelect');
         const content = document.getElementById('msgContent')?.value?.trim();
 
+        const [recipientType, recipientId] = (sel?.value || '').split('|');
+        if (!recipientType) {
+            app().ui.showToast('اختر المستلم', 'error');
+            return;
+        }
         if (!content) {
             app().ui.showToast('نص الرسالة مطلوب', 'error');
             return;
         }
 
-        const [recipientType, recipientTeacherId] = (sel.value || '').split('|');
-
         const btn = document.querySelector('#newMessageModal .btn-primary');
         try {
             if (global.setBtnLoading) global.setBtnLoading(btn, true);
-            await apiFetch('/messages', 'POST', {
-                recipientType,
-                recipientTeacherId: recipientTeacherId ? parseInt(recipientTeacherId, 10) : null,
-                content
-            });
+            if (recipientType === 'Parent') {
+                await apiFetch('/messages/to-parent', 'POST', { parentUserId: parseInt(recipientId, 10), content });
+            } else {
+                await apiFetch('/messages', 'POST', {
+                    recipientType,
+                    recipientTeacherId: recipientId ? parseInt(recipientId, 10) : null,
+                    content
+                });
+            }
             app().ui.closeModal('newMessageModal');
             app().ui.showToast('تم إرسال الرسالة بنجاح', 'success');
             fetchMessages();

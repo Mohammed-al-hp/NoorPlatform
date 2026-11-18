@@ -30,7 +30,6 @@ public class SettingsController : ControllerBase
             {
                 centerName = "",
                 contactPhone = "",
-                email = "",
                 address = "",
                 workDays = "السبت,الأحد,الاثنين,الثلاثاء,الأربعاء,الخميس",
                 workStartTime = "08:00",
@@ -57,10 +56,24 @@ public class SettingsController : ControllerBase
                 pointsAttendancePresent = 10,
                 pointsHifzMemorization = 50,
                 pointsHifzRevision = 20,
+                pointsAttendanceLate = 5,
+                pointsAttendanceExcused = 0,
+                pointsAttendanceUnexcused = 0,
+                pointsHifzMemVeryGood = 40,
+                pointsHifzMemGood = 30,
+                pointsHifzRevVeryGood = 15,
+                pointsHifzRevGood = 10,
+                pointsHifzRevAcceptable = 5,
+                pointsMatnMemorization = 20,
+                enableMatn = true,
+                enableDress = true,
+                enablePrayer = true,
+                enableParentHome = true,
                 hifzRatingTargetAge5To7 = 4,
                 hifzRatingTargetAge8To10 = 6,
                 hifzRatingTargetAge11Plus = 8,
-                hifzRatingPassingEvaluations = "ممتاز,جيد جداً,جيد,ضعيف"
+                otpChannel = "WhatsApp",
+                studentRemindersEnabled = true
             });
         }
         if (settings.ProgressThreshold10 <= 0)
@@ -76,7 +89,6 @@ public class SettingsController : ControllerBase
         {
             settings.CenterName,
             settings.ContactPhone,
-            settings.Email,
             settings.Address,
             settings.WorkDays,
             settings.WorkStartTime,
@@ -103,10 +115,22 @@ public class SettingsController : ControllerBase
             settings.PointsAttendancePresent,
             settings.PointsHifzMemorization,
             settings.PointsHifzRevision,
+            settings.PointsAttendanceLate,
+            settings.PointsAttendanceExcused,
+            settings.PointsAttendanceUnexcused,
+            settings.PointsHifzMemVeryGood,
+            settings.PointsHifzMemGood,
+            settings.PointsHifzRevVeryGood,
+            settings.PointsHifzRevGood,
+            settings.PointsHifzRevAcceptable,
+            settings.PointsMatnMemorization,
+            settings.EnableMatn,
+            settings.EnableDress,
+            settings.EnablePrayer,
+            settings.EnableParentHome,
             settings.HifzRatingTargetAge5To7,
             settings.HifzRatingTargetAge8To10,
             settings.HifzRatingTargetAge11Plus,
-            settings.HifzRatingPassingEvaluations,
             settings.OtpChannel,
             settings.StudentRemindersEnabled
         });
@@ -149,7 +173,6 @@ public class SettingsController : ControllerBase
 
         settings.CenterName = request.CenterName.Trim();
         settings.ContactPhone = request.ContactPhone?.Trim() ?? string.Empty;
-        settings.Email = request.Email?.Trim() ?? string.Empty;
         settings.Address = request.Address?.Trim() ?? string.Empty;
         settings.WorkDays = request.WorkDays?.Trim() ?? "السبت,الأحد,الاثنين,الثلاثاء,الأربعاء,الخميس";
         settings.WorkStartTime = request.WorkStartTime?.Trim() ?? "08:00";
@@ -176,6 +199,9 @@ public class SettingsController : ControllerBase
             settings.ProgressThreshold6 = request.ProgressThreshold6.Value;
         if (request.ProgressThreshold4.HasValue)
             settings.ProgressThreshold4 = request.ProgressThreshold4.Value;
+        var t = new[] { settings.ProgressThreshold10, settings.ProgressThreshold9, settings.ProgressThreshold8, settings.ProgressThreshold6, settings.ProgressThreshold4 };
+        if (t.Any(x => x <= 0 || x > 1) || t.Zip(t.Skip(1)).Any(p => p.First < p.Second))
+            return BadRequest(new { message = "نسب الهدف الشهري يجب أن تكون بين 1% و100% وتتناقص من درجة 10 إلى درجة 4" });
         if (request.WeightAttendance.HasValue)
             settings.WeightAttendance = request.WeightAttendance.Value;
         if (request.WeightHifz.HasValue)
@@ -190,12 +216,25 @@ public class SettingsController : ControllerBase
             settings.WeightDress = request.WeightDress.Value;
         if (request.EvaluationsVisibleToStudentsAndParents.HasValue)
             settings.EvaluationsVisibleToStudentsAndParents = request.EvaluationsVisibleToStudentsAndParents.Value;
-        if (request.PointsAttendancePresent.HasValue)
-            settings.PointsAttendancePresent = Math.Max(0, request.PointsAttendancePresent.Value);
-        if (request.PointsHifzMemorization.HasValue)
-            settings.PointsHifzMemorization = Math.Max(0, request.PointsHifzMemorization.Value);
-        if (request.PointsHifzRevision.HasValue)
-            settings.PointsHifzRevision = Math.Max(0, request.PointsHifzRevision.Value);
+        // نقاط الحضور: يُسمح بقيمة سالبة للغياب (خصم)، ورصيد الطالب لا ينزل عن صفر
+        static int Att(int v) => Math.Clamp(v, -100, 1000);
+        static int Pts(int v) => Math.Clamp(v, 0, 1000);
+        if (request.PointsAttendancePresent.HasValue) settings.PointsAttendancePresent = Att(request.PointsAttendancePresent.Value);
+        if (request.PointsAttendanceLate.HasValue) settings.PointsAttendanceLate = Att(request.PointsAttendanceLate.Value);
+        if (request.PointsAttendanceExcused.HasValue) settings.PointsAttendanceExcused = Att(request.PointsAttendanceExcused.Value);
+        if (request.PointsAttendanceUnexcused.HasValue) settings.PointsAttendanceUnexcused = Att(request.PointsAttendanceUnexcused.Value);
+        if (request.PointsHifzMemorization.HasValue) settings.PointsHifzMemorization = Pts(request.PointsHifzMemorization.Value);
+        if (request.PointsHifzMemVeryGood.HasValue) settings.PointsHifzMemVeryGood = Pts(request.PointsHifzMemVeryGood.Value);
+        if (request.PointsHifzMemGood.HasValue) settings.PointsHifzMemGood = Pts(request.PointsHifzMemGood.Value);
+        if (request.PointsHifzRevision.HasValue) settings.PointsHifzRevision = Pts(request.PointsHifzRevision.Value);
+        if (request.PointsHifzRevVeryGood.HasValue) settings.PointsHifzRevVeryGood = Pts(request.PointsHifzRevVeryGood.Value);
+        if (request.PointsHifzRevGood.HasValue) settings.PointsHifzRevGood = Pts(request.PointsHifzRevGood.Value);
+        if (request.PointsHifzRevAcceptable.HasValue) settings.PointsHifzRevAcceptable = Pts(request.PointsHifzRevAcceptable.Value);
+        if (request.PointsMatnMemorization.HasValue) settings.PointsMatnMemorization = Pts(request.PointsMatnMemorization.Value);
+        if (request.EnableMatn.HasValue) settings.EnableMatn = request.EnableMatn.Value;
+        if (request.EnableDress.HasValue) settings.EnableDress = request.EnableDress.Value;
+        if (request.EnablePrayer.HasValue) settings.EnablePrayer = request.EnablePrayer.Value;
+        if (request.EnableParentHome.HasValue) settings.EnableParentHome = request.EnableParentHome.Value;
         if (request.HifzRatingTargetAge5To7.HasValue)
             settings.HifzRatingTargetAge5To7 = Math.Clamp(request.HifzRatingTargetAge5To7.Value, 1, 60);
         if (request.HifzRatingTargetAge8To10.HasValue)
@@ -262,7 +301,6 @@ public class UpdateSettingsRequest
 {
     public string CenterName { get; set; } = string.Empty;
     public string? ContactPhone { get; set; }
-    public string? Email { get; set; }
     public string? Address { get; set; }
     public string? WorkDays { get; set; }
     public string? WorkStartTime { get; set; }
@@ -289,6 +327,19 @@ public class UpdateSettingsRequest
     public int? PointsAttendancePresent { get; set; }
     public int? PointsHifzMemorization { get; set; }
     public int? PointsHifzRevision { get; set; }
+    public int? PointsAttendanceLate { get; set; }
+    public int? PointsAttendanceExcused { get; set; }
+    public int? PointsAttendanceUnexcused { get; set; }
+    public int? PointsHifzMemVeryGood { get; set; }
+    public int? PointsHifzMemGood { get; set; }
+    public int? PointsHifzRevVeryGood { get; set; }
+    public int? PointsHifzRevGood { get; set; }
+    public int? PointsHifzRevAcceptable { get; set; }
+    public int? PointsMatnMemorization { get; set; }
+    public bool? EnableMatn { get; set; }
+    public bool? EnableDress { get; set; }
+    public bool? EnablePrayer { get; set; }
+    public bool? EnableParentHome { get; set; }
     public int? HifzRatingTargetAge5To7 { get; set; }
     public int? HifzRatingTargetAge8To10 { get; set; }
     public int? HifzRatingTargetAge11Plus { get; set; }

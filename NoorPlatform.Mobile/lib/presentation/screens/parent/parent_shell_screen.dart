@@ -1,3 +1,4 @@
+import '../../widgets/today_date_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -66,29 +67,35 @@ class _ParentShellScreenState extends State<ParentShellScreen> {
           final unread = notif.unreadCount;
           return Scaffold(
             body: IndexedStack(index: _index, children: pages),
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: [
-                const NavigationDestination(
-                  icon: Icon(Icons.family_restroom_outlined),
-                  selectedIcon: Icon(Icons.family_restroom_rounded),
-                  label: 'الأبناء',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.payments_outlined),
-                  selectedIcon: Icon(Icons.payments_rounded),
-                  label: 'الرسوم',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.mail_outline_rounded),
-                  selectedIcon: Icon(Icons.mail_rounded),
-                  label: 'الرسائل',
-                ),
-                NavigationDestination(
-                  icon: _badgeIcon(Icons.grid_view_outlined, unread),
-                  selectedIcon: _badgeIcon(Icons.grid_view_rounded, unread),
-                  label: 'المزيد',
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const TodayDateBar(),
+                NavigationBar(
+                  selectedIndex: _index,
+                  onDestinationSelected: (i) => setState(() => _index = i),
+                  destinations: [
+                    const NavigationDestination(
+                      icon: Icon(Icons.family_restroom_outlined),
+                      selectedIcon: Icon(Icons.family_restroom_rounded),
+                      label: 'الأبناء',
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.payments_outlined),
+                      selectedIcon: Icon(Icons.payments_rounded),
+                      label: 'الرسوم',
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.mail_outline_rounded),
+                      selectedIcon: Icon(Icons.mail_rounded),
+                      label: 'الرسائل',
+                    ),
+                    NavigationDestination(
+                      icon: _badgeIcon(Icons.grid_view_outlined, unread),
+                      selectedIcon: _badgeIcon(Icons.grid_view_rounded, unread),
+                      label: 'المزيد',
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -123,9 +130,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => context
-                .read<ParentDashboardBloc>()
-                .add(LoadParentDashboard()),
+            onPressed: () =>
+                context.read<ParentDashboardBloc>().add(LoadParentDashboard()),
           ),
         ],
       ),
@@ -138,9 +144,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           if (state is ParentDashboardError) {
             return ErrorState(
               message: state.message,
-              onRetry: () => context
-                  .read<ParentDashboardBloc>()
-                  .add(LoadParentDashboard()),
+              onRetry: () => context.read<ParentDashboardBloc>().add(
+                LoadParentDashboard(),
+              ),
             );
           }
           if (state is ParentDashboardLoaded) {
@@ -171,7 +177,10 @@ class _ParentBody extends StatelessWidget {
               (a) => Card(
                 color: NoorTheme.warning.withValues(alpha: 0.15),
                 child: ListTile(
-                  leading: const Icon(Icons.warning_amber, color: NoorTheme.warning),
+                  leading: const Icon(
+                    Icons.warning_amber,
+                    color: NoorTheme.warning,
+                  ),
                   title: Text(a.message),
                   subtitle: Text(
                     'المبلغ: ${Formatters.number(a.amount, fractionDigits: 2)}',
@@ -250,7 +259,8 @@ class _ChildCard extends StatelessWidget {
                 ),
                 if (child.monthlyHifzRating != null)
                   StatChip(
-                    label: 'تقييم الشهر (${child.monthlyHifzRating!.successfulSessions}/${child.monthlyHifzRating!.target})',
+                    label:
+                        'تقييم الشهر (${child.monthlyHifzRating!.successfulSessions}/${child.monthlyHifzRating!.target})',
                     value: '${formatScore(child.monthlyHifzRating!.score)}/10',
                     icon: Icons.workspace_premium,
                     color: scoreColor(child.monthlyHifzRating!.score),
@@ -260,8 +270,12 @@ class _ChildCard extends StatelessWidget {
             if (child.monthlyHifzRating?.warning != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text('⚠ ${child.monthlyHifzRating!.warning}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: NoorTheme.warning)),
+                child: Text(
+                  '⚠ ${child.monthlyHifzRating!.warning}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: NoorTheme.warning),
+                ),
               ),
             if (child.badgeList.isNotEmpty) ...[
               const SizedBox(height: 8),

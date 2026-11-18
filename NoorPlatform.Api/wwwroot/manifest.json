@@ -1,8 +1,8 @@
 {
   "name": "منصة نور لإدارة مركز وحلقات تحفيظ القرآن الكريم",
-  "short_name": "نور",
+  "short_name": "منصة نور",
   "description": "نظام إدارة مراكز وحلقات تحفيظ القرآن الكريم — متابعة الحفظ والحضور والاختبارات",
-  "start_url": "/",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "background_color": "#FFFDF5",
@@ -40,7 +40,7 @@
     {
       "name": "الحضور والغياب",
       "short_name": "الحضور",
-      "url": "/#attendance",
+      "url": "/index.html#attendance",
       "icons": [
         {
           "src": "icon-192.png",
@@ -52,7 +52,7 @@
     {
       "name": "تقدم الحفظ والمراجعة",
       "short_name": "تقدم الحفظ",
-      "url": "/#memorization",
+      "url": "/index.html#memorization",
       "icons": [
         {
           "src": "icon-192.png",

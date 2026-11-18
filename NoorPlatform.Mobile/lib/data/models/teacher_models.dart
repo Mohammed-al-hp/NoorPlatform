@@ -595,13 +595,18 @@ class DressRecordModel {
       );
 }
 
-/// GET /api/messages/inbox
+/// GET /api/messages/inbox — محادثة مع ولي أمر (واردة منه، أو بدأها المحفّظ/الإدارة).
 class InboxMessageModel {
   final int id;
   final String content;
   final String createdAt;
   final bool isRead;
   final String senderName;
+  /// in = من ولي الأمر، out = بدأها المحفّظ/الإدارة.
+  final String direction;
+  /// ولي الأمر الطرف الآخر في المحادثة.
+  final String counterpartName;
+  final List<InboxReplyModel> replies;
 
   const InboxMessageModel({
     required this.id,
@@ -609,7 +614,12 @@ class InboxMessageModel {
     required this.createdAt,
     required this.isRead,
     required this.senderName,
+    this.direction = 'in',
+    this.counterpartName = '',
+    this.replies = const [],
   });
+
+  bool get isOutgoing => direction == 'out';
 
   factory InboxMessageModel.fromJson(Map<String, dynamic> j) =>
       InboxMessageModel(
@@ -618,6 +628,50 @@ class InboxMessageModel {
         createdAt: toStr(j['createdAt']),
         isRead: toBool(j['isRead']),
         senderName: toStr(j['senderName']),
+        direction: toStr(j['direction'] ?? 'in'),
+        counterpartName: toStr(j['counterpartName'] ?? j['senderName']),
+        replies: _list(j['replies']).map(InboxReplyModel.fromJson).toList(),
+      );
+}
+
+class InboxReplyModel {
+  final int id;
+  final String content;
+  final String createdAt;
+  final String senderName;
+  final bool fromParent;
+
+  const InboxReplyModel({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.senderName,
+    required this.fromParent,
+  });
+
+  factory InboxReplyModel.fromJson(Map<String, dynamic> j) => InboxReplyModel(
+        id: toInt(j['id']),
+        content: toStr(j['content']),
+        createdAt: toStr(j['createdAt']),
+        senderName: toStr(j['senderName']),
+        fromParent: toBool(j['fromParent']),
+      );
+}
+
+/// GET /api/messages/parent-recipients — أولياء أمور طلاب المحفّظ.
+class ParentContactModel {
+  final int userId;
+  final String fullName;
+  final List<String> children;
+
+  const ParentContactModel({required this.userId, required this.fullName, this.children = const []});
+
+  String get label => children.isEmpty ? fullName : '$fullName — ${children.join('، ')}';
+
+  factory ParentContactModel.fromJson(Map<String, dynamic> j) => ParentContactModel(
+        userId: toInt(j['userId']),
+        fullName: toStr(j['fullName']),
+        children: (j['children'] is List) ? (j['children'] as List).map((e) => e.toString()).toList() : const [],
       );
 }
 

@@ -57,6 +57,8 @@ flutter test tool/generate_icons_test.dart     # إعادة توليد أيقو�
 - **الهوية البصرية**: أخضر غامق `#1A5C3A` + ذهبي `#B8860B`، خط Tajawal للواجهة و Amiri للنص القرآني (محمّلان محلياً). الويب: متغيرات `:root` في `css/app.css`. الهاتف: `lib/config/theme.dart` والمكونات في `presentation/widgets/`.
 - **الرسائل للمستخدم بالعربية** دائماً، ولا تُعرض نصوص الاستثناءات التقنية.
 - بعد تعديل ملفات الويب الثابتة: ارفع `CACHE_NAME` في `wwwroot/sw.js` حتى تصل التعديلات للمتصفحات.
+- **القرآن (رواية قالون)**: ترقيم الآيات بالعدّ المدني الأول (6214 آية — البقرة 285، قريش 5) في `QuranIndex` (الخادم) و`SURAHS` (`utils.js`) و`kQuranSurahs` (الهاتف) — لا يُستخدم عدّ حفص (6236). نص الآيات من مجمع الملك فهد (UthmanicQaloon v10) مضمّن: `wwwroot/data/quran-qaloun.json` و`assets/quran/` ويُعرض بخط UthmanicQaloun.
+- **عارض المصحف**: صور «مصحف أمانة التعليم» (بإذن الجهة الناشرة) في `wwwroot/mushaf/{1..576}.jpg` وفهرس بدايات السور في `data/mushaf-index.json` (مُتحقَّق منه يدوياً).
 
 ---
 

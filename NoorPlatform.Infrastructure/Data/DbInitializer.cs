@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using NoorPlatform.Core.Entities;
 
@@ -31,6 +32,8 @@ public static class DbInitializer
         {
             await EnsureTestLoginAccountsAsync(userManager, roleManager);
         }
+
+        await NormalizeLoginNamesAsync(context);
 
         // قواعد موجودة قبل إضافة «المدير العام»: يُرقّى أقدم مشرف نشط ليبقى للنظام مدير عام واحد على الأقل
         if (context.Users.Any(u => u.Role == UserRole.Admin) &&
@@ -72,7 +75,6 @@ public static class DbInitializer
         var adminUser = new User
         {
             UserName = "218912345678",
-            Email = "admin@noor.local",
             PhoneNumber = "218912345678",
             FullName = "المشرف العام",
             Role = UserRole.Admin,
@@ -88,7 +90,6 @@ public static class DbInitializer
         {
             UserName = "218912345679",
             PhoneNumber = "218912345679",
-            Email = "teacher@noor.local",
             FullName = "عبدالله السلمي",
             Role = UserRole.Teacher,
             EmailConfirmed = true,
@@ -102,7 +103,6 @@ public static class DbInitializer
         {
             UserName = "218921234567",
             PhoneNumber = "218921234567",
-            Email = "parent@noor.local",
             FullName = "محمد الزهراني",
             Role = UserRole.Parent,
             EmailConfirmed = true,
@@ -116,7 +116,6 @@ public static class DbInitializer
         {
             UserName = "218931234567",
             PhoneNumber = "218931234567",
-            Email = "student@noor.local",
             FullName = "أحمد الزهراني",
             Role = UserRole.Student,
             EmailConfirmed = true,
@@ -173,6 +172,96 @@ public static class DbInitializer
         await context.SaveChangesAsync();
     }
 
+    private static readonly System.Text.RegularExpressions.Regex LibyanUserName = new(@"^2189\d{8}$");
+    private static readonly System.Text.RegularExpressions.Regex StudentUserName = new(@"^st\d{6}$");
+
+    /// <summary>
+    /// توحيد أسماء الدخول (يعمل عند كل تشغيل ولا يغيّر شيئاً إن كانت البيانات سليمة):
+    /// الدخول برقم هاتف ليبي (2189XXXXXXXX) لكل المستخدمين، واسم مستخدم (stXXXXXX) للطالب الذي لا يملك هاتفاً.
+    /// - أرقام مسجلة بالبادئة 966 بالخطأ (9669XXXXXXXX) ← 2189XXXXXXXX إن لم يكن الرقم مستخدماً.
+    /// - طالب باسم دخول قديم (مثل 1778869770528@noor.sa) ← رقم هاتفه إن وُجد، وإلا اسم مستخدم جديد.
+    /// - البريد الإلكتروني لم يعد مستخدماً في المنصة فيُفرَّغ.
+    /// كل تغيير يُسجَّل في سجل التدقيق ليعرف المشرف أسماء الدخول الجديدة.
+    /// </summary>
+    private static async Task NormalizeLoginNamesAsync(NoorDbContext context)
+    {
+        var users = await context.Users.ToListAsync();
+        var taken = new HashSet<string>(users.Select(u => u.UserName ?? string.Empty), StringComparer.OrdinalIgnoreCase);
+        var studentPhones = await context.Students.IgnoreQueryFilters()
+            .Select(s => new { s.UserId, s.StudentPhone })
+            .ToListAsync();
+        var phoneByUser = studentPhones.GroupBy(s => s.UserId).ToDictionary(g => g.Key, g => g.First().StudentPhone);
+        var changed = false;
+
+        foreach (var user in users)
+        {
+            var current = user.UserName ?? string.Empty;
+            string? target = null;
+
+            if (current.Length == 12 && current.StartsWith("9669") && current.All(char.IsDigit))
+            {
+                var fixedPhone = "218" + current[3..];
+                if (!taken.Contains(fixedPhone)) target = fixedPhone;
+            }
+            else if (user.Role == UserRole.Student && !LibyanUserName.IsMatch(current) && !StudentUserName.IsMatch(current))
+            {
+                var phone = NormalizeLibyanPhone(phoneByUser.GetValueOrDefault(user.Id));
+                target = phone != null && !taken.Contains(phone) ? phone : NewStudentUserName(taken);
+            }
+
+            if (target != null)
+            {
+                var old = current;
+                user.UserName = target;
+                user.NormalizedUserName = target.ToUpperInvariant();
+                user.PhoneNumber = LibyanUserName.IsMatch(target) ? target : null;
+                taken.Add(target);
+                if (user.Role == UserRole.Parent && LibyanUserName.IsMatch(target))
+                {
+                    var parent = await context.Parents.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.UserId == user.Id);
+                    if (parent != null) parent.Phone = target;
+                }
+                context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = "System",
+                    Action = AuditAction.Update,
+                    EntityName = nameof(User),
+                    EntityId = user.Id.ToString(),
+                    OldValues = System.Text.Json.JsonSerializer.Serialize(new { UserName = old }),
+                    NewValues = System.Text.Json.JsonSerializer.Serialize(new { UserName = target, Event = "LoginNameNormalized" })
+                });
+                changed = true;
+            }
+
+            if (user.Email != null || user.NormalizedEmail != null)
+            {
+                user.Email = null;
+                user.NormalizedEmail = null;
+                changed = true;
+            }
+        }
+
+        if (changed) await context.SaveChangesAsync();
+    }
+
+    private static string? NormalizeLibyanPhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return null;
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (digits.StartsWith("00218")) digits = digits[2..];
+        if (digits.Length == 10 && digits.StartsWith("09")) digits = "218" + digits[1..];
+        return LibyanUserName.IsMatch(digits) ? digits : null;
+    }
+
+    private static string NewStudentUserName(HashSet<string> taken)
+    {
+        while (true)
+        {
+            var name = "st" + System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999);
+            if (!taken.Contains(name)) return name;
+        }
+    }
+
     /// <summary>حسابات اختبار بكلمات مرور معروفة — تُضاف أو تُحدَّث دون حذف المستخدمين الحاليين.</summary>
     private static async Task EnsureTestLoginAccountsAsync(
         UserManager<User> userManager,
@@ -217,7 +306,6 @@ public static class DbInitializer
             {
                 UserName = userName,
                 PhoneNumber = userName,
-                Email = $"{userName}@noor.test",
                 FullName = fullName,
                 Role = role,
                 EmailConfirmed = true,

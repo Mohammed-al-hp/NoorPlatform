@@ -1,101 +1,111 @@
 /**
- * منصة نور — جلب نص القرآن الكريم (رواية قالون)
- * المصدر: مجمع الملك فهد لطباعة المصحف الشريف، عبر jsDelivr CDN
- * https://github.com/fawazahmed0/quran-api
+ * منصة نور — نص القرآن الكريم برواية قالون عن نافع (يعمل دون إنترنت)
+ * المصدر: مجمع الملك فهد لطباعة المصحف الشريف — مصحف المدينة برواية قالون (UthmanicQaloon v10)،
+ * بالعدّ المدني الأول (6214 آية) المطابق لترقيم مصاحف قالون في ليبيا.
+ * الملف /data/quran-qaloun.json يُحمَّل مرة واحدة ويحفظه المتصفح (Service Worker) للعمل دون اتصال.
+ * يُعرض النص بخط «UthmanicQaloun» لأن بعض علامات الضبط فيه خاصة برسم المجمع.
  */
 (function (global) {
     'use strict';
 
-    const BASE_URL = 'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/ara-quranqaloon';
+    const DATA_URL = '/data/quran-qaloun.json?v=1';
+    let _loading = null;
+    let _surahs = null;
 
-    /**
-     * تحويل اسم السورة (كما يُخزَّن بحقول select في hifz.js، مثل "الفاتحة")
-     * إلى رقمها (1-114)، بالاعتماد على مصفوفة SURAHS الموجودة أصلاً بـ utils.js.
-     */
+    /** تحميل نص المصحف كاملاً (مرة واحدة لكل جلسة). */
+    function load() {
+        if (_surahs) return Promise.resolve(_surahs);
+        if (!_loading) {
+            _loading = fetch(DATA_URL)
+                .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+                .then(data => { _surahs = data.surahs || []; return _surahs; })
+                .catch(e => { _loading = null; console.warn('تعذر تحميل نص المصحف:', e); return []; });
+        }
+        return _loading;
+    }
+
     function getSurahNumberByName(surahName) {
         const list = global.SURAHS || (global.NoorUtils && global.NoorUtils.SURAHS) || [];
         const found = list.find(s => s.name === surahName);
         return found ? found.n : null;
     }
 
-    // تخزين مؤقت بالذاكرة لكل سورة تم جلبها بهذه الجلسة، لتفادي إعادة الطلب لنفس السورة
-    const _surahCache = {};
-
-    /**
-     * جلب كل آيات سورة معيّنة برواية قالون.
-     * @param {number} surahNumber رقم السورة (1-114)
-     * @returns {Promise<Array<{number:number, text:string}>>}
-     */
+    /** آيات سورة: [{ number, text }]. */
     async function fetchSurahVerses(surahNumber) {
         const num = parseInt(surahNumber, 10);
         if (!num || num < 1 || num > 114) return [];
-
-        if (_surahCache[num]) return _surahCache[num];
-
-        try {
-            const res = await fetch(`${BASE_URL}/${num}.min.json`);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            // بنية الاستجابة المؤكدة فعليًا (تم التحقق عبر اختبار مباشر):
-            // { "chapter": [ { "chapter": 1, "verse": 1, "text": "..." }, ... ] }
-            const verses = (data.chapter || []).map(v => ({
-                number: v.verse,
-                text: v.text
-            }));
-            _surahCache[num] = verses;
-            return verses;
-        } catch (e) {
-            console.warn('تعذر جلب نص السورة من مصدر القرآن (قالون):', e);
-            return [];
-        }
+        const surahs = await load();
+        return (surahs[num - 1] || []).map((text, i) => ({ number: i + 1, text }));
     }
 
-    /**
-     * جلب نص آية واحدة محددة.
-     * @param {number} surahNumber
-     * @param {number} verseNumber
-     * @returns {Promise<string>} نص الآية، أو سلسلة فارغة إن تعذر الجلب
-     */
     async function fetchVerseText(surahNumber, verseNumber) {
-        const verses = await fetchSurahVerses(surahNumber);
-        const v = verses.find(x => x.number === parseInt(verseNumber, 10));
-        return v ? v.text : '';
+        const num = parseInt(surahNumber, 10);
+        const v = parseInt(verseNumber, 10);
+        const surahs = await load();
+        return (surahs[num - 1] || [])[v - 1] || '';
     }
 
-    /**
-     * جلب نص آية بالاعتماد على اسم السورة (كما هو مخزن بحقول hifz.js) بدل رقمها.
-     * @param {string} surahName اسم السورة كما بمصفوفة SURAHS (مثال: "الفاتحة")
-     * @param {number} verseNumber
-     * @returns {Promise<string>}
-     */
     async function fetchVerseTextByName(surahName, verseNumber) {
         const num = getSurahNumberByName(surahName);
-        if (!num) return '';
-        return fetchVerseText(num, verseNumber);
+        return num ? fetchVerseText(num, verseNumber) : '';
     }
 
-    /**
-     * جلب نص نطاق من الآيات (من...إلى) كنص واحد متصل، جاهز للعرض في حقل نصي.
-     * @param {string} surahName
-     * @param {number} fromVerse
-     * @param {number} toVerse
-     * @returns {Promise<string>}
-     */
     async function fetchVerseRangeTextByName(surahName, fromVerse, toVerse) {
         const num = getSurahNumberByName(surahName);
         if (!num) return '';
         const verses = await fetchSurahVerses(num);
         const from = parseInt(fromVerse, 10);
         const to = parseInt(toVerse, 10) || from;
-        const selected = verses.filter(v => v.number >= from && v.number <= to);
-        return selected.map(v => v.text).join(' ');
+        return verses.filter(v => v.number >= from && v.number <= to).map(v => v.text).join(' ');
+    }
+
+    /** توحيد النص للبحث: إزالة التشكيل وعلامات الضبط والمدّ وتوحيد الهمزات. */
+    function normalizeForSearch(s) {
+        return String(s || '')
+            .replace(/[ؐ-ًؚ-ٰٟۖ-ۭ࣓-ࣿـ]/g, '')
+            .replace(/[إأآٱا]/g, 'ا').replace(/[ىے]/g, 'ي').replace(/ة/g, 'ه').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي')
+            // الرسم العثماني يحذف الألف في كلمات كثيرة (الصرط، الكتب...)؛ نتجاهل الألف في الطرفين عند المطابقة
+            .replace(/ا/g, '')
+            .replace(/\s+/g, ' ').trim();
+    }
+
+    /** بداية الآية مختصرة للعرض في القوائم (أول كلمات). */
+    function verseLead(text, words) {
+        const parts = String(text || '').split(/\s+/);
+        const n = words || 6;
+        return parts.slice(0, n).join(' ') + (parts.length > n ? ' …' : '');
+    }
+
+    /** خيارات قائمة الآيات: «12 — أول كلمات الآية». */
+    async function verseOptionsHtml(surahName, selected) {
+        const num = getSurahNumberByName(surahName);
+        if (!num) return '';
+        const verses = await fetchSurahVerses(num);
+        const esc = global.escapeHtml || (s => String(s));
+        return verses.map(v =>
+            `<option value="${v.number}"${String(v.number) === String(selected) ? ' selected' : ''}>${v.number} — ${esc(verseLead(v.text))}</option>`
+        ).join('');
+    }
+
+    /** البحث عن آيات في سورة تحتوي الكلمة (دون اعتبار للتشكيل). */
+    async function searchInSurah(surahName, query) {
+        const num = getSurahNumberByName(surahName);
+        const q = normalizeForSearch(query);
+        if (!num || !q) return [];
+        const verses = await fetchSurahVerses(num);
+        return verses.filter(v => normalizeForSearch(v.text).includes(q));
     }
 
     global.NoorQuranText = {
+        load,
         fetchSurahVerses,
         fetchVerseText,
         fetchVerseTextByName,
         fetchVerseRangeTextByName,
-        getSurahNumberByName
+        getSurahNumberByName,
+        verseOptionsHtml,
+        searchInSurah,
+        normalizeForSearch,
+        verseLead
     };
 })(window);

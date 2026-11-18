@@ -3,7 +3,6 @@ class UserModel {
   final int id;
   final String fullName;
   final String phone;
-  final String? email;
   final String role; // "Admin" | "Teacher" | "Student" | "Parent"
   /// تسمية الدور بالعربية من الخادم (مدير عام / مشرف / محفّظ / طالب / ولي أمر).
   final String? serverRoleLabel;
@@ -13,7 +12,6 @@ class UserModel {
     required this.id,
     required this.fullName,
     required this.phone,
-    this.email,
     required this.role,
     this.serverRoleLabel,
     this.isSuperAdmin = false,
@@ -46,7 +44,6 @@ class UserModel {
       id: json['id'] as int,
       fullName: json['fullName'] as String,
       phone: json['phone'] as String? ?? '',
-      email: json['email'] as String?,
       role: json['role'] as String,
       serverRoleLabel: json['roleLabel'] as String?,
       isSuperAdmin: json['isSuperAdmin'] == true,
@@ -57,7 +54,6 @@ class UserModel {
         'id': id,
         'fullName': fullName,
         'phone': phone,
-        'email': email,
         'role': role,
         'roleLabel': serverRoleLabel,
         'isSuperAdmin': isSuperAdmin,

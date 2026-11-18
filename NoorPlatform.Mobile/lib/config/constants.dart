@@ -4,7 +4,8 @@ class AppConstants {
 
   static const String appName = 'نور';
   static const String appNameFull = 'منصة نور لإدارة مركز وحلقات تحفيظ القرآن الكريم';
-  static const int totalQuranVerses = 6236;
+  /// العدّ المدني الأول (رواية قالون) — المعتمد في المنصة.
+  static const int totalQuranVerses = 6214;
 
   // ── Cache TTL (in minutes) ──
   static const int cacheTtlShort = 2;

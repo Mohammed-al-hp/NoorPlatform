@@ -78,6 +78,7 @@
             // الخادم يفرض تغيير كلمة المرور المؤقتة: افتح نافذة التغيير بدل عرض خطأ صلاحيات
             if (payload.code === 'MUST_CHANGE_PASSWORD') {
                 err.mustChangePassword = true;
+                global.NoorAccountMenu?.resetPasswordModal?.();
                 app().ui?.openModal?.('changePasswordModal');
             }
             throw err;

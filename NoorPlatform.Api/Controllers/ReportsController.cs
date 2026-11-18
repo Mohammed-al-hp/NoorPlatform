@@ -42,11 +42,8 @@ public class ReportsController : ControllerBase
         if (student == null)
             return NotFound(new { message = "الطالب غير موجود" });
 
-        var totalVerses = student.HifzRecords
-            .Where(r => r.Type == RecordType.Memorization)
-            .Sum(r => r.VerseCount > 0 ? r.VerseCount : HifzRecord.ParseVerseCount(r.Verses));
-
-        var progress = Math.Min((int)Math.Round((double)totalVerses / 6236 * 100), 100);
+        // المحفوظ بالترتيب العكسي (من الناس) حتى أبعد موضع في الحفظ الجديد
+        var progress = (int)Math.Round(HifzProgressCalculator.Calculate(student.HifzRecords));
         var teacherName = student.Circle?.Teacher?.User?.FullName ?? "—";
         var circleName = student.Circle?.Name ?? "—";
         // ─── إصلاح أمني: نص الإنجاز المخصص للمحفّظ/المشرف فقط — الطالب وولي الأمر يحصلان على النص المحسوب

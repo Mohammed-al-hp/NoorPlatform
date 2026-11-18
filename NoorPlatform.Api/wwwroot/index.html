@@ -10,7 +10,7 @@
     <title>منصة نور — لإدارة مركز وحلقات تحفيظ القرآن الكريم</title>
     <link rel="icon" href="/img/logo-mark.svg" type="image/svg+xml">
     <link rel="alternate icon" href="/icon-192.png" type="image/png">
-    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="/css/fonts.css">
     <script src="/js/icons.js"></script>
     <script src="/js/asset-loader.js"></script>
@@ -28,9 +28,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="/css/app.css?v=3">
+    <meta name="apple-mobile-web-app-title" content="منصة نور">
+    <link rel="stylesheet" href="/css/app.css?v=8">
     <link rel="stylesheet" href="/css/enhancements.css?v=2">
     <link rel="stylesheet" href="/css/smart-features.css?v=1">
+    <link rel="stylesheet" href="/css/mobile.css?v=1">
 </head>
 
 <body>
@@ -53,8 +55,8 @@
             <!-- بداية نموذج تسجيل الدخول -->
             <form id="loginForm" onsubmit="event.preventDefault(); handleLogin()">
                 <div class="form-group">
-                    <label>رقم الهاتف</label>
-                    <input type="text" id="loginPhone" class="form-control" placeholder="أدخل رقم الهاتف"
+                    <label>رقم الهاتف أو اسم المستخدم</label>
+                    <input type="text" id="loginPhone" class="form-control" placeholder="09xxxxxxxx — أو اسم المستخدم للطالب" dir="ltr"
                            autocomplete="username">
                 </div>
                 <div class="form-group">
@@ -93,7 +95,7 @@
             <div class="role-avatar" id="roleAvatar" data-icon="user" data-icon-size="22"></div>
             <div class="role-info">
                 <h4 id="roleName">المشرف العام</h4>
-                <span id="roleEmail">admin@noor.sa</span>
+                <span id="roleEmail"></span>
             </div>
         </div>
 
@@ -166,7 +168,7 @@
                 <div class="nav-section-label">المتابعة</div>
                 <div class="nav-item" onclick="navigate('memorization', this)">
                     <div class="nav-icon" data-icon="book-open" data-icon-size="20"></div>
-                    <span>التسميع والحفظ</span>
+                    <span>الحفظ والمراجعة</span>
                 </div>
                 <div class="nav-item" onclick="navigate('attendance', this)">
                     <div class="nav-icon" data-icon="check-circle" data-icon-size="20"></div>
@@ -338,6 +340,7 @@
                 <button class="btn btn-primary" onclick="navigate('attendance', null)" style="font-size:13px; padding:6px 14px"><span data-icon="check-circle" data-icon-size="14"></span> تسجيل حضور</button>
                 <button class="btn btn-primary admin-only-action" onclick="openModal('addTeacherModal')" style="font-size:13px; padding:6px 14px"><span data-icon="plus" data-icon-size="14"></span> إضافة محفّظ</button>
                 <button class="btn btn-primary admin-only-action" onclick="openModal('addCircleModal')" style="font-size:13px; padding:6px 14px"><span data-icon="plus" data-icon-size="14"></span> إنشاء حلقة</button>
+                <button class="btn btn-outline admin-only-action" onclick="showCenterSummary()" title="عدد الطلاب والمحفظين والحلقات وجلسات التسميع لهذا الشهر" style="font-size:13px; padding:6px 14px"><span data-icon="bar-chart" data-icon-size="14"></span> ملخص المركز</button>
             </div>
 
             <!-- Charts -->
@@ -371,10 +374,16 @@
             <div class="table-card" style="margin-top: 20px;">
                 <div class="card-header">
                     <div>
-                        <h3 style="display:flex;align-items:center;gap:8px"><span data-icon="medal-gold" data-icon-size="18"></span> المتصدرون هذا الأسبوع</h3>
-                        <p>قائمة أفضل الطلاب بناءً على النقاط والإنجازات</p>
+                        <h3 style="display:flex;align-items:center;gap:8px"><span data-icon="medal-gold" data-icon-size="18"></span> المتصدرون</h3>
+                        <p id="leaderboardSubtitle">أفضل عشرة طلاب بمجموع النقاط</p>
                     </div>
-                    <button class="card-action" onclick="fetchLeaderboard()"><span data-icon="refresh-cw" data-icon-size="14"></span> تحديث</button>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                        <div class="leaderboard-scope" id="leaderboardScope" role="group" aria-label="نطاق المتصدرين" style="display:none">
+                            <button type="button" data-scope="mine" onclick="NoorDashboard.setLeaderboardScope('mine')">طلابي</button>
+                            <button type="button" data-scope="center" onclick="NoorDashboard.setLeaderboardScope('center')">المركز</button>
+                        </div>
+                        <button class="card-action" onclick="fetchLeaderboard()"><span data-icon="refresh-cw" data-icon-size="14"></span> تحديث</button>
+                    </div>
                 </div>
                 <div style="overflow-x: auto; padding: 10px 20px;">
                     <div id="leaderboardWrap" style="display: flex; flex-direction: column; gap: 12px;">
@@ -740,7 +749,6 @@
                     <p>متابعة تقدم الطلاب في حفظ القرآن الكريم</p>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-outline" id="jlwmab" onclick="showCenterSummary()" title="عرض أرقام المركز: عدد الطلاب والمحفظين والحلقات وجلسات التسميع لهذا الشهر"><span data-icon="users" data-icon-size="14"></span> ملخص المركز</button>
                     <button class="btn btn-primary" onclick="openModal('addMemModal')"><span data-icon="plus" data-icon-size="14"></span> تسجيل تسميع</button>
                 </div>
             </div>
@@ -1144,17 +1152,38 @@
         </div> <!-- ===== إغلاق page-studentView ===== -->
         <!-- بوابة ولي الأمر -->
         <div class="content" id="page-parentView">
-            <div class="page-header">
-                <div>
-                    <h2>بوابة ولي الأمر</h2>
-                    <p>متابعة تقدم أبنائك في حفظ القرآن الكريم</p>
+            <!-- العنوان في الشريط العلوي يكفي («بوابة ولي الأمر») — الصفحة تبدأ بالمحتوى مباشرة -->
+            <div id="parentAlerts"></div>
+            <div class="parent-layout">
+                <!-- بطاقات الأبناء -->
+                <div id="parentChildrenGrid" class="parent-children">
+                    <div class="parent-empty">
+                        <span class="spin-icon" data-icon="loader" data-icon-size="14"></span> جاري تحميل بيانات الأبناء...
+                    </div>
                 </div>
-            </div>
-            <!-- بطاقات الأبناء -->
-            <div id="parentChildrenGrid" class="cards-grid">
-                <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
-                    <span class="spin-icon" data-icon="loader" data-icon-size="14"></span> جاري تحميل بيانات الأبناء...
-                </div>
+
+                <aside class="parent-aside">
+                    <section class="parent-panel">
+                        <h3><span data-icon="clock" data-icon-size="16"></span> آخر الجلسات</h3>
+                        <div id="parentTimeline"><div class="parent-empty">...</div></div>
+                    </section>
+                    <section class="parent-panel">
+                        <h3><span data-icon="zap" data-icon-size="16"></span> اختصارات</h3>
+                        <div class="parent-shortcuts">
+                            <button type="button" onclick="navigate('messages', null)"><span data-icon="message-circle" data-icon-size="18"></span> مراسلة المحفّظ</button>
+                            <button type="button" onclick="navigate('parentHome', null)"><span data-icon="home" data-icon-size="18"></span> متابعة البيت</button>
+                            <button type="button" onclick="navigate('myEvaluations', null)"><span data-icon="clipboard-list" data-icon-size="18"></span> تقييم الأبناء</button>
+                            <button type="button" onclick="navigate('parentFees', null)"><span data-icon="wallet" data-icon-size="18"></span> الرسوم</button>
+                        </div>
+                    </section>
+                    <section class="parent-panel parent-help">
+                        <h3><span data-icon="info" data-icon-size="16"></span> كيف تُقرأ الأرقام؟</h3>
+                        <p><strong>يحفظ الآن:</strong> السورة التي وصل إليها ابنك في الحفظ الجديد (الحفظ يبدأ من سورة الناس نحو الفاتحة).</p>
+                        <p><strong>المحفوظ من القرآن:</strong> نسبة ما أتمّه من القرآن حتى موضعه الحالي، وليست درجة إتقان.</p>
+                        <p><strong>الإتقان:</strong> تقيسه جلسات المراجعة — افتح «خريطة الإتقان».</p>
+                        <p><strong>التقدير:</strong> «ضعيف ويحتاج مراجعة» جلسة يعيدها الطالب ولا تُحتسب.</p>
+                    </section>
+                </aside>
             </div>
         </div>
 
@@ -1371,309 +1400,343 @@
             <div class="page-header">
                 <div>
                     <h2><span data-icon="settings" data-icon-size="20"></span> الإعدادات</h2>
-                    <p>إعدادات المنصة، النظام، تفضيلات المستخدم</p>
+                    <p>إعدادات المركز، التقييم والنقاط، وتفضيلات حسابك</p>
                 </div>
                 <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()"><span data-icon="save" data-icon-size="14"></span> حفظ التغييرات</button>
             </div>
+            <div id="settingsStatus" class="settings-status" role="status" aria-live="polite" style="display:none"></div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-bottom:40px;">
+            <div class="settings-layout">
+                <!-- ── قائمة الأقسام ── -->
+                <nav class="settings-nav" aria-label="أقسام الإعدادات">
+                    <div class="settings-nav-group">إعدادات المركز</div>
+                    <button type="button" class="settings-nav-item active" data-settings-tab="center" onclick="NoorSettings.showTab('center')"><span data-icon="mosque" data-icon-size="16"></span> المركز والدوام</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="finance" onclick="NoorSettings.showTab('finance')"><span data-icon="wallet" data-icon-size="16"></span> المالية</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="otp" onclick="NoorSettings.showTab('otp')"><span data-icon="lock" data-icon-size="16"></span> التحقق والتذكيرات</button>
 
-                <!-- 1. معلومات المركز -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="mosque" data-icon-size="20"></span> معلومات المركز
-                    </h3>
-                    <div class="form-group">
-                        <label class="form-label">اسم المركز</label>
-                        <input type="text" id="settingsCenterName" class="form-input" placeholder="مثال: مركز نور">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">رقم التواصل</label>
-                        <input type="tel" id="settingsContactPhone" class="form-input" placeholder="09xxxxxxxx">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">البريد الإلكتروني</label>
-                        <input type="email" id="settingsEmail" class="form-input" placeholder="info@example.com">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label">العنوان</label>
-                        <input type="text" id="settingsAddress" class="form-input" placeholder="المدينة، الشارع...">
-                    </div>
-                </div>
+                    <div class="settings-nav-group">التقييم والنقاط</div>
+                    <button type="button" class="settings-nav-item" data-settings-tab="elements" onclick="NoorSettings.showTab('elements')"><span data-icon="check-circle" data-icon-size="16"></span> عناصر التقييم</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="attendance" onclick="NoorSettings.showTab('attendance')"><span data-icon="calendar" data-icon-size="16"></span> الحضور والغياب</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="grades" onclick="NoorSettings.showTab('grades')"><span data-icon="star" data-icon-size="16"></span> الحفظ والمراجعة</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="monthly" onclick="NoorSettings.showTab('monthly')"><span data-icon="award" data-icon-size="16"></span> الأهداف الشهرية</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="period" onclick="NoorSettings.showTab('period')"><span data-icon="clipboard-list" data-icon-size="16"></span> تقييم الفترة والاختبار</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="matns" onclick="NoorSettings.showTab('matns')"><span data-icon="book-open" data-icon-size="16"></span> المتون</button>
 
-                <!-- 2. إعدادات الدوام -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="calendar" data-icon-size="20"></span> إعدادات الدوام
-                    </h3>
-                    <div class="form-group">
-                        <label class="form-label">أيام العمل الأسبوعية (مفصولة بفاصلة)</label>
-                        <input type="text" id="settingsWorkDays" class="form-input" placeholder="السبت, الأحد, الاثنين...">
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                        <div class="form-group">
-                            <label class="form-label">وقت البداية</label>
-                            <input type="time" id="settingsWorkStartTime" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">وقت النهاية</label>
-                            <input type="time" id="settingsWorkEndTime" class="form-input">
-                        </div>
-                    </div>
-                </div>
+                    <div class="settings-nav-group">حسابي</div>
+                    <button type="button" class="settings-nav-item" data-settings-tab="appearance" onclick="NoorSettings.showTab('appearance')"><span data-icon="moon" data-icon-size="16"></span> المظهر والإشعارات</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="security" onclick="NoorSettings.showTab('security')"><span data-icon="lock" data-icon-size="16"></span> كلمة المرور</button>
+                    <button type="button" class="settings-nav-item" data-settings-tab="system" onclick="NoorSettings.showTab('system')"><span data-icon="bar-chart" data-icon-size="16"></span> معلومات النظام</button>
+                </nav>
 
-                <!-- 3. نقاط الطلاب -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="star" data-icon-size="20"></span> نقاط الطلاب
-                    </h3>
-                    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">تُضاف هذه النقاط تلقائياً عند الحضور والتسميع. يمكن للمدير تعديل القيم.</p>
-                    <div class="form-group">
-                        <label class="form-label">نقاط الحضور (حاضر)</label>
-                        <input type="number" id="settingsPointsAttendance" class="form-input" min="0" value="10">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">نقاط الحفظ الجديد</label>
-                        <input type="number" id="settingsPointsHifzMemorization" class="form-input" min="0" value="50">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label">نقاط المراجعة</label>
-                        <input type="number" id="settingsPointsHifzRevision" class="form-input" min="0" value="20">
-                    </div>
-                </div>
-
-                <!-- التقييم الشهري بحسب جلسات الحفظ الجديد الناجحة -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="award" data-icon-size="20"></span> التقييم الشهري للحفظ الجديد
-                    </h3>
-                    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">عدد جلسات الحفظ الجديد الناجحة في الشهر اللازم للحصول على 10/10 حسب عمر الطالب. الدرجة = العدد ÷ الهدف × 10 (بحد أقصى 10).</p>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">5–7 سنوات (وغير المعروف)</label>
-                            <input type="number" id="settingsHifzTarget5To7" class="form-input" min="1" max="60" value="4">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">8–10 سنوات</label>
-                            <input type="number" id="settingsHifzTarget8To10" class="form-input" min="1" max="60" value="6">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">11 فأكثر</label>
-                            <input type="number" id="settingsHifzTarget11Plus" class="form-input" min="1" max="60" value="8">
-                        </div>
-                    </div>
-                    <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label">التقييمات التي تُعدّ الجلسة بها ناجحة (مفصولة بفاصلة)</label>
-                        <input type="text" id="settingsHifzPassingEvals" class="form-input" value="ممتاز,جيد جداً,جيد,ضعيف">
-                    </div>
-                </div>
-
-                <!-- 3. إعدادات المالية -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="wallet" data-icon-size="20"></span> إعدادات المالية
-                    </h3>
-                    <div class="form-group">
-                        <label class="form-label">الرسوم الشهرية الافتراضية</label>
-                        <input type="number" id="settingsDefaultMonthlyFee" class="form-input" placeholder="مثال: 50">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">العملة المحلية</label>
-                        <input type="text" id="settingsCurrency" class="form-input" placeholder="د.ل">
-                    </div>
-                </div>
-
-                <!-- 3a. التحقق والتنبيهات -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="lock" data-icon-size="20"></span> التحقق والتنبيهات
-                    </h3>
-                    <div class="form-group">
-                        <label class="form-label">قناة إرسال رمز التحقق (OTP)</label>
-                        <select id="settingsOtpChannel" class="form-input">
-                            <option value="WhatsApp">واتساب</option>
-                            <option value="Sms">رسالة نصية SMS</option>
-                            <option value="Both">كلاهما (يختار المستخدم)</option>
-                        </select>
-                        <small style="color:var(--text-muted);font-size:12px;display:block;margin-top:6px">
-                            خيار SMS جاهز للربط: يكفي تعبئة إعدادات مزود الخدمة (Sms__ApiUrl و Sms__ApiKey) على الخادم.
-                        </small>
-                    </div>
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                            <input type="checkbox" id="settingsStudentReminders" checked>
-                            تذكير الطلاب بالورد اليومي وأوقات الصلاة
-                        </label>
-                    </div>
-                </div>
-
-                <!-- 3b. التقييم التربوي -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="clipboard-list" data-icon-size="20"></span> التقييم التربوي
-                    </h3>
-                    <div class="form-group">
-                        <label class="form-label">حد الفتحات لاعتبار غير حافظ</label>
-                        <input type="number" id="settingsOralMaxOpenings" class="form-input" min="1"value="1">
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-                        <div class="form-group">
-                            <label class="form-label">خصم التردد</label>
-                            <input type="number" id="settingsOralHesitation" class="form-input" min="0" step="0.5" value="2">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">خصم التنبيه</label>
-                            <input type="number" id="settingsOralAlert" class="form-input" min="0" step="0.5" value="5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">خصم الفتح</label>
-                            <input type="number" id="settingsOralOpening" class="form-input" min="0" step="0.5" value="15">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">الهدف الشهري الافتراضي (أثمان)</label>
-                        <input type="number" id="settingsDefaultAthman" class="form-input" min="1" value="8">
-                    </div>
-                    <p style="font-size:12px;color:var(--text-muted);margin:8px 0 12px">عتبات نسبة إنجاز الهدف الشهري (نسبة من 1 لكل درجة)</p>
-                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
-                        <div class="form-group"><label class="form-label">درجة 10</label><input type="number" id="settingsPT10" class="form-input" min="0" max="1" step="0.01" value="0.75"></div>
-                        <div class="form-group"><label class="form-label">درجة 9</label><input type="number" id="settingsPT9" class="form-input" min="0" max="1" step="0.01" value="0.625"></div>
-                        <div class="form-group"><label class="form-label">درجة 8</label><input type="number" id="settingsPT8" class="form-input" min="0" max="1" step="0.01" value="0.5"></div>
-                        <div class="form-group"><label class="form-label">درجة 6</label><input type="number" id="settingsPT6" class="form-input" min="0" max="1" step="0.01" value="0.375"></div>
-                        <div class="form-group"><label class="form-label">درجة 4</label><input type="number" id="settingsPT4" class="form-input" min="0" max="1" step="0.01" value="0.25"></div>
-                    </div>
-                    <p style="font-size:12px;color:var(--text-muted);margin:8px 0 12px">أوزان أبعاد تقييم الفترة (نسب نسبية)</p>
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-                        <div class="form-group"><label class="form-label">حضور</label><input type="number" id="settingsWAtt" class="form-input" min="0" step="0.1" value="1"></div>
-                        <div class="form-group"><label class="form-label">حفظ</label><input type="number" id="settingsWHifz" class="form-input" min="0" step="0.1" value="1"></div>
-                        <div class="form-group"><label class="form-label">مراجعة</label><input type="number" id="settingsWRev" class="form-input" min="0" step="0.1" value="1"></div>
-                        <div class="form-group"><label class="form-label">تقدم</label><input type="number" id="settingsWProg" class="form-input" min="0" step="0.1" value="1"></div>
-                        <div class="form-group"><label class="form-label">متون</label><input type="number" id="settingsWMatn" class="form-input" min="0" step="0.1" value="1"></div>
-                        <div class="form-group"><label class="form-label">لباس</label><input type="number" id="settingsWDress" class="form-input" min="0" step="0.1" value="1"></div>
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;margin-top:12px">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                            <input type="checkbox" id="settingsEvalsVisible" checked>
-                            إظهار تقييمات الفترة للطالب وولي الأمر
-                        </label>
-                    </div>
-                </div>
-
-                <!-- 3c. إدارة المتون -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="book-open" data-icon-size="20"></span> إدارة المتون
-                    </h3>
-                    <div class="form-row">
-                        <div class="form-group" style="flex:1">
-                            <label class="form-label">اسم متن جديد</label>
-                            <input type="text" id="newMatnName" class="form-input" placeholder="مثال: تحفة الأطفال">
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="margin-bottom:16px" onclick="NoorSettings.addMatn()"><span data-icon="plus" data-icon-size="14"></span> إضافة متن</button>
-                    <div id="matnsSettingsList"></div>
-                </div>
-
-                <!-- 4. المظهر -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="settings" data-icon-size="20"></span> المظهر والتخصيص
-                    </h3>
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
-                            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)" style="width:20px;height:20px;accent-color:var(--green)">
-                            <div style="display:flex;flex-direction:column">
-                                <span style="font-weight:700">الوضع الليلي (Dark Mode)</span>
-                                <span style="font-size:12px;color:var(--text-muted)">تبديل واجهة النظام للون الداكن</span>
+                <div class="settings-panels">
+                    <!-- ═══ المركز والدوام ═══ -->
+                    <section class="settings-panel active" data-settings-panel="center">
+                        <h3 class="settings-panel-title">المركز والدوام</h3>
+                        <div class="settings-card">
+                            <h4>معلومات المركز</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">اسم المركز *</label>
+                                    <input type="text" id="settingsCenterName" class="form-input" placeholder="مثال: مركز نور">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">رقم التواصل</label>
+                                    <input type="tel" id="settingsContactPhone" class="form-input" placeholder="09xxxxxxxx">
+                                </div>
                             </div>
-                        </label>
-                    </div>
-                    <div class="form-group" style="margin-top:20px">
-                        <label class="form-label">حجم الخط الأساسي</label>
-                        <select id="settingsFontSize" class="form-input" onchange="NoorDashboard.changeFontSize(this.value)">
-                            <option value="14px">صغير (14px)</option>
-                            <option value="16px" selected>افتراضي (16px)</option>
-                            <option value="18px">كبير (18px)</option>
-                        </select>
-                    </div>
-                </div>
+                            <div class="form-group">
+                                <label class="form-label">العنوان</label>
+                                <input type="text" id="settingsAddress" class="form-input" placeholder="المدينة، الشارع...">
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h4>الدوام</h4>
+                            <div class="form-group">
+                                <label class="form-label">أيام العمل الأسبوعية (مفصولة بفاصلة)</label>
+                                <input type="text" id="settingsWorkDays" class="form-input" placeholder="السبت, الأحد, الاثنين...">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">وقت البداية</label>
+                                    <input type="time" id="settingsWorkStartTime" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">وقت النهاية</label>
+                                    <input type="time" id="settingsWorkEndTime" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
-                <!-- 5. الإشعارات والتنبيهات -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="bell" data-icon-size="20"></span> الإشعارات والتنبيهات
-                    </h3>
-                    <div style="display:flex;flex-direction:column;gap:12px">
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-                            <input type="checkbox" id="prefNotifAttendance" checked onchange="NoorDashboard.savePref('notifAttendance', this.checked)">
-                            <span>إشعارات الغياب والحضور</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-                            <input type="checkbox" id="prefNotifHifz" checked onchange="NoorDashboard.savePref('notifHifz', this.checked)">
-                            <span>إشعارات تقدم الحفظ والمراجعة</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-                            <input type="checkbox" id="prefNotifPayments" checked onchange="NoorDashboard.savePref('notifPayments', this.checked)">
-                            <span>إشعارات المدفوعات المستحقة</span>
-                        </label>
-                    </div>
-                </div>
+                    <!-- ═══ المالية ═══ -->
+                    <section class="settings-panel" data-settings-panel="finance">
+                        <h3 class="settings-panel-title">المالية</h3>
+                        <div class="settings-card">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">الرسوم الشهرية الافتراضية</label>
+                                    <input type="number" id="settingsDefaultMonthlyFee" class="form-input" min="0" placeholder="مثال: 50">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">العملة المحلية</label>
+                                    <input type="text" id="settingsCurrency" class="form-input" placeholder="د.ل">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
-                <!-- 6. الأمان -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:var(--blue)">
-                        <span data-icon="lock" data-icon-size="20"></span> الأمان
-                    </h3>
-                    <form onsubmit="return false" autocomplete="off">
-                        <div class="form-group">
-                            <label class="form-label">كلمة المرور الحالية</label>
-                            <input type="password" id="settingsCurrentPass" autocomplete="current-password" class="form-input" placeholder="••••••••">
+                    <!-- ═══ التحقق والتذكيرات ═══ -->
+                    <section class="settings-panel" data-settings-panel="otp">
+                        <h3 class="settings-panel-title">التحقق والتذكيرات</h3>
+                        <div class="settings-card">
+                            <div class="form-group">
+                                <label class="form-label">قناة إرسال رمز التحقق (استرجاع كلمة المرور)</label>
+                                <select id="settingsOtpChannel" class="form-input">
+                                    <option value="WhatsApp">واتساب</option>
+                                    <option value="Sms">رسالة نصية SMS</option>
+                                    <option value="Both">كلاهما (يختار المستخدم)</option>
+                                </select>
+                                <small class="settings-hint">خيار SMS يحتاج إعداد مزود الخدمة على الخادم (Sms__ApiUrl و Sms__ApiKey).</small>
+                            </div>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsStudentReminders" checked>
+                                <span><strong>تذكير الطلاب</strong><small>بالورد اليومي وأوقات الصلاة</small></span>
+                            </label>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">كلمة المرور الجديدة</label>
-                            <input type="password" id="settingsNewPass" autocomplete="new-password" class="form-input" placeholder="••••••••">
-                        </div>
-                    </form>
-                        <button class="btn btn-outline" style="width:100%" onclick="NoorDashboard.changePassword()">تحديث كلمة المرور</button>
-                </div>
+                    </section>
 
-                <!-- 7. معلومات النظام -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);grid-column:1/-1">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:var(--text-muted)">
-                        <span data-icon="bar-chart" data-icon-size="20"></span> معلومات النظام (للقراءة فقط)
-                    </h3>
-                    <div id="sysInfoContainer" style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--text-muted)">
-                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
-                            <div style="font-size:24px;font-weight:bold;color:var(--text)" id="sysTotalUsers">0</div>
-                            <div>إجمالي المستخدمين</div>
+                    <!-- ═══ عناصر التقييم ═══ -->
+                    <section class="settings-panel" data-settings-panel="elements">
+                        <h3 class="settings-panel-title">عناصر التقييم</h3>
+                        <p class="settings-panel-desc">الحفظ والمراجعة والحضور أساسية دائماً. اختر العناصر الإضافية التي يعتمدها المركز؛ العنصر المُعطَّل يختفي من صفحات المحفّظ والطالب، ولا يمنح نقاطاً، ولا يدخل في تقييم الفترة.</p>
+                        <div class="settings-card">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsEnableMatn" checked>
+                                <span><strong>المتون</strong><small>تسجيل حفظ ومراجعة المتون، ونقاطها، ودخولها في التقييم</small></span>
+                            </label>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsEnableDress" checked>
+                                <span><strong>اللباس</strong><small>متابعة الالتزام باللباس ودخوله في التقييم</small></span>
+                            </label>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsEnablePrayer" checked>
+                                <span><strong>الصلاة</strong><small>سجل الصلاة اليومي للطالب (مؤشر استرشادي)</small></span>
+                            </label>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsEnableParentHome" checked>
+                                <span><strong>متابعة ولي الأمر في البيت</strong><small>تقييم أسبوعي من ولي الأمر (مؤشر استرشادي)</small></span>
+                            </label>
                         </div>
-                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
-                            <div style="font-size:24px;font-weight:bold;color:var(--text)" id="sysTotalRecords">0</div>
-                            <div>السجلات المدخلة</div>
-                        </div>
-                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
-                            <div style="font-size:24px;font-weight:bold;color:var(--text)" id="sysVersion">v1.0.0</div>
-                            <div>نسخة المنصة</div>
-                        </div>
-                        <div style="padding:12px;background:var(--bg);border-radius:8px;flex:1;min-width:150px;text-align:center">
-                            <div style="font-size:16px;font-weight:bold;color:var(--text);margin-top:6px" id="sysServerTime">--</div>
-                            <div>توقيت السيرفر</div>
-                        </div>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- 8. صيانة البيانات -->
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);grid-column:1/-1;border-right:4px solid var(--blue)">
-                    <h3 style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-                        <span data-icon="settings" data-icon-size="20"></span> صيانة وتصدير البيانات
-                    </h3>
-                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">يمكنك تحميل نسخة من البيانات الأساسية على شكل ملف Excel أو مسح الذاكرة المؤقتة (Cache) للتطبيق في حال وجود خلل.</p>
-                    <div style="display:flex;gap:12px;flex-wrap:wrap">
-                        <button class="btn btn-primary" onclick="NoorDashboard.exportData()"><span data-icon="download" data-icon-size="14"></span> تصدير البيانات (Excel)</button>
-                        <button class="btn btn-outline" style="color:var(--text-muted);border-color:var(--border)" onclick="NoorDashboard.clearCache()"><span data-icon="trash-2" data-icon-size="14"></span> تفريغ الذاكرة المؤقتة (Cache)</button>
-                    </div>
-                </div>
+                    <!-- ═══ الحضور والغياب ═══ -->
+                    <section class="settings-panel" data-settings-panel="attendance">
+                        <h3 class="settings-panel-title">الحضور والغياب</h3>
+                        <p class="settings-panel-desc">النقاط التي يحصل عليها الطالب لكل حالة حضور. يمكن إدخال قيمة سالبة للخصم (مثل −5 للغياب دون إذن)، ورصيد الطالب لا ينزل عن صفر.</p>
+                        <div class="settings-card">
+                            <div class="settings-points-grid">
+                                <div class="form-group">
+                                    <label class="form-label">حاضر</label>
+                                    <input type="number" id="settingsPointsAttendance" class="form-input" min="-100" max="1000" value="10">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">متأخر</label>
+                                    <input type="number" id="settingsPointsLate" class="form-input" min="-100" max="1000" value="5">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">غائب بإذن</label>
+                                    <input type="number" id="settingsPointsExcused" class="form-input" min="-100" max="1000" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">غائب دون إذن</label>
+                                    <input type="number" id="settingsPointsUnexcused" class="form-input" min="-100" max="1000" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
+                    <!-- ═══ الحفظ والمراجعة ═══ -->
+                    <section class="settings-panel" data-settings-panel="grades">
+                        <h3 class="settings-panel-title">الحفظ والمراجعة</h3>
+                        <div class="settings-card">
+                            <h4>سلّم التقديرات المعتمد</h4>
+                            <table class="settings-grade-table">
+                                <thead><tr><th>التقدير</th><th>النسبة</th><th>الحفظ الجديد</th><th>المراجعة</th></tr></thead>
+                                <tbody>
+                                    <tr><td>ممتاز</td><td dir="ltr">85% – 100%</td><td>✓</td><td>✓</td></tr>
+                                    <tr><td>جيد جداً</td><td dir="ltr">75% – 84%</td><td>✓</td><td>✓</td></tr>
+                                    <tr><td>جيد</td><td dir="ltr">65% – 74%</td><td>✓</td><td>✓</td></tr>
+                                    <tr><td>مقبول</td><td dir="ltr">50% – 64%</td><td class="muted">—</td><td>✓</td></tr>
+                                    <tr class="fail"><td>ضعيف ويحتاج مراجعة</td><td dir="ltr">49% فأقل</td><td colspan="2">جلسة راسبة: لا تُحتسب ولا تمنح نقاطاً، وتُعاد لاحقاً</td></tr>
+                                </tbody>
+                            </table>
+                            <small class="settings-hint">في الحفظ الجديد لا يوجد «مقبول»: ما دون 65% يُعدّ «ضعيف ويحتاج مراجعة».</small>
+                        </div>
+                        <div class="settings-card">
+                            <h4>نقاط الحفظ الجديد</h4>
+                            <div class="settings-points-grid">
+                                <div class="form-group"><label class="form-label">ممتاز</label><input type="number" id="settingsPointsHifzMemorization" class="form-input" min="0" max="1000" value="50"></div>
+                                <div class="form-group"><label class="form-label">جيد جداً</label><input type="number" id="settingsPointsMemVeryGood" class="form-input" min="0" max="1000" value="40"></div>
+                                <div class="form-group"><label class="form-label">جيد</label><input type="number" id="settingsPointsMemGood" class="form-input" min="0" max="1000" value="30"></div>
+                                <div class="form-group"><label class="form-label">ضعيف ويحتاج مراجعة</label><input type="number" class="form-input" value="0" disabled title="جلسة راسبة — لا نقاط"></div>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h4>نقاط المراجعة</h4>
+                            <div class="settings-points-grid">
+                                <div class="form-group"><label class="form-label">ممتاز</label><input type="number" id="settingsPointsHifzRevision" class="form-input" min="0" max="1000" value="20"></div>
+                                <div class="form-group"><label class="form-label">جيد جداً</label><input type="number" id="settingsPointsRevVeryGood" class="form-input" min="0" max="1000" value="15"></div>
+                                <div class="form-group"><label class="form-label">جيد</label><input type="number" id="settingsPointsRevGood" class="form-input" min="0" max="1000" value="10"></div>
+                                <div class="form-group"><label class="form-label">مقبول</label><input type="number" id="settingsPointsRevAcceptable" class="form-input" min="0" max="1000" value="5"></div>
+                            </div>
+                        </div>
+                        <div class="settings-card" data-requires="matn">
+                            <h4>نقاط المتون</h4>
+                            <div class="form-group" style="max-width:240px">
+                                <label class="form-label">حفظ جزء جديد من متن (جلسة ناجحة)</label>
+                                <input type="number" id="settingsPointsMatn" class="form-input" min="0" max="1000" value="20">
+                            </div>
+                            <small class="settings-hint">الجزء نفسه من المتن يُحتسب مرة واحدة فقط حتى لو سُجّل من نافذة التسميع ومن صفحة التقييم التربوي.</small>
+                        </div>
+                    </section>
+
+                    <!-- ═══ الأهداف الشهرية ═══ -->
+                    <section class="settings-panel" data-settings-panel="monthly">
+                        <h3 class="settings-panel-title">الأهداف الشهرية</h3>
+                        <div class="settings-card">
+                            <h4>درجة الحفظ الشهرية (من 10) حسب عمر الطالب</h4>
+                            <p class="settings-hint" style="margin-bottom:12px">عدد جلسات الحفظ الجديد <strong>الناجحة</strong> في الشهر ليحصل الطالب على 10/10. الدرجة = عدد الجلسات ÷ الهدف × 10. مثال: الهدف 8 والطالب أنجز 6 ← 7.5 من 10.</p>
+                            <div class="settings-points-grid">
+                                <div class="form-group"><label class="form-label">5–7 سنوات</label><input type="number" id="settingsHifzTarget5To7" class="form-input" min="1" max="60" value="4"></div>
+                                <div class="form-group"><label class="form-label">8–10 سنوات</label><input type="number" id="settingsHifzTarget8To10" class="form-input" min="1" max="60" value="6"></div>
+                                <div class="form-group"><label class="form-label">11 سنة فأكثر</label><input type="number" id="settingsHifzTarget11Plus" class="form-input" min="1" max="60" value="8"></div>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h4>هدف الأثمان الشهري</h4>
+                            <p class="settings-hint" style="margin-bottom:12px">يحدد المحفّظ لكل طالب عدد الأثمان المطلوبة شهرياً (من صفحة التقييم التربوي ← الأهداف الشهرية). هنا القيمة الافتراضية، وجدول تحويل نسبة الإنجاز إلى درجة «التقدم» من 10.</p>
+                            <div class="form-group" style="max-width:240px">
+                                <label class="form-label">الهدف الافتراضي (أثمان في الشهر)</label>
+                                <input type="number" id="settingsDefaultAthman" class="form-input" min="1" value="8">
+                            </div>
+                            <label class="form-label">أقل نسبة إنجاز للحصول على الدرجة</label>
+                            <div class="settings-threshold-grid">
+                                <div class="form-group"><label class="form-label">10 من 10</label><div class="input-suffix"><input type="number" id="settingsPT10" class="form-input" min="1" max="100" step="0.5" value="75"><span>%</span></div></div>
+                                <div class="form-group"><label class="form-label">9 من 10</label><div class="input-suffix"><input type="number" id="settingsPT9" class="form-input" min="1" max="100" step="0.5" value="62.5"><span>%</span></div></div>
+                                <div class="form-group"><label class="form-label">8 من 10</label><div class="input-suffix"><input type="number" id="settingsPT8" class="form-input" min="1" max="100" step="0.5" value="50"><span>%</span></div></div>
+                                <div class="form-group"><label class="form-label">6 من 10</label><div class="input-suffix"><input type="number" id="settingsPT6" class="form-input" min="1" max="100" step="0.5" value="37.5"><span>%</span></div></div>
+                                <div class="form-group"><label class="form-label">4 من 10</label><div class="input-suffix"><input type="number" id="settingsPT4" class="form-input" min="1" max="100" step="0.5" value="25"><span>%</span></div></div>
+                            </div>
+                            <small class="settings-hint" id="settingsThresholdExample">مثال: الهدف 8 أثمان — من أنجز 6 (75%) يأخذ 10، ومن أنجز 4 (50%) يأخذ 8، وأي إنجاز أقل من آخر نسبة يأخذ 2.</small>
+                        </div>
+                    </section>
+
+                    <!-- ═══ تقييم الفترة والاختبار ═══ -->
+                    <section class="settings-panel" data-settings-panel="period">
+                        <h3 class="settings-panel-title">تقييم الفترة والاختبار الشفوي</h3>
+                        <div class="settings-card">
+                            <h4>أوزان أبعاد تقييم الفترة</h4>
+                            <p class="settings-hint" style="margin-bottom:12px">أوزان نسبية: وزن 2 يعني أن البُعد يساوي ضعف بُعد وزنه 1. الوزن 0 يستبعد البُعد.</p>
+                            <div class="settings-points-grid">
+                                <div class="form-group"><label class="form-label">الحضور</label><input type="number" id="settingsWAtt" class="form-input" min="0" step="0.5" value="1"></div>
+                                <div class="form-group"><label class="form-label">الحفظ</label><input type="number" id="settingsWHifz" class="form-input" min="0" step="0.5" value="1"></div>
+                                <div class="form-group"><label class="form-label">المراجعة</label><input type="number" id="settingsWRev" class="form-input" min="0" step="0.5" value="1"></div>
+                                <div class="form-group"><label class="form-label">التقدم الشهري</label><input type="number" id="settingsWProg" class="form-input" min="0" step="0.5" value="1"></div>
+                                <div class="form-group" data-requires="matn"><label class="form-label">المتون</label><input type="number" id="settingsWMatn" class="form-input" min="0" step="0.5" value="1"></div>
+                                <div class="form-group" data-requires="dress"><label class="form-label">اللباس</label><input type="number" id="settingsWDress" class="form-input" min="0" step="0.5" value="1"></div>
+                            </div>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="settingsEvalsVisible" checked>
+                                <span><strong>إظهار تقييم الفترة للطالب وولي الأمر</strong></span>
+                            </label>
+                        </div>
+                        <div class="settings-card">
+                            <h4>الاختبار الشفوي (المراجعة بالأسئلة)</h4>
+                            <div class="settings-points-grid">
+                                <div class="form-group"><label class="form-label">أقصى عدد فتحات للسؤال</label><input type="number" id="settingsOralMaxOpenings" class="form-input" min="1" value="1"></div>
+                                <div class="form-group"><label class="form-label">خصم كل تردد</label><input type="number" id="settingsOralHesitation" class="form-input" min="0" step="0.5" value="2"></div>
+                                <div class="form-group"><label class="form-label">خصم كل تنبيه</label><input type="number" id="settingsOralAlert" class="form-input" min="0" step="0.5" value="5"></div>
+                                <div class="form-group"><label class="form-label">خصم كل فتح</label><input type="number" id="settingsOralOpening" class="form-input" min="0" step="0.5" value="15"></div>
+                            </div>
+                            <small class="settings-hint">درجة السؤال = 100 − الخصومات. السؤال الذي يتجاوز الفتحات المسموحة يُلغى بدرجة صفر. التقدير النهائي يتبع سلّم التقديرات.</small>
+                        </div>
+                    </section>
+
+                    <!-- ═══ المتون ═══ -->
+                    <section class="settings-panel" data-settings-panel="matns">
+                        <h3 class="settings-panel-title">المتون</h3>
+                        <div class="settings-card">
+                            <div class="settings-inline-add">
+                                <input type="text" id="newMatnName" class="form-input" placeholder="اسم متن جديد، مثال: تحفة الأطفال">
+                                <button class="btn btn-primary" type="button" onclick="NoorSettings.addMatn()"><span data-icon="plus" data-icon-size="14"></span> إضافة</button>
+                            </div>
+                            <div id="matnsSettingsList"></div>
+                            <small class="settings-hint">إضافة المتون وتعطيلها تُحفظ فوراً. لإيقاف المتون كلياً استخدم «عناصر التقييم».</small>
+                        </div>
+                    </section>
+
+                    <!-- ═══ المظهر والإشعارات (تُحفظ على هذا الجهاز فوراً) ═══ -->
+                    <section class="settings-panel" data-settings-panel="appearance">
+                        <h3 class="settings-panel-title">المظهر والإشعارات</h3>
+                        <p class="settings-panel-desc">تفضيلات شخصية تُحفظ على هذا الجهاز فوراً، ولا تحتاج زر الحفظ.</p>
+                        <div class="settings-card">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                                <span><strong>الوضع الليلي</strong><small>تبديل الواجهة للون الداكن</small></span>
+                            </label>
+                            <div class="form-group" style="max-width:240px;margin-top:12px">
+                                <label class="form-label">حجم الخط</label>
+                                <select id="settingsFontSize" class="form-input" onchange="NoorDashboard.changeFontSize(this.value)">
+                                    <option value="14px">صغير</option>
+                                    <option value="16px" selected>افتراضي</option>
+                                    <option value="18px">كبير</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h4>الإشعارات</h4>
+                            <label class="settings-switch"><input type="checkbox" id="prefNotifAttendance" checked onchange="NoorDashboard.savePref('notifAttendance', this.checked)"><span><strong>الغياب والحضور</strong></span></label>
+                            <label class="settings-switch"><input type="checkbox" id="prefNotifHifz" checked onchange="NoorDashboard.savePref('notifHifz', this.checked)"><span><strong>تقدم الحفظ والمراجعة</strong></span></label>
+                            <label class="settings-switch"><input type="checkbox" id="prefNotifPayments" checked onchange="NoorDashboard.savePref('notifPayments', this.checked)"><span><strong>المدفوعات المستحقة</strong></span></label>
+                        </div>
+                    </section>
+
+                    <!-- ═══ كلمة المرور ═══ -->
+                    <section class="settings-panel" data-settings-panel="security">
+                        <h3 class="settings-panel-title">كلمة المرور</h3>
+                        <div class="settings-card" style="max-width:420px">
+                            <form onsubmit="return false" autocomplete="off">
+                                <div class="form-group">
+                                    <label class="form-label">كلمة المرور الحالية</label>
+                                    <input type="password" id="settingsCurrentPass" autocomplete="current-password" class="form-input" placeholder="••••••••">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">كلمة المرور الجديدة (8 أحرف على الأقل)</label>
+                                    <input type="password" id="settingsNewPass" autocomplete="new-password" class="form-input" placeholder="••••••••">
+                                </div>
+                            </form>
+                            <button class="btn btn-primary" type="button" onclick="NoorDashboard.changePassword()">تحديث كلمة المرور</button>
+                        </div>
+                    </section>
+
+                    <!-- ═══ معلومات النظام ═══ -->
+                    <section class="settings-panel" data-settings-panel="system">
+                        <h3 class="settings-panel-title">معلومات النظام</h3>
+                        <div class="settings-card">
+                            <div id="sysInfoContainer" class="settings-sys-grid">
+                                <div><strong id="sysTotalUsers">0</strong><span>إجمالي المستخدمين</span></div>
+                                <div><strong id="sysTotalRecords">0</strong><span>السجلات المدخلة</span></div>
+                                <div><strong id="sysVersion">v1.0.0</strong><span>نسخة المنصة</span></div>
+                                <div><strong id="sysServerTime">--</strong><span>توقيت الخادم</span></div>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h4>الذاكرة المؤقتة</h4>
+                            <p class="settings-hint" style="margin-bottom:12px">عند ظهور خلل في العرض بعد تحديث المنصة، فرّغ الذاكرة المؤقتة لإعادة تحميل الملفات.</p>
+                            <button class="btn btn-outline" type="button" onclick="NoorDashboard.clearCache()"><span data-icon="trash-2" data-icon-size="14"></span> تفريغ الذاكرة المؤقتة</button>
+                        </div>
+                    </section>
+                </div>
             </div>
         </div>
 
@@ -1762,37 +1825,8 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">رقم هاتف الطالب (اختياري)</label>
-                            <input id="phone" class="form-input" type="tel" placeholder="09xxxxxxxx">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">السكن (اختياري)</label>
-                            <input id="residence" class="form-input" type="text" placeholder="المدينة / الحي">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">الحلقة (اختياري)</label>
-                            <select id="halaqa" class="form-input">
-                                <option value="">— بدون حلقة —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">المستوى (اختياري)</label>
-                            <select id="level" class="form-input">
-                                <option value="">—</option>
-                                <option value="مبتدئ">مبتدئ</option>
-                                <option value="متوسط">متوسط</option>
-                                <option value="متقدم">متقدم</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <div class="form-group">
-                        <label class="form-label">ولي أمر موجود مسبقاً (اختياري)</label>
+                        <label class="form-label">ولي أمر موجود مسبقاً</label>
                         <select id="existingParentId" class="form-input" onclick="populateExistingParentSelect()" onfocus="populateExistingParentSelect()" onchange="toggleExistingParentFields()">
                             <option value="">— أدخل بيانات ولي أمر جديد بالأسفل —</option>
                         </select>
@@ -1822,6 +1856,36 @@
                             </select>
                         </div>
                     </div>
+                    </div>
+
+                    <div class="form-section-title">معلومات إضافية</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">رقم هاتف الطالب</label>
+                            <input id="phone" class="form-input" type="tel" placeholder="09xxxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">السكن</label>
+                            <input id="residence" class="form-input" type="text" placeholder="المدينة / الحي">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">الحلقة</label>
+                            <select id="halaqa" class="form-input">
+                                <option value="">— بدون حلقة —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">المستوى</label>
+                            <select id="level" class="form-input">
+                                <option value="">—</option>
+                                <option value="مبتدئ">مبتدئ</option>
+                                <option value="متوسط">متوسط</option>
+                                <option value="متقدم">متقدم</option>
+                            </select>
+                        </div>
                     </div>
 
                 </div>
@@ -1861,6 +1925,11 @@
                         <span id="hifzLastPositionHint" style="font-size:12px;color:var(--green-dark, #16a34a);display:block;margin-top:4px"></span>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">تاريخ الجلسة *</label>
+                        <input type="date" class="form-input" id="hifzSessionDate">
+                        <small style="color:var(--text-muted);font-size:12px">اليوم افتراضياً — غيّره عند تسجيل جلسة سابقة.</small>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">نوع الجلسة</label>
                         <div style="display:flex;gap:8px;flex-wrap:wrap">
                             <button type="button" class="btn btn-primary" style="flex:1;min-width:120px;padding:10px"
@@ -1887,27 +1956,35 @@
                         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px">
                             <input type="checkbox" id="hifzShowToSurah"> تسميع يشمل أكثر من سورة
                         </label>
+                        <!-- اختيار الآيات بنصّها (رواية قالون، دون إنترنت) أو بالرجوع لصفحة المصحف -->
+                        <div class="verse-picker-tools">
+                            <div class="verse-search">
+                                <span data-icon="search" data-icon-size="14"></span>
+                                <input class="form-input" id="hifzVerseSearch" type="search" placeholder="ابحث عن الآية بكلمة منها..." autocomplete="off">
+                            </div>
+                            <button type="button" class="btn btn-outline" onclick="NoorHifz.openMushafAtSelection('mem')"><span data-icon="book-open" data-icon-size="14"></span> عرض في المصحف</button>
+                        </div>
+                        <div id="hifzVerseResults" class="verse-results"></div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">من آية</label>
-                                <input class="form-input" id="hifzFromVerse" type="number" min="1" placeholder="1">
+                                <select class="form-input verse-select" id="hifzFromVerse"></select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">إلى آية</label>
-                                <input class="form-input" id="hifzToVerse" type="number" min="1" placeholder="10">
+                                <label class="form-label">إلى آية (يبدأ منها في الجلسة القادمة ما بعدها)</label>
+                                <select class="form-input verse-select" id="hifzToVerse"></select>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">نص بداية الآية</label>
-                            <input class="form-input" id="hifzStartText" type="text" placeholder="اقرأ من قوله تعالى...">
-                            <span style="font-size:11px;color:var(--text-muted)">يُملأ تلقائيًا من رواية قالون عند اختيار السورة والآية — يمكن تعديله يدويًا</span>
+                            <label class="form-label">نص آية البداية</label>
+                            <input class="form-input quran-text" id="hifzStartText" type="text" placeholder="اقرأ من قوله تعالى...">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">نص نهاية الآية</label>
-                            <input class="form-input" id="hifzEndText" type="text" placeholder="...إلى قوله">
-                            <span style="font-size:11px;color:var(--text-muted)">يُملأ تلقائيًا من رواية قالون عند اختيار السورة والآية — يمكن تعديله يدويًا</span>
+                            <label class="form-label">نص آية النهاية</label>
+                            <input class="form-input quran-text" id="hifzEndText" type="text" placeholder="...إلى قوله">
+                            <span style="font-size:11px;color:var(--text-muted)">النص من مصحف قالون (مجمع الملك فهد) ويعمل دون إنترنت — يمكن تعديله يدويًا</span>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="hifzMatnGroup">
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
                                 <input type="checkbox" id="hifzIncludeMatn" onchange="document.getElementById('hifzMatnFields').style.display=this.checked?'block':'none'">
                                 تسجيل حفظ متن أيضًا بهذه الجلسة
@@ -1933,6 +2010,10 @@
                         </div>
                         <div id="hifzSequentialPanel" class="hifz-revision-panel">
                             <span id="hifzSeqPositionHint" style="font-size:12px;color:var(--green-dark, #16a34a);display:block;margin-bottom:8px"></span>
+                            <div class="verse-picker-tools">
+                                <span style="font-size:12px;color:var(--text-muted)">اختر الآية من قائمتها (رقمها وأول كلماتها)</span>
+                                <button type="button" class="btn btn-outline" onclick="NoorHifz.openMushafAtSelection('seq')"><span data-icon="book-open" data-icon-size="14"></span> عرض في المصحف</button>
+                            </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">من سورة</label>
@@ -1940,12 +2021,12 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">من آية</label>
-                                    <select class="form-input" id="hifzSeqFromVerse"></select>
+                                    <select class="form-input verse-select" id="hifzSeqFromVerse"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">نص بداية الآية</label>
-                                <input class="form-input" id="hifzSeqStartText" type="text" placeholder="اقرأ من قوله تعالى..." readonly>
+                                <input class="form-input quran-text" id="hifzSeqStartText" type="text" placeholder="اقرأ من قوله تعالى..." readonly>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
@@ -1954,12 +2035,12 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">إلى آية</label>
-                                    <select class="form-input" id="hifzSeqToVerse"></select>
+                                    <select class="form-input verse-select" id="hifzSeqToVerse"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">نص نهاية الآية</label>
-                                <input class="form-input" id="hifzSeqEndText" type="text" placeholder="...إلى قوله" readonly>
+                                <input class="form-input quran-text" id="hifzSeqEndText" type="text" placeholder="...إلى قوله" readonly>
                             </div>
                             <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">السور التي سيتم تسميعها:</p>
                             <div class="hifz-seq-preview" id="hifzSeqPreview"></div>
@@ -1984,14 +2065,17 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">التقييم *</label>
-                        <select class="form-input" id="hifzEvaluation">
-                            <option value="excellent">ممتاز</option>
-                            <option value="veryGood">جيد جدًا</option>
-                            <option value="good">جيد</option>
-                            <option value="weak">ضعيف</option>
-                            <option value="review">يحتاج مراجعة</option>
-                        </select>
+                        <div class="form-row">
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-label">التقدير *</label>
+                                <select class="form-input" id="hifzEvaluation"></select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-label">النسبة %</label>
+                                <input class="form-input" id="hifzPercent" type="number" min="0" max="100" step="1" placeholder="تحدد التقدير تلقائياً" oninput="NoorGrades.applyPercent()">
+                            </div>
+                        </div>
+                        <small id="hifzGradeHint" class="hifz-grade-hint"></small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">ملاحظة</label>
@@ -2124,7 +2208,7 @@
                         <textarea id="annContent" class="form-input" rows="4" placeholder="اكتب نص الإعلان هنا..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">تاريخ الانتهاء (اختياري)</label>
+                        <label class="form-label">تاريخ الانتهاء</label>
                         <input class="form-input" type="date">
                     </div>
                 </div>
@@ -2385,7 +2469,7 @@
                     <p id="editHifzStudent" style="font-weight:700;margin-bottom:12px"></p>
                     <div class="form-group">
                         <label class="form-label">نوع الجلسة *</label>
-                        <select class="form-input" id="editHifzType">
+                        <select class="form-input" id="editHifzType" onchange="NoorGrades.fillSelect(document.getElementById('editHifzEvaluation'), this.value)">
                             <option value="Memorization">حفظ جديد</option>
                             <option value="Revision">مراجعة</option>
                         </select>
@@ -2395,7 +2479,7 @@
                         <input type="text" class="form-input" id="editHifzSurah" maxlength="50">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">إلى سورة (للمراجعة — اختياري)</label>
+                        <label class="form-label">إلى سورة (للمراجعة)</label>
                         <input type="text" class="form-input" id="editHifzToSurah" maxlength="50">
                     </div>
                     <div class="form-group">
@@ -2404,13 +2488,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">التقييم *</label>
-                        <select class="form-input" id="editHifzEvaluation">
-                            <option value="ممتاز">ممتاز</option>
-                            <option value="جيد جدًا">جيد جدًا</option>
-                            <option value="جيد">جيد</option>
-                            <option value="ضعيف">ضعيف</option>
-                            <option value="يحتاج مراجعة">يحتاج مراجعة</option>
-                        </select>
+                        <select class="form-input" id="editHifzEvaluation"></select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">ملاحظة</label>
@@ -2476,16 +2554,6 @@
                             <input type="date" id="editStudentRegistrationDate" class="form-control">
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>رقم هاتف الطالب (اختياري)</label>
-                            <input type="tel" id="editStudentPhone" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label>السكن (اختياري)</label>
-                            <input type="text" id="editStudentResidence" class="form-control">
-                        </div>
-                    </div>
                     <div class="form-group">
                         <label>اسم ولي الأمر *</label>
                         <input type="text" id="editGuardianName" class="form-control">
@@ -2509,7 +2577,7 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>المستوى (اختياري)</label>
+                            <label>المستوى</label>
                             <select id="editStudentLevel" class="form-control">
                                 <option value="مبتدئ">مبتدئ</option>
                                 <option value="متوسط">متوسط</option>
@@ -2517,10 +2585,21 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>الحلقة (اختياري)</label>
+                            <label>الحلقة</label>
                             <select id="editStudentCircle" class="form-control">
                                 <option value="">— بدون حلقة —</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="form-section-title">معلومات إضافية</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>رقم هاتف الطالب</label>
+                            <input type="tel" id="editStudentPhone" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>السكن</label>
+                            <input type="text" id="editStudentResidence" class="form-control">
                         </div>
                     </div>
                 </div>
@@ -2699,7 +2778,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>الوصف (اختياري)</label>
+                        <label>الوصف</label>
                         <textarea class="form-control" name="description" rows="2"
                                   placeholder="وصف مختصر للملف..."></textarea>
                     </div>
@@ -2747,7 +2826,7 @@
                     <h3><span data-icon="lock" data-icon-size="18"></span> تغيير كلمة المرور</h3>
                 </div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted);margin-bottom:16px">يجب تغيير كلمة المرور المؤقتة قبل المتابعة.</p>
+                    <p id="changePasswordIntro" style="color:var(--text-muted);margin-bottom:16px">يجب تغيير كلمة المرور المؤقتة قبل المتابعة.</p>
                     <form onsubmit="return false" autocomplete="off">
                         <div class="form-group">
                             <label>كلمة المرور الحالية</label>
@@ -2765,7 +2844,8 @@
                         <div id="changePasswordError" style="color:var(--danger, #e74c3c); font-size:13px; display:none; margin-top:-8px; margin-bottom:8px;"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="submitChangePassword()" style="width:100%">
+                    <button type="button" class="btn btn-outline" id="changePasswordCancel" onclick="NoorAccountMenu.closePasswordModal()" style="display:none">إلغاء</button>
+                    <button type="button" class="btn btn-primary" onclick="submitChangePassword()" id="changePasswordSubmit" style="flex:1">
                         حفظ
                         ومتابعة
                     </button>
@@ -2854,7 +2934,7 @@
                         </div>
                         <div class="form-row" style="display:flex;gap:12px">
                             <div class="form-group" style="flex:1">
-                                <label>هاتف الطالب (اختياري)</label><input class="form-control"
+                                <label>هاتف الطالب</label><input class="form-control"
                                                                    id="wlPhone" type="tel" placeholder="09xxxxxxxx">
                             </div>
                             <div class="form-group" style="flex:1">
@@ -2884,7 +2964,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>الحلقة المفضلة / المطلوبة <small style="color:var(--text-muted);font-weight:400">(اختياري)</small></label>
+                            <label>الحلقة المفضلة / المطلوبة</label>
                             <select class="form-control" id="wlPreferredCircle">
                                 <option value="">— بدون تفضيل —</option>
                             </select>
@@ -2967,7 +3047,7 @@
         <script src="/js/app.js"></script>
         <script src="/js/utils.js"></script>
         <script>if (typeof syncNoorUtils === 'function') syncNoorUtils();</script>
-        <script src="/js/api.js?v=2"></script>
+        <script src="/js/api.js?v=3"></script>
         <script src="/js/ui.js?v=11"></script>
         <script>
             // شبكة أمان: إن وُجدت الدالة على NoorApp فقط انقلها لـ window (لحماية onclick)
@@ -2978,24 +3058,26 @@
             }
         </script>
         <script src="/js/modals.js?v=4"></script>
-        <script src="/js/auth.js?v=7"></script>
-        <script src="/js/dashboard.js?v=4"></script>
-        <script src="/js/students.js?v=4"></script>
-        <script src="/js/attendance.js?v=4"></script>
-        <script src="/js/quran-text.js"></script>
-        <script src="/js/hifz.js?v=2"></script>
+        <script src="/js/auth.js?v=9"></script>
+        <script src="/js/dashboard.js?v=7"></script>
+        <script src="/js/students.js?v=5"></script>
+        <script src="/js/attendance.js?v=5"></script>
+        <script src="/js/quran-text.js?v=2"></script>
+        <script src="/js/mushaf-viewer.js?v=1"></script>
+        <script src="/js/hifz.js?v=6"></script>
         <script src="/js/parents.js?v=2"></script>
-        <script src="/js/users.js?v=4"></script>
-        <script src="/js/messages.js"></script>
+        <script src="/js/users.js?v=5"></script>
+        <script src="/js/messages.js?v=2"></script>
 
         <!-- All inline scripts have been extracted into modular JS files -->
-        <script src="/js/pedagogical.js?v=2"></script>
-        <script src="/js/teachers.js?v=3"></script>
+        <script src="/js/pedagogical.js?v=4"></script>
+        <script src="/js/teachers.js?v=4"></script>
         <script src="/js/reports.js?v=3"></script>
-        <script src="/js/app-ui-extensions.js?v=5"></script>
+        <script src="/js/app-ui-extensions.js?v=6"></script>
         <script src="/js/payments.js?v=3"></script>
         <script src="/js/monthly-rating.js?v=1"></script>
-        <script src="/js/page-controller.js?v=4"></script>
+        <script src="/js/page-controller.js?v=7"></script>
+        <script src="/js/account-menu.js?v=3"></script>
         <script src="/js/list-tools.js?v=1"></script>
         <script src="/js/reminders.js?v=1"></script>
         <script src="/js/smart-features.js?v=1"></script>
@@ -3319,7 +3401,7 @@
                         <input type="date" id="expDate" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">ملاحظات (اختياري)</label>
+                        <label class="form-label">ملاحظات</label>
                         <textarea id="expNotes" class="form-input" rows="3"></textarea>
                     </div>
                     <div class="modal-footer" style="padding: 16px 0 0; border: none;">

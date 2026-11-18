@@ -45,8 +45,7 @@ public class UsersController : ControllerBase
             var term = search.Trim();
             query = query.Where(u =>
                 u.FullName.Contains(term) ||
-                (u.UserName != null && u.UserName.Contains(term)) ||
-                (u.Email != null && u.Email.Contains(term)));
+                (u.UserName != null && u.UserName.Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<UserRole>(role, true, out var roleFilter))
@@ -62,7 +61,6 @@ public class UsersController : ControllerBase
                 u.Id,
                 u.FullName,
                 phone = AccountProvisioningService.ToDisplayPhone(u.UserName ?? ""),
-                u.Email,
                 role = u.Role.ToString(),
                 u.IsSuperAdmin,
                 adminPermissions = u.Role == UserRole.Admin ? AdminAccess.ToNames(u.IsSuperAdmin, u.AdminPermissions) : Array.Empty<string>(),
@@ -88,7 +86,6 @@ public class UsersController : ControllerBase
             user.Id,
             user.FullName,
             phone = AccountProvisioningService.ToDisplayPhone(user.UserName ?? ""),
-            user.Email,
             role = user.Role.ToString(),
             user.IsSuperAdmin,
             adminPermissions = user.Role == UserRole.Admin ? AdminAccess.ToNames(user.IsSuperAdmin, user.AdminPermissions) : Array.Empty<string>(),
@@ -132,8 +129,6 @@ public class UsersController : ControllerBase
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Email))
-            user.Email = request.Email.Trim();
 
         // ─── إصلاح حرج: حماية صارمة عند تغيير الدور ───
         if (!string.IsNullOrWhiteSpace(request.Role) && Enum.TryParse<UserRole>(request.Role, true, out var newRole)
@@ -433,7 +428,6 @@ public class UpdateUserRequest
 {
     public string? FullName { get; set; }
     public string? Phone { get; set; }
-    public string? Email { get; set; }
     public string? Role { get; set; }
     public bool? IsActive { get; set; }
     public bool? MustChangePassword { get; set; }

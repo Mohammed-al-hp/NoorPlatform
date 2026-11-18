@@ -41,6 +41,7 @@ abstract class PortalRemoteDataSource {
   Future<List<SentMessageModel>> getSentMessages();
   Future<List<MessageRecipientModel>> getMessageRecipients();
   Future<void> sendMessage(SendMessageRequest request);
+  Future<void> replyToThread(int threadId, String content);
   Future<List<PaymentModel>> getParentPayments();
   Future<List<LibraryItemModel>> getLibrary({String? search, String? category});
   Future<String> downloadLibraryFile(int id, String title);
@@ -215,7 +216,7 @@ class PortalRemoteDataSourceImpl implements PortalRemoteDataSource {
 
   @override
   Future<List<SentMessageModel>> getSentMessages() => _guard(() async {
-        final res = await apiClient.get(ApiConfig.messagesSent);
+        final res = await apiClient.get(ApiConfig.messagesThreads);
         ApiResponseHelper.ensureSuccess(res, fallback: 'فشل تحميل الرسائل');
         return ApiResponseHelper.asMapList(res.data)
             .map(SentMessageModel.fromJson)
@@ -243,6 +244,15 @@ class PortalRemoteDataSourceImpl implements PortalRemoteDataSource {
         );
         ApiResponseHelper.ensureSuccess(res, fallback: 'فشل إرسال الرسالة');
       }, 'فشل إرسال الرسالة');
+
+  @override
+  Future<void> replyToThread(int threadId, String content) => _guard(() async {
+        final res = await apiClient.post(
+          ApiConfig.messageParentReply(threadId),
+          data: {'content': content},
+        );
+        ApiResponseHelper.ensureSuccess(res, fallback: 'فشل إرسال الرد');
+      }, 'فشل إرسال الرد');
 
   @override
   Future<List<PaymentModel>> getParentPayments() => _guard(() async {

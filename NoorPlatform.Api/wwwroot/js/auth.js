@@ -313,7 +313,8 @@
         const loginErrorBox = document.getElementById('loginError');
         if (loginErrorBox) { loginErrorBox.style.display = 'none'; loginErrorBox.textContent = ''; }
         const isValid = ui().validateForm([
-            { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الهاتف', pattern: /^(st\d{6}|[0-9٠-٩+\s]{9,15})$/i, patternMsg: 'أدخل رقم الهاتف أو اسم الدخول (مثل st123456)' },
+            // رقم هاتف ليبي من 10 أرقام (09XXXXXXXX) لكل المستخدمين، أو اسم المستخدم stXXXXXX للطالب الذي لا يملك هاتفاً
+            { id: 'loginPhone', required: true, requiredMsg: 'يرجى إدخال رقم الهاتف أو اسم المستخدم', pattern: /^\s*(st\d{6}|[0٠][9٩][0-9٠-٩]{8}|(\+|00)?218[9٩][0-9٠-٩]{8})\s*$/i, patternMsg: 'أدخل رقم هاتف ليبي من 10 أرقام يبدأ بـ 09، أو اسم المستخدم للطالب (مثل st123456)' },
             { id: 'loginPassword', required: true, requiredMsg: 'يرجى إدخال كلمة المرور', minLength: 6, minLengthMsg: 'كلمة المرور 6 أحرف على الأقل' }
         ]);
         if (!isValid) return;
@@ -356,6 +357,7 @@
             if (ls) ls.style.display = 'none';
 
             if (data.mustChangePassword) {
+                global.NoorAccountMenu?.resetPasswordModal?.();
                 ui().openModal('changePasswordModal');
                 ui().showToast('يرجى تغيير كلمة المرور المؤقتة', 'warning');
             } else {
@@ -400,6 +402,7 @@
             const cpRes = await apiFetch('/auth/change-password', 'POST', { currentPassword: current, newPassword: newPass });
             if (cpRes?.token) app().saveSession(cpRes.token, app().state.user);
             ui().closeModal('changePasswordModal');
+            global.NoorAccountMenu?.resetPasswordModal?.();
             ui().showToast('تم تغيير كلمة المرور', 'success');
             checkAuth();
         } catch (e) {

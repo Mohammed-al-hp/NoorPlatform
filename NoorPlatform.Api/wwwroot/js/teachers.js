@@ -122,7 +122,6 @@
                 </div>
                 <p><strong>تاريخ الميلاد:</strong> ${birthStr}</p>
                 <p style="margin-top:8px"><strong>رقم الهاتف:</strong> <span dir="ltr">${esc(t.phone || '—')}</span></p>
-                <p style="margin-top:8px"><strong>البريد الإلكتروني:</strong> ${esc(t.email || '—')}</p>
                 <h4 style="margin-top:16px;margin-bottom:8px">الحلقات</h4>
                 <ul style="padding-right:20px;line-height:2">${circlesHtml}</ul>
             `, (window.Icon ? window.Icon('clipboard-list', {size:16}) : '') + ' ملف المحفظ');

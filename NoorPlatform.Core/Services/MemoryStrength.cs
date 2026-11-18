@@ -37,8 +37,9 @@ public static class MemoryStrength
         if (e.Contains("ممتاز")) return 5;
         if (e.StartsWith("جيد جد") || e.StartsWith("جيد جـ")) return 4;
         if (e.StartsWith("جيد")) return 3;
-        if (e.Contains("مقبول") || e.Contains("يحتاج")) return 2;
+        // «ضعيف ويحتاج مراجعة» جلسة راسبة: يُفحص قبل «يحتاج» حتى لا يُعامل كـ«مقبول»
         if (e.Contains("ضعيف") || e.Contains("إعادة") || e.Contains("اعادة") || e.Contains("راسب")) return 1;
+        if (e.Contains("مقبول") || e.Contains("يحتاج")) return 2;
         return 3;
     }
 

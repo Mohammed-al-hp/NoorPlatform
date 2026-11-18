@@ -68,7 +68,7 @@
                 </div>
               </div>
               <div class="student-card-stats">
-                <div class="mini-stat"><label>الحفظ</label><p>${s.progress}%</p></div>
+                <div class="mini-stat" title="نسبة ما أتمّه من القرآن بالترتيب من سورة الناس حتى موضعه الحالي في الحفظ الجديد"><label>المحفوظ</label><p>${s.progress}%</p></div>
                 <div class="mini-stat"><label>الحضور</label><p>${s.attendance}%</p></div>
               </div>
               <div class="progress-wrap" style="margin-bottom:14px">

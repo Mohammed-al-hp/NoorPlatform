@@ -168,12 +168,14 @@ class _HifzSessionCard extends StatelessWidget {
   final HifzRecordModel record;
   const _HifzSessionCard({required this.record});
 
+  /// «ضعيف ويحتاج مراجعة» جلسة راسبة (أحمر)، «مقبول» تنبيه (برتقالي).
   Color _evalColor(String e) {
+    if (e.isEmpty) return NoorTheme.textSecondary;
+    if (e.contains('ضعيف') || e.contains('يحتاج')) return NoorTheme.error;
     if (e.contains('ممتاز')) return NoorTheme.success;
     if (e.contains('جيد')) return NoorTheme.primaryGreenLight;
-    if (e.contains('ضعيف')) return NoorTheme.warning;
-    if (e.isEmpty) return NoorTheme.textSecondary;
-    return NoorTheme.error;
+    if (e.contains('مقبول')) return NoorTheme.warning;
+    return NoorTheme.textSecondary;
   }
 
   @override

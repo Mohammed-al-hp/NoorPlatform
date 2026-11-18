@@ -19,4 +19,6 @@ public class MatnRecord
     public string Evaluation { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public int RecordedByUserId { get; set; }
+    /// <summary>النقاط الممنوحة فعلياً لهذا السجل — تُسحب عند الحذف.</summary>
+    public int PointsAwarded { get; set; }
 }

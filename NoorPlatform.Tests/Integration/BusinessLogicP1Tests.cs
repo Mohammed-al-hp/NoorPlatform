@@ -239,4 +239,102 @@ public class BusinessLogicP1Tests : IClassFixture<WebApplicationFactory<Program>
         msg.GetProperty("replies").EnumerateArray().Select(r => r.GetProperty("content").GetString())
             .Should().Contain("الحلقة بعد الفجر يومياً");
     }
+
+    // ─── المشرف يبدأ رسالة لولي أمر، وولي الأمر يرد داخل المحادثة ───
+    [Fact]
+    public async Task Staff_StartsThreadWithParent_ParentRepliesInThread()
+    {
+        var admin = await AdminAsync();
+        var parentUserId = await Db(db => db.Users.Where(u => u.UserName == "218921234567").Select(u => u.Id).FirstAsync());
+
+        var recipients = await admin.GetFromJsonAsync<JsonElement>("/api/messages/parent-recipients");
+        recipients.EnumerateArray().Select(p => p.GetProperty("userId").GetInt32()).Should().Contain(parentUserId);
+
+        var start = await admin.PostAsJsonAsync("/api/messages/to-parent", new { parentUserId, content = "تذكير باجتماع أولياء الأمور" });
+        start.StatusCode.Should().Be(HttpStatusCode.OK);
+        var rootId = (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("messageId").GetInt32();
+
+        var parent = await ParentAsync();
+        var threads = await parent.GetFromJsonAsync<JsonElement>("/api/messages/threads");
+        threads.EnumerateArray().Should().Contain(t => t.GetProperty("id").GetInt32() == rootId && t.GetProperty("direction").GetString() == "in");
+
+        (await parent.PostAsJsonAsync($"/api/messages/{rootId}/parent-reply", new { content = "سأحضر إن شاء الله" }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // الرد يظهر في صندوق الإدارة داخل المحادثة نفسها كرسالة غير مقروءة
+        var inbox = await admin.GetFromJsonAsync<JsonElement>("/api/messages/inbox");
+        var thread = inbox.EnumerateArray().First(t => t.GetProperty("id").GetInt32() == rootId);
+        thread.GetProperty("isRead").GetBoolean().Should().BeFalse();
+        thread.GetProperty("replies").EnumerateArray().Select(r => r.GetProperty("content").GetString())
+            .Should().Contain("سأحضر إن شاء الله");
+
+        // ولي أمر آخر لا يستطيع الرد على محادثة لا تخصه، والمحفّظ لا يرد على محادثة الإدارة
+        (await (await TeacherAsync()).PostAsJsonAsync($"/api/messages/{rootId}/reply", new { content = "x" }))
+            .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    // ─── المتن: الجزء نفسه لا يُحتسب مرتين (نافذة التسميع + صفحة التقييم التربوي) ───
+    [Fact]
+    public async Task Matn_SamePortionMemorizedTwice_IsRejected_AndPointsCountedOnce()
+    {
+        var studentId = await SeedStudentIdAsync();
+        var teacher = await TeacherAsync();
+        var before = await PointsAsync(studentId);
+        var body = new { studentId, matnName = "تحفة الأطفال", portion = "الأبيات 1-10", type = "Memorization", evaluation = "ممتاز" };
+
+        (await teacher.PostAsJsonAsync("/api/pedagogical/matn", body)).StatusCode.Should().Be(HttpStatusCode.OK);
+        var afterFirst = await PointsAsync(studentId);
+        afterFirst.Should().Be(before + 20);
+
+        // نفس الجزء بصيغة مختلفة قليلاً (تشكيل/مسافات) في يوم آخر
+        var dup = await teacher.PostAsJsonAsync("/api/pedagogical/matn",
+            new { studentId, matnName = "تُحفة الأطفال ", portion = "الأبيات  1-10", type = "Memorization", evaluation = "جيد", date = DateTime.UtcNow.Date.AddDays(-3) });
+        dup.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await PointsAsync(studentId)).Should().Be(afterFirst, "الجزء المكرر لا يمنح نقاطاً");
+
+        // جزء جديد يُقبل
+        (await teacher.PostAsJsonAsync("/api/pedagogical/matn",
+            new { studentId, matnName = "تحفة الأطفال", portion = "الأبيات 11-20", type = "Memorization", evaluation = "ضعيف ويحتاج مراجعة" }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        (await PointsAsync(studentId)).Should().Be(afterFirst, "الجلسة الراسبة لا تمنح نقاطاً");
+    }
+
+    // ─── الدخول: رقم ليبي من 10 أرقام أو اسم مستخدم الطالب فقط ───
+    [Theory]
+    [InlineData("966912345678")]      // بادئة دولة أخرى
+    [InlineData("091234567")]         // 9 أرقام
+    [InlineData("admin@noor.local")]  // بريد إلكتروني
+    public async Task Login_RejectsNonLibyanPhoneAndEmail(string login)
+    {
+        var client = _factory.CreateClient();
+        var res = await client.PostAsJsonAsync("/api/auth/login", new { Phone = login, Password = "Admin123!" });
+        res.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Login_AcceptsLocalAndInternationalLibyanFormats()
+    {
+        var client = _factory.CreateClient();
+        (await client.PostAsJsonAsync("/api/auth/login", new { Phone = "0912345678", Password = "Admin123!" }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        (await client.PostAsJsonAsync("/api/auth/login", new { Phone = "+218912345678", Password = "Admin123!" }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    // ─── المتصدرون: المحفّظ يرى طلابه افتراضياً ويمكنه عرض المركز، والإدارة ترى المركز ───
+    [Fact]
+    public async Task Leaderboard_TeacherDefaultsToOwnStudents_CanSwitchToCenter()
+    {
+        var teacher = await TeacherAsync();
+        var mine = await teacher.GetFromJsonAsync<JsonElement>("/api/dashboard/leaderboard");
+        mine.EnumerateArray().Should().OnlyContain(s => s.GetProperty("isMine").GetBoolean());
+
+        var center = await teacher.GetAsync("/api/dashboard/leaderboard?scope=center");
+        center.StatusCode.Should().Be(HttpStatusCode.OK);
+        var centerItems = (await center.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().ToList();
+        centerItems.Count.Should().BeGreaterThanOrEqualTo(mine.GetArrayLength());
+
+        var admin = await (await AdminAsync()).GetFromJsonAsync<JsonElement>("/api/dashboard/leaderboard?scope=mine");
+        admin.GetArrayLength().Should().Be(centerItems.Count, "الإدارة ترى المركز كاملاً دائماً");
+    }
 }

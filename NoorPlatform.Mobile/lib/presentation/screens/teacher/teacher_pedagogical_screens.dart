@@ -103,7 +103,7 @@ class _MatnTabState extends State<_MatnTab> {
     }
     String matn = matns.first.name;
     String type = 'Memorization';
-    String evaluation = kEvaluationOptions.first;
+    String evaluation = kMemorizationGrades.first;
     final portion = TextEditingController();
     final notes = TextEditingController();
     final ok = await showDialog<bool>(
@@ -128,12 +128,16 @@ class _MatnTabState extends State<_MatnTab> {
                   DropdownMenuItem(value: 'Memorization', child: Text('حفظ')),
                   DropdownMenuItem(value: 'Revision', child: Text('مراجعة')),
                 ],
-                onChanged: (v) => type = v ?? type,
+                onChanged: (v) => setD(() {
+                  type = v ?? type;
+                  evaluation = gradeForList(evaluation, revision: type == 'Revision');
+                }),
               ),
               DropdownButtonFormField<String>(
+                key: ValueKey('matn-grade-$type'),
                 initialValue: evaluation,
-                decoration: const InputDecoration(labelText: 'التقييم'),
-                items: kEvaluationOptions.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                decoration: const InputDecoration(labelText: 'التقدير'),
+                items: gradesFor(revision: type == 'Revision').map(gradeMenuItem).toList(),
                 onChanged: (v) => evaluation = v ?? evaluation,
               ),
               TextField(controller: notes, decoration: const InputDecoration(labelText: 'ملاحظات')),
@@ -151,7 +155,7 @@ class _MatnTabState extends State<_MatnTab> {
         context,
         () => teacherRepo.addMatnRecord({
               'studentId': widget.studentId,
-              'date': DateTime.now().toUtc().toIso8601String(),
+              'date': libyaNowIso(),
               'matnName': matn,
               'portion': portion.text.trim(),
               'type': type,

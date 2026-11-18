@@ -20,14 +20,8 @@ public static class PedagogicalGrading
         return Math.Clamp(score, 0, 100);
     }
 
-    public static string ImpressionFromPercent(double percent) => percent switch
-    {
-        >= 90 => "ممتاز",
-        >= 80 => "جيد جداً",
-        >= 70 => "جيد",
-        >= 50 => "مقبول",
-        _ => "ضعيف"
-    };
+    /// <summary>التقدير من النسبة وفق سلّم المراجعة المعتمد (انظر <see cref="GradeScale"/>).</summary>
+    public static string ImpressionFromPercent(double percent) => GradeScale.FromPercent(percent, RecordType.Revision);
 
     public static (double OverallPercent, string Grade, bool IsMemorized, int TotalOpenings, string FailReason) AggregateSession(
         IEnumerable<(int Hesitation, int Alerts, int Openings, double? ManualScore)> questions,
@@ -39,7 +33,7 @@ public static class PedagogicalGrading
     {
         var list = questions.ToList();
         if (list.Count == 0)
-            return (0, "ضعيف", false, 0, "لا توجد أسئلة");
+            return (0, GradeScale.Weak, false, 0, "لا توجد أسئلة");
 
         var scored = list.Select(q =>
         {
@@ -57,7 +51,7 @@ public static class PedagogicalGrading
         var cancelledCount = scored.Count(s => s.cancelled);
         var counted = scored.Where(s => !s.cancelled).ToList();
         if (counted.Count == 0)
-            return (0, "ضعيف", false, totalOpenings, "أُلغيت جميع الأسئلة بسبب تجاوز الفتحات المسموحة");
+            return (0, GradeScale.Weak, false, totalOpenings, "أُلغيت جميع الأسئلة بسبب تجاوز الفتحات المسموحة");
         var overall = Math.Round(counted.Average(s => s.pct), 1);
 
         string failReason = "";

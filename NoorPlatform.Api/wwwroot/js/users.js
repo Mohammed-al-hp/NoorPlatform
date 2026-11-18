@@ -108,7 +108,6 @@
                 <p><strong>الاسم:</strong> ${U().escapeHtml(u.fullName)}</p>
                 <p><strong>الدور:</strong> ${roleAr(u.role)}</p>
                 <p><strong>الهاتف:</strong> <span dir="ltr">${U().escapeHtml(u.phone)}</span></p>
-                <p><strong>البريد:</strong> ${U().escapeHtml(u.email || '—')}</p>
                 <p><strong>آخر دخول:</strong> ${u.lastLoginAt ? U().formatDateTimeEnGb(u.lastLoginAt) : '—'}</p>
                 <p><strong>الحالة:</strong> ${u.isActive ? 'نشط' : 'معطّل'}</p>
                 <p><strong>تغيير كلمة المرور:</strong> ${u.mustChangePassword ? 'مطلوب' : 'لا'}</p>

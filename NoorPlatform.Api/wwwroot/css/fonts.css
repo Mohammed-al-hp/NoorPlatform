@@ -5,3 +5,5 @@
 @font-face { font-family: 'Tajawal'; src: url('/fonts/Tajawal-ExtraBold.ttf') format('truetype'); font-weight: 800 900; font-display: swap; }
 @font-face { font-family: 'Amiri'; src: url('/fonts/Amiri-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Amiri'; src: url('/fonts/Amiri-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+/* خط مصحف المدينة برواية قالون (مجمع الملك فهد) — لازم لعرض علامات الضبط الخاصة بنص قالون */
+@font-face { font-family: 'UthmanicQaloun'; src: url('/fonts/UthmanicQaloun.woff2') format('woff2'); font-weight: 400; font-display: swap; }

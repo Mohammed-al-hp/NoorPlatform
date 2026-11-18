@@ -57,12 +57,46 @@ public class PlatformSettings
     /// <summary>هل يظهر تقييم الفترة للطالب وولي الأمر؟</summary>
     public bool EvaluationsVisibleToStudentsAndParents { get; set; } = true;
 
-    /// <summary>نقاط تُضاف للطالب عند تسجيل حضور (حاضر).</summary>
+    // ─── نقاط الحضور (قد تكون سالبة للغياب؛ رصيد الطالب لا ينزل عن صفر) ───
+    /// <summary>نقاط الحضور (حاضر).</summary>
     public int PointsAttendancePresent { get; set; } = 10;
-    /// <summary>نقاط تُضاف عند تسجيل حفظ جديد.</summary>
+    /// <summary>نقاط الحضور المتأخر.</summary>
+    public int PointsAttendanceLate { get; set; } = 5;
+    /// <summary>نقاط الغياب بإذن.</summary>
+    public int PointsAttendanceExcused { get; set; }
+    /// <summary>نقاط الغياب دون إذن.</summary>
+    public int PointsAttendanceUnexcused { get; set; }
+
+    // ─── نقاط الحفظ الجديد حسب التقدير («ضعيف ويحتاج مراجعة» = صفر دائماً) ───
+    /// <summary>حفظ جديد — ممتاز.</summary>
     public int PointsHifzMemorization { get; set; } = 50;
-    /// <summary>نقاط تُضاف عند تسجيل مراجعة.</summary>
+    /// <summary>حفظ جديد — جيد جداً.</summary>
+    public int PointsHifzMemVeryGood { get; set; } = 40;
+    /// <summary>حفظ جديد — جيد.</summary>
+    public int PointsHifzMemGood { get; set; } = 30;
+
+    // ─── نقاط المراجعة حسب التقدير ───
+    /// <summary>مراجعة — ممتاز.</summary>
     public int PointsHifzRevision { get; set; } = 20;
+    /// <summary>مراجعة — جيد جداً.</summary>
+    public int PointsHifzRevVeryGood { get; set; } = 15;
+    /// <summary>مراجعة — جيد.</summary>
+    public int PointsHifzRevGood { get; set; } = 10;
+    /// <summary>مراجعة — مقبول.</summary>
+    public int PointsHifzRevAcceptable { get; set; } = 5;
+
+    /// <summary>نقاط حفظ جزء جديد من متن (جلسة ناجحة) — عند تفعيل المتون.</summary>
+    public int PointsMatnMemorization { get; set; } = 20;
+
+    // ─── عناصر التقييم الاختيارية (يختار المركز ما يعتمده في التقييم والنقاط) ───
+    /// <summary>المتون: تسجيلها، نقاطها، ودخولها في تقييم الفترة.</summary>
+    public bool EnableMatn { get; set; } = true;
+    /// <summary>متابعة اللباس ودخوله في تقييم الفترة.</summary>
+    public bool EnableDress { get; set; } = true;
+    /// <summary>سجل الصلاة للطلاب ومؤشره الاسترشادي.</summary>
+    public bool EnablePrayer { get; set; } = true;
+    /// <summary>متابعة ولي الأمر في البيت ومؤشرها الاسترشادي.</summary>
+    public bool EnableParentHome { get; set; } = true;
 
     // ─── التقييم الشهري بحسب جلسات الحفظ الجديد الناجحة (هدف 10/10 حسب العمر) ───
     /// <summary>عدد جلسات الحفظ الجديد الناجحة المطلوبة شهرياً لعمر 5–7 سنوات (وأقل من 5 أو عمر غير معروف).</summary>
@@ -71,8 +105,8 @@ public class PlatformSettings
     public int HifzRatingTargetAge8To10 { get; set; } = 6;
     /// <summary>الهدف الشهري لعمر 11 سنة فأكثر.</summary>
     public int HifzRatingTargetAge11Plus { get; set; } = 8;
-    /// <summary>قيم التقييم (Evaluation) التي تُعدّ الجلسة بها ناجحة — مفصولة بفواصل.</summary>
-    public string HifzRatingPassingEvaluations { get; set; } = "ممتاز,جيد جداً,جيد,ضعيف";
+    /// <summary>مهمل: الجلسة الناجحة تُحدَّد الآن بسلّم التقديرات الموحّد (GradeScale). يُحذف ضمن خطة تحسين قاعدة البيانات.</summary>
+    public string HifzRatingPassingEvaluations { get; set; } = "ممتاز,جيد جداً,جيد,مقبول";
 
     // ─── قناة إرسال رمز التحقق (OTP) ───
     /// <summary>القناة المفعّلة: WhatsApp أو Sms أو Both (يختار المستخدم عند الطلب).</summary>

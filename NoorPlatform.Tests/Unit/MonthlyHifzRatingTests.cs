@@ -95,20 +95,21 @@ public class MonthlyHifzRatingTests
             Mem(d, "ممتاز"),
             Mem(d, "جيد جدًا"),   // تنوين على الألف — نفس "جيد جداً"
             Mem(d, "جيد"),
-            Mem(d, "ضعيف"),        // يُحتسب ناجحاً حسب القرار المعتمد
+            Mem(d, "ضعيف ويحتاج مراجعة"), // جلسة راسبة حسب سلّم التقديرات المعتمد
+            Mem(d, "ضعيف"),        // الصيغة القديمة — راسبة أيضاً
             Mem(d, "يحتاج مراجعة"),
             Mem(d, ""),
             new HifzRecord { Date = d, Type = RecordType.Revision, Evaluation = "ممتاز" }
         };
-        // الافتراضي المعتمد: ممتاز، جيد جداً، جيد، ضعيف — "يحتاج مراجعة" والفارغ لا يُحتسبان
+        // الناجح: ممتاز، جيد جداً، جيد — «ضعيف ويحتاج مراجعة» والفارغ لا يُحتسبان
         var r = MonthlyHifzRating.Calculate(records, DobForAge(12), 2026, 11, Cfg);
-        r.SuccessfulSessions.Should().Be(4);
-        r.TotalMemorizationSessions.Should().Be(6);
-        r.Score.Should().Be(5.0); // 4/8×10
+        r.SuccessfulSessions.Should().Be(3);
+        r.TotalMemorizationSessions.Should().Be(7);
+        r.Score.Should().Be(3.8); // 3/8×10 = 3.75
     }
 
     [Fact]
-    public void Config_FromSettings_UsesCustomTargetsAndPassingList()
+    public void Config_FromSettings_UsesCustomTargets_AndUnifiedGradeScale()
     {
         var cfg = MonthlyHifzRatingConfig.From(new PlatformSettings
         {
@@ -120,8 +121,9 @@ public class MonthlyHifzRatingTests
         var records = new[] { Mem(new DateTime(2026, 11, 2)), Mem(new DateTime(2026, 11, 3), "جيد") };
         var r = MonthlyHifzRating.Calculate(records, DobForAge(6), 2026, 11, cfg);
         r.Target.Should().Be(2);
-        r.SuccessfulSessions.Should().Be(1);
-        r.Score.Should().Be(5.0);
+        // قائمة النجاح المخزنة مهملة: «جيد» ناجح دائماً وفق السلّم الموحّد
+        r.SuccessfulSessions.Should().Be(2);
+        r.Score.Should().Be(10.0);
     }
 
     [Fact]

@@ -186,7 +186,7 @@
                 <td id="att-status-${sid}">${statusBadgeHtml(st)}</td>
                 <td>${actionButtonsHtml(sid, st === 'NotRecorded' ? '' : st)}</td>
                 <td style="padding:12px 16px;">
-                    <input type="text" class="form-control" data-note-id="${sid}" value="${utils().escapeHtml(r.note || '')}" placeholder="ملاحظة (اختياري)..." style="font-size:12px; padding:6px 10px; width: 100%; min-width: 120px;" onchange="NoorAttendance.stageNote(${sid}, this.value)">
+                    <input type="text" class="form-control" data-note-id="${sid}" value="${utils().escapeHtml(r.note || '')}" placeholder="ملاحظة..." style="font-size:12px; padding:6px 10px; width: 100%; min-width: 120px;" onchange="NoorAttendance.stageNote(${sid}, this.value)">
                 </td>
             </tr>`;
         }).join('')}

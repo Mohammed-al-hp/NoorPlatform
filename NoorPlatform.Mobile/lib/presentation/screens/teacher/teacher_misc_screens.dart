@@ -11,59 +11,263 @@ import '../../../domain/repositories/portal_repository.dart';
 import '../../widgets/async_body.dart';
 import 'teacher_ui.dart';
 
-/// صندوق رسائل المحفّظ (من أولياء الأمور) مع تعليم المقروء.
-class TeacherInboxScreen extends StatelessWidget {
+/// رسائل المحفّظ: محادثات مع أولياء الأمور (واردة أو بدأها المحفّظ)، مع الرد وبدء رسالة جديدة.
+class TeacherInboxScreen extends StatefulWidget {
   const TeacherInboxScreen({super.key});
+
+  @override
+  State<TeacherInboxScreen> createState() => _TeacherInboxScreenState();
+}
+
+class _TeacherInboxScreenState extends State<TeacherInboxScreen> {
+  int _reloadKey = 0;
+
+  void _refresh() => setState(() => _reloadKey++);
+
+  Future<void> _compose() async {
+    final recipients = await teacherRepo.getParentRecipients();
+    if (!mounted) return;
+    final parents = recipients.fold((f) {
+      showSnack(context, f.message, error: true);
+      return <ParentContactModel>[];
+    }, (v) => v);
+    if (parents.isEmpty) {
+      showSnack(context, 'لا يوجد أولياء أمور مرتبطون بطلابك');
+      return;
+    }
+    int? selected;
+    final ctrl = TextEditingController();
+    final sent = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModal) => Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('رسالة إلى ولي أمر', style: Theme.of(ctx).textTheme.titleLarge),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int>(
+                initialValue: selected,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'ولي الأمر'),
+                items: parents
+                    .map((p) => DropdownMenuItem(
+                          value: p.userId,
+                          child: Text(p.label, overflow: TextOverflow.ellipsis),
+                        ))
+                    .toList(),
+                onChanged: (v) => setModal(() => selected = v),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: ctrl,
+                maxLines: 4,
+                maxLength: 2000,
+                decoration: const InputDecoration(labelText: 'نص الرسالة'),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  if (selected == null || ctrl.text.trim().isEmpty) {
+                    showSnack(ctx, 'اختر ولي الأمر واكتب نص الرسالة', error: true);
+                    return;
+                  }
+                  final res = await teacherRepo.sendToParent(selected!, ctrl.text.trim());
+                  if (!ctx.mounted) return;
+                  res.fold(
+                    (f) => showSnack(ctx, f.message, error: true),
+                    (_) => Navigator.pop(ctx, true),
+                  );
+                },
+                icon: const Icon(Icons.send_rounded),
+                label: const Text('إرسال'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    ctrl.dispose();
+    if (sent == true && mounted) {
+      showSnack(context, 'تم إرسال الرسالة');
+      _refresh();
+    }
+  }
+
+  Future<void> _openThread(InboxMessageModel m) async {
+    if (!m.isRead) await teacherRepo.markMessageRead(m.id);
+    if (!mounted) return;
+    final ctrl = TextEditingController();
+    final replied = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                m.isOutgoing ? 'إلى: ${m.counterpartName}' : 'من: ${m.counterpartName}',
+                style: Theme.of(ctx).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    _ThreadBubble(
+                      author: m.isOutgoing ? m.senderName : m.counterpartName,
+                      content: m.content,
+                      createdAt: m.createdAt,
+                      fromParent: !m.isOutgoing,
+                    ),
+                    for (final r in m.replies)
+                      _ThreadBubble(
+                        author: r.senderName,
+                        content: r.content,
+                        createdAt: r.createdAt,
+                        fromParent: r.fromParent,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: ctrl,
+                maxLines: 3,
+                maxLength: 2000,
+                decoration: const InputDecoration(labelText: 'اكتب ردك لولي الأمر'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final text = ctrl.text.trim();
+                  if (text.isEmpty) return;
+                  final res = await teacherRepo.replyToMessage(m.id, text);
+                  if (!ctx.mounted) return;
+                  res.fold(
+                    (f) => showSnack(ctx, f.message, error: true),
+                    (_) => Navigator.pop(ctx, true),
+                  );
+                },
+                icon: const Icon(Icons.reply_rounded),
+                label: const Text('إرسال الرد'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    ctrl.dispose();
+    if (!mounted) return;
+    if (replied == true) showSnack(context, 'تم إرسال الرد');
+    _refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الرسائل الواردة')),
+      appBar: AppBar(title: const Text('الرسائل')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _compose,
+        icon: const Icon(Icons.edit_rounded),
+        label: const Text('رسالة جديدة'),
+      ),
       body: LoadView<List<InboxMessageModel>>(
+        key: ValueKey(_reloadKey),
         loader: teacherRepo.getInbox,
         isEmpty: (l) => l.isEmpty,
         emptyTitle: 'لا توجد رسائل',
         emptyIcon: Icons.mail_outline,
         builder: (context, list, reload) => ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 88),
           itemCount: list.length,
           itemBuilder: (context, i) {
             final m = list[i];
+            final last = m.replies.isNotEmpty ? m.replies.last.content : m.content;
             return ListTile(
-              leading: Icon(m.isRead ? Icons.drafts_outlined : Icons.mark_email_unread,
-                  color: m.isRead ? NoorTheme.textSecondary : NoorTheme.primaryGreen),
-              title: Text(m.senderName,
-                  style: TextStyle(fontWeight: m.isRead ? FontWeight.normal : FontWeight.w700)),
-              subtitle: Text(m.content, maxLines: 2, overflow: TextOverflow.ellipsis),
-              trailing: Text(Formatters.displayDate(m.createdAt), style: const TextStyle(fontSize: 11)),
-              onTap: () async {
-                await showDialog<void>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Text(m.senderName),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SelectableText(m.content),
-                          const SizedBox(height: 8),
-                          Text(Formatters.displayDateTime(m.createdAt),
-                              style: Theme.of(ctx).textTheme.bodySmall),
-                        ],
-                      ),
-                    ),
-                    actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إغلاق'))],
-                  ),
-                );
-                if (!m.isRead) {
-                  await teacherRepo.markMessageRead(m.id);
-                  reload();
-                }
-              },
+              leading: Icon(
+                m.isRead
+                    ? (m.isOutgoing ? Icons.outbox_outlined : Icons.drafts_outlined)
+                    : Icons.mark_email_unread,
+                color: m.isRead ? NoorTheme.textSecondary : NoorTheme.primaryGreen,
+              ),
+              title: Text(
+                m.isOutgoing ? 'إلى: ${m.counterpartName}' : m.counterpartName,
+                style: TextStyle(fontWeight: m.isRead ? FontWeight.normal : FontWeight.w700),
+              ),
+              subtitle: Text(last, maxLines: 2, overflow: TextOverflow.ellipsis),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(Formatters.displayDate(m.createdAt), style: const TextStyle(fontSize: 11)),
+                  if (m.replies.isNotEmpty)
+                    Text('${m.replies.length} رد', style: const TextStyle(fontSize: 11)),
+                ],
+              ),
+              onTap: () => _openThread(m),
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// فقاعة رسالة داخل المحادثة: ولي الأمر بلون، والمحفّظ/الإدارة بلون آخر.
+class _ThreadBubble extends StatelessWidget {
+  final String author;
+  final String content;
+  final String createdAt;
+  final bool fromParent;
+
+  const _ThreadBubble({
+    required this.author,
+    required this.content,
+    required this.createdAt,
+    required this.fromParent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: EdgeInsetsDirectional.only(top: 8, start: fromParent ? 0 : 24, end: fromParent ? 24 : 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: fromParent
+            ? NoorTheme.accentGold.withValues(alpha: 0.08)
+            : NoorTheme.primaryGreen.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(NoorTheme.radiusMd),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(author, style: theme.textTheme.labelLarge)),
+              Text(Formatters.displayDateTime(createdAt), style: theme.textTheme.bodySmall),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SelectableText(content),
+        ],
       ),
     );
   }

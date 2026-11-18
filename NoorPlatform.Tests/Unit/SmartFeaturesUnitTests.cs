@@ -72,10 +72,10 @@ public class MemoryStrengthTests
 public class QuranIndexTests
 {
     [Fact]
-    public void Index_Has114Surahs_And6236Verses()
+    public void Index_Has114Surahs_And6214Verses_MadaniCount()
     {
         QuranIndex.Surahs.Should().HaveCount(114);
-        QuranIndex.Surahs.Sum(s => s.VerseCount).Should().Be(6236);
+        QuranIndex.Surahs.Sum(s => s.VerseCount).Should().Be(6214); // العدّ المدني الأول (قالون)
     }
 
     [Theory]

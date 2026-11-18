@@ -129,6 +129,13 @@ class PortalRepositoryImpl implements PortalRepository {
       });
 
   @override
+  Future<Either<Failure, Unit>> replyToThread(int threadId, String content) =>
+      _run(() async {
+        await remote.replyToThread(threadId, content);
+        return unit;
+      });
+
+  @override
   Future<Either<Failure, List<PaymentModel>>> getParentPayments() =>
       _run(remote.getParentPayments);
 
